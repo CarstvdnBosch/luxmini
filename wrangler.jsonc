@@ -1,0 +1,33 @@
+// Cloudflare Worker voor luxmini.nl
+// - Statische site uit ./public (HTML, CSS, JS, foto's)
+// - Een kleine Worker (src/worker.js) voor het contactformulier op /api/contact
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "luxmini",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  // Mail van het formulier gaat via Cloudflare Email Routing naar alleen dit (geverifieerde) adres.
+  "send_email": [
+    { "name": "MAIL", "destination_address": "info.luxmini@gmail.com" }
+  ],
+  "vars": {
+    "AFZENDER": "website@luxmini.nl",
+    "ONTVANGER": "info.luxmini@gmail.com"
+  },
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true }
+
+  // Pas aanzetten NADAT luxmini.nl in Cloudflare staat (nameservers omgezet bij GoDaddy).
+  // Haal dan de // weg voor het blok hieronder en zet een komma achter "observability".
+  // "routes": [
+  //   { "pattern": "www.luxmini.nl", "custom_domain": true },
+  //   { "pattern": "luxmini.nl", "custom_domain": true }
+  // ]
+}

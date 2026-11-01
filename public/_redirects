@@ -1,0 +1,8 @@
+# Oude Wix-adressen doorsturen naar de nieuwe pagina's (behoudt Google-vindbaarheid)
+/aanbod                 /kraamcadeaubox   301
+/aanbod/                /kraamcadeaubox   301
+/shop                   /kraamcadeaubox   301
+/klantenservice         /#contact         301
+/over-lux               /#over            301
+/product-page/*         /kraamcadeaubox   301
+/account/*              /                 301
