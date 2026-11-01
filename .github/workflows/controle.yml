@@ -39,6 +39,8 @@ jobs:
     container: mcr.microsoft.com/playwright/python:v1.47.0-jammy
     steps:
       - uses: actions/checkout@v4
+      - name: Playwright voor Python (zelfde versie als de browsers in de container)
+        run: pip install --no-cache-dir playwright==1.47.0
       - run: python3 scripts/controleer.py
       - name: Screenshots bewaren
         if: always()
