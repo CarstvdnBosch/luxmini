@@ -46,7 +46,7 @@ def main():
                 y, nr = 0, 0
                 while y < hoogte:
                     page.evaluate(f"window.scrollTo({{ top: {y}, behavior: 'instant' }})")
-                    page.wait_for_timeout(900)  # kleurlaag en balk laten bijkomen
+                    page.wait_for_timeout(1300)  # kleurlaag en balk laten bijkomen (overgangen tot 1,2 s)
                     page.screenshot(path=str(UIT / f"{code}-{pagina.replace('.html', '')}-{nr:02d}.png"))
                     y += h - OVERLAP  # overlap, zodat niets onder de vaste balk wegvalt
                     nr += 1

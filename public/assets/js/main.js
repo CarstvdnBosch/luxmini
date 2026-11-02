@@ -178,6 +178,8 @@
         wisselrij; een tik op een tegel wisselt ook. Er wisselt niets vanzelf.
      --------------------------------------------------------------- */
   var SALIE = '#C3CFBC';
+  // diepe portfoliotinten (wit haalt daar 3:1, alleen voor grote tekst)
+  var DIEPE_TINTEN = ['#BC8B47', '#839C75', '#999575', '#C88654', '#AE8C94'];
   var heroSets = [];
   document.querySelectorAll('.hero').forEach(function (hero) {
     var tegels = hero.querySelectorAll('.tegel');
@@ -250,19 +252,21 @@
   /* ---------------------------------------------------------------
      4. Portfolio: hover-lijst met foto's en achtergrondkleur
      --------------------------------------------------------------- */
-  // 4a. Portfolio met vijf sferen: alles tegelijk in 0,75 s (laag, foto's,
-  //     productregel, andere namen + label + pijl-link naar 0,2); wisselen
+  // 4a. Portfolio met vijf sferen: alles tegelijk in 1 s rustig in-uit (laag in een
+  //     diepe tint, alle tekst wit, foto's met productregel, andere namen 0,35); wisselen
   //     tussen items is een crossfade van 0,35 s. Weg, focus uit de lijst of Esc: terug.
   document.querySelectorAll('.hoverlijst.sferen').forEach(function (lijst) {
     var sectie = lijst.closest('.hoverlijst-sectie');
     var knoppen = Array.prototype.slice.call(lijst.querySelectorAll('ul button'));
     var sferen = Array.prototype.slice.call(lijst.querySelectorAll('.sfeer'));
+    var traagTimer = null;
     function kies(k) {
       var i = knoppen.indexOf(k);
       knoppen.forEach(function (b) { b.classList.toggle('aan', b === k); });
       sferen.forEach(function (s, n) { s.classList.toggle('aan', n === i); });
       lijst.classList.add('actief');
       if (sectie) sectie.classList.add('lijst-actief');
+      clearTimeout(traagTimer); laag.classList.add('traag'); // rustige overgang van 1 s bij aanwijzen
       zetLaag(k.dataset.kleur);
     }
     function reset() {
@@ -272,6 +276,8 @@
       knoppen.forEach(function (b) { b.classList.remove('aan'); });
       lijst.style.setProperty('--my', '0');
       laagBijwerken(true);
+      clearTimeout(traagTimer);
+      traagTimer = setTimeout(function () { laag.classList.remove('traag'); }, 1000); // daarna weer 0,75 s bij scrollen
     }
     knoppen.forEach(function (k) {
       if (muis) k.addEventListener('mouseenter', function () { kies(k); });
@@ -508,14 +514,18 @@
         var omgeving = huidig.closest('.op-kleur, .op-wit, .op-grijs') || huidig;
         kleuren.forEach(function (k) { balk.classList.toggle(k, omgeving.classList.contains(k)); });
       }
+      var diep = false;
       if (laatste) {
         var omg = laatste.closest('.op-kleur, .op-wit, .op-grijs') || laatste;
         balk.style.backgroundColor = omg.classList.contains('met-laag') ? laagKleur : (omg.style.backgroundColor || '');
+        // diepe portfoliotint onder de balk: wit logo, wit label en witte burger
+        diep = omg.classList.contains('met-laag') && DIEPE_TINTEN.indexOf((laagKleur || '').toUpperCase()) >= 0;
       }
+      balk.classList.toggle('diep', diep);
       // boven een lichte bovenkant (salie, perzik ...) zijn balklogo en burger donker
       var inBovenkant = !!(laatste && laatste.closest('.hero-kleur'));
       balk.classList.toggle('licht', heroLicht && inBovenkant);
-      if (burger) burger.classList.toggle('donker', voorbij ? (!balk.classList.contains('op-kleur') || (heroLicht && inBovenkant)) : heroLicht);
+      if (burger) burger.classList.toggle('donker', voorbij ? (!diep && (!balk.classList.contains('op-kleur') || (heroLicht && inBovenkant))) : heroLicht);
     };
     balkBijwerken = bijwerken;
     var gepland = false;

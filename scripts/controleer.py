@@ -17,7 +17,8 @@ Wat het doet:
   - controleert de tabbladen in Personaliseren (klik wisselt foto en kop
     binnen 1,5 s, aanwijzen niet)
   - controleert dat het portfolio precies vijf items telt, in de lijst en in
-    de kaarten, en dat die overeenkomen
+    de kaarten, en dat die overeenkomen; met een muis wordt bij aanwijzen de
+    actieve naam wit en de laag een van de vijf diepe tinten
   - controleert in public/_headers dat CSS en JS niet lang gecachet worden
     zonder hercontrole
   - maakt screenshots in scripts/screenshots/
@@ -196,7 +197,26 @@ LEES_PORTFOLIO = """() => {
   return [knoppen, kaarten, regels, beelden];
 }"""
 
-def controleer_portfolio(page, tag):
+# diepe portfoliotinten (wit haalt daar minstens 3:1), als rgb
+DIEPE_TINTEN = {"rgb(188, 139, 71)", "rgb(131, 156, 117)", "rgb(153, 149, 117)", "rgb(200, 134, 84)", "rgb(174, 140, 148)"}
+LEES_HOVER = """() => { const a = document.querySelector('#portfolio .hoverlijst ul button.aan');
+  return [a ? getComputedStyle(a).color : null, a ? getComputedStyle(a).opacity : null, getComputedStyle(document.querySelector('.achtergrond')).backgroundColor]; }"""
+
+def controleer_portfolio(page, tag, touch=False):
+    if not touch:
+        # met een muis: aanwijzen maakt de actieve naam wit op een diepe tint (wens Carst)
+        page.eval_on_selector("#portfolio .hoverlijst", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
+        page.wait_for_timeout(300)
+        for n in range(1, 6):
+            page.hover(f"#portfolio .hoverlijst li:nth-child({n}) button")
+            page.wait_for_timeout(1300)  # kleur en laag wisselen in 1 s
+            kleur, zicht, laag = page.evaluate(LEES_HOVER)
+            if kleur != "rgb(255, 255, 255)" or zicht != "1":
+                fouten.append(f"{tag}: portfolio item {n}: actieve naam is {kleur} (opacity {zicht}), verwacht wit")
+            if laag not in DIEPE_TINTEN:
+                fouten.append(f"{tag}: portfolio item {n}: laag is {laag}, verwacht een van de diepe tinten")
+        page.mouse.move(2, 2)
+        page.wait_for_timeout(1300)
     knoppen, kaarten, regels, beelden = page.evaluate(LEES_PORTFOLIO)
     if len(knoppen) != 5 or len(kaarten) != 5:
         fouten.append(f"{tag}: portfolio telt {len(knoppen)} items in de lijst en {len(kaarten)} kaarten, verwacht precies 5 en 5")
@@ -262,7 +282,7 @@ def controleer_setwissel(page, tag, naam):
     else:
         page.mouse.move(b * 0.25, h * 0.5); page.wait_for_timeout(100)
         page.mouse.move(b * 0.8, h * 0.5, steps=4)
-    page.wait_for_timeout(1000)  # kleur- en logowissel duren 0,75 s
+    page.wait_for_timeout(1500)  # kleur- en logowissel duren 1,2 s
     sets, gedrukt, oud, tekst, logo = page.evaluate(LEES_SETS)
     if any(t != "rgb(32, 32, 32)" for t in tekst):
         fouten.append(f"{tag}: in set B is de tekst in de bovenkant niet inkt ({tekst})")
@@ -279,7 +299,7 @@ def controleer_setwissel(page, tag, naam):
         page.tap(".hero-wissel button[data-set='a']")
     else:
         page.mouse.move(b * 0.25, h * 0.5, steps=4)
-    page.wait_for_timeout(1000)
+    page.wait_for_timeout(1500)
     sets, _, _, tekst, logo = page.evaluate(LEES_SETS)
     if tekst[0] != "rgb(255, 255, 255)" or logo != ["1", "0"]:
         fouten.append(f"{tag}: terug in set A is de kop niet wit of het logo niet wit ({tekst[0]}, {logo})")
@@ -380,7 +400,7 @@ def main():
                     else:
                         fouten.append(f"{tag}: .hero[data-wissel] ontbreekt (setwisseltest kan niet draaien)")
                 if page.query_selector("#portfolio"):
-                    controleer_portfolio(page, tag)
+                    controleer_portfolio(page, tag, touch)
                 if page.query_selector(".hoverlijst button"):
                     lijst_zichtbaar = page.is_visible(".hoverlijst")
                     kaarten_zichtbaar = page.is_visible(".kaarten")

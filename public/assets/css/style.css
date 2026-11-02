@@ -66,11 +66,11 @@ a:hover { opacity: .8; }
 /* ---------- Kleurregel: wit alleen op terracotta ----------
    Krijgt de bovenkant (.hero-kleur) een andere paletkleur, dan zet main.js
    html.hero-licht: alle koppen, lijnen en de lopende tekst worden inkt en het
-   logo wisselt naar de donkere versie, in 0,75 s (net als de achtergrond). */
+   logo wisselt naar de donkere versie, in 1,2 s rustig in-uit (net als de achtergrond). */
 html.hero-licht .hero-kleur { --op-kleur: var(--inkt); }
-.js .hero-kleur .kop-xl, .js .hero-kleur .kop-l, .js .hero-kleur .kop-m, .js .hero-kleur .quote, .js .hero-kleur .lopend-spoor { transition: color .75s ease; }
+.js .hero-kleur .kop-xl, .js .hero-kleur .kop-l, .js .hero-kleur .kop-m, .js .hero-kleur .quote, .js .hero-kleur .lopend-spoor { transition: color 1.2s var(--rustig); }
 .logo { position: relative; }
-.logo img { transition: opacity .75s ease; }
+.logo img { transition: opacity 1.2s var(--rustig); }
 .logo .logo-donker { position: absolute; left: 0; top: 0; opacity: 0; }
 html.hero-licht .site-header .logo-wit { opacity: 0; }
 html.hero-licht .site-header .logo-donker { opacity: 1; }
@@ -82,7 +82,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .tegel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 /* set B ("Het cadeau") ligt over set A en vervaagt in 0,2 s; zonder JavaScript alleen set A */
 .tegel img.set-b { display: none; }
-.js .tegel img.set-b { display: block; opacity: 0; transition: opacity .2s ease; }
+.js .tegel img.set-b { display: block; opacity: 0; transition: opacity .6s var(--rustig); }
 .js .hero.toon-b .tegel img.set-b { opacity: 1; }
 .js .hero[data-wissel] .tegel { cursor: pointer; }
 .hero-cirkel { position: absolute; left: 29%; top: 28%; width: 24%; aspect-ratio: 1; border: 1px solid var(--op-kleur); border-radius: 50%; opacity: .45; pointer-events: none; z-index: 3; }
@@ -308,6 +308,10 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 /* balk boven de bovenkant terwijl die een lichte paletkleur heeft: donker logo */
 .balk.op-kleur.licht .logo-wit { display: none; }
 .balk.op-kleur.licht .logo-donker { display: block; }
+/* balk boven het portfolio terwijl de laag een diepe tint is: wit logo en wit label */
+.balk.diep { color: var(--wit); }
+.balk.diep .logo-wit { display: block; }
+.balk.diep .logo-donker { display: none; }
 
 /* ---------- Tekst die rustig invaagt bij scrollen ---------- */
 .js .opkomen { opacity: 0; transform: translateY(28px); transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1); }
@@ -332,7 +336,8 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
    staat hieronder in CSS en begint dus direct, zonder op "load" te wachten.
    0,10 logo · 0,35 perzik vlak · 0,65 masker + foto · 0,75/0,87 tekstregels ·
    1,90 uitgang (logo, regels, 2,00 figuur, 2,05 doek en pagina) · 3,05 klaar */
-:root { --p3-uit: cubic-bezier(.33,1,.68,1); --in-uit: cubic-bezier(.76,0,.24,1); --intro-y: 80px; }
+:root { --p3-uit: cubic-bezier(.33,1,.68,1); --in-uit: cubic-bezier(.76,0,.24,1); --intro-y: 80px;
+  --rustig: cubic-bezier(.45,0,.55,1); /* rustige in-uit voor kleurwissels (wens Carst: zachter dan 0,75 s) */ }
 .intro-scherm { display: none; }
 .js.intro-aan .intro-scherm { display: block; position: fixed; inset: 0; z-index: 100; overflow: hidden; color: var(--wit);
   /* klikken gaan na 2,3 s door naar de pagina; noodrem: altijd weg vóór 4,0 s, ook als main.js niet draait */
@@ -491,7 +496,7 @@ html.menu-is-open { overflow: hidden; }
 .js .hero.klaar .tegel { opacity: 1; translate: 0 0; }
 .js .hero .t2, .js .hero .t5 { transition-delay: 0s, .1s, .1s; }
 .js .hero .t3, .js .hero .t6 { transition-delay: 0s, .2s, .2s; }
-.js .hero .hero-cirkel { transform: scale(.6); opacity: 0; transition: transform 1.4s cubic-bezier(.2,.7,.2,1), opacity 1s ease, border-color .75s ease, translate .6s cubic-bezier(.2,.7,.2,1); }
+.js .hero .hero-cirkel { transform: scale(.6); opacity: 0; transition: transform 1.4s cubic-bezier(.2,.7,.2,1), opacity 1s ease, border-color 1.2s var(--rustig), translate .6s cubic-bezier(.2,.7,.2,1); }
 .js .hero.klaar .hero-cirkel { transform: none; opacity: .45; }
 .badge { will-change: transform; }
 
@@ -528,8 +533,12 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .achtergrond { position: fixed; inset: 0; z-index: -1; background-color: var(--wit); pointer-events: none; transition: background-color .75s cubic-bezier(.25,.46,.45,.94); will-change: background-color; }
 .js .met-laag { background-color: transparent !important; transition: none; }
 /* De bovenkant (header, collage, uitgelicht, werkwijze) kleurt samen mee */
-.js .hero-kleur { transition: background-color .75s cubic-bezier(.25,.46,.45,.94); }
-.js .balk { transition: background-color .9s cubic-bezier(.25,.46,.45,.94), transform .5s ease; }
+/* bovenkant: achtergrond, tekstkleur en logo wisselen samen in 1,2 s; halverwege van helft wisselen
+   loopt vloeiend terug vanaf de huidige stand (CSS-overgangen keren om vanaf waar ze zijn) */
+.js .hero-kleur { transition: background-color 1.2s var(--rustig); }
+.js .balk { transition: background-color 1.2s var(--rustig), color 1s var(--rustig), transform .5s ease; }
+/* portfolio: de laag wisselt bij aanwijzen in 1 s (rustig), bij scrollen blijft het 0,75 s */
+.achtergrond.traag { transition: background-color 1s var(--rustig); }
 
 /* ---------- 001 Werkwijze: kolommen over de volle hoogte ---------- */
 .kernwaarden { position: relative; }
@@ -578,7 +587,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .kern-kop .kop-m { min-height: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .achtergrond, .js .hero-kleur, .js .balk { transition: none; }
+  .achtergrond, .achtergrond.traag, .js .hero-kleur, .js .balk { transition: none; }
   .js .kern-beeld, .js .kern-masker, .js .kern-masker img, .js .kern-kop, .js .kern-copy, .js .kern-copy-masker, .js .kern-copy-masker p, .js .kern-tekst { transition: none; }
 }
 
@@ -595,20 +604,25 @@ html.zacht-scrollen { scroll-behavior: auto; }
    25% en 58% van de sectie staan, niet van de tekstkolom */
 .hoverlijst.sferen { position: relative; width: var(--B); margin-left: calc(50% - var(--B) / 2); --my: 0; }
 .hoverlijst.sferen ul { position: relative; z-index: 1; }
-.hoverlijst.sferen button { white-space: nowrap; color: var(--inkt); opacity: 1; transition: opacity .75s ease; }
-.hoverlijst.sferen.actief button { color: var(--inkt); opacity: .2; }
-.hoverlijst.sferen.actief button.aan { opacity: 1; } /* de actieve naam blijft inkt */
-.sfeer-beelden { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .75s ease; }
+/* bij aanwijzen (wens Carst, zoals Stock): de laag wordt een diepe tint en alle tekst wit;
+   wit haalt op die tinten 3:1, dus alleen grote tekst (namen, productregel 19 px vet) */
+.hoverlijst.sferen button { white-space: nowrap; color: var(--inkt); opacity: 1; transition: opacity 1s var(--rustig), color 1s var(--rustig); }
+.hoverlijst.sferen.actief button { color: var(--wit); opacity: .35; }
+.hoverlijst.sferen.actief button.aan { opacity: 1; }
+.sfeer-beelden { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 1s var(--rustig); }
 .hoverlijst.sferen.actief .sfeer-beelden { opacity: 1; }
 .sfeer { position: absolute; inset: 0; opacity: 0; transition: opacity .35s ease; } /* wisselen tussen items: crossfade 0,35 s */
 .sfeer.aan { opacity: 1; }
-.hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld { display: block; position: absolute; opacity: 1; object-fit: cover; margin: 0; transform: none; transition: translate .6s cubic-bezier(.2,.7,.2,1); }
+.hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld { display: block; position: absolute; opacity: 1; overflow: hidden; margin: 0; transform: none; transition: translate .6s cubic-bezier(.2,.7,.2,1); }
+.hoverlijst.sferen .groot img, .hoverlijst.sferen .klein-beeld img { width: 100%; height: 100%; object-fit: cover; }
+.hoverlijst.sferen .groot::after, .hoverlijst.sferen .klein-beeld::after { content: ""; position: absolute; inset: 0; background: rgba(32,32,32,.2); } /* 20% inkt, zoals Stock */
 .hoverlijst.sferen .groot { left: 25%; top: calc(var(--B) * -.03); width: min(30%, 440px); aspect-ratio: 30 / 41.66; translate: 0 calc(var(--my) * 40px); }
 .hoverlijst.sferen .klein-beeld { left: 58%; top: calc(var(--B) * .17); width: min(15%, 220px); aspect-ratio: 3 / 4; translate: 0 calc(var(--my) * 20px); }
-.productregel { position: absolute; left: 58%; top: calc(var(--B) * .17 + min(var(--B) * .15, 220px) * 4 / 3 + 16px); max-width: 30%; margin: 0; font-size: 14px; font-weight: 600; line-height: 1.6; letter-spacing: .2em; text-transform: uppercase; color: var(--inkt); translate: 0 calc(var(--my) * 20px); transition: translate .6s cubic-bezier(.2,.7,.2,1); }
+.productregel { position: absolute; left: 58%; top: calc(var(--B) * .17 + min(var(--B) * .15, 220px) * 4 / 3 + 16px); max-width: 30%; margin: 0; font-size: 19px; font-weight: 600; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; color: var(--wit); translate: 0 calc(var(--my) * 20px); transition: translate .6s cubic-bezier(.2,.7,.2,1); }
 /* label en pijl-link vallen terug naar 0,2 terwijl een item actief is */
-.js .hoverlijst-sectie .sectie > .label, .js .hoverlijst-sectie .sectie > .pijl { transition: opacity .75s ease, transform .9s cubic-bezier(.2,.7,.2,1); }
+.js .hoverlijst-sectie .sectie > .label, .js .hoverlijst-sectie .sectie > .pijl { transition: opacity 1s var(--rustig), color 1s var(--rustig), transform .9s cubic-bezier(.2,.7,.2,1); }
 .js .hoverlijst-sectie.lijst-actief .sectie > .label, .js .hoverlijst-sectie.lijst-actief .sectie > .pijl { opacity: .2; }
+.js #portfolio.lijst-actief .sectie > .label, .js #portfolio.lijst-actief .sectie > .pijl { color: var(--wit); opacity: .35; }
 
 /* kaarten: vijf kleurvlakken met foto, sfeernaam en productregel; alleen de rij scrollt */
 .kaarten.sfeer-kaarten { --kaart-rand: min(8.2vw, calc(var(--max) * .082)); display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 320px); gap: 16px; margin-inline: calc(-1 * var(--kaart-rand)); padding-inline: var(--kaart-rand); padding-bottom: 8px; scroll-padding-inline: var(--kaart-rand); overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: thin; }
@@ -616,11 +630,12 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .sfeer-kaarten .kaart { background: var(--kaart-kleur, var(--grijsblauw)); padding: 12px 12px 18px; }
 .sfeer-kaarten .kaart img { aspect-ratio: 4 / 5; }
 .sfeer-kaarten .kaart figcaption { margin-top: 14px; font-size: inherit; }
-.kaart-naam { display: block; font-family: var(--display); font-size: 24px; line-height: 1.2; color: var(--inkt); }
-.kaart-regel { display: block; margin-top: 6px; font-family: var(--sans); font-size: 16px; line-height: 1.4; color: var(--inkt); }
+/* kaarten in de diepe tint met witte tekst (grote tekst: naam 24 px, productregel 19 px vet) */
+.kaart-naam { display: block; font-family: var(--display); font-size: 24px; line-height: 1.2; color: var(--wit); }
+.kaart-regel { display: block; margin-top: 6px; font-family: var(--sans); font-size: 19px; font-weight: 600; line-height: 1.4; color: var(--wit); }
 @media (max-width: 760px) { .kaarten.sfeer-kaarten { --kaart-rand: var(--rand); gap: 12px; } }
 @media (prefers-reduced-motion: reduce) {
-  .hoverlijst.sferen button, .sfeer-beelden, .sfeer, .hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld, .productregel,
+  .hoverlijst.sferen button, .sfeer-beelden, .sfeer, .hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld, .productregel, .balk.diep,
   .js .hoverlijst-sectie .sectie > .label, .js .hoverlijst-sectie .sectie > .pijl { transition: none; }
   .hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld, .productregel { translate: none; }
 }
