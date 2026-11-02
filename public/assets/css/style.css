@@ -58,26 +58,52 @@ a:hover { opacity: .8; }
 .pijl svg { width: 28px; height: 10px; flex: none; }
 .quote { margin: 0; font-family: var(--display); font-size: clamp(26px, 2.8vw, 40px); line-height: 1.25; letter-spacing: .02em; }
 
-/* ---------- Hero met collage ---------- */
-.hero { position: relative; max-width: var(--max); margin: 0 auto; height: clamp(600px, 62.5vw, 900px); }
-.tegel { position: absolute; perspective: 1200px; transition: transform .6s cubic-bezier(.2,.7,.2,1); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.tegel-binnen { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.2,.7,.2,1); }
-.tegel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.tegel img.achter { transform: rotateY(180deg); }
-.tegel.om .tegel-binnen { transform: rotateY(180deg); }
-@media (hover: hover) { .tegel:hover .tegel-binnen { transform: rotateY(180deg); } }
-.hero-cirkel { position: absolute; left: 33%; top: 26%; width: 22%; aspect-ratio: 1; border: 1px solid var(--op-kleur); border-radius: 50%; opacity: .45; pointer-events: none; z-index: 3; }
-.hero-tekst { position: absolute; left: 33.9%; top: 29%; z-index: 4; display: flex; flex-direction: column; gap: 18px; pointer-events: none; text-shadow: 0 1px 2px rgba(32,32,32,.25), 0 2px 18px rgba(32,32,32,.28); }
-.hero-tekst .caps { margin: 6px 0 0 4px; line-height: 2; font-size: 13px; text-shadow: none; }
-.badge { position: absolute; left: 78.5%; top: 82%; width: clamp(70px, 6.6vw, 96px); z-index: 4; }
+/* ---------- Kleurregel: wit alleen op terracotta ----------
+   Krijgt de bovenkant (.hero-kleur) een andere paletkleur, dan zet main.js
+   html.hero-licht: alle koppen, lijnen en de lopende tekst worden inkt en het
+   logo wisselt naar de donkere versie, in 0,75 s (net als de achtergrond). */
+html.hero-licht .hero-kleur { --op-kleur: var(--inkt); }
+.js .hero-kleur .kop-xl, .js .hero-kleur .kop-l, .js .hero-kleur .kop-m, .js .hero-kleur .quote, .js .hero-kleur .lopend-spoor { transition: color .75s ease; }
+.logo { position: relative; }
+.logo img { transition: opacity .75s ease; }
+.logo .logo-donker { position: absolute; left: 0; top: 0; opacity: 0; }
+html.hero-licht .site-header .logo-wit { opacity: 0; }
+html.hero-licht .site-header .logo-donker { opacity: 1; }
 
-/* posities desktop (gemeten op 1440 × 900) */
-.t1 { left: 2.2%;  top: 50%;   width: 14.3%; aspect-ratio: .66; z-index: 1; }
-.t2 { left: 11%;   top: 30.9%; width: 23.4%; aspect-ratio: .71; z-index: 2; }
-.t3 { left: 10.2%; top: 70%;   width: 11.8%; aspect-ratio: .76; z-index: 3; }
-.t4 { left: 59.4%; top: 12.9%; width: 16.5%; aspect-ratio: .6;  z-index: 1; }
-.t5 { left: 64.8%; top: 30.9%; width: 17.2%; aspect-ratio: .77; z-index: 2; }
-.t6 { left: 65%;   top: 66.3%; width: 12%;   aspect-ratio: 1.22; z-index: 3; }
+/* ---------- Hero met collage: twee sets die samen wisselen ---------- */
+.hero { position: relative; max-width: var(--max); margin: 0 auto; height: clamp(680px, 100svh, 1000px); overflow-x: clip; }
+.tegel { position: absolute; transition: transform .6s cubic-bezier(.2,.7,.2,1); -webkit-tap-highlight-color: transparent; }
+.tegel-binnen { position: relative; width: 100%; height: 100%; }
+.tegel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* set B ("Het cadeau") ligt over set A en vervaagt in 0,2 s; zonder JavaScript alleen set A */
+.tegel img.set-b { display: none; }
+.js .tegel img.set-b { display: block; opacity: 0; transition: opacity .2s ease; }
+.js .hero.toon-b .tegel img.set-b { opacity: 1; }
+.js .hero[data-wissel] .tegel { cursor: pointer; }
+.hero-cirkel { position: absolute; left: 29%; top: 28%; width: 24%; aspect-ratio: 1; border: 1px solid var(--op-kleur); border-radius: 50%; opacity: .45; pointer-events: none; z-index: 3; }
+.hero-tekst { position: absolute; left: 37%; top: 52%; transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; gap: 18px; pointer-events: none; }
+.hero .kop-xl { font-size: clamp(40px, 6.1vw, 88px); }
+.hero-tekst .caps { margin: 6px 0 0 4px; line-height: 2; font-size: 13px; }
+.badge { position: absolute; left: 78.5%; top: 82%; width: clamp(70px, 6.6vw, 96px); z-index: 4; }
+/* wisselrij "Het atelier · Het cadeau": op touch altijd, met een muis alleen bij toetsenbordfocus */
+.hero-wissel { display: none; }
+.js .hero-wissel { display: flex; align-items: center; margin: -6px 0 0 4px; pointer-events: auto; font-size: 14px; font-weight: 600; letter-spacing: .32em; text-transform: uppercase; color: var(--op-kleur-klein); transition: opacity .3s ease; }
+.hero-wissel button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; padding: 0; min-height: 44px; min-width: 44px; cursor: pointer; text-underline-offset: 6px; text-decoration-thickness: 1px; -webkit-tap-highlight-color: transparent; }
+.hero-wissel button[aria-pressed="true"] { text-decoration-line: underline; }
+.hero-wissel span { padding: 0 .26em 0 .5em; } /* knoppen hebben al letterspatiëring achter de laatste letter */
+@media (hover: hover) and (pointer: fine) {
+  .js .hero-wissel { opacity: 0; pointer-events: none; }
+  .js .hero-wissel:focus-within { opacity: 1; pointer-events: auto; }
+}
+
+/* posities desktop en tablet, in % van het hero-vak (top = bovenrand) */
+.t1 { left: 6%;  top: 51%; width: 12.5%; aspect-ratio: .74; z-index: 1; }
+.t2 { left: 14%; top: 31%; width: 21%;   aspect-ratio: .71; z-index: 2; }
+.t3 { left: 12%; top: 70%; width: 11%;   aspect-ratio: .76; z-index: 3; }
+.t4 { left: 63%; top: 20%; width: 14.5%; aspect-ratio: .6;  z-index: 1; }
+.t5 { left: 68%; top: 39%; width: 16.5%; aspect-ratio: .77; z-index: 2; }
+.t6 { left: 65%; top: 71%; width: 12%;   aspect-ratio: 1.22; z-index: 3; }
+@media (min-width: 761px) and (max-width: 1024px) { .hero .kop-xl { font-size: min(clamp(40px, 6.1vw, 88px), 6vw); } }
 
 .intro { max-width: 900px; margin: 0 auto; padding: clamp(24px, 4vw, 56px) 24px clamp(96px, 13vw, 180px); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 32px; }
 
@@ -230,16 +256,18 @@ a:hover { opacity: .8; }
   .site-header .wrap { min-height: 0; padding-top: 16px; padding-bottom: 12px; }
   .menu { gap: 0 18px; letter-spacing: .14em; }
   .menu a { padding: 8px 0; }
-  .hero { height: 680px; }
+  .hero { height: 740px; }
   .hero-cirkel { left: 12%; top: 26%; width: 58%; }
-  .hero-tekst { left: var(--rand); right: var(--rand); top: 30%; }
+  .hero-tekst { left: var(--rand); right: var(--rand); top: 25.5%; transform: none; }
   .badge { left: auto; right: 5%; top: auto; bottom: 6%; width: 70px; }
+  .hero-wissel { font-size: 13px; letter-spacing: .24em; }
+  /* bovenste rij blijft; onderste rij begint minimaal 16 px onder de wisselrij */
   .t1 { left: 4%;  top: 3%;  width: 26%; }
   .t2 { left: 36%; top: 1%;  width: 30%; }
   .t3 { left: 72%; top: 5%;  width: 22%; }
-  .t4 { left: 5%;  top: 62%; width: 25%; }
-  .t5 { left: 35%; top: 65%; width: 30%; }
-  .t6 { left: 70%; top: 64%; width: 26%; }
+  .t4 { left: 5%;  top: 66%; width: 25%; }
+  .t5 { left: 35%; top: 68.5%; width: 30%; }
+  .t6 { left: 70%; top: 67.5%; width: 26%; }
   /* portfolio: foto boven de lijst in plaats van eroverheen */
   .hoverlijst .groot { position: relative; left: auto; top: auto; display: none; width: 64%; margin: 0 auto 24px; }
   .hoverlijst .klein-beeld { display: none; }
@@ -257,7 +285,7 @@ a:hover { opacity: .8; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tegel, .tegel-binnen, .hoverlijst .groot, .hoverlijst .klein-beeld, .hoverlijst-sectie { transition: none; }
+  .tegel, .js .tegel img.set-b, .logo img, .js .hero-kleur .kop-xl, .js .hero-kleur .kop-l, .js .hero-kleur .kop-m, .js .hero-kleur .quote, .js .hero-kleur .lopend-spoor, .hoverlijst .groot, .hoverlijst .klein-beeld, .hoverlijst-sectie { transition: none; }
   .kaarten { scroll-behavior: auto; }
 }
 
@@ -272,6 +300,9 @@ a:hover { opacity: .8; }
 .balk .menu a { padding: 10px 0; }
 .balk.op-kleur .logo-donker, .balk.op-wit .logo-wit, .balk.op-grijs .logo-wit { display: none; }
 .balk.op-wit .logo-donker, .balk.op-grijs .logo-donker { display: block; }
+/* balk boven de bovenkant terwijl die een lichte paletkleur heeft: donker logo */
+.balk.op-kleur.licht .logo-wit { display: none; }
+.balk.op-kleur.licht .logo-donker { display: block; }
 
 /* ---------- Tekst die rustig invaagt bij scrollen ---------- */
 .js .opkomen { opacity: 0; transform: translateY(28px); transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1); }
@@ -469,7 +500,7 @@ html.menu-is-open { overflow: hidden; }
 .js .hero.klaar .tegel { opacity: 1; translate: 0 0; }
 .js .hero .t2, .js .hero .t5 { transition-delay: 0s, .1s, .1s; }
 .js .hero .t3, .js .hero .t6 { transition-delay: 0s, .2s, .2s; }
-.js .hero .hero-cirkel { transform: scale(.6); opacity: 0; transition: transform 1.4s cubic-bezier(.2,.7,.2,1), opacity 1s ease; }
+.js .hero .hero-cirkel { transform: scale(.6); opacity: 0; transition: transform 1.4s cubic-bezier(.2,.7,.2,1), opacity 1s ease, border-color .75s ease, translate .6s cubic-bezier(.2,.7,.2,1); }
 .js .hero.klaar .hero-cirkel { transform: none; opacity: .45; }
 .badge { will-change: transform; }
 
@@ -507,7 +538,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .achtergrond { position: fixed; inset: 0; z-index: -1; background-color: var(--wit); pointer-events: none; transition: background-color .75s cubic-bezier(.25,.46,.45,.94); will-change: background-color; }
 .js .met-laag { background-color: transparent !important; transition: none; }
 /* De bovenkant (header, collage, uitgelicht, werkwijze) kleurt samen mee */
-.js .hero-kleur { transition: background-color .9s cubic-bezier(.25,.46,.45,.94); }
+.js .hero-kleur { transition: background-color .75s cubic-bezier(.25,.46,.45,.94); }
 .js .balk { transition: background-color .9s cubic-bezier(.25,.46,.45,.94), transform .5s ease; }
 
 /* ---------- 001 Werkwijze: kolommen over de volle hoogte ---------- */
@@ -539,7 +570,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .js .kern-kop, .js .kern-copy { transition: transform 1s cubic-bezier(.215,.61,.355,1); }
   /* de foto in de kolom is donker: daarop wit, net als voorheen */
   .js .kern-tekst { transition: color .5s ease; }
-  .js .kern-kolom.open .kern-tekst { color: var(--wit); }
+  .js .kern-kolom.open .kern-tekst, .js .kern-kolom.open .kop-m { color: var(--wit); }
   .js .kern-label { transition: color .5s ease; }
   .js .kernwaarden:has(.kern-kolom:first-child.open) .kern-label { color: var(--wit); }
   .js .kern-copy { position: absolute; left: 0; right: 0; top: 100%; padding-top: 28px; }

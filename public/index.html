@@ -82,7 +82,7 @@
 
 <header class="site-header op-kleur hero-kleur">
   <div class="wrap">
-    <a class="logo" href="index.html" aria-label="LUX mini, naar de homepage"><img src="assets/img/logo-luxmini-wit.png" alt="LUX mini" width="248" height="94"></a>
+    <a class="logo" href="index.html" aria-label="LUX mini, naar de homepage"><img class="logo-wit" src="assets/img/logo-luxmini-wit.png" alt="LUX mini" width="248" height="94"><img class="logo-donker" src="assets/img/logo-luxmini-donker.png" alt="" width="248" height="93"></a>
     <nav class="menu" aria-label="Hoofdmenu">
       <a href="#werkwijze">Werkwijze</a>
       <a href="#portfolio">Portfolio</a>
@@ -100,38 +100,41 @@
 
 <main id="inhoud">
 
-<!-- Hero met collage: foto's bewegen mee en draaien om -->
+<!-- Hero met collage: de foto's bewegen mee en wisselen samen per schermhelft
+     (links set A "Het atelier" op terracotta, rechts set B "Het cadeau" op salie) -->
 <section class="op-kleur hero-kleur">
-  <div class="hero">
-    <div data-cursor="draai" class="tegel t1" data-diepte="10" tabindex="0" role="button" aria-label="Draai foto om: borduurmachine in het atelier"><div class="tegel-binnen">
-      <img src="assets/img/over-naaimachine.jpg" alt="Borduurmachine met een wand vol garens">
-      <img class="achter" src="assets/img/p-knuffel-naam.jpg" alt="" loading="lazy">
+  <div class="hero" data-wissel>
+    <div class="tegel t1" data-diepte="10"><div class="tegel-binnen">
+      <img src="assets/img/ig-babynest.jpg" alt="Babynest van bruine teddystof met een lichte binnenkant">
     </div></div>
-    <div data-cursor="draai" class="tegel t2" data-diepte="22" tabindex="0" role="button" aria-label="Draai foto om: geopende kraamcadeaubox"><div class="tegel-binnen">
-      <img src="assets/img/hero-box-open.jpg" alt="Geopende kraamcadeaubox met de naam Sem">
-      <img class="achter" src="assets/img/p-sjaaltje-kleur.jpg" alt="" loading="lazy">
+    <div class="tegel t2" data-diepte="22"><div class="tegel-binnen">
+      <img class="set-a" src="assets/img/over-naaimachine.jpg" alt="Borduurmachine met een wand vol garens">
+      <img class="set-b" src="assets/img/p-swaddle-open-kleur.jpg" alt="">
     </div></div>
-    <div data-cursor="draai" class="tegel t3" data-diepte="34" tabindex="0" role="button" aria-label="Draai foto om: shirtje met ruches en broekje"><div class="tegel-binnen">
-      <img src="assets/img/ig-outfit-ladder.jpg" alt="Mauve overslagshirtje met ruches en een flared broekje met bloemenprint aan een houten ladder">
-      <img class="achter" src="assets/img/p-knuffel.jpg" alt="" loading="lazy">
+    <div class="tegel t3" data-diepte="34"><div class="tegel-binnen">
+      <img class="set-a" src="assets/img/pers-stoffen.jpg" alt="Vier stoffen met prints van vosjes, walvissen en blaadjes">
+      <img class="set-b" src="assets/img/p-bijtring-giraf-kleur.jpg" alt="">
     </div></div>
-    <div data-cursor="draai" class="tegel t4" data-diepte="14" tabindex="0" role="button" aria-label="Draai foto om: Carien aan het naaien"><div class="tegel-binnen">
-      <img src="assets/img/pers-handwerk.jpg" alt="Carien naait een LUX-label in">
-      <img class="achter" src="assets/img/pers-stoffen.jpg" alt="" loading="lazy">
+    <div class="tegel t4" data-diepte="14"><div class="tegel-binnen">
+      <img class="set-a" src="assets/img/pers-klaar.jpg" alt="Kast in het atelier met hangende babykleding en gevouwen stoffen">
+      <img class="set-b" src="assets/img/p-broekje-kleur.jpg" alt="">
     </div></div>
-    <div data-cursor="draai" class="tegel t5" data-diepte="26" tabindex="0" role="button" aria-label="Draai foto om: Carien in haar atelier"><div class="tegel-binnen">
+    <div class="tegel t5" data-diepte="26"><div class="tegel-binnen">
       <img src="assets/img/over-carien.jpg" alt="Carien Geurts aan het werk in haar atelier" style="object-position: 30% 50%">
-      <img class="achter" src="assets/img/ig-babynest.jpg" alt="" loading="lazy">
     </div></div>
-    <div data-cursor="draai" class="tegel t6" data-diepte="38" tabindex="0" role="button" aria-label="Draai foto om: overslagshirtje"><div class="tegel-binnen">
-      <img src="assets/img/p-shirtje-kleur.jpg" alt="Cognackleurig overslagshirtje">
-      <img class="achter" src="assets/img/p-broekje-kleur.jpg" alt="" loading="lazy">
+    <div class="tegel t6" data-diepte="38"><div class="tegel-binnen">
+      <img class="set-a" src="assets/img/over-werkplek.jpg" alt="Het atelier van Carien met naaimachines bij het raam">
+      <img class="set-b" src="assets/img/p-shirtje-kleur.jpg" alt="">
     </div></div>
 
     <div class="hero-cirkel" aria-hidden="true"></div>
     <div class="hero-tekst">
       <h1 class="kop-xl">Samen<br>ontworpen,<br>met de hand<br>gemaakt</h1>
       <p class="caps">Carien Geurts<br>Atelier Ospel</p>
+      <!-- LET OP: wacht op akkoord Carien -->
+      <div class="hero-wissel" role="group" aria-label="Kies de foto's">
+        <button type="button" data-set="a" aria-pressed="true">Het atelier</button><span aria-hidden="true">·</span><button type="button" data-set="b" aria-pressed="false">Het cadeau</button>
+      </div>
     </div>
     <svg class="badge" viewBox="0 0 120 120" role="img" aria-label="LUX mini, handgemaakt voor de allerkleinsten">
       <defs><path id="badgeCirkel" d="M60,60 m-44,0 a44,44 0 1,1 88,0 a44,44 0 1,1 -88,0"></path></defs>

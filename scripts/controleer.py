@@ -15,7 +15,8 @@ Wat het doet:
   - maakt screenshots in scripts/screenshots/
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
-    interacties werken (foto omdraaien, hover-lijst met muis, kaarten op touch)
+    interacties werken (hero-sets wisselen per schermhelft of met een tik,
+    hover-lijst met muis, kaarten op touch)
 Exitcode 1 als er fouten zijn, zodat een agent of CI het ziet.
 """
 import os, sys, pathlib, re, threading, functools
@@ -177,6 +178,44 @@ def controleer_stappen(browser):
         if breedte > b:
             fouten.append(f"{tag}: pagina scrollt horizontaal (scrollWidth {breedte} > {b})")
 
+# Hero: de foto's wisselen samen per schermhelft (brief stock-pariteit, criterium 4 en 7)
+WISSELEND, VAST = ["t2", "t3", "t4", "t6"], ["t1", "t5"]
+LEES_SETS = """() => {
+  const uit = {};
+  document.querySelectorAll('.hero[data-wissel] .tegel').forEach(t => {
+    const c = [...t.classList].find(k => /^t\\d$/.test(k)); const b = t.querySelector('img.set-b');
+    uit[c] = b ? (getComputedStyle(b).opacity === '1' ? 'B' : 'A') : 'vast'; });
+  const k = document.querySelector('.hero-wissel button[data-set="b"]');
+  return [uit, k ? k.getAttribute('aria-pressed') : null, document.querySelectorAll('.tegel.om, .tegel[role="button"]').length];
+}"""
+
+def controleer_setwissel(page, tag, naam):
+    """Desktop: muis op de rechterhelft zet t2, t3, t4, t6 op set B (t1, t5 blijven).
+    Mobiel: een tik op "Het cadeau" doet hetzelfde en zet aria-pressed goed."""
+    b, h = SCHERMEN[naam]
+    if naam == "mobiel":
+        page.tap(".hero-wissel button[data-set='b']")
+    else:
+        page.mouse.move(b * 0.25, h * 0.5); page.wait_for_timeout(100)
+        page.mouse.move(b * 0.8, h * 0.5, steps=4)
+    page.wait_for_timeout(600)
+    sets, gedrukt, oud = page.evaluate(LEES_SETS)
+    if [sets.get(t) for t in WISSELEND] != ["B"] * 4 or [sets.get(t) for t in VAST] != ["vast"] * 2:
+        fouten.append(f"{tag}: setwissel klopt niet, tegels staan op {sets} (verwacht t2, t3, t4, t6 op B; t1, t5 vast)")
+    if naam == "mobiel" and gedrukt != "true":
+        fouten.append(f"{tag}: 'Het cadeau' heeft na een tik aria-pressed={gedrukt}, verwacht true")
+    if oud:
+        fouten.append(f"{tag}: er zijn nog {oud} tegels die omdraaien of als knop werken")
+    # terug naar set A
+    if naam == "mobiel":
+        page.tap(".hero-wissel button[data-set='a']")
+    else:
+        page.mouse.move(b * 0.25, h * 0.5, steps=4)
+    page.wait_for_timeout(600)
+    sets, _, _ = page.evaluate(LEES_SETS)
+    if [sets.get(t) for t in WISSELEND] != ["A"] * 4:
+        fouten.append(f"{tag}: terug naar set A lukt niet, tegels staan op {sets}")
+
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
@@ -206,7 +245,7 @@ def main():
                         fouten.append(f"{tag}: kapotte link -> {href}")
                 # afbeeldingen
                 for src, ok, alt, deco in page.eval_on_selector_all(
-                    "img", "els => els.map(e => [e.getAttribute('src'), e.complete && e.naturalWidth > 0, e.getAttribute('alt'), e.closest('.hoverlijst') !== null || e.classList.contains('achter')])"
+                    "img", "els => els.map(e => [e.getAttribute('src'), e.complete && e.naturalWidth > 0, e.getAttribute('alt'), e.closest('.hoverlijst') !== null || e.classList.contains('set-b')])"
                 ):
                     if src and not src.startswith("http") and not bestaat(src, pagina):
                         fouten.append(f"{tag}: afbeelding ontbreekt -> {src}")
@@ -222,15 +261,8 @@ def main():
                     waarschuwingen.append(f"{tag}: nog in te vullen: {p}")
 
                 # interacties
-                if page.query_selector(".tegel"):
-                    if naam == "mobiel":
-                        page.tap(".tegel.t2")
-                    else:
-                        page.focus(".tegel.t2"); page.keyboard.press("Enter")
-                    page.wait_for_timeout(900)
-                    if not page.eval_on_selector(".tegel.t2", "e => e.classList.contains('om')"):
-                        fouten.append(f"{tag}: foto draait niet om (tik of Enter-toets)")
-                    page.focus(".tegel.t2"); page.keyboard.press("Enter")
+                if page.query_selector(".hero[data-wissel]"):
+                    controleer_setwissel(page, tag, naam)
                 if page.query_selector(".hoverlijst button"):
                     lijst_zichtbaar = page.is_visible(".hoverlijst")
                     kaarten_zichtbaar = page.is_visible(".kaarten")

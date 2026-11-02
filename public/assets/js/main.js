@@ -16,8 +16,17 @@
   /* Kleurhulpjes (naar stockdutchdesign.com): de bovenkant van de pagina
      (.hero-kleur) en één vaste achtergrondlaag voor de rest */
   var heroKleurEls = Array.prototype.slice.call(document.querySelectorAll('.hero-kleur'));
+  // Kleurregel: wit staat alleen op terracotta. Elke andere paletkleur zet
+  // html.hero-licht, waarmee CSS alle tekst in de bovenkant inkt maakt en
+  // het donkere logo toont. Leeg ('') = terug naar terracotta.
+  var heroLicht = false, heroKleurNu = '';
   function zetHeroKleur(kleur) {
+    kleur = (kleur || '').trim();
+    if (kleur.toLowerCase() === '#bc8565') kleur = '';
+    heroKleurNu = kleur;
     heroKleurEls.forEach(function (el) { el.style.backgroundColor = kleur; });
+    heroLicht = !!kleur;
+    html.classList.toggle('hero-licht', heroLicht);
     if (typeof balkBijwerken === 'function') balkBijwerken(true);
   }
   var laag = document.createElement('div');
@@ -156,10 +165,16 @@
   }
 
   /* ---------------------------------------------------------------
-     3. Collage: meebewegen met de muis en omdraaien
+     3. Collage: meebewegen en licht kantelen met de muis; de foto's wisselen
+        samen per schermhelft (set A "Het atelier" op terracotta, set B
+        "Het cadeau" op salie). Op touch en met het toetsenbord via de
+        wisselrij; een tik op een tegel wisselt ook. Er wisselt niets vanzelf.
      --------------------------------------------------------------- */
+  var SALIE = '#C3CFBC';
+  var heroSets = [];
   document.querySelectorAll('.hero').forEach(function (hero) {
     var tegels = hero.querySelectorAll('.tegel');
+    var cirkel = hero.querySelector('.hero-cirkel');
     if (muis && !stil) {
       hero.addEventListener('mousemove', function (e) {
         var r = hero.getBoundingClientRect();
@@ -167,27 +182,62 @@
         var y = ((e.clientY - r.top) / r.height) * 2 - 1;
         tegels.forEach(function (t) {
           var d = parseFloat(t.dataset.diepte || '20');
-          t.style.transform = 'translate3d(' + (-x * d).toFixed(1) + 'px,' + (-y * d).toFixed(1) + 'px,0)';
+          // perspectief 1000 px, maximaal ±8° kantelen
+          t.style.transform = 'perspective(1000px) translate3d(' + (-x * d).toFixed(1) + 'px,' + (-y * d).toFixed(1) + 'px,0) rotateX(' + (-y * 8).toFixed(2) + 'deg) rotateY(' + (x * 8).toFixed(2) + 'deg)';
         });
+        if (cirkel) cirkel.style.translate = (-x * 18).toFixed(1) + 'px ' + (-y * 18).toFixed(1) + 'px';
       });
-      hero.addEventListener('mouseleave', function () { tegels.forEach(function (t) { t.style.transform = ''; }); });
+      hero.addEventListener('mouseleave', function () {
+        tegels.forEach(function (t) { t.style.transform = ''; });
+        if (cirkel) cirkel.style.translate = '';
+      });
     }
+    // De kop staat naast de foto's, niet erop: is de langste regel (afhankelijk
+    // van het lettertype) breder dan de ruimte tot de foto rechts ervan, dan
+    // wordt de kop iets kleiner (12 px lucht). Alleen vanaf 761 px.
+    var kop = hero.querySelector('.hero-tekst .kop-xl');
+    if (kop) {
+      var basisGrootte = kop.style.fontSize;
+      var pasKopIn = function () {
+        kop.style.fontSize = basisGrootte;
+        if (window.innerWidth <= 760) return;
+        for (var poging = 0; poging < 4; poging++) {
+          var bereik = document.createRange(); bereik.selectNodeContents(kop);
+          var regels = Array.prototype.slice.call(bereik.getClientRects()); // per regel(deel) van de tekst
+          var links = kop.getBoundingClientRect().left, factor = 1;
+          tegels.forEach(function (t) {
+            var r = t.getBoundingClientRect();
+            if (r.left <= links) return;
+            regels.forEach(function (g) {
+              if (g.width && g.bottom > r.top && g.top < r.bottom && g.right > r.left - 12) factor = Math.min(factor, (r.left - 12 - links) / (g.right - links));
+            });
+          });
+          if (factor >= 1) break;
+          kop.style.fontSize = Math.floor(parseFloat(getComputedStyle(kop).fontSize) * factor) + 'px';
+        }
+      };
+      pasKopIn();
+      window.addEventListener('resize', pasKopIn);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(pasKopIn);
+    }
+    if (!hero.hasAttribute('data-wissel')) return; // alleen de homepage heeft twee sets
+    var knoppen = Array.prototype.slice.call(hero.querySelectorAll('.hero-wissel button'));
+    var huidigeSet = 'a';
+    function zetSet(s) {
+      huidigeSet = s;
+      hero.classList.toggle('toon-b', s === 'b');
+      knoppen.forEach(function (k) { k.setAttribute('aria-pressed', k.dataset.set === s ? 'true' : 'false'); });
+      zetHeroKleur(s === 'b' ? SALIE : '');
+    }
+    heroSets.push(function () { if (huidigeSet !== 'a') zetSet('a'); });
+    knoppen.forEach(function (k) { k.addEventListener('click', function () { zetSet(k.dataset.set); }); });
+    if (!muis) tegels.forEach(function (t) { t.addEventListener('click', function () { zetSet(huidigeSet === 'a' ? 'b' : 'a'); }); });
     if (muis) {
-      var helft = '';
       hero.addEventListener('mousemove', function (e) {
-        var nu = e.clientX < window.innerWidth / 2 ? 'links' : 'rechts';
-        if (nu === helft) return;
-        helft = nu;
-        zetHeroKleur(nu === 'links' ? getComputedStyle(html).getPropertyValue('--terracotta').trim() : '#B4B19A');
+        var s = e.clientX < window.innerWidth / 2 ? 'a' : 'b';
+        if (s !== huidigeSet || heroKleurNu !== (s === 'b' ? SALIE : '')) zetSet(s);
       });
-      hero.addEventListener('mouseleave', function () { helft = ''; });
     }
-    tegels.forEach(function (t) {
-      function draai() { var om = t.classList.toggle('om'); t.setAttribute('aria-pressed', om ? 'true' : 'false'); }
-      t.setAttribute('aria-pressed', 'false');
-      if (!muis) t.addEventListener('click', draai);
-      t.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); draai(); } });
-    });
   });
 
   /* ---------------------------------------------------------------
@@ -282,15 +332,18 @@
     kolom.addEventListener('mouseleave', dicht);
   });
   // Binnen de bovenkant blijft de kleur staan zoals bij Stock; wie de bovenkant
-  // verlaat, krijgt weer terracotta (wit op perzik of olijf leest slecht)
+  // verlaat, krijgt weer set A en terracotta. Bij focus alleen als de focus
+  // echt naar iets buiten de bovenkant gaat (een tik op een lege plek of op
+  // een tegel laat de gekozen set staan).
+  function terugNaarA() { heroSets.forEach(function (f) { f(); }); zetHeroKleur(''); }
   heroKleurEls.forEach(function (el) {
     el.addEventListener('mouseleave', function (e) {
       if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.hero-kleur')) return;
-      zetHeroKleur('');
+      terugNaarA();
     });
     el.addEventListener('focusout', function (e) {
-      if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.hero-kleur')) return;
-      zetHeroKleur('');
+      if (!e.relatedTarget || (e.relatedTarget.closest && e.relatedTarget.closest('.hero-kleur'))) return;
+      terugNaarA();
     });
   });
 
@@ -352,7 +405,10 @@
         var omg = laatste.closest('.op-kleur, .op-wit, .op-grijs') || laatste;
         balk.style.backgroundColor = omg.classList.contains('met-laag') ? laagKleur : (omg.style.backgroundColor || '');
       }
-      if (burger) burger.classList.toggle('donker', voorbij && !balk.classList.contains('op-kleur'));
+      // boven een lichte bovenkant (salie, perzik ...) zijn balklogo en burger donker
+      var inBovenkant = !!(laatste && laatste.closest('.hero-kleur'));
+      balk.classList.toggle('licht', heroLicht && inBovenkant);
+      if (burger) burger.classList.toggle('donker', voorbij ? (!balk.classList.contains('op-kleur') || (heroLicht && inBovenkant)) : heroLicht);
     };
     balkBijwerken = bijwerken;
     var gepland = false;
@@ -441,6 +497,7 @@
       cursor.classList.toggle('groot', !!doel && !tekst);
       if (tekst) cLabel.textContent = tekst;
       var kleurvlak = e.target.closest('.op-kleur, .statement, .menu-scherm');
+      if (kleurvlak && heroLicht && kleurvlak.closest('.hero-kleur')) kleurvlak = null;
       cursor.classList.toggle('op-kleur-c', !!kleurvlak && !tekst);
     });
     document.addEventListener('mouseleave', function () { cursor.classList.remove('zichtbaar'); });
