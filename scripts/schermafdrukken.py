@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 PROJECT = pathlib.Path(__file__).resolve().parent.parent
 ROOT = PROJECT / "public"
 UIT = PROJECT / "scripts" / "schermafdrukken"
-PAGINAS = sys.argv[1:] or ["index.html", "kraamcadeaubox.html"]
+PAGINAS = sys.argv[1:] or ["index.html", "kraamcadeaubox.html", "producten.html", "over.html", "contact.html"]
 OVERLAP = 100  # px: hoogte van de vaste balk plus marge
 # touch = has_touch + is_mobile: dan gelden (hover: none) en (pointer: coarse), zoals op een echte telefoon of tablet
 SCHERMEN = {"d": (1440, 900, False), "t": (768, 1024, True), "m": (390, 844, True)}

@@ -12,6 +12,8 @@
     zet: function (k, v) { try { window.sessionStorage.setItem(k, v); } catch (e) { /* niet erg */ } }
   };
   var heroEl = document.querySelector('.hero');
+  // De vaste balk verschijnt na de hero (homepage) of na de eerste sectie van een subpagina
+  var kopEl = heroEl || document.querySelector('main > .pagina-kop, main > .over-kop, main > .contact-kop');
 
   /* Kleurhulpjes (naar stockdutchdesign.com): de bovenkant van de pagina
      (.hero-kleur) en één vaste achtergrondlaag voor de rest */
@@ -465,7 +467,7 @@
          vloeit naar de kleur van de sectie waarvan het midden in beeld is
      --------------------------------------------------------------- */
   var lagen = Array.prototype.slice.call(document.querySelectorAll('main > section')).filter(function (sec) {
-    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement');
+    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement') && !sec.matches('.contact-kop, .pagina-kop, .over-kop'); // koppen houden hun eigen kleur, zoals de bovenkant van de homepage
   });
   lagen.forEach(function (sec) {
     if (!sec.hasAttribute('data-achtergrond')) sec.setAttribute('data-achtergrond', getComputedStyle(sec).backgroundColor);
@@ -492,16 +494,94 @@
   }
 
   /* ---------------------------------------------------------------
+     5d. Over, "Hoe ik werk": vanaf 761 px een menu met drie stappen.
+         Alleen een klik, Enter of Spatie wisselt (aanwijzen en focus niet);
+         de tekst wisselt met een crossfade van 0,4 s (CSS). Mobiel en zonder
+         JavaScript staan de stappen onder elkaar.
+     --------------------------------------------------------------- */
+  document.querySelectorAll('.hoe').forEach(function (sec) {
+    var lijst = sec.querySelector('.hoe-tabs');
+    var paneel = sec.querySelector('.hoe-stappen');
+    var tabs = Array.prototype.slice.call(sec.querySelectorAll('.hoe-tab'));
+    var stappen = Array.prototype.slice.call(sec.querySelectorAll('.hoe-stap'));
+    if (!lijst || !paneel || !tabs.length) return;
+    var breed = window.matchMedia('(min-width: 761px)');
+    var huidig = 0;
+    function zetTabs() {
+      tabs.forEach(function (t, n) { t.setAttribute('aria-selected', n === huidig ? 'true' : 'false'); t.tabIndex = n === huidig ? 0 : -1; });
+      stappen.forEach(function (s, n) { s.classList.toggle('aan', n === huidig); s.setAttribute('aria-hidden', n === huidig ? 'false' : 'true'); });
+      paneel.setAttribute('aria-labelledby', tabs[huidig].id);
+    }
+    function stand() {
+      var aan = breed.matches;
+      sec.classList.toggle('tabs-aan', aan);
+      lijst.hidden = !aan;
+      if (aan) {
+        lijst.setAttribute('role', 'tablist'); lijst.setAttribute('aria-label', 'Hoe ik werk');
+        paneel.setAttribute('role', 'tabpanel');
+        tabs.forEach(function (t) { t.setAttribute('role', 'tab'); t.setAttribute('aria-controls', paneel.id); });
+        zetTabs();
+      } else { // onder elkaar: alles leesbaar, geen tab-rollen
+        paneel.removeAttribute('role'); paneel.removeAttribute('aria-labelledby');
+        stappen.forEach(function (s) { s.removeAttribute('aria-hidden'); });
+      }
+    }
+    tabs.forEach(function (t, n) { t.addEventListener('click', function () { huidig = n; zetTabs(); }); });
+    lijst.addEventListener('keydown', function (e) { // pijltoetsen verplaatsen alleen de focus
+      var n = tabs.indexOf(document.activeElement), doel = null;
+      if (n < 0) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') doel = (n + 1) % tabs.length;
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') doel = (n - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home') doel = 0;
+      else if (e.key === 'End') doel = tabs.length - 1;
+      if (doel === null) return;
+      e.preventDefault(); tabs[doel].focus();
+    });
+    if (breed.addEventListener) breed.addEventListener('change', stand);
+    stand();
+  });
+
+  /* ---------------------------------------------------------------
+     5e. Lichte parallax (alleen met een muis en zonder "minder beweging"):
+         de themafoto's schuiven binnen hun kader hooguit 9% op of neer,
+         de kopfoto van Contact zakt langzaam mee met scrollen.
+     --------------------------------------------------------------- */
+  var parallaxEls = Array.prototype.slice.call(document.querySelectorAll('.thema-foto img, .contact-kop-foto img'));
+  if (parallaxEls.length && muis && !stil) {
+    var parallaxBijwerken = function () {
+      var vh = window.innerHeight;
+      parallaxEls.forEach(function (img) {
+        var kader = img.parentNode.getBoundingClientRect();
+        if (kader.bottom < -50 || kader.top > vh + 50) return;
+        var y;
+        if (img.closest('.contact-kop-foto')) y = Math.max(0, -kader.top) * 0.3;
+        else if (window.innerWidth <= 760) y = 0;
+        else {
+          var p = ((kader.top + kader.height / 2) - vh / 2) / (vh / 2 + kader.height / 2);
+          y = -Math.max(-1, Math.min(1, p)) * kader.height * 0.09;
+        }
+        img.style.setProperty('--parallax', y.toFixed(1) + 'px');
+      });
+    };
+    var parallaxGepland = false;
+    window.addEventListener('scroll', function () {
+      if (!parallaxGepland) { parallaxGepland = true; requestAnimationFrame(function () { parallaxGepland = false; parallaxBijwerken(); }); }
+    }, { passive: true });
+    window.addEventListener('resize', parallaxBijwerken);
+    parallaxBijwerken();
+  }
+
+  /* ---------------------------------------------------------------
      6. Vaste balk met sectielabel; burger kleurt mee
      --------------------------------------------------------------- */
   var balk = document.querySelector('.balk');
   var secties = Array.prototype.slice.call(document.querySelectorAll('[data-label]'));
-  if (balk && heroEl) {
+  if (balk && kopEl) {
     var label = balk.querySelector('.sectie-label');
     var kleuren = ['op-kleur', 'op-wit', 'op-grijs'];
     var laatste = null;
     var bijwerken = function () {
-      var voorbij = heroEl.getBoundingClientRect().bottom < 40;
+      var voorbij = kopEl.getBoundingClientRect().bottom < 40;
       balk.classList.toggle('zichtbaar', voorbij);
       var huidig = null;
       secties.forEach(function (sec) { if (sec.getBoundingClientRect().top <= 90) huidig = sec; });
@@ -566,7 +646,7 @@
     var io = new IntersectionObserver(function (items) {
       items.forEach(function (it) { if (it.isIntersecting) { it.target.classList.add('in-beeld'); io.unobserve(it.target); } });
     }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier, main .contact-links').forEach(function (el, i) {
+    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier').forEach(function (el, i) {
       if (el.closest('.hero') || el.closest('.statement')) return;
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';
@@ -631,7 +711,7 @@
       cursor.classList.toggle('label', !!tekst);
       cursor.classList.toggle('groot', !!doel && !tekst);
       if (tekst) cLabel.textContent = tekst;
-      var kleurvlak = e.target.closest('.op-kleur, .statement, .menu-scherm');
+      var kleurvlak = e.target.closest('.op-kleur, .statement, .menu-scherm, .contact-kop');
       if (kleurvlak && heroLicht && kleurvlak.closest('.hero-kleur')) kleurvlak = null;
       cursor.classList.toggle('op-kleur-c', !!kleurvlak && !tekst);
     });
@@ -734,6 +814,14 @@
     if (m) {
       m.setAttribute('role', 'alert');
       m.innerHTML = '<strong>Je bericht is niet verstuurd.</strong> Controleer je naam, e-mailadres en bericht, of stuur Carien een WhatsApp of mail.';
+      // contact.html?verzonden=fout#formulier: zorg dat de melding zonder scrollen in beeld staat
+      var toonMelding = function () {
+        setTimeout(function () {
+          var r = m.getBoundingClientRect();
+          if (r.top < 0 || r.bottom > window.innerHeight) m.scrollIntoView({ block: 'center', behavior: 'instant' });
+        }, 60);
+      };
+      if (document.readyState === 'complete') toonMelding(); else window.addEventListener('load', toonMelding);
     }
   }
   document.querySelectorAll('[data-jaar]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
