@@ -462,24 +462,42 @@
   }
 
   /* ---------------------------------------------------------------
-     8. Lopende tekst en draaiende badge, gekoppeld aan het scrollen
+     8. Lopende tekst (CSS: een halve spoorbreedte in 15 s, los van het
+        scrollen) pauzeert buiten beeld; de foto in Uitgelicht schuift licht
+        mee met de muis boven de lopende regel. De badge draait mee met scrollen.
      --------------------------------------------------------------- */
-  var sporen = Array.prototype.slice.call(document.querySelectorAll('.lopend-spoor'));
-  var badges = Array.prototype.slice.call(document.querySelectorAll('.badge'));
-  if (!stil && (sporen.length || badges.length)) {
-    var start = performance.now();
-    var tik = function (nu) {
-      var y = window.scrollY;
-      var drift = (nu - start) * 0.02;
-      sporen.forEach(function (s) {
-        var helft = s.scrollWidth / 2 || 1;
-        var x = (y * 0.45 + drift) % helft;
-        s.style.transform = 'translate3d(' + (-x).toFixed(1) + 'px,0,0)';
+  var lopers = Array.prototype.slice.call(document.querySelectorAll('.lopend'));
+  if ('IntersectionObserver' in window && lopers.length) {
+    var lopIo = new IntersectionObserver(function (items) {
+      items.forEach(function (it) { it.target.classList.toggle('pauze', !it.isIntersecting); });
+    });
+    lopers.forEach(function (l) { lopIo.observe(l); });
+  }
+  if (muis && !stil) {
+    document.querySelectorAll('.uitgelicht').forEach(function (blok) {
+      var beeld = blok.querySelector('.uitgelicht-beeld');
+      var regel = blok.querySelector('.lopend');
+      if (!beeld || !regel) return;
+      blok.addEventListener('mousemove', function (e) {
+        var r = regel.getBoundingClientRect();
+        if (e.clientY < r.top || e.clientY > r.bottom) { beeld.style.translate = ''; return; }
+        var b = beeld.getBoundingClientRect();
+        var dx = Math.max(-36, Math.min(36, (e.clientX - (b.left + b.width / 2 - (parseFloat(beeld.style.translate) || 0))) * 0.05));
+        beeld.style.translate = dx.toFixed(1) + 'px 0';
       });
+      blok.addEventListener('mouseleave', function () { beeld.style.translate = ''; });
+    });
+  }
+  var badges = Array.prototype.slice.call(document.querySelectorAll('.badge'));
+  if (!stil && badges.length) {
+    var draaiBadges = function () {
+      var y = window.scrollY;
       badges.forEach(function (b) { b.style.transform = 'rotate(' + (y * 0.18).toFixed(1) + 'deg)'; });
-      requestAnimationFrame(tik);
     };
-    requestAnimationFrame(tik);
+    var badgeGepland = false;
+    window.addEventListener('scroll', function () {
+      if (!badgeGepland) { badgeGepland = true; requestAnimationFrame(function () { badgeGepland = false; draaiBadges(); }); }
+    }, { passive: true });
   }
 
   /* ---------------------------------------------------------------
