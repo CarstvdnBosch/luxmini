@@ -6,6 +6,8 @@ Vereist:  pip install playwright  &&  playwright install chromium
 
 Wat het doet:
   - opent elke pagina op desktop (1440 px) en mobiel (390 px)
+  - controleert (bij minder beweging, 1440/768/390) dat laag en balk na een
+    #contact-link en na End op Contact staan (ontwerpcriterium 12)
   - maakt screenshots in scripts/screenshots/
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
@@ -49,10 +51,55 @@ def bestaat(href, pagina):
         doel = doel / "index.html"
     return doel.exists()
 
+CONTACT_SCHERMEN = {"desktop": (1440, 900, False), "tablet": (768, 1024, True), "mobiel": (390, 844, True)}
+
+# Leest de kleur van de laag, de verwachte kleur van #contact (genormaliseerd naar rgb) en het balklabel
+STAND_CONTACT = """() => {
+  const norm = k => { const d = document.createElement('div'); d.style.backgroundColor = k; document.body.appendChild(d);
+    const c = getComputedStyle(d).backgroundColor; d.remove(); return c; };
+  const laag = document.querySelector('.achtergrond');
+  const contact = document.querySelector('#contact');
+  return [laag ? getComputedStyle(laag).backgroundColor : null,
+          contact ? norm(contact.getAttribute('data-achtergrond') || '') : null,
+          (document.querySelector('.balk .sectie-label') || {}).textContent || ''];
+}"""
+
+def controleer_contact(browser):
+    """Ontwerpcriterium 12: na een #contact-link of End kleurt de laag naar #contact en toont de balk Contact."""
+    for naam, (b, h, touch) in CONTACT_SCHERMEN.items():
+        ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch, reduced_motion="reduce")
+        ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
+        for pagina in ["index.html", "kraamcadeaubox.html"]:
+            for manier in ["link", "end"]:
+                page = ctx.new_page()
+                page.goto(url(pagina), wait_until="load")
+                page.wait_for_timeout(400)
+                tag = f"{pagina} [{naam}, minder beweging, {manier}]"
+                if manier == "link":
+                    link = page.query_selector('main a.pijl[href="#contact"]')
+                    if not link:
+                        fouten.append(f"{tag}: geen pijl-link naar #contact gevonden"); page.close(); continue
+                    link.scroll_into_view_if_needed()
+                    page.wait_for_timeout(300)
+                    link.click()
+                else:
+                    page.keyboard.press("End")
+                page.wait_for_timeout(1200)
+                laag, verwacht, label = page.evaluate(STAND_CONTACT)
+                if laag is None or verwacht is None:
+                    fouten.append(f"{tag}: .achtergrond of #contact ontbreekt")
+                elif laag != verwacht:
+                    fouten.append(f"{tag}: laag is {laag}, verwacht {verwacht} (kleur van #contact)")
+                if "Contact" not in label:
+                    fouten.append(f"{tag}: balk toont '{label.strip()}' in plaats van Contact")
+                page.close()
+        ctx.close()
+
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
+        controleer_contact(browser)
         for naam, (b, h) in SCHERMEN.items():
             touch = naam == "mobiel"  # has_touch + is_mobile: (hover: none) en (pointer: coarse), zoals op een telefoon
             ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch)

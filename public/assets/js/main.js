@@ -277,10 +277,11 @@
   function laagBijwerken(forceer) {
     // De laag wisselt zodra een sectie het onderste stukje van het scherm vult
     // (lijn op 88%). Zo staat witte tekst nooit lang op een lichte laag.
+    // De laatste sectie waarvan de bovenkant boven de lijn ligt telt, ook als
+    // de lijn onderaan de pagina in de footer valt (bijv. na End of #contact).
     var lijn = window.innerHeight * 0.88, kies = null;
     lagen.forEach(function (sec) {
-      var r = sec.getBoundingClientRect();
-      if (r.top <= lijn && r.bottom > lijn) kies = sec;
+      if (sec.getBoundingClientRect().top <= lijn) kies = sec;
     });
     if (kies && (forceer || kies !== laatsteLaag)) { laatsteLaag = kies; zetLaag(kies.getAttribute('data-achtergrond')); }
   }
@@ -306,6 +307,9 @@
       balk.classList.toggle('zichtbaar', voorbij);
       var huidig = null;
       secties.forEach(function (sec) { if (sec.getBoundingClientRect().top <= 90) huidig = sec; });
+      // Onderaan de pagina komt de laatste sectie nooit tot 90 px; toon dan haar label.
+      var doc = document.documentElement;
+      if (secties.length && window.scrollY + window.innerHeight >= doc.scrollHeight - 2) huidig = secties[secties.length - 1];
       if (huidig && huidig !== laatste) {
         laatste = huidig;
         label.innerHTML = huidig.getAttribute('data-label');

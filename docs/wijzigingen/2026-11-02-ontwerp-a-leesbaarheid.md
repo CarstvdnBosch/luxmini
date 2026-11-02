@@ -10,7 +10,7 @@ Bezoekers zien op telefoon en tablet meteen de foto's van het portfolio en de th
 ## Acceptatiecriteria
 
 **Kaarten, werkwijze, ritme en dia (punt 1, 4, 5, 6)**
-1. Alle "Ontwerpcriteria (toetsbaar)" hieronder (1 t/m 11) zijn gehaald. Uitzonderingen staan alleen onder "Bekende uitzonderingen".
+1. Alle "Ontwerpcriteria (toetsbaar)" hieronder (1 t/m 12) zijn gehaald. Uitzonderingen staan alleen onder "Bekende uitzonderingen".
 2. De kaartenrij `.kaarten` staat in de HTML van `#portfolio` (`index.html`) en `#themas` (`kraamcadeaubox.html`), met `loading="lazy"` en dezelfde foto's, namen en `alt`-teksten als de bestaande `.hoverlijst`. Er zijn geen nieuwe foto's of namen bijgekomen.
 3. De drie werkwijzezinnen (`.kern-zin`) en de resterende teksten staan er letterlijk zoals in de ontwerprichting (punt 2). Er is geen nieuwe inhoud verzonnen.
 
@@ -99,11 +99,13 @@ Bezoekers zien op telefoon en tablet meteen de foto's van het portfolio en de th
    - er staan geen labels met transparantie meer.
 10. Er is geen naad of flits tussen de hero, uitgelicht, werkwijze, de `.achtergrond`-laag en de balk. Overal is dezelfde terracotta te zien.
 11. Geen enkele foto in de kaarten is meer vergroot dan haar eigen grootte, behalve de bekende uitzondering bij aandachtspunt c hieronder.
+12. Na een tik op 'Stel je box samen' of een andere #contact-link, ook bij minder beweging, kleurt de laag op 1440, 768 en 390 naar de kleur van #contact en toont de balk '004 — Contact' (kraamcadeaubox) of '006 — Contact' (index).
 
 ## Bekende uitzonderingen
 Hierop keuren de controleur en de ontwerpgate niet af.
 - **Hero rechts is olijf (aandachtspunt a).** Op desktop kleurt de hero rechts bij aanwijzen naar olijf `#B4B19A` (`main.js`, rond regel 149). De witte h1 haalt daarop maar 2,2:1. Het is een tijdelijke stand bij aanwijzen en valt buiten deze wijziging. Alleen de terracotta-waarde in diezelfde regel verandert (criterium 5).
 - **`ig-jasje-teddy.jpg` vergroot (aandachtspunt c, ontwerpcriterium 11).** Het bestand is 316 × 300 en wordt in de mobiele kaart (ongeveer 281 × 351) ongeveer 1,2× vergroot. Dat accepteren we tijdelijk, tot het origineel er is. De melding staat in `docs/fotolijst.md` (criterium 9). `ig-babynest.jpg` (324 × 436) is net groot genoeg en geldt niet als uitzondering.
+- **Werkwijze → portfolio op 1440 is in rust 275 px (ontwerpcriterium 6).** Door de voorgeschreven `min-height` van de werkwijze is de afstand tot het label van portfolio in rust 275 px (met aanwijstekst 111 px). De ontwerpgate (ronde 1) accepteert dit; het lege vlak is ongeveer 31% van de schermhoogte, onder de grens van 40% (criterium 5).
 
 ## Bestanden
 - `public/assets/css/style.css` (variabelen `--terracotta`, `--op-kleur-klein`, `--ritme`; kaarten, werkwijze, labels, ritme, dia's)
@@ -130,7 +132,8 @@ Geen blokkerende vragen: Carst heeft de scope en de kleur goedgekeurd. Ter info 
 |---|---|---|
 | Plannen | website-planner | brief opgesteld; ontwerprichting en ontwerpcriteria letterlijk overgenomen van website-ontwerper |
 | Bouwen | website-bouwer | Gebouwd op `wijziging/ontwerp-a-leesbaarheid`. Kaarten `.kaarten` in de HTML van `#portfolio` en `#themas` (9 + 9, `loading="lazy"`, foto, `alt` en naam letterlijk uit de hover-lijst, `role="region"`, `aria-label`, `tabindex="0"`); zichtbaar bij `(hover: none), (pointer: coarse)`, hover-lijst daar verborgen. Werkwijze: `.kern-zin` letterlijk volgens de ontwerprichting, rest in `.kern-copy`; bij aanwijzen wordt de tekst in de geopende kolom (en het label boven kolom 1) wit, omdat hij dan op de donkere foto staat. `--ritme`, `--op-kleur-klein`, `--terracotta: #BC8565`; `.op-kleur` is standaard inkt, wit alleen voor `.kop-xl/-l/-m`, `.quote`, `.prijs` en de lopende tekst (allemaal ≥ 24 px). Dia's met `visibility`; bij minder beweging nu echt direct (de oude regel werd overschreven door `.js .dia`). `.kern-kolom` heeft bovenin ruimte voor het label (anders viel het label op tablet over "01") en staat op touch bovenaan uitgelijnd. Touch-emulatie: `has_touch=True` geeft in Chromium al `(hover: none)` en `(pointer: coarse)`; `is_mobile=True` toegevoegd voor m en t in `schermafdrukken.py` en voor mobiel in `controleer.py` (die controleert op touch nu de kaarten in plaats van de hover-lijst). Metingen: scrollWidth 390/768/1440; kaart 281 px op 390, inkijk 75 px; snap op 293 px; tekst min. 16 px, max. 58 tekens per regel; geen witte tekst < 24 px op terracotta; labels zonder transparantie; afstand tot het volgende label 151 px (1440) en 84 px (390), behalve werkwijze → portfolio op 1440 (zie open punt). `npm test` 6/6, `controleer.py` geen fouten. Open: werkwijze → portfolio op 1440 is in rust 275 px (met aanwijstekst 111 px) door de voorgeschreven `min-height`; geen pijl-link onder de thema's toegevoegd, omdat de pijl-link "Stel je box samen" van de statement er direct op volgt. Geen vrijstaande foto's op terracotta gevonden. |
-| Controleren | website-controleur | |
-| Ontwerpgate | website-ontwerper | |
+| Controleren | website-controleur | Ronde 1: AKKOORD. |
+| Ontwerpgate | website-ontwerper | Ronde 1: ONTWERP NIET AKKOORD. Eén verplicht punt: na springen naar de onderkant of naar `#contact` (End, anker "Stel je box samen", vooral bij minder beweging) bleef de `.achtergrond`-laag grijsblauw of wit onder de witte contactkop, en toonde de balk nog het vorige label ("003 — Zo werkt het"). Oorzaak: de lijn op 88% valt dan in de footer en de balklijn op 90 px wordt onderaan nooit bereikt. Toegevoegd als ontwerpcriterium 12. |
+| Bouwen (ronde 2) | website-bouwer | `main.js`: de laag kiest de laatste sectie waarvan de bovenkant boven de lijn op 88% ligt (zonder voorwaarde op de onderkant); de balk toont onderaan de pagina (`scrollY + innerHeight >= scrollHeight - 2`) het label van de laatste `[data-label]`. Halverwege de pagina verandert er niets zichtbaars: alleen achter de ondoorzichtige statement kan de laag nu eerder wisselen. `controleer.py`: nieuwe controle voor ontwerpcriterium 12 (minder beweging, #contact-link en End, beide pagina's, 1440/768/390). |
 | Preview bekeken | Carst | |
 | Live gezet (merge) | Carst | |
