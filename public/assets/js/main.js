@@ -146,7 +146,7 @@
         var nu = e.clientX < window.innerWidth / 2 ? 'links' : 'rechts';
         if (nu === helft) return;
         helft = nu;
-        zetHeroKleur(nu === 'links' ? '#C7997E' : '#B4B19A');
+        zetHeroKleur(nu === 'links' ? getComputedStyle(html).getPropertyValue('--terracotta').trim() : '#B4B19A');
       });
       hero.addEventListener('mouseleave', function () { helft = ''; });
     }
@@ -197,7 +197,8 @@
         });
       }
     }
-    knoppen.forEach(function (k) { [k.dataset.groot, k.dataset.klein].forEach(function (s) { var i = new Image(); i.src = s; }); });
+    // foto's vooraf laden, alleen als de lijst zichtbaar is (op touch staan de kaarten er)
+    if (lijst.offsetParent !== null) knoppen.forEach(function (k) { [k.dataset.groot, k.dataset.klein].forEach(function (s) { var i = new Image(); i.src = s; }); });
   });
 
   /* ---------------------------------------------------------------

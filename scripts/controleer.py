@@ -9,7 +9,7 @@ Wat het doet:
   - maakt screenshots in scripts/screenshots/
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
-    interacties werken (foto omdraaien, hover-lijst)
+    interacties werken (foto omdraaien, hover-lijst met muis, kaarten op touch)
 Exitcode 1 als er fouten zijn, zodat een agent of CI het ziet.
 """
 import os, sys, pathlib, re, threading, functools
@@ -54,7 +54,8 @@ def main():
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         for naam, (b, h) in SCHERMEN.items():
-            ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=(naam == "mobiel"))
+            touch = naam == "mobiel"  # has_touch + is_mobile: (hover: none) en (pointer: coarse), zoals op een telefoon
+            ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch)
             # intro-scherm overslaan, zodat de controle meteen de pagina ziet
             ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
             for pagina in PAGINAS:
@@ -81,7 +82,7 @@ def main():
                     if alt is None:
                         fouten.append(f"{tag}: afbeelding zonder alt-attribuut -> {src}")
                 # horizontaal scrollen
-                breed = page.evaluate("document.documentElement.scrollWidth > window.innerWidth + 1")
+                breed = page.evaluate(f"document.documentElement.scrollWidth > {b} + 1")
                 if breed:
                     fouten.append(f"{tag}: pagina scrollt horizontaal (iets is te breed)")
                 # placeholders
@@ -100,10 +101,27 @@ def main():
                         fouten.append(f"{tag}: foto draait niet om (tik of Enter-toets)")
                     page.focus(".tegel.t2"); page.keyboard.press("Enter")
                 if page.query_selector(".hoverlijst button"):
-                    page.click(".hoverlijst li:nth-child(2) button")
-                    page.wait_for_timeout(500)
-                    if not page.eval_on_selector(".hoverlijst", "e => e.classList.contains('actief')"):
-                        fouten.append(f"{tag}: hover-lijst toont geen foto's")
+                    lijst_zichtbaar = page.is_visible(".hoverlijst")
+                    kaarten_zichtbaar = page.is_visible(".kaarten")
+                    if touch:
+                        # op touch: hover-lijst verborgen, kaarten met dezelfde foto's, namen en alt-teksten
+                        if lijst_zichtbaar or not kaarten_zichtbaar:
+                            fouten.append(f"{tag}: op touch hoort de kaartenrij zichtbaar en de hover-lijst verborgen")
+                        knoppen = page.eval_on_selector_all(".hoverlijst button", "els => els.map(b => [b.dataset.groot, b.dataset.alt, b.textContent.trim()])")
+                        kaarten = page.eval_on_selector_all(".kaarten .kaart", "els => els.map(k => [k.querySelector('img').getAttribute('src'), k.querySelector('img').getAttribute('alt'), k.querySelector('figcaption').textContent.trim()])")
+                        if knoppen != kaarten:
+                            fouten.append(f"{tag}: kaarten wijken af van de hover-lijst (foto, alt of naam)")
+                        page.eval_on_selector(".kaarten", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
+                        page.wait_for_timeout(500)
+                        if not page.eval_on_selector(".kaarten .kaart img", "e => e.complete && e.naturalWidth > 0"):
+                            fouten.append(f"{tag}: eerste kaartfoto laadt niet")
+                    else:
+                        if not lijst_zichtbaar or kaarten_zichtbaar:
+                            fouten.append(f"{tag}: met muis hoort de hover-lijst zichtbaar en de kaartenrij verborgen")
+                        page.click(".hoverlijst li:nth-child(2) button")
+                        page.wait_for_timeout(500)
+                        if not page.eval_on_selector(".hoverlijst", "e => e.classList.contains('actief')"):
+                            fouten.append(f"{tag}: hover-lijst toont geen foto's")
 
                 if page.query_selector(".balk"):
                     page.evaluate("window.scrollTo(0, document.body.scrollHeight / 2)")

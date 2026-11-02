@@ -37,7 +37,7 @@ Agents mergen nooit naar `main` en zetten nooit zelf iets live.
 ## Ontwerpregels (niet zonder overleg veranderen)
 
 - Ontwerppatroon: editorial, gebaseerd op de opbouw van stockdutchdesign.com, maar met eigen logo, teksten en foto's van LUX mini. Nooit hun logo, teksten, slogans of foto's overnemen.
-- Kleuren (variabelen in `style.css`): terracotta `#C7997E` (hoofdkleur, witte tekst), wit, grijsblauw `#E0E6E7`, inkt `#202020`. Hoverkleuren portfolio: perzik `#DEB799`, oker `#C89F67`, salie `#C3CFBC`, mauve `#B5969E`, olijf `#B4B19A`.
+- Kleuren (variabelen in `style.css`): terracotta `#BC8565` (hoofdkleur; witte tekst alleen voor koppen en quotes vanaf 24 px; kleine tekst op terracotta in inkt), wit, grijsblauw `#E0E6E7`, inkt `#202020`. Hoverkleuren portfolio: perzik `#DEB799`, oker `#C89F67`, salie `#C3CFBC`, mauve `#B5969E`, olijf `#B4B19A`.
 - Lettertypes: grote koppen en quotes in Libre Caslon Display, labels en pijl-links in Libre Caslon Text, lopende tekst in Source Sans 3 (vrije versie van de letter die Stock gebruikt). Kleine kapitalen met ruime spatiëring (`.caps`).
 - Logo: witte versie (`logo-luxmini-wit.png`) los op terracotta; donkere versie (`logo-luxmini-donker.png`) op wit/grijs.
 - Vaste balk (`.balk`) verschijnt na de hero en toont het label van de huidige sectie (`data-label`). Nieuwe secties krijgen een `data-label`.

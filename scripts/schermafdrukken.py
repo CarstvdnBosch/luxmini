@@ -17,6 +17,7 @@ ROOT = PROJECT / "public"
 UIT = PROJECT / "scripts" / "schermafdrukken"
 PAGINAS = sys.argv[1:] or ["index.html", "kraamcadeaubox.html"]
 OVERLAP = 100  # px: hoogte van de vaste balk plus marge
+# touch = has_touch + is_mobile: dan gelden (hover: none) en (pointer: coarse), zoals op een echte telefoon of tablet
 SCHERMEN = {"d": (1440, 900, False), "t": (768, 1024, True), "m": (390, 844, True)}
 
 class Stil(SimpleHTTPRequestHandler):
@@ -34,7 +35,7 @@ def main():
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         for code, (b, h, touch) in SCHERMEN.items():
-            ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch)
+            ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch)
             ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
             for pagina in PAGINAS:
                 page = ctx.new_page()

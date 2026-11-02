@@ -48,3 +48,5 @@ Lever de originele bestanden aan (geen WhatsApp-versies, die zijn verkleind). No
 
 ## Originelen van Instagram (gewenst)
 De `ig-*.jpg`-foto's komen van Instagram en zijn klein (640 px, het babynest zelfs ~330 × 440 px). Graag de originele bestanden van Carien voor: babynest, outfit met ruches aan de ladder, jasje (twee kanten), hanger met houten paardje, pastel bijtringen en de twee tashangers.
+
+**Tijdelijk vergroot:** `ig-jasje-teddy.jpg` is maar 316 × 300 px. In de portfoliokaart op touch (mobiel ongeveer 281 × 351 px, tablet 300 × 375 px) wordt de foto daardoor ongeveer 1,2× vergroot (gemeten: 1,17× op 390 px, 1,25× op 768 px). Dat accepteren we tijdelijk, tot het origineel er is.
