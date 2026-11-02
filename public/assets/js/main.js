@@ -516,6 +516,9 @@
       var aan = breed.matches;
       sec.classList.toggle('tabs-aan', aan);
       lijst.hidden = !aan;
+      // over de donkere foto blijft de laag wit (zoals het atelier ervoor); onder elkaar is het terracotta
+      sec.setAttribute('data-achtergrond', aan ? '#FFFFFF' : '#BC8565');
+      laagBijwerken(true);
       if (aan) {
         lijst.setAttribute('role', 'tablist'); lijst.setAttribute('aria-label', 'Hoe ik werk');
         paneel.setAttribute('role', 'tabpanel');

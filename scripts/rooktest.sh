@@ -31,8 +31,13 @@ done
 check "Homepage"              200 "$BASIS/"                  "Samen"
 check "Kraamcadeaubox"        200 "$BASIS/kraamcadeaubox"    "Kies je formaat"
 check "Privacy"               200 "$BASIS/privacy"           "Privacyverklaring"
+check "Producten"             200 "$BASIS/producten"         "Producten</h1>"
+check "Over"                  200 "$BASIS/over"              "Over Carien</h1>"
+check "Contact"               200 "$BASIS/contact"           "Contact</h1>"
+check "Contactformulier"      200 "$BASIS/contact"           'action="/api/contact"'
 check "Afbeelding"            200 "$BASIS/assets/img/hero-box-open.jpg"
 check "Oud Wix-adres"         301 "$BASIS/aanbod"
+check "Oud adres klantenservice" 301 "$BASIS/klantenservice"
 check "Onbekende pagina"      404 "$BASIS/bestaat-niet"
 check "Formulier (GET)"       303 "$BASIS/api/contact"
 
