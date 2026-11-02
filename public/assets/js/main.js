@@ -518,14 +518,14 @@
       if (laatste) {
         var omg = laatste.closest('.op-kleur, .op-wit, .op-grijs') || laatste;
         balk.style.backgroundColor = omg.classList.contains('met-laag') ? laagKleur : (omg.style.backgroundColor || '');
-        // diepe portfoliotint onder de balk: wit logo, wit label en witte burger
+        // diepe portfoliotint onder de balk: wit logo; label en burger blijven inkt
         diep = omg.classList.contains('met-laag') && DIEPE_TINTEN.indexOf((laagKleur || '').toUpperCase()) >= 0;
       }
       balk.classList.toggle('diep', diep);
       // boven een lichte bovenkant (salie, perzik ...) zijn balklogo en burger donker
       var inBovenkant = !!(laatste && laatste.closest('.hero-kleur'));
       balk.classList.toggle('licht', heroLicht && inBovenkant);
-      if (burger) burger.classList.toggle('donker', voorbij ? (!diep && (!balk.classList.contains('op-kleur') || (heroLicht && inBovenkant))) : heroLicht);
+      if (burger) burger.classList.toggle('donker', voorbij ? (!balk.classList.contains('op-kleur') || (heroLicht && inBovenkant)) : heroLicht);
     };
     balkBijwerken = bijwerken;
     var gepland = false;

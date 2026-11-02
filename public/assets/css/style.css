@@ -309,7 +309,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .balk.op-kleur.licht .logo-wit { display: none; }
 .balk.op-kleur.licht .logo-donker { display: block; }
 /* balk boven het portfolio terwijl de laag een diepe tint is: wit logo en wit label */
-.balk.diep { color: var(--wit); }
+.balk.diep { color: var(--inkt); } /* het label blijft inkt (5,4:1), alleen het logo wordt wit */
 .balk.diep .logo-wit { display: block; }
 .balk.diep .logo-donker { display: none; }
 
@@ -615,7 +615,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .sfeer.aan { opacity: 1; }
 .hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld { display: block; position: absolute; opacity: 1; overflow: hidden; margin: 0; transform: none; transition: translate .6s cubic-bezier(.2,.7,.2,1); }
 .hoverlijst.sferen .groot img, .hoverlijst.sferen .klein-beeld img { width: 100%; height: 100%; object-fit: cover; }
-.hoverlijst.sferen .groot::after, .hoverlijst.sferen .klein-beeld::after { content: ""; position: absolute; inset: 0; background: rgba(32,32,32,.2); } /* 20% inkt, zoals Stock */
+.hoverlijst.sferen .groot::after, .hoverlijst.sferen .klein-beeld::after { content: ""; position: absolute; inset: 0; background: rgba(60,40,30,.2); } /* warme sluier, zoals Stock */
+.hoverlijst.sferen .groot::after { background: rgba(60,40,30,.28); } /* grote foto iets dieper, zodat witte namen erover beter lezen */
 .hoverlijst.sferen .groot { left: 25%; top: calc(var(--B) * -.03); width: min(30%, 440px); aspect-ratio: 30 / 41.66; translate: 0 calc(var(--my) * 40px); }
 .hoverlijst.sferen .klein-beeld { left: 58%; top: calc(var(--B) * .17); width: min(15%, 220px); aspect-ratio: 3 / 4; translate: 0 calc(var(--my) * 20px); }
 .productregel { position: absolute; left: 58%; top: calc(var(--B) * .17 + min(var(--B) * .15, 220px) * 4 / 3 + 16px); max-width: 30%; margin: 0; font-size: 19px; font-weight: 600; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; color: var(--wit); translate: 0 calc(var(--my) * 20px); transition: translate .6s cubic-bezier(.2,.7,.2,1); }
@@ -755,4 +756,10 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .hero:not([data-wissel]) .t4 { top: 62%; }
   .hero:not([data-wissel]) .t5 { top: 65%; }
   .hero:not([data-wissel]) .t6 { top: 64%; }
+}
+
+/* desktop en tablet: de header ligt los over de hero en blijft doorzichtig, zodat alleen de hero
+   van kleur wisselt (anders schuiven twee overgangen over elkaar en zie je een band) */
+@media (min-width: 761px) {
+  .js .site-header.hero-kleur { background-color: transparent !important; }
 }
