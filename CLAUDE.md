@@ -24,7 +24,7 @@ Agents mergen nooit naar `main` en zetten nooit zelf iets live.
   - `privacy.html`, `bedankt.html`, `404.html`, `robots.txt`, `sitemap.xml`
   - `_redirects` — doorverwijzingen van oude Wix-adressen; `_headers` — beveiliging en caching
   - `assets/css/style.css` — alle opmaak; kleuren als variabelen bovenaan
-  - `assets/js/main.js` — collage, omdraaien, hover-lijst, vaste balk, opkomen bij scrollen
+  - `assets/js/main.js` — intro, collage (sets wisselen), hover-lijst, tabbladen, vaste balk, opkomen bij scrollen
   - `assets/img/` — webversies van foto's (max. ~1400 px, JPEG kwaliteit ~80)
 - `src/worker.js` + `src/formulier.js` — contactformulier (`POST /api/contact`) → mail via Cloudflare Email Routing naar info.luxmini@gmail.com
 - `wrangler.jsonc` — Cloudflare-configuratie
@@ -45,7 +45,9 @@ Agents mergen nooit naar `main` en zetten nooit zelf iets live.
 - Secties genummerd: `001 —`, `002 —` enzovoort, klein in serif.
 - Links als pijl-links (`.pijl`), geen opvallende knoppen.
 - Scrollen en kleur (gemeten bij Stock): wiel glijdt met ease 0,05, toetsenbord en ankers met 0,14; touch native. Secties na de bovenkant zijn doorzichtig boven één vaste laag (`.achtergrond`) die per sectie in 0,75 s van kleur verloopt. Header, collage, uitgelicht en werkwijze (`.hero-kleur`) kleuren samen mee bij aanwijzen en gaan terug naar terracotta bij verlaten.
-- Hero: collage van zes foto's (`.tegel.t1` t/m `.t6`). Op desktop bewegen ze mee met de muis en draaien ze om bij aanwijzen; op mobiel draaien ze om met een tik.
+- Witte tekst: alleen op terracotta (koppen en quotes vanaf 24 px), nooit op perzik, oker, salie, mauve, olijf of grijsblauw. Krijgt de bovenkant een andere paletkleur, dan wordt alle tekst daar inkt en wisselt het logo naar de donkere versie (`html.hero-licht`, 0,75 s). Uitzondering: tekst op een donkere foto (statement, open werkwijze-kolom).
+- Hero: collage van zes foto's (`.tegel.t1` t/m `.t6`) in twee sets. De foto's wisselen samen per schermhelft: links set A "Het atelier" op terracotta, rechts set B "Het cadeau" op salie (t2, t3, t4 en t6 wisselen, t1 en t5 blijven). Op touch en met het toetsenbord wisselt de set via de tabjes "Het atelier · Het cadeau" (`aria-pressed`); een tik op een tegel wisselt ook. Er wisselt niets vanzelf. Op desktop bewegen en kantelen de foto's licht mee met de muis (max. 8°). Tegels zijn geen knoppen en draaien niet los.
+- Intro: één keer per sessie bij het eerste bezoek, op elke pagina, ongeveer 3 s (logo, perzik vlak met foto, "Ieder nieuw leven / is bijzonder", doek trekt op). Overslaan met tik, klik, toets, scroll of vegen; noodrem in CSS na 4,0 s. Geen intro bij "minder beweging", zonder JavaScript of na een pagina-overgang.
 - Mobiel moet altijd goed werken (390 px breed): niets mag horizontaal scrollen, tekst moet leesbaar blijven.
 - Toon: warm, persoonlijk, Nederlands, "je/jij". Korte zinnen.
 

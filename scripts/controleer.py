@@ -5,7 +5,9 @@ Gebruik:  python3 scripts/controleer.py
 Vereist:  pip install playwright  &&  playwright install chromium
 
 Wat het doet:
-  - opent elke pagina op desktop (1440 px) en mobiel (390 px)
+  - opent elke pagina op desktop (1440 px) en mobiel (390 px), en controleert
+    horizontaal scrollen ook op tablet (768 px); de intro wordt overgeslagen
+    via sessionStorage (lux-intro-gezien)
   - controleert (bij minder beweging, 1440/768/390) dat laag en balk na een
     #contact-link en na End op Contact staan (ontwerpcriterium 12)
   - controleert de prijstabel van de kraamcadeaubox (prijzen, producten,
@@ -271,6 +273,24 @@ def controleer_setwissel(page, tag, naam):
     if [sets.get(t) for t in WISSELEND] != ["A"] * 4:
         fouten.append(f"{tag}: terug naar set A lukt niet, tegels staan op {sets}")
 
+def controleer_tablet(browser):
+    """Geen horizontaal scrollen op 768 px (touch), ook niet na een wissel in Personaliseren."""
+    ctx = browser.new_context(viewport={"width": 768, "height": 1024}, has_touch=True, is_mobile=True)
+    ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
+    for pagina in ["index.html", "kraamcadeaubox.html"]:
+        page = ctx.new_page()
+        page.goto(url(pagina), wait_until="load")
+        page.wait_for_timeout(400)
+        if page.query_selector(".slider [role='tab']"):
+            page.eval_on_selector(".slider", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
+            page.tap(".slider [role='tab']:nth-of-type(3)")
+            page.wait_for_timeout(600)
+        breedte = page.evaluate("document.documentElement.scrollWidth")
+        if breedte > 768:
+            fouten.append(f"{pagina} [tablet]: pagina scrollt horizontaal (scrollWidth {breedte} > 768)")
+        page.close()
+    ctx.close()
+
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
@@ -278,6 +298,7 @@ def main():
         controleer_prijstabel(browser)
         controleer_stappen(browser)
         controleer_contact(browser)
+        controleer_tablet(browser)
         for naam, (b, h) in SCHERMEN.items():
             touch = naam == "mobiel"  # has_touch + is_mobile: (hover: none) en (pointer: coarse), zoals op een telefoon
             ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch)
