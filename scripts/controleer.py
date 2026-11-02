@@ -5,17 +5,27 @@ Gebruik:  python3 scripts/controleer.py
 Vereist:  pip install playwright  &&  playwright install chromium
 
 Wat het doet:
-  - opent elke pagina op desktop (1440 px) en mobiel (390 px)
+  - opent elke pagina op desktop (1440 px) en mobiel (390 px), en controleert
+    horizontaal scrollen ook op tablet (768 px); de intro wordt overgeslagen
+    via sessionStorage (lux-intro-gezien)
   - controleert (bij minder beweging, 1440/768/390) dat laag en balk na een
     #contact-link en na End op Contact staan (ontwerpcriterium 12)
   - controleert de prijstabel van de kraamcadeaubox (prijzen, producten,
     vinkjes en aantallen)
   - controleert "003 — Zo werkt het" op de kraamcadeaubox: één <ol> met drie
     stappen, de juiste koppen en geen horizontaal scrollen (1440/768/390)
+  - controleert de tabbladen in Personaliseren (klik wisselt foto en kop
+    binnen 1,5 s, aanwijzen niet)
+  - controleert dat het portfolio precies vijf items telt, in de lijst en in
+    de kaarten, en dat die overeenkomen; met een muis wordt bij aanwijzen de
+    actieve naam wit en de laag een van de vijf diepe tinten
+  - controleert in public/_headers dat CSS en JS niet lang gecachet worden
+    zonder hercontrole
   - maakt screenshots in scripts/screenshots/
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
-    interacties werken (foto omdraaien, hover-lijst met muis, kaarten op touch)
+    interacties werken (hero-sets wisselen per schermhelft of met een tik,
+    hover-lijst met muis, kaarten op touch)
 Exitcode 1 als er fouten zijn, zodat een agent of CI het ziet.
 """
 import os, sys, pathlib, re, threading, functools
@@ -177,13 +187,175 @@ def controleer_stappen(browser):
         if breedte > b:
             fouten.append(f"{tag}: pagina scrollt horizontaal (scrollWidth {breedte} > {b})")
 
+# Portfolio: precies vijf sferen, in de hoverlijst en in de kaarten (brief stock-pariteit, criterium 11 en 13)
+LEES_PORTFOLIO = """() => {
+  const s = document.querySelector('#portfolio');
+  const knoppen = [...s.querySelectorAll('.hoverlijst ul button')].map(b => [b.textContent.trim(), b.dataset.groot]);
+  const kaarten = [...s.querySelectorAll('.kaarten .kaart')].map(k => [(k.querySelector('.kaart-naam') || k).textContent.trim(), k.querySelector('img').getAttribute('src')]);
+  const regels = [...s.querySelectorAll('.kaarten .kaart .kaart-regel')].map(r => r.textContent.trim());
+  const beelden = s.querySelectorAll('.hoverlijst .sfeer').length;
+  return [knoppen, kaarten, regels, beelden];
+}"""
+
+# diepe portfoliotinten (wit haalt daar minstens 3:1), als rgb
+DIEPE_TINTEN = {"rgb(188, 139, 71)", "rgb(131, 156, 117)", "rgb(153, 149, 117)", "rgb(200, 134, 84)", "rgb(174, 140, 148)"}
+LEES_HOVER = """() => { const a = document.querySelector('#portfolio .hoverlijst ul button.aan');
+  return [a ? getComputedStyle(a).color : null, a ? getComputedStyle(a).opacity : null, getComputedStyle(document.querySelector('.achtergrond')).backgroundColor]; }"""
+
+def controleer_portfolio(page, tag, touch=False):
+    if not touch:
+        # met een muis: aanwijzen maakt de actieve naam wit op een diepe tint (wens Carst)
+        page.eval_on_selector("#portfolio .hoverlijst", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
+        page.wait_for_timeout(300)
+        for n in range(1, 6):
+            page.hover(f"#portfolio .hoverlijst li:nth-child({n}) button")
+            page.wait_for_timeout(1300)  # kleur en laag wisselen in 1 s
+            kleur, zicht, laag = page.evaluate(LEES_HOVER)
+            if kleur != "rgb(255, 255, 255)" or zicht != "1":
+                fouten.append(f"{tag}: portfolio item {n}: actieve naam is {kleur} (opacity {zicht}), verwacht wit")
+            if laag not in DIEPE_TINTEN:
+                fouten.append(f"{tag}: portfolio item {n}: laag is {laag}, verwacht een van de diepe tinten")
+        page.mouse.move(2, 2)
+        page.wait_for_timeout(1300)
+    knoppen, kaarten, regels, beelden = page.evaluate(LEES_PORTFOLIO)
+    if len(knoppen) != 5 or len(kaarten) != 5:
+        fouten.append(f"{tag}: portfolio telt {len(knoppen)} items in de lijst en {len(kaarten)} kaarten, verwacht precies 5 en 5")
+    if knoppen != kaarten:
+        fouten.append(f"{tag}: lijst en kaarten in het portfolio komen niet overeen ({knoppen} tegen {kaarten})")
+    if len(regels) != len(kaarten) or not all(regels):
+        fouten.append(f"{tag}: niet elke portfoliokaart heeft een productregel")
+    if beelden != len(knoppen):
+        fouten.append(f"{tag}: de lijst heeft {beelden} fotoparen voor {len(knoppen)} items")
+
+# Personaliseren: tabbladen als media-slider (brief stock-pariteit, criterium 14 en 15)
+LEES_TABBLAD = """() => {
+  const s = document.querySelector('.slider'); const tabs = [...s.querySelectorAll('[role="tab"]')];
+  const zichtbaar = e => getComputedStyle(e).visibility === 'visible' && e.getAnimations().length === 0;
+  const dias = [...s.querySelectorAll('.dia')].filter(d => getComputedStyle(d).visibility === 'visible').map(d => [d.dataset.i, d.getAnimations().length]);
+  const koppen = [...s.querySelectorAll('.techniek')].filter(d => getComputedStyle(d).visibility === 'visible').map(d => [d.dataset.i, d.querySelector('h2').textContent.trim()]);
+  return [tabs.map(t => t.getAttribute('aria-selected')), dias, koppen, tabs.map(t => t.textContent.trim())];
+}"""
+
+def controleer_tabbladen(page, tag, touch):
+    page.eval_on_selector(".slider", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
+    page.wait_for_timeout(300)
+    if not touch:
+        page.hover(".slider [role='tab']:nth-of-type(2)")
+        page.wait_for_timeout(400)
+        geselecteerd, _, _, _ = page.evaluate(LEES_TABBLAD)
+        if geselecteerd[1] == "true":
+            fouten.append(f"{tag}: aanwijzen wisselt het tabblad in Personaliseren (alleen klik hoort te wisselen)")
+    page.click(".slider [role='tab']:nth-of-type(2)")
+    page.wait_for_timeout(1500)
+    geselecteerd, dias, koppen, namen = page.evaluate(LEES_TABBLAD)
+    if geselecteerd != ["false", "true", "false"]:
+        fouten.append(f"{tag}: na een klik op het tweede tabblad is aria-selected {geselecteerd}")
+    if dias != [["1", 0]]:
+        fouten.append(f"{tag}: na 1,5 s staat in Personaliseren niet alleen de foto van het tweede tabblad stil ({dias})")
+    if [k[0] for k in koppen] != ["1"] or koppen[0][1] != namen[1]:
+        fouten.append(f"{tag}: na 1,5 s toont Personaliseren niet de kop van het tweede tabblad ({koppen})")
+    page.click(".slider [role='tab']:nth-of-type(1)")
+    page.wait_for_timeout(1500)
+
+# Hero: de foto's wisselen samen per schermhelft (brief stock-pariteit, criterium 4 en 7)
+WISSELEND, VAST = ["t2", "t3", "t4", "t6"], ["t1", "t5"]
+LEES_SETS = """() => {
+  const uit = {};
+  document.querySelectorAll('.hero[data-wissel] .tegel').forEach(t => {
+    const c = [...t.classList].find(k => /^t\\d$/.test(k)); const b = t.querySelector('img.set-b');
+    uit[c] = b ? (getComputedStyle(b).opacity === '1' ? 'B' : 'A') : 'vast'; });
+  const k = document.querySelector('.hero-wissel button[data-set="b"]');
+  const kleur = s => getComputedStyle(document.querySelector(s)).color;
+  const zicht = s => { const e = document.querySelector(s); return e ? getComputedStyle(e).opacity : null; };
+  // tekst in de bovenkant (kop, quote, lopende regel) en het logo in de header
+  const tekst = [kleur('.hero .kop-xl'), kleur('.hero-kleur .quote'), kleur('.hero-kleur .lopend-spoor')];
+  return [uit, k ? k.getAttribute('aria-pressed') : null, document.querySelectorAll('.tegel.om, .tegel[role="button"]').length,
+          tekst, [zicht('.site-header .logo-wit'), zicht('.site-header .logo-donker')]];
+}"""
+
+def controleer_setwissel(page, tag, naam):
+    """Desktop: muis op de rechterhelft zet t2, t3, t4, t6 op set B (t1, t5 blijven).
+    Mobiel: een tik op "Het cadeau" doet hetzelfde en zet aria-pressed goed."""
+    b, h = SCHERMEN[naam]
+    if naam == "mobiel":
+        page.tap(".hero-wissel button[data-set='b']")
+    else:
+        page.mouse.move(b * 0.25, h * 0.5); page.wait_for_timeout(100)
+        page.mouse.move(b * 0.8, h * 0.5, steps=4)
+    page.wait_for_timeout(1500)  # kleur- en logowissel duren 1,2 s
+    sets, gedrukt, oud, tekst, logo = page.evaluate(LEES_SETS)
+    if any(t != "rgb(32, 32, 32)" for t in tekst):
+        fouten.append(f"{tag}: in set B is de tekst in de bovenkant niet inkt ({tekst})")
+    if logo != ["0", "1"]:
+        fouten.append(f"{tag}: in set B staat niet het donkere logo in de header (opacity wit/donker = {logo})")
+    if [sets.get(t) for t in WISSELEND] != ["B"] * 4 or [sets.get(t) for t in VAST] != ["vast"] * 2:
+        fouten.append(f"{tag}: setwissel klopt niet, tegels staan op {sets} (verwacht t2, t3, t4, t6 op B; t1, t5 vast)")
+    if naam == "mobiel" and gedrukt != "true":
+        fouten.append(f"{tag}: 'Het cadeau' heeft na een tik aria-pressed={gedrukt}, verwacht true")
+    if oud:
+        fouten.append(f"{tag}: er zijn nog {oud} tegels die omdraaien of als knop werken")
+    # terug naar set A
+    if naam == "mobiel":
+        page.tap(".hero-wissel button[data-set='a']")
+    else:
+        page.mouse.move(b * 0.25, h * 0.5, steps=4)
+    page.wait_for_timeout(1500)
+    sets, _, _, tekst, logo = page.evaluate(LEES_SETS)
+    if tekst[0] != "rgb(255, 255, 255)" or logo != ["1", "0"]:
+        fouten.append(f"{tag}: terug in set A is de kop niet wit of het logo niet wit ({tekst[0]}, {logo})")
+    if [sets.get(t) for t in WISSELEND] != ["A"] * 4:
+        fouten.append(f"{tag}: terug naar set A lukt niet, tegels staan op {sets}")
+
+def controleer_tablet(browser):
+    """Geen horizontaal scrollen op 768 px (touch), ook niet na een wissel in Personaliseren."""
+    ctx = browser.new_context(viewport={"width": 768, "height": 1024}, has_touch=True, is_mobile=True)
+    ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
+    for pagina in ["index.html", "kraamcadeaubox.html"]:
+        page = ctx.new_page()
+        page.goto(url(pagina), wait_until="load")
+        page.wait_for_timeout(400)
+        if page.query_selector(".slider [role='tab']"):
+            page.eval_on_selector(".slider", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
+            page.tap(".slider [role='tab']:nth-of-type(3)")
+            page.wait_for_timeout(600)
+        breedte = page.evaluate("document.documentElement.scrollWidth")
+        if breedte > 768:
+            fouten.append(f"{pagina} [tablet]: pagina scrollt horizontaal (scrollWidth {breedte} > 768)")
+        page.close()
+    ctx.close()
+
+# Caching: CSS en JS mogen niet lang vastzitten zonder hercontrole (anders ziet een
+# terugkerende bezoeker na een release nog een week de oude opmaak en scripts)
+def cache_te_lang(waarde):
+    """True als een Cache-Control-waarde lang cachet zonder hercontrole."""
+    w = waarde.lower()
+    m = re.search(r"max-age=(\d+)", w)
+    return bool(m and int(m.group(1)) > 0 and "must-revalidate" not in w and "no-cache" not in w)
+
+def controleer_headers():
+    regels = (ROOT / "_headers").read_text(encoding="utf-8").splitlines()
+    pad, gevonden = None, {}
+    for r in regels:
+        if r and not r[0].isspace():
+            pad = r.strip()
+        elif pad and r.strip().lower().startswith("cache-control:"):
+            gevonden[pad] = r.split(":", 1)[1].strip()
+    for pad in ["/assets/css/*", "/assets/js/*"]:
+        waarde = gevonden.get(pad)
+        if waarde is None:
+            fouten.append(f"_headers: geen Cache-Control voor {pad}")
+        elif cache_te_lang(waarde):
+            fouten.append(f"_headers: {pad} cachet lang zonder hercontrole ({waarde}); gebruik max-age=0, must-revalidate")
+
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
+    controleer_headers()
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         controleer_prijstabel(browser)
         controleer_stappen(browser)
         controleer_contact(browser)
+        controleer_tablet(browser)
         for naam, (b, h) in SCHERMEN.items():
             touch = naam == "mobiel"  # has_touch + is_mobile: (hover: none) en (pointer: coarse), zoals op een telefoon
             ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch)
@@ -206,7 +378,7 @@ def main():
                         fouten.append(f"{tag}: kapotte link -> {href}")
                 # afbeeldingen
                 for src, ok, alt, deco in page.eval_on_selector_all(
-                    "img", "els => els.map(e => [e.getAttribute('src'), e.complete && e.naturalWidth > 0, e.getAttribute('alt'), e.closest('.hoverlijst') !== null || e.classList.contains('achter')])"
+                    "img", "els => els.map(e => [e.getAttribute('src'), e.complete && e.naturalWidth > 0, e.getAttribute('alt'), e.closest('.hoverlijst') !== null || e.classList.contains('set-b')])"
                 ):
                     if src and not src.startswith("http") and not bestaat(src, pagina):
                         fouten.append(f"{tag}: afbeelding ontbreekt -> {src}")
@@ -222,15 +394,13 @@ def main():
                     waarschuwingen.append(f"{tag}: nog in te vullen: {p}")
 
                 # interacties
-                if page.query_selector(".tegel"):
-                    if naam == "mobiel":
-                        page.tap(".tegel.t2")
+                if pagina == "index.html":  # setwissel is verplicht op de homepage
+                    if page.query_selector(".hero[data-wissel]"):
+                        controleer_setwissel(page, tag, naam)
                     else:
-                        page.focus(".tegel.t2"); page.keyboard.press("Enter")
-                    page.wait_for_timeout(900)
-                    if not page.eval_on_selector(".tegel.t2", "e => e.classList.contains('om')"):
-                        fouten.append(f"{tag}: foto draait niet om (tik of Enter-toets)")
-                    page.focus(".tegel.t2"); page.keyboard.press("Enter")
+                        fouten.append(f"{tag}: .hero[data-wissel] ontbreekt (setwisseltest kan niet draaien)")
+                if page.query_selector("#portfolio"):
+                    controleer_portfolio(page, tag, touch)
                 if page.query_selector(".hoverlijst button"):
                     lijst_zichtbaar = page.is_visible(".hoverlijst")
                     kaarten_zichtbaar = page.is_visible(".kaarten")
@@ -239,7 +409,7 @@ def main():
                         if lijst_zichtbaar or not kaarten_zichtbaar:
                             fouten.append(f"{tag}: op touch hoort de kaartenrij zichtbaar en de hover-lijst verborgen")
                         knoppen = page.eval_on_selector_all(".hoverlijst button", "els => els.map(b => [b.dataset.groot, b.dataset.alt, b.textContent.trim()])")
-                        kaarten = page.eval_on_selector_all(".kaarten .kaart", "els => els.map(k => [k.querySelector('img').getAttribute('src'), k.querySelector('img').getAttribute('alt'), k.querySelector('figcaption').textContent.trim()])")
+                        kaarten = page.eval_on_selector_all(".kaarten .kaart", "els => els.map(k => [k.querySelector('img').getAttribute('src'), k.querySelector('img').getAttribute('alt'), (k.querySelector('.kaart-naam') || k.querySelector('figcaption')).textContent.trim()])")
                         if knoppen != kaarten:
                             fouten.append(f"{tag}: kaarten wijken af van de hover-lijst (foto, alt of naam)")
                         page.eval_on_selector(".kaarten", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
@@ -273,14 +443,12 @@ def main():
                     page.wait_for_timeout(900)
                     if page.get_attribute(".burger", "aria-expanded") != "false" or not page.eval_on_selector("#menu-scherm", "e => e.hidden"):
                         fouten.append(f"{tag}: menu sluit niet met Esc")
-                # woordenlijst: tweede techniek kiezen
-                if page.query_selector(".woordenlijst"):
-                    page.click(".woorden li:nth-child(2) button")
-                    page.wait_for_timeout(1100)
-                    if not page.eval_on_selector(".dia[data-index='1']", "e => e.classList.contains('aan')"):
-                        fouten.append(f"{tag}: woordenlijst wisselt de foto niet")
-                    page.click(".woorden li:nth-child(1) button")
-                    page.wait_for_timeout(1100)
+                # Personaliseren: tabbladen (alleen klik wisselt, aanwijzen niet)
+                if pagina == "index.html":  # tabbladen zijn verplicht op de homepage
+                    if page.query_selector(".slider [role='tab']"):
+                        controleer_tabbladen(page, tag, touch)
+                    else:
+                        fouten.append(f"{tag}: geen tabbladen ([role=tab]) in Personaliseren (tabbladtest kan niet draaien)")
                 # alles wat bij scrollen invaagt zichtbaar maken voor de screenshot
                 page.evaluate("document.querySelectorAll('.opkomen, .woorden-kop, img.zoom, .stappen').forEach(e => e.classList.add('in-beeld')); document.querySelectorAll('.hero').forEach(h => h.classList.add('klaar'))")
                 page.wait_for_timeout(1000)

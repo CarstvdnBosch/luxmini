@@ -17,12 +17,23 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;1,400&family=Source+Sans+3:wght@400;600;700&display=swap">
-<script>document.documentElement.classList.add('js');setTimeout(function(){if(!window.luxKlaar)document.documentElement.classList.remove('js')},2500)</script>
+<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;if(s.getItem('lux-intro-gezien')!=='1'&&s.getItem('lux-overgang')!=='1'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan')},2500)})(document)</script>
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 <a class="skip" href="#inhoud">Naar de inhoud</a>
-<div class="intro-scherm" aria-hidden="true"><div class="intro-logo"><img src="assets/img/logo-luxmini-wit.png" alt="" width="248" height="94"></div></div>
+<!-- Intro bij het eerste bezoek per sessie (alleen met JavaScript en zonder "minder beweging") -->
+<div class="intro-scherm" aria-hidden="true">
+  <div class="intro-doek"></div>
+  <div class="intro-inhoud">
+    <div class="intro-logo"><img src="assets/img/logo-luxmini-wit.png" alt="" width="248" height="93"></div>
+    <div class="intro-podium">
+      <div class="intro-figuur"><div class="intro-vlak"></div><div class="intro-masker"><img class="intro-foto" data-src="assets/img/p-knuffel-naam.jpg" alt="" width="675" height="900"></div></div>
+      <p class="intro-regel r1"><span>Ieder nieuw leven</span></p>
+      <p class="intro-regel r2"><span>is bijzonder</span></p>
+    </div>
+  </div>
+</div>
 <div class="overgang" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"><span class="cursor-label"></span></div>
 <button class="burger" type="button" aria-expanded="false" aria-controls="menu-scherm" aria-label="Menu openen"><span></span><span></span><span></span></button>
@@ -56,7 +67,7 @@
 
 <header class="site-header op-kleur hero-kleur">
   <div class="wrap">
-    <a class="logo" href="index.html" aria-label="LUX mini, naar de homepage"><img src="assets/img/logo-luxmini-wit.png" alt="LUX mini" width="248" height="94"></a>
+    <a class="logo" href="index.html" aria-label="LUX mini, naar de homepage"><img class="logo-wit" src="assets/img/logo-luxmini-wit.png" alt="LUX mini" width="248" height="94"><img class="logo-donker" src="assets/img/logo-luxmini-donker.png" alt="" width="248" height="93"></a>
     <nav class="menu" aria-label="Hoofdmenu">
       <a href="index.html#werkwijze">Werkwijze</a>
       <a href="index.html#portfolio">Portfolio</a>
@@ -76,29 +87,23 @@
 
 <section class="op-kleur hero-kleur">
   <div class="hero">
-    <div data-cursor="draai" class="tegel t1" data-diepte="10" tabindex="0" role="button" aria-label="Draai foto om: box thema Vos"><div class="tegel-binnen">
+    <div class="tegel t1" data-diepte="10"><div class="tegel-binnen">
       <img src="assets/img/box-vos.jpg" alt="Kraamcadeaubox thema Vos">
-      <img class="achter" src="assets/img/stof-vos.jpg" alt="" loading="lazy">
     </div></div>
-    <div data-cursor="draai" class="tegel t2" data-diepte="22" tabindex="0" role="button" aria-label="Draai foto om: geopende box"><div class="tegel-binnen">
+    <div class="tegel t2" data-diepte="22"><div class="tegel-binnen">
       <img src="assets/img/hero-box-open.jpg" alt="Geopende kraamcadeaubox met de naam Sem">
-      <img class="achter" src="assets/img/hero-box-dicht.jpg" alt="" loading="lazy">
     </div></div>
-    <div data-cursor="draai" class="tegel t3" data-diepte="34" tabindex="0" role="button" aria-label="Draai foto om: box thema Tulp"><div class="tegel-binnen">
+    <div class="tegel t3" data-diepte="34"><div class="tegel-binnen">
       <img src="assets/img/box-tulp.jpg" alt="Kraamcadeaubox thema Tulp">
-      <img class="achter" src="assets/img/stof-tulp.jpg" alt="" loading="lazy">
     </div></div>
-    <div data-cursor="draai" class="tegel t4" data-diepte="14" tabindex="0" role="button" aria-label="Draai foto om: box thema Walvis"><div class="tegel-binnen">
+    <div class="tegel t4" data-diepte="14"><div class="tegel-binnen">
       <img src="assets/img/box-walvis.jpg" alt="Kraamcadeaubox thema Walvis">
-      <img class="achter" src="assets/img/stof-walvis.jpg" alt="" loading="lazy">
     </div></div>
-    <div data-cursor="draai" class="tegel t5" data-diepte="26" tabindex="0" role="button" aria-label="Draai foto om: box thema Giraf"><div class="tegel-binnen">
+    <div class="tegel t5" data-diepte="26"><div class="tegel-binnen">
       <img src="assets/img/box-giraf.jpg" alt="Kraamcadeaubox thema Giraf">
-      <img class="achter" src="assets/img/stof-giraf.jpg" alt="" loading="lazy">
     </div></div>
-    <div data-cursor="draai" class="tegel t6" data-diepte="38" tabindex="0" role="button" aria-label="Draai foto om: box thema Regenboog"><div class="tegel-binnen">
+    <div class="tegel t6" data-diepte="38"><div class="tegel-binnen">
       <img src="assets/img/box-regenboog.jpg" alt="Kraamcadeaubox thema Regenboog">
-      <img class="achter" src="assets/img/stof-regenboog.jpg" alt="" loading="lazy">
     </div></div>
 
     <div class="hero-cirkel" aria-hidden="true"></div>

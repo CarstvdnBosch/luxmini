@@ -49,4 +49,14 @@ Lever de originele bestanden aan (geen WhatsApp-versies, die zijn verkleind). No
 ## Originelen van Instagram (gewenst)
 De `ig-*.jpg`-foto's komen van Instagram en zijn klein (640 px, het babynest zelfs ~330 × 440 px). Graag de originele bestanden van Carien voor: babynest, outfit met ruches aan de ladder, jasje (twee kanten), hanger met houten paardje, pastel bijtringen en de twee tashangers.
 
-**Tijdelijk vergroot:** `ig-jasje-teddy.jpg` is maar 316 × 300 px. In de portfoliokaart op touch (mobiel ongeveer 281 × 351 px, tablet 300 × 375 px) wordt de foto daardoor ongeveer 1,2× vergroot (gemeten: 1,17× op 390 px, 1,25× op 768 px). Dat accepteren we tijdelijk, tot het origineel er is.
+**Jasje (`ig-jasje-teddy.jpg`, 316 × 300 px):** staat sinds de stock-pariteit alleen nog als kleine portfoliofoto (220 × 293 px op 1440) en wordt daar niet meer vergroot. De kaarten op touch tonen alleen de grote foto's.
+
+Met de grotere originelen kan ook:
+- de Instagram-foto (`ig-outfit-ladder.jpg`, nu 480 × 640, getoond als 3 : 4) naar de verhouding 2 : 3 van Stock;
+- `ig-babynest.jpg` als grote portfoliofoto gebruikt worden (nu alleen klein, anders wordt hij vergroot).
+
+## Logo als vector (gewenst)
+Het logo is nu een PNG van 248 px breed. Daardoor kan het in de intro niet groter dan 200 px getoond worden. Met een vectorlogo (SVG) kan het logo in de intro groter en scherper.
+
+## Tijdelijke foto's
+- **Belettering** in Personaliseren toont tijdelijk `hero-box-dicht.jpg` (de doos met naam), tot er een foto van belettering op kleding is (opname 8).

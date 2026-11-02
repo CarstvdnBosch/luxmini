@@ -17,7 +17,12 @@
   --rand: 8.2%;                 /* zijmarge zoals in het ontwerp */
   --max: 1440px;
   --ritme: clamp(56px, 7vw, 104px); /* vast ritme tussen secties */
+  /* B = breedte van het ontwerpvak (schermbreedte zonder scrollbalk, max. 1440 px);
+     u = 1% daarvan. Werkt binnen <main> (container), net als vw bij Stock. */
+  --B: min(100cqw, var(--max));
+  --u: calc(var(--B) / 100);
 }
+main { container-type: inline-size; }
 
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 84px; -webkit-text-size-adjust: 100%; }
@@ -58,26 +63,52 @@ a:hover { opacity: .8; }
 .pijl svg { width: 28px; height: 10px; flex: none; }
 .quote { margin: 0; font-family: var(--display); font-size: clamp(26px, 2.8vw, 40px); line-height: 1.25; letter-spacing: .02em; }
 
-/* ---------- Hero met collage ---------- */
-.hero { position: relative; max-width: var(--max); margin: 0 auto; height: clamp(600px, 62.5vw, 900px); }
-.tegel { position: absolute; perspective: 1200px; transition: transform .6s cubic-bezier(.2,.7,.2,1); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.tegel-binnen { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.2,.7,.2,1); }
-.tegel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.tegel img.achter { transform: rotateY(180deg); }
-.tegel.om .tegel-binnen { transform: rotateY(180deg); }
-@media (hover: hover) { .tegel:hover .tegel-binnen { transform: rotateY(180deg); } }
-.hero-cirkel { position: absolute; left: 33%; top: 26%; width: 22%; aspect-ratio: 1; border: 1px solid var(--op-kleur); border-radius: 50%; opacity: .45; pointer-events: none; z-index: 3; }
-.hero-tekst { position: absolute; left: 33.9%; top: 29%; z-index: 4; display: flex; flex-direction: column; gap: 18px; pointer-events: none; text-shadow: 0 1px 2px rgba(32,32,32,.25), 0 2px 18px rgba(32,32,32,.28); }
-.hero-tekst .caps { margin: 6px 0 0 4px; line-height: 2; font-size: 13px; text-shadow: none; }
-.badge { position: absolute; left: 78.5%; top: 82%; width: clamp(70px, 6.6vw, 96px); z-index: 4; }
+/* ---------- Kleurregel: wit alleen op terracotta ----------
+   Krijgt de bovenkant (.hero-kleur) een andere paletkleur, dan zet main.js
+   html.hero-licht: alle koppen, lijnen en de lopende tekst worden inkt en het
+   logo wisselt naar de donkere versie, in 1,2 s rustig in-uit (net als de achtergrond). */
+html.hero-licht .hero-kleur { --op-kleur: var(--inkt); }
+.js .hero-kleur .kop-xl, .js .hero-kleur .kop-l, .js .hero-kleur .kop-m, .js .hero-kleur .quote, .js .hero-kleur .lopend-spoor { transition: color 1.2s var(--rustig); }
+.logo { position: relative; }
+.logo img { transition: opacity 1.2s var(--rustig); }
+.logo .logo-donker { position: absolute; left: 0; top: 0; opacity: 0; }
+html.hero-licht .site-header .logo-wit { opacity: 0; }
+html.hero-licht .site-header .logo-donker { opacity: 1; }
 
-/* posities desktop (gemeten op 1440 × 900) */
-.t1 { left: 2.2%;  top: 50%;   width: 14.3%; aspect-ratio: .66; z-index: 1; }
-.t2 { left: 11%;   top: 30.9%; width: 23.4%; aspect-ratio: .71; z-index: 2; }
-.t3 { left: 10.2%; top: 70%;   width: 11.8%; aspect-ratio: .76; z-index: 3; }
-.t4 { left: 59.4%; top: 12.9%; width: 16.5%; aspect-ratio: .6;  z-index: 1; }
-.t5 { left: 64.8%; top: 30.9%; width: 17.2%; aspect-ratio: .77; z-index: 2; }
-.t6 { left: 65%;   top: 66.3%; width: 12%;   aspect-ratio: 1.22; z-index: 3; }
+/* ---------- Hero met collage: twee sets die samen wisselen ---------- */
+.hero { position: relative; max-width: var(--max); margin: 0 auto; height: clamp(680px, 100svh, 1000px); overflow-x: clip; }
+.tegel { position: absolute; transition: transform .6s cubic-bezier(.2,.7,.2,1); -webkit-tap-highlight-color: transparent; }
+.tegel-binnen { position: relative; width: 100%; height: 100%; }
+.tegel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* set B ("Het cadeau") ligt over set A en vervaagt in 0,2 s; zonder JavaScript alleen set A */
+.tegel img.set-b { display: none; }
+.js .tegel img.set-b { display: block; opacity: 0; transition: opacity .6s var(--rustig); }
+.js .hero.toon-b .tegel img.set-b { opacity: 1; }
+.js .hero[data-wissel] .tegel { cursor: pointer; }
+.hero-cirkel { position: absolute; left: 29%; top: 28%; width: 24%; aspect-ratio: 1; border: 1px solid var(--op-kleur); border-radius: 50%; opacity: .45; pointer-events: none; z-index: 3; }
+.hero-tekst { position: absolute; left: 37%; top: 52%; transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; gap: 18px; pointer-events: none; }
+/* basisgrootte zonder overlap met de foto's, ook zonder JavaScript; main.js maakt de kop alleen bij uitzondering kleiner */
+.hero .kop-xl { font-size: clamp(40px, 5.6vw, 80px); }
+.hero-tekst .caps { margin: 6px 0 0 4px; line-height: 2; font-size: 13px; }
+.badge { position: absolute; left: 78.5%; top: 82%; width: clamp(70px, 6.6vw, 96px); z-index: 4; }
+/* wisselrij "Het atelier · Het cadeau": op touch altijd, met een muis alleen bij toetsenbordfocus */
+.hero-wissel { display: none; }
+.js .hero-wissel { display: flex; align-items: center; margin: -6px 0 0 4px; pointer-events: auto; font-size: 14px; font-weight: 600; letter-spacing: .32em; text-transform: uppercase; color: var(--op-kleur-klein); transition: opacity .3s ease; }
+.hero-wissel button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; padding: 0; min-height: 44px; min-width: 44px; cursor: pointer; text-underline-offset: 6px; text-decoration-thickness: 1px; -webkit-tap-highlight-color: transparent; }
+.hero-wissel button[aria-pressed="true"] { text-decoration-line: underline; }
+.hero-wissel span { padding: 0 .26em 0 .5em; } /* knoppen hebben al letterspatiëring achter de laatste letter */
+@media (hover: hover) and (pointer: fine) {
+  .js .hero-wissel { opacity: 0; pointer-events: none; }
+  .js .hero-wissel:focus-within { opacity: 1; pointer-events: auto; }
+}
+
+/* posities desktop en tablet, in % van het hero-vak (top = bovenrand) */
+.t1 { left: 6%;  top: 51%; width: 12.5%; aspect-ratio: .74; z-index: 1; }
+.t2 { left: 14%; top: 31%; width: 21%;   aspect-ratio: .71; z-index: 2; }
+.t3 { left: 12%; top: 70%; width: 11%;   aspect-ratio: .76; z-index: 3; }
+.t4 { left: 63%; top: 20%; width: 14.5%; aspect-ratio: .6;  z-index: 1; }
+.t5 { left: 68%; top: 39%; width: 16.5%; aspect-ratio: .77; z-index: 2; }
+.t6 { left: 65%; top: 71%; width: 12%;   aspect-ratio: 1.22; z-index: 3; }
 
 .intro { max-width: 900px; margin: 0 auto; padding: clamp(24px, 4vw, 56px) 24px clamp(96px, 13vw, 180px); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 32px; }
 
@@ -230,16 +261,18 @@ a:hover { opacity: .8; }
   .site-header .wrap { min-height: 0; padding-top: 16px; padding-bottom: 12px; }
   .menu { gap: 0 18px; letter-spacing: .14em; }
   .menu a { padding: 8px 0; }
-  .hero { height: 680px; }
-  .hero-cirkel { left: 12%; top: 26%; width: 58%; }
-  .hero-tekst { left: var(--rand); right: var(--rand); top: 30%; }
+  .hero { height: 740px; }
+  .hero-cirkel { left: calc(12% + 12px); top: calc(26% - 40px); width: 52%; } /* om de kop, 10 px vrij van "Carien Geurts / Atelier Ospel" */
+  .hero-tekst { left: var(--rand); right: var(--rand); top: 25.5%; transform: none; }
   .badge { left: auto; right: 5%; top: auto; bottom: 6%; width: 70px; }
+  .hero-wissel { font-size: 13px; letter-spacing: .24em; }
+  /* bovenste rij blijft; onderste rij begint minimaal 16 px onder de wisselrij */
   .t1 { left: 4%;  top: 3%;  width: 26%; }
   .t2 { left: 36%; top: 1%;  width: 30%; }
   .t3 { left: 72%; top: 5%;  width: 22%; }
-  .t4 { left: 5%;  top: 62%; width: 25%; }
-  .t5 { left: 35%; top: 65%; width: 30%; }
-  .t6 { left: 70%; top: 64%; width: 26%; }
+  .t4 { left: 5%;  top: 66%; width: 25%; }
+  .t5 { left: 35%; top: 68.5%; width: 30%; }
+  .t6 { left: 70%; top: 67.5%; width: 26%; }
   /* portfolio: foto boven de lijst in plaats van eroverheen */
   .hoverlijst .groot { position: relative; left: auto; top: auto; display: none; width: 64%; margin: 0 auto 24px; }
   .hoverlijst .klein-beeld { display: none; }
@@ -257,7 +290,7 @@ a:hover { opacity: .8; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tegel, .tegel-binnen, .hoverlijst .groot, .hoverlijst .klein-beeld, .hoverlijst-sectie { transition: none; }
+  .tegel, .js .tegel img.set-b, .logo img, .js .hero-kleur .kop-xl, .js .hero-kleur .kop-l, .js .hero-kleur .kop-m, .js .hero-kleur .quote, .js .hero-kleur .lopend-spoor, .hoverlijst .groot, .hoverlijst .klein-beeld, .hoverlijst-sectie { transition: none; }
   .kaarten { scroll-behavior: auto; }
 }
 
@@ -272,44 +305,101 @@ a:hover { opacity: .8; }
 .balk .menu a { padding: 10px 0; }
 .balk.op-kleur .logo-donker, .balk.op-wit .logo-wit, .balk.op-grijs .logo-wit { display: none; }
 .balk.op-wit .logo-donker, .balk.op-grijs .logo-donker { display: block; }
+/* balk boven de bovenkant terwijl die een lichte paletkleur heeft: donker logo */
+.balk.op-kleur.licht .logo-wit { display: none; }
+.balk.op-kleur.licht .logo-donker { display: block; }
+/* balk boven het portfolio terwijl de laag een diepe tint is: wit logo en wit label */
+.balk.diep { color: var(--inkt); } /* het label blijft inkt (5,4:1), alleen het logo wordt wit */
+.balk.diep .logo-wit { display: block; }
+.balk.diep .logo-donker { display: none; }
 
 /* ---------- Tekst die rustig invaagt bij scrollen ---------- */
 .js .opkomen { opacity: 0; transform: translateY(28px); transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1); }
 .js .opkomen.in-beeld { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .js .opkomen { opacity: 1; transform: none; transition: none; } }
 
-/* ---------- Instagram ---------- */
-.insta { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
-.insta a { display: block; overflow: hidden; }
-.insta img { width: 100%; aspect-ratio: 1; object-fit: cover; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
-.insta a:hover img { transform: scale(1.06); }
-.insta a:hover { opacity: 1; }
-.insta-kop { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; }
-
-@media (max-width: 1024px) { .insta { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 760px) {
   .logo img { height: 36px; }
   .menu { font-size: 11px; letter-spacing: .18em; }
   .caps { letter-spacing: .4em; font-size: 12px; }
   .balk .menu { display: none; }
   .balk .wrap { min-height: 56px; }
-  .insta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 }
 
 /* =====================================================================
    Interacties naar het voorbeeld van stockdutchdesign.com
    ===================================================================== */
 
-/* ---------- Intro-scherm (eerste bezoek per sessie) ---------- */
+/* ---------- Intro-scherm (eerste bezoek per sessie, ca. 3,05 s) ----------
+   Het script in <head> zet .intro-aan alleen bij het eerste bezoek per sessie,
+   niet na een pagina-overgang en niet bij "minder beweging". De hele tijdlijn
+   staat hieronder in CSS en begint dus direct, zonder op "load" te wachten.
+   0,10 logo · 0,35 perzik vlak · 0,65 masker + foto · 0,75/0,87 tekstregels ·
+   1,90 uitgang (logo, regels, 2,00 figuur, 2,05 doek en pagina) · 3,05 klaar */
+:root { --p3-uit: cubic-bezier(.33,1,.68,1); --in-uit: cubic-bezier(.76,0,.24,1); --intro-y: 80px;
+  --rustig: cubic-bezier(.45,0,.55,1); /* rustige in-uit voor kleurwissels (wens Carst: zachter dan 0,75 s) */ }
 .intro-scherm { display: none; }
-/* Noodrem: ook als main.js niet laadt, schuift het scherm na 2,4 s altijd weg */
-.js .intro-scherm { display: flex; position: fixed; inset: 0; z-index: 100; background: var(--salie); align-items: center; justify-content: center; transition: transform .9s cubic-bezier(.76,0,.24,1); animation: intro-nood .9s 2.4s cubic-bezier(.76,0,.24,1) forwards; }
-@keyframes intro-nood { to { transform: translateY(-100%); visibility: hidden; pointer-events: none; } }
-.js .intro-scherm.weg { transform: translateY(-100%); pointer-events: none; }
-.js .intro-scherm.verborgen { display: none; }
-.intro-logo { overflow: hidden; }
-.intro-logo img { width: clamp(150px, 18vw, 240px); height: auto; transform: translateY(110%); animation: intro-logo 1s .15s cubic-bezier(.2,.7,.2,1) forwards; }
-@keyframes intro-logo { to { transform: none; } }
+.js.intro-aan .intro-scherm { display: block; position: fixed; inset: 0; z-index: 100; overflow: hidden; color: var(--wit);
+  /* klikken gaan na 2,3 s door naar de pagina; noodrem: altijd weg vóór 4,0 s, ook als main.js niet draait */
+  animation: intro-door 0s 2.3s forwards, intro-nood .3s 3.65s forwards; }
+@keyframes intro-door { to { pointer-events: none; } }
+@keyframes intro-nood { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+/* overslaan (tik, klik, toets, scroll): de uitgang is binnen 0,6 s klaar (0,5 s) */
+.js.intro-aan .intro-scherm.snel { transform: translateY(-100%); transition: transform .5s var(--in-uit); pointer-events: none; }
+.intro-doek { position: absolute; inset: 0; background: var(--terracotta); }
+.intro-inhoud { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; }
+.intro-logo img { width: 200px; height: auto; }
+.intro-podium { position: relative; display: flex; flex-direction: column; align-items: center; }
+.intro-figuur { position: relative; overflow: hidden; width: min(25vw, calc((100svh - 240px) * 25 / 35)); aspect-ratio: 25 / 35; }
+.intro-vlak, .intro-masker { position: absolute; inset: 0; }
+.intro-vlak { background: var(--perzik); }
+.intro-masker { overflow: hidden; }
+.intro-foto { width: 100%; height: 100%; object-fit: cover; }
+.intro-figuur.zonder-foto .intro-masker { visibility: hidden; } /* foto na 0,6 s niet geladen: alleen het perzik vlak */
+.intro-regel { margin: 0; overflow: hidden; white-space: nowrap; font-family: var(--display); font-weight: 400; font-size: clamp(40px, 4.4vw, 64px); line-height: 1.1; padding-bottom: .1em; }
+.intro-regel span { display: block; }
+/* desktop: regel 1 eindigt 24 px links van de figuur (40% hoogte), regel 2 begint 24 px rechts (62%) */
+@media (min-width: 1025px) {
+  .intro-regel { position: absolute; translate: 0 -50%; }
+  .intro-regel.r1 { right: calc(100% + 24px); top: 40%; text-align: right; }
+  .intro-regel.r2 { left: calc(100% + 24px); top: 62%; }
+}
+/* tot en met 1024 px: beide regels gecentreerd onder de figuur */
+@media (max-width: 1024px) {
+  .intro-figuur { width: min(36vw, calc((100svh - 400px) * 25 / 35)); }
+  .intro-regel { text-align: center; }
+  .intro-regel.r1 { margin-top: 24px; }
+}
+@media (max-width: 760px) {
+  :root { --intro-y: 48px; }
+  .intro-logo img { width: 160px; }
+  .intro-figuur { width: min(56vw, calc((100svh - 360px) * 25 / 35)); }
+  .intro-regel { font-size: 40px; }
+}
+/* de tijdlijn */
+.js.intro-aan .intro-logo { animation: intro-zichtbaar .5s .1s var(--p3-uit) both, intro-vervaag .3s 1.9s linear forwards; }
+.js.intro-aan .intro-vlak { animation: intro-van-onder .9s .35s var(--p3-uit) both; }
+.js.intro-aan .intro-masker { animation: intro-masker .9s .65s var(--p3-uit) both; }
+.js.intro-aan .intro-foto { animation: intro-foto .9s .65s var(--p3-uit) both; }
+.js.intro-aan .intro-regel span { animation: intro-van-onder .8s .75s var(--p3-uit) both; }
+.js.intro-aan .intro-regel.r2 span { animation-delay: .87s; }
+.js.intro-aan .intro-regel { animation: intro-schermhoog 1s 1.9s var(--in-uit) forwards; }
+.js.intro-aan .intro-regel.r2 { animation-delay: 1.96s; }
+.js.intro-aan .intro-figuur { animation: intro-figuur-weg 1s 2s var(--in-uit) forwards; }
+.js.intro-aan .intro-doek { animation: intro-doek-weg 1s 2.05s var(--p3-uit) forwards; }
+/* de pagina komt van 80 px (mobiel 48 px) omhoog terwijl het doek optrekt */
+.js.intro-aan .site-header, .js.intro-aan main { animation: intro-pagina 1s 2.05s var(--p3-uit) both; }
+@keyframes intro-zichtbaar { from { opacity: 0; } }
+@keyframes intro-vervaag { to { opacity: 0; } }
+@keyframes intro-van-onder { from { transform: translateY(100%); } }
+@keyframes intro-masker { from { transform: translateY(101%); } }
+@keyframes intro-foto { from { transform: translateY(-80%); } }
+@keyframes intro-schermhoog { to { transform: translateY(-100vh); } }
+@keyframes intro-figuur-weg { to { transform: translateY(calc(-100vh - 100%)); } }
+@keyframes intro-doek-weg { to { transform: translateY(-100%); } }
+@keyframes intro-pagina { from { transform: translateY(var(--intro-y)); } }
+/* "Naar de inhoud" komt na de eerste Tab boven de wegschuivende intro */
+.skip:focus { z-index: 110; }
 
 /* ---------- Pagina-overgang ---------- */
 .overgang { position: fixed; inset: 0; z-index: 99; background: var(--terracotta); transform: translateY(100%); pointer-events: none; transition: transform .6s cubic-bezier(.76,0,.24,1); }
@@ -362,38 +452,34 @@ a:hover { opacity: .8; }
 html.menu-is-open { overflow: hidden; }
 
 /* ---------- Uitgelicht met lopende tekst ---------- */
-.uitgelicht { position: relative; max-width: var(--max); margin: 0 auto; padding: clamp(40px, 6vw, 80px) 0 calc(var(--ritme) / 2); }
-.uitgelicht-beeld { position: relative; z-index: 1; width: clamp(180px, 18vw, 260px); aspect-ratio: 3 / 4; object-fit: cover; margin-left: 0; }
+/* Desktop: foto op 16,667% / 5,9u, 25% x 33,33u; het midden van de lopende regel
+   op het midden van de foto; tekstblok vanaf 50%, 32 px onder de lopende regel */
+.uitgelicht { --ub-links: 16.667%; --ub-top: calc(var(--u) * 5.9); --ub-b: 25%; --ub-h: calc(var(--u) * 33.333);
+  --lopend-fs: clamp(56px, calc(var(--u) * 7.6), 110px); --lopend-midden: calc(var(--ub-top) + var(--ub-h) / 2);
+  --tekst-links: 50%; --tekst-b: min(25%, 360px);
+  position: relative; max-width: var(--max); margin: 0 auto; padding: 0 0 calc(var(--ritme) / 2); min-height: calc(var(--ub-top) + var(--ub-h) + var(--ritme) / 2); }
+.uitgelicht-beeld { position: absolute; z-index: 1; left: var(--ub-links); top: var(--ub-top); width: var(--ub-b); height: var(--ub-h); overflow: hidden; translate: 0 0; transition: translate .6s cubic-bezier(.2,.7,.2,1); }
+/* de witte lopende regel loopt over de lichte foto: foto iets donkerder plus 20% inkt, zodat wit minstens 3:1 haalt */
+.uitgelicht-beeld img { width: 100%; height: 100%; object-fit: cover; filter: brightness(.85); }
+.uitgelicht-beeld::after { content: ""; position: absolute; inset: 0; background: rgba(32,32,32,.2); pointer-events: none; transition: opacity .9s ease; }
+.js .uitgelicht-beeld:has(> img.zoom:not(.in-beeld))::after { opacity: 0; } /* sluier komt samen met de foto op */
 .lopend { overflow: hidden; white-space: nowrap; pointer-events: none; }
-.uitgelicht .lopend { position: absolute; left: 0; right: 0; top: clamp(130px, 14vw, 210px); z-index: 2; }
+.uitgelicht .lopend { position: absolute; left: 0; right: 0; top: var(--lopend-midden); transform: translateY(-50%); z-index: 2; }
 .lopend-spoor { display: inline-block; font-family: var(--display); font-size: clamp(48px, 7.6vw, 110px); line-height: 1.1; will-change: transform; }
+.uitgelicht .lopend-spoor { font-size: var(--lopend-fs); }
+/* lopende tekst: lineair en eindeloos, een halve spoorbreedte in 15 s; stil buiten beeld,
+   bij minder beweging en zonder JavaScript (dan begint de regel met "— Ieder") */
+.js .lopend-spoor { animation: lopen 15s linear infinite; }
+.js .lopend.pauze .lopend-spoor { animation-play-state: paused; }
+@keyframes lopen { to { transform: translate3d(-50%, 0, 0); } }
 .lopend-los { padding: 0 0 clamp(64px, 8vw, 110px); }
-.uitgelicht-tekst { position: relative; z-index: 3; max-width: 340px; margin: clamp(-120px, -8vw, -40px) 0 0 38%; display: flex; flex-direction: column; gap: 16px; }
+.uitgelicht-tekst { position: relative; z-index: 3; width: var(--tekst-b); margin: 0 0 0 var(--tekst-links); padding-top: calc(var(--lopend-midden) + var(--lopend-fs) * .55 + 32px); display: flex; flex-direction: column; gap: 16px; }
 .uitgelicht-tekst .caps { font-size: 14px; margin: 0; }
-
-/* ---------- Personaliseren: woordenlijst met draaiende foto ---------- */
-.woorden-sectie { transition: background .6s ease; }
-.woordenlijst { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px clamp(32px, 6vw, 96px); align-items: center; }
-.woorden-tekst { display: flex; flex-direction: column; gap: 28px; }
-.woorden { list-style: none; margin: 0; padding: 0; }
-.woorden button { font-family: var(--display); font-size: clamp(44px, 6.4vw, 92px); line-height: 1.08; color: rgba(32,32,32,.28); background: none; border: 0; padding: 0; cursor: pointer; transition: color .35s ease; text-align: left; }
-.woorden button.aan, .woorden button:hover { color: var(--inkt); }
-.woorden-uitleg { position: relative; min-height: 64px; }
-.woorden-uitleg p { max-width: 360px; }
-.js .woorden-uitleg p { position: absolute; inset: 0 auto auto 0; opacity: 0; transform: translateY(10px); transition: opacity .4s ease, transform .4s ease; max-width: 360px; }
-.js .woorden-uitleg p.aan { position: relative; opacity: 1; transform: none; }
-.woorden-podium { position: relative; display: grid; gap: 16px; max-width: 460px; width: 100%; justify-self: center; }
-.dia { margin: 0; }
-.dia img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; box-shadow: 0 30px 60px rgba(32,32,32,.18); }
-/* met JavaScript: één foto tegelijk, die in beeld draait */
-.js .woorden-podium { display: block; aspect-ratio: 4 / 5; }
-/* wachtende en vertrokken dia's staan onzichtbaar (ook de schaduw); zichtbaar
-   zodra .aan, en tijdens het vertrek nog 1 s zichtbaar */
-.js .dia { position: absolute; inset: 0; visibility: hidden; transform: translate(150%, 0) rotate(90deg); transition: transform 1s cubic-bezier(.76,0,.24,1), visibility 0s linear 1s; }
-.js .dia img { height: 100%; }
-.js .dia.aan { visibility: visible; transform: none; z-index: 2; transition: transform 1s cubic-bezier(.76,0,.24,1), visibility 0s; }
-.js .dia.weg { transform: translate(-150%, 0) rotate(-90deg); }
-.woorden-sectie { overflow: hidden; }
+/* tussen de quote en Uitgelicht het vaste ritme (max. 160 px desktop, 96 px mobiel) */
+.intro.kort { padding-bottom: 0; }
+@media (max-width: 1024px) {
+  .uitgelicht { --ub-links: 10%; --ub-b: 36%; --ub-h: calc(var(--u) * 48); --tekst-links: 54%; --tekst-b: 38%; }
+}
 
 /* ---------- Koppen per woord uit een masker ---------- */
 .js .woorden-kop .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .06em; margin-bottom: -.06em; }
@@ -410,7 +496,7 @@ html.menu-is-open { overflow: hidden; }
 .js .hero.klaar .tegel { opacity: 1; translate: 0 0; }
 .js .hero .t2, .js .hero .t5 { transition-delay: 0s, .1s, .1s; }
 .js .hero .t3, .js .hero .t6 { transition-delay: 0s, .2s, .2s; }
-.js .hero .hero-cirkel { transform: scale(.6); opacity: 0; transition: transform 1.4s cubic-bezier(.2,.7,.2,1), opacity 1s ease; }
+.js .hero .hero-cirkel { transform: scale(.6); opacity: 0; transition: transform 1.4s cubic-bezier(.2,.7,.2,1), opacity 1s ease, border-color 1.2s var(--rustig), translate .6s cubic-bezier(.2,.7,.2,1); }
 .js .hero.klaar .hero-cirkel { transform: none; opacity: .45; }
 .badge { will-change: transform; }
 
@@ -418,20 +504,19 @@ html.menu-is-open { overflow: hidden; }
   .site-header .menu { flex-wrap: wrap; gap: 6px 18px; }
   .js .site-header .menu { display: none; }
   .js .burger { top: 18px; }
-  .uitgelicht { padding-left: 0; }
-  .uitgelicht-beeld { width: 46%; margin-left: var(--rand); }
-  .uitgelicht .lopend { top: 120px; }
-  .uitgelicht-tekst { margin: 32px var(--rand) 0; }
-  .woordenlijst { grid-template-columns: minmax(0, 1fr); }
-  .woorden-podium { max-width: 300px; order: -1; }
+  /* mobiel: foto 62% breed en gecentreerd, lopende regel 56 px op het midden, tekst 32 px eronder */
+  .uitgelicht { --ub-links: 19%; --ub-top: 0px; --ub-b: 62%; --ub-h: calc(var(--u) * 82.667); --lopend-fs: 56px; }
+  .uitgelicht-tekst { width: auto; margin: 0 var(--rand); padding-top: calc(var(--ub-top) + var(--ub-h) + 32px); }
+  .intro.kort { padding-bottom: 24px; }
   .menu-binnen { align-items: flex-start; padding-top: 96px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .js .intro-scherm { display: none; }
-  .js .intro-scherm { animation: none; }
-  .overgang, .dia, .menu-scherm, .menu-nav a, .menu-kolom, .menu-foto { transition: none; }
-  .js .dia, .js .dia.aan { transition: none; } /* dia's wisselen direct */
+  .js.intro-aan .intro-scherm { display: none; }
+  .js.intro-aan .site-header, .js.intro-aan main { animation: none; }
+  .overgang, .menu-scherm, .menu-nav a, .menu-kolom, .menu-foto { transition: none; }
+  .js .lopend-spoor { animation: none; } /* lopende tekst staat stil en begint met "— Ieder" */
+  .uitgelicht-beeld, .uitgelicht-beeld::after { transition: none; }
   .js .woorden-kop .w > span, .js img.zoom, .js .hero .tegel, .js .hero .hero-cirkel { transform: none; translate: none; opacity: 1; transition: none; }
   .js .hero .hero-cirkel { opacity: .45; }
 }
@@ -448,8 +533,12 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .achtergrond { position: fixed; inset: 0; z-index: -1; background-color: var(--wit); pointer-events: none; transition: background-color .75s cubic-bezier(.25,.46,.45,.94); will-change: background-color; }
 .js .met-laag { background-color: transparent !important; transition: none; }
 /* De bovenkant (header, collage, uitgelicht, werkwijze) kleurt samen mee */
-.js .hero-kleur { transition: background-color .9s cubic-bezier(.25,.46,.45,.94); }
-.js .balk { transition: background-color .9s cubic-bezier(.25,.46,.45,.94), transform .5s ease; }
+/* bovenkant: achtergrond, tekstkleur en logo wisselen samen in 1,2 s; halverwege van helft wisselen
+   loopt vloeiend terug vanaf de huidige stand (CSS-overgangen keren om vanaf waar ze zijn) */
+.js .hero-kleur { transition: background-color 1.2s var(--rustig); }
+.js .balk { transition: background-color 1.2s var(--rustig), color 1s var(--rustig), transform .5s ease; }
+/* portfolio: de laag wisselt bij aanwijzen in 1 s (rustig), bij scrollen blijft het 0,75 s */
+.achtergrond.traag { transition: background-color 1s var(--rustig); }
 
 /* ---------- 001 Werkwijze: kolommen over de volle hoogte ---------- */
 .kernwaarden { position: relative; }
@@ -480,7 +569,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .js .kern-kop, .js .kern-copy { transition: transform 1s cubic-bezier(.215,.61,.355,1); }
   /* de foto in de kolom is donker: daarop wit, net als voorheen */
   .js .kern-tekst { transition: color .5s ease; }
-  .js .kern-kolom.open .kern-tekst { color: var(--wit); }
+  .js .kern-kolom.open .kern-tekst, .js .kern-kolom.open .kop-m { color: var(--wit); }
   .js .kern-label { transition: color .5s ease; }
   .js .kernwaarden:has(.kern-kolom:first-child.open) .kern-label { color: var(--wit); }
   .js .kern-copy { position: absolute; left: 0; right: 0; top: 100%; padding-top: 28px; }
@@ -498,6 +587,179 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .kern-kop .kop-m { min-height: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .achtergrond, .js .hero-kleur, .js .balk { transition: none; }
+  .achtergrond, .achtergrond.traag, .js .hero-kleur, .js .balk { transition: none; }
   .js .kern-beeld, .js .kern-masker, .js .kern-masker img, .js .kern-kop, .js .kern-copy, .js .kern-copy-masker, .js .kern-copy-masker p, .js .kern-tekst { transition: none; }
+}
+
+/* =====================================================================
+   002 Portfolio: vijf sferen (naar de portfoliolijst van Stock)
+   Met een muis (en JavaScript) de lijst; op touch en zonder JavaScript kaarten.
+   ===================================================================== */
+.sferen { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .js .hoverlijst.sferen { display: block; }
+  .js .kaarten.sfeer-kaarten { display: none; }
+}
+/* het vak is zo breed als het ontwerpvak (max. 1440 px), zodat de foto's op
+   25% en 58% van de sectie staan, niet van de tekstkolom */
+.hoverlijst.sferen { position: relative; width: var(--B); margin-left: calc(50% - var(--B) / 2); --my: 0; }
+.hoverlijst.sferen ul { position: relative; z-index: 1; }
+/* bij aanwijzen (wens Carst, zoals Stock): de laag wordt een diepe tint en alle tekst wit;
+   wit haalt op die tinten 3:1, dus alleen grote tekst (namen, productregel 19 px vet, 700) */
+.hoverlijst.sferen button { white-space: nowrap; color: var(--inkt); opacity: 1; transition: opacity 1s var(--rustig), color 1s var(--rustig); }
+.hoverlijst.sferen.actief button { color: var(--wit); opacity: .35; }
+.hoverlijst.sferen.actief button.aan { opacity: 1; }
+.sfeer-beelden { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 1s var(--rustig); }
+.hoverlijst.sferen.actief .sfeer-beelden { opacity: 1; }
+.sfeer { position: absolute; inset: 0; opacity: 0; transition: opacity .35s ease; } /* wisselen tussen items: crossfade 0,35 s */
+.sfeer.aan { opacity: 1; }
+.hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld { display: block; position: absolute; opacity: 1; overflow: hidden; margin: 0; transform: none; transition: translate .6s cubic-bezier(.2,.7,.2,1); }
+.hoverlijst.sferen .groot img, .hoverlijst.sferen .klein-beeld img { width: 100%; height: 100%; object-fit: cover; }
+.hoverlijst.sferen .groot::after, .hoverlijst.sferen .klein-beeld::after { content: ""; position: absolute; inset: 0; background: rgba(60,40,30,.2); } /* warme sluier, zoals Stock */
+.hoverlijst.sferen .groot::after { background: rgba(60,40,30,.28); } /* grote foto iets dieper, zodat witte namen erover beter lezen */
+.hoverlijst.sferen .groot { left: 25%; top: calc(var(--B) * -.03); width: min(30%, 440px); aspect-ratio: 30 / 41.66; translate: 0 calc(var(--my) * 40px); }
+.hoverlijst.sferen .klein-beeld { left: 58%; top: calc(var(--B) * .17); width: min(15%, 220px); aspect-ratio: 3 / 4; translate: 0 calc(var(--my) * 20px); }
+.productregel { position: absolute; left: 58%; top: calc(var(--B) * .17 + min(var(--B) * .15, 220px) * 4 / 3 + 16px); max-width: 30%; margin: 0; font-size: 19px; font-weight: 700; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; color: var(--wit); translate: 0 calc(var(--my) * 20px); transition: translate .6s cubic-bezier(.2,.7,.2,1); }
+/* label en pijl-link vallen terug naar 0,2 terwijl een item actief is */
+.js .hoverlijst-sectie .sectie > .label, .js .hoverlijst-sectie .sectie > .pijl { transition: opacity 1s var(--rustig), color 1s var(--rustig), transform .9s cubic-bezier(.2,.7,.2,1); }
+.js .hoverlijst-sectie.lijst-actief .sectie > .label, .js .hoverlijst-sectie.lijst-actief .sectie > .pijl { opacity: .2; }
+.js #portfolio.lijst-actief .sectie > .label, .js #portfolio.lijst-actief .sectie > .pijl { color: var(--wit); opacity: .35; }
+
+/* kaarten: vijf kleurvlakken met foto, sfeernaam en productregel; alleen de rij scrollt */
+.kaarten.sfeer-kaarten { --kaart-rand: min(8.2vw, calc(var(--max) * .082)); display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 320px); gap: 16px; margin-inline: calc(-1 * var(--kaart-rand)); padding-inline: var(--kaart-rand); padding-bottom: 8px; scroll-padding-inline: var(--kaart-rand); overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: thin; }
+@media (hover: none), (pointer: coarse) { .kaarten.sfeer-kaarten { scrollbar-width: none; padding-bottom: 0; } .kaarten.sfeer-kaarten::-webkit-scrollbar { display: none; } }
+.sfeer-kaarten .kaart { background: var(--kaart-kleur, var(--grijsblauw)); padding: 12px 12px 18px; }
+.sfeer-kaarten .kaart img { aspect-ratio: 4 / 5; }
+.sfeer-kaarten .kaart figcaption { margin-top: 14px; font-size: inherit; }
+/* kaarten in de diepe tint met witte tekst (grote tekst: naam 24 px, productregel 19 px vet, 700) */
+.kaart-naam { display: block; font-family: var(--display); font-size: 24px; line-height: 1.2; color: var(--wit); }
+.kaart-regel { display: block; margin-top: 6px; font-family: var(--sans); font-size: 19px; font-weight: 700; line-height: 1.4; color: var(--wit); }
+@media (max-width: 760px) { .kaarten.sfeer-kaarten { --kaart-rand: var(--rand); gap: 12px; } }
+@media (prefers-reduced-motion: reduce) {
+  .hoverlijst.sferen button, .sfeer-beelden, .sfeer, .hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld, .productregel, .balk.diep,
+  .js .hoverlijst-sectie .sectie > .label, .js .hoverlijst-sectie .sectie > .pijl { transition: none; }
+  .hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld, .productregel { translate: none; }
+}
+
+/* =====================================================================
+   003 Personaliseren: media-slider (naar Stock)
+   Zonder JavaScript: de drie technieken onder elkaar, tekst links en foto rechts.
+   ===================================================================== */
+.slider-sectie { overflow: clip; } /* het draaien blijft binnen de sectie */
+.slider { max-width: var(--max); margin: 0 auto; padding: var(--ritme) var(--rand) calc(var(--ritme) / 2); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px clamp(32px, 6vw, 96px); align-items: center; }
+.slider-label { grid-column: 1 / -1; }
+.slider-beelden, .slider-teksten { display: contents; }
+.slider-tabs { display: none; }
+.techniek { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; color: var(--inkt); }
+.techniek .klein { max-width: 360px; }
+.dia { margin: 0; width: 100%; max-width: 460px; justify-self: center; }
+.dia img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+.techniek[data-i="0"] { grid-row: 2; grid-column: 1; } .dia[data-i="0"] { grid-row: 2; grid-column: 2; }
+.techniek[data-i="1"] { grid-row: 3; grid-column: 1; } .dia[data-i="1"] { grid-row: 3; grid-column: 2; }
+.techniek[data-i="2"] { grid-row: 4; grid-column: 1; } .dia[data-i="2"] { grid-row: 4; grid-column: 2; }
+@media (max-width: 760px) {
+  .slider { grid-template-columns: minmax(0, 1fr); }
+  .dia[data-i="0"] { grid-row: 2; grid-column: 1; } .techniek[data-i="0"] { grid-row: 3; grid-column: 1; }
+  .dia[data-i="1"] { grid-row: 4; grid-column: 1; } .techniek[data-i="1"] { grid-row: 5; grid-column: 1; }
+  .dia[data-i="2"] { grid-row: 6; grid-column: 1; } .techniek[data-i="2"] { grid-row: 7; grid-column: 1; }
+}
+/* tabbladen: kleine kapitalen in volle inkt, het actieve onderstreept (1 px, 6 px onder de letters) */
+.slider-tab { font-family: var(--sans); font-size: 14px; font-weight: 600; line-height: 1; letter-spacing: .32em; text-transform: uppercase; white-space: nowrap; color: var(--inkt); background: none; border: 0; padding: 0; min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.slider-tab span { position: relative; display: inline-block; margin-right: -.32em; padding-right: .32em; } /* letterspatiëring na de laatste letter telt niet mee */
+.slider-tab span::after { content: ""; position: absolute; left: 0; right: .32em; bottom: -6px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left center; transition: transform .5s cubic-bezier(.2,.7,.2,1); }
+.slider-tab[aria-selected="true"] span::after { transform: none; }
+
+/* met JavaScript: één techniek tegelijk */
+.js .slider-tabs { display: flex; justify-content: center; }
+.js .slider-beelden { display: block; position: relative; overflow: hidden; } /* beeldvlak is een masker: oude foto schuift eruit, nieuwe draait erin */
+.js .slider-teksten { display: grid; }
+.js .techniek { grid-area: 1 / 1; visibility: hidden; }
+.js .techniek.aan { visibility: visible; }
+.js .dia { position: absolute; inset: 0; max-width: none; visibility: hidden; }
+.js .dia.aan { visibility: visible; }
+.js .dia img { height: 100%; aspect-ratio: auto; }
+.js .techniek[data-i], .js .dia[data-i] { grid-row: auto; grid-column: auto; }
+.js .techniek[data-i] { grid-area: 1 / 1; }
+
+/* desktop (vanaf 1025 px) en tablet: label linksboven, tekst links, beeld rechts, tabbladen onderaan */
+@media (min-width: 761px) {
+  .js .slider-sectie { height: clamp(720px, 100svh, 1000px); }
+  .js .slider { display: block; position: relative; height: 100%; width: var(--B); max-width: none; padding: 0; --tekst-links: 16.66%; --tekst-b: clamp(320px, 25%, 380px); --beeld-links: 50%; --beeld-h: min(calc(var(--u) * 44), calc(100svh - 220px)); }
+  .js .slider-label { position: absolute; left: var(--rand); top: var(--ritme); }
+  .js .slider-teksten { position: absolute; left: var(--tekst-links); width: var(--tekst-b); top: 50%; transform: translateY(-50%); }
+  .js .slider-beelden { position: absolute; left: var(--beeld-links); top: 50%; height: var(--beeld-h); aspect-ratio: 3 / 4; transform: translateY(-50%); }
+  .js .slider-tabs { position: absolute; left: 50%; bottom: 48px; transform: translateX(-50%); gap: 48px; }
+}
+@media (min-width: 761px) and (max-width: 1024px) {
+  .js .slider { --tekst-links: 8%; --tekst-b: 38%; --beeld-links: 52%; --beeld-h: min(calc(var(--u) * 53.333), calc(100svh - 260px)); }
+}
+/* mobiel: label, beeld (72%, 3:4), tabbladen in drie kolommen, kop, tekst en pijl-link */
+@media (max-width: 760px) {
+  .js .slider { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .js .slider-beelden { width: calc(var(--u) * 72); aspect-ratio: 3 / 4; justify-self: center; }
+  .js .slider-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-inline: calc(-1 * var(--rand) + 8px); }
+  .slider-tab { font-size: 13px; letter-spacing: .12em; }
+  .slider-tab span { margin-right: -.12em; padding-right: .12em; }
+  .slider-tab span::after { right: .12em; }
+}
+@media (prefers-reduced-motion: reduce) { .slider-tab span::after { transition: none; } }
+
+/* =====================================================================
+   005 Instagram en 006 Contact: één foto met tekst (naar Stock)
+   Kolommen in % van het ontwerpvak: 16,66 | 33,33 | 8,33 | 25 | 16,67
+   ===================================================================== */
+.insta-blok, .contact-rij, .contact-formulier { width: var(--B); margin-left: calc(50% - var(--B) / 2); }
+.insta-blok { display: grid; grid-template-columns: 16.666% 33.333% 8.334% 25% 16.667%; align-items: center; }
+.insta-foto { grid-column: 2; display: block; overflow: hidden; max-width: 480px; }
+.insta-foto:hover { opacity: 1; }
+/* 3:4 in plaats van 2:3: het bestand is 480 x 640 en wordt zo niet vergroot */
+.insta-foto img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.insta-foto:hover img { transform: scale(1.04); }
+.insta-tekst { grid-column: 4; display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
+
+/* contact: rij 1 tekst links (16,66–41,66%) en vierkante foto rechts (50–83,33%), rij 2 het formulier */
+.contact-sectie { gap: 48px; }
+.contact-rij { display: grid; grid-template-columns: 16.666% 25% 8.334% 33.333% 16.667%; align-items: center; }
+.contact-tekst { grid-column: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
+.contact-lijst { display: flex; flex-direction: column; align-items: flex-start; }
+.contact-lijst .pijl { min-height: 44px; }
+.contact-foto { grid-column: 4; width: 100%; max-width: 480px; aspect-ratio: 1; object-fit: cover; }
+.contact-formulier { padding: 0 calc(var(--B) * .16667); display: flex; flex-direction: column; gap: 24px; }
+.contact-formulier .formulier { max-width: 960px; margin: 0; }
+.contact-inleiding { max-width: none; color: var(--inkt); }
+
+@media (max-width: 1024px) {
+  .insta-blok { grid-template-columns: 8.2% 40% 6% 37.6% 8.2%; }
+  .contact-rij { grid-template-columns: 8.2% 37.6% 6% 40% 8.2%; }
+  .contact-formulier { padding: 0 calc(var(--B) * .082); }
+}
+/* mobiel: alles in één kolom binnen de rand; bij contact eerst de foto (3:2) */
+@media (max-width: 760px) {
+  .insta-blok, .contact-rij, .contact-formulier { width: auto; margin-left: 0; }
+  .insta-blok { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .insta-foto, .insta-tekst { grid-column: 1; max-width: none; }
+  .contact-sectie { gap: 32px; }
+  .contact-rij { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .contact-tekst { grid-column: 1; gap: 24px; }
+  .contact-foto { grid-column: 1; grid-row: 1; max-width: none; aspect-ratio: 3 / 2; }
+  .contact-formulier { padding: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .insta-foto img { transition: none; } }
+
+/* tablet (761–1024 px): alleen de burger, zodat het menu niet over twee regels loopt */
+@media (min-width: 761px) and (max-width: 1024px) {
+  .js .site-header .menu { display: none; }
+}
+/* kraamcadeaubox op mobiel: geen wisselrij, dus de onderste rij foto's sluit dichter aan */
+@media (max-width: 760px) {
+  .hero:not([data-wissel]) { height: 680px; }
+  .hero:not([data-wissel]) .t4 { top: 62%; }
+  .hero:not([data-wissel]) .t5 { top: 65%; }
+  .hero:not([data-wissel]) .t6 { top: 64%; }
+}
+
+/* desktop en tablet: de header ligt los over de hero en blijft doorzichtig, zodat alleen de hero
+   van kleur wisselt (anders schuiven twee overgangen over elkaar en zie je een band) */
+@media (min-width: 761px) {
+  .js .site-header.hero-kleur { background-color: transparent !important; }
 }

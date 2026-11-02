@@ -16,8 +16,17 @@
   /* Kleurhulpjes (naar stockdutchdesign.com): de bovenkant van de pagina
      (.hero-kleur) en één vaste achtergrondlaag voor de rest */
   var heroKleurEls = Array.prototype.slice.call(document.querySelectorAll('.hero-kleur'));
+  // Kleurregel: wit staat alleen op terracotta. Elke andere paletkleur zet
+  // html.hero-licht, waarmee CSS alle tekst in de bovenkant inkt maakt en
+  // het donkere logo toont. Leeg ('') = terug naar terracotta.
+  var heroLicht = false, heroKleurNu = '';
   function zetHeroKleur(kleur) {
+    kleur = (kleur || '').trim();
+    if (kleur.toLowerCase() === '#bc8565') kleur = '';
+    heroKleurNu = kleur;
     heroKleurEls.forEach(function (el) { el.style.backgroundColor = kleur; });
+    heroLicht = !!kleur;
+    html.classList.toggle('hero-licht', heroLicht);
     if (typeof balkBijwerken === 'function') balkBijwerken(true);
   }
   var laag = document.createElement('div');
@@ -25,7 +34,12 @@
   laag.setAttribute('aria-hidden', 'true');
   document.body.insertBefore(laag, document.body.firstChild);
   var laagKleur = '';
-  function zetLaag(kleur) { if (kleur && kleur !== laagKleur) { laagKleur = kleur; laag.style.backgroundColor = kleur; } }
+  function zetLaag(kleur) {
+    if (kleur && kleur !== laagKleur) {
+      laagKleur = kleur; laag.style.backgroundColor = kleur;
+      if (typeof balkBijwerken === 'function') balkBijwerken(); // de balk kleurt mee
+    }
+  }
   var balkBijwerken = null;
 
   /* ---------------------------------------------------------------
@@ -38,34 +52,68 @@
 
   function heroKlaar() { if (heroEl) heroEl.classList.add('klaar'); document.dispatchEvent(new Event('lux:klaar')); }
 
-  if (intro) {
-    var alGezien = opslag.lees('lux-intro-gezien') === '1';
-    if (stil || alGezien || vanOvergang) {
-      intro.classList.add('verborgen');
-      if (vanOvergang && overgang && !stil) {
-        overgang.style.transition = 'none';
-        overgang.classList.add('dicht');
-        requestAnimationFrame(function () {
-          overgang.style.transition = '';
-          overgang.classList.remove('dicht');
-          overgang.classList.add('open-boven');
-          setTimeout(function () { overgang.style.transition = 'none'; overgang.classList.remove('open-boven'); requestAnimationFrame(function () { overgang.style.transition = ''; }); }, 700);
-        });
-      }
-      setTimeout(heroKlaar, vanOvergang ? 250 : 0);
-    } else {
-      opslag.zet('lux-intro-gezien', '1');
-      var klaarIntro = function () {
-        intro.classList.add('weg');
-        setTimeout(heroKlaar, 250);
-        setTimeout(function () { intro.classList.add('verborgen'); }, 1000);
+  // Het script in <head> heeft al besloten of de intro komt (.intro-aan) en
+  // de tijdlijn loopt in CSS. Hier: hero-kop op ~2,35 s, klaar op ~3,05 s,
+  // overslaan met tik, klik, toets, scroll of vegen (dan klaar in 0,6 s).
+  if (intro && html.classList.contains('intro-aan') && !stil) {
+    (function () {
+      var doek = intro.querySelector('.intro-doek');
+      var figuur = intro.querySelector('.intro-figuur');
+      var foto = intro.querySelector('.intro-foto');
+      // de foto pas nu laden: zonder intro (herhaald bezoek, minder beweging, geen JS) wordt hij nooit opgehaald
+      if (foto && foto.dataset.src && !foto.getAttribute('src')) foto.src = foto.dataset.src;
+      var bewegers = [document.querySelector('.site-header'), document.querySelector('main')].filter(Boolean);
+      var verstreken = 0;
+      try {
+        var an = doek && doek.getAnimations ? doek.getAnimations()[0] : null;
+        if (an && an.currentTime !== null) verstreken = Math.max(0, an.currentTime);
+      } catch (e) { /* oude browser: tel vanaf nu */ }
+      var klaar = false, snel = false, timers = [];
+      var na = function (ms, fn) { timers.push(setTimeout(fn, Math.max(0, ms - verstreken))); };
+      var opruimen = function () {
+        if (klaar) return;
+        klaar = true;
+        timers.forEach(clearTimeout);
+        signalen.forEach(function (s) { window.removeEventListener(s, overslaan, true); });
+        html.classList.remove('intro-aan');
+        intro.classList.remove('snel');
+        bewegers.forEach(function (el) { el.style.transform = ''; el.style.transition = ''; el.style.animation = ''; });
+        heroKlaar();
       };
-      if (document.readyState === 'complete') setTimeout(klaarIntro, 1100);
-      else window.addEventListener('load', function () { setTimeout(klaarIntro, 700); });
-      setTimeout(function () { if (!intro.classList.contains('weg')) klaarIntro(); }, 2600); // nooit langer wachten
-    }
+      var overslaan = function () {
+        if (klaar || snel) return;
+        snel = true;
+        // header en pagina vanaf hun huidige plek in 0,5 s naar 0 (binnen 0,6 s klaar)
+        bewegers.forEach(function (el) {
+          var nu = getComputedStyle(el).transform;
+          el.style.animation = 'none';
+          el.style.transform = nu === 'none' ? '' : nu;
+        });
+        void intro.offsetWidth;
+        bewegers.forEach(function (el) { el.style.transition = 'transform .5s cubic-bezier(.33,1,.68,1)'; el.style.transform = 'none'; });
+        intro.classList.add('snel');
+        heroKlaar();
+        timers.push(setTimeout(opruimen, 540));
+      };
+      var signalen = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'];
+      signalen.forEach(function (s) { window.addEventListener(s, overslaan, { capture: true, passive: true }); });
+      na(600, function () { if (foto && !(foto.complete && foto.naturalWidth > 0) && figuur) figuur.classList.add('zonder-foto'); });
+      na(2350, heroKlaar);           // woorden van de hero-kop komen op
+      na(3060, opruimen);            // de intro is klaar
+    })();
   } else {
-    heroKlaar();
+    html.classList.remove('intro-aan');
+    if (vanOvergang && overgang && !stil) {
+      overgang.style.transition = 'none';
+      overgang.classList.add('dicht');
+      requestAnimationFrame(function () {
+        overgang.style.transition = '';
+        overgang.classList.remove('dicht');
+        overgang.classList.add('open-boven');
+        setTimeout(function () { overgang.style.transition = 'none'; overgang.classList.remove('open-boven'); requestAnimationFrame(function () { overgang.style.transition = ''; }); }, 700);
+      });
+    }
+    setTimeout(heroKlaar, vanOvergang ? 250 : 0);
   }
 
   // Interne links naar een andere pagina: eerst het kleurvlak, dan pas wisselen.
@@ -124,10 +172,18 @@
   }
 
   /* ---------------------------------------------------------------
-     3. Collage: meebewegen met de muis en omdraaien
+     3. Collage: meebewegen en licht kantelen met de muis; de foto's wisselen
+        samen per schermhelft (set A "Het atelier" op terracotta, set B
+        "Het cadeau" op salie). Op touch en met het toetsenbord via de
+        wisselrij; een tik op een tegel wisselt ook. Er wisselt niets vanzelf.
      --------------------------------------------------------------- */
+  var SALIE = '#C3CFBC';
+  // diepe portfoliotinten (wit haalt daar 3:1, alleen voor grote tekst)
+  var DIEPE_TINTEN = ['#BC8B47', '#839C75', '#999575', '#C88654', '#AE8C94'];
+  var heroSets = [];
   document.querySelectorAll('.hero').forEach(function (hero) {
     var tegels = hero.querySelectorAll('.tegel');
+    var cirkel = hero.querySelector('.hero-cirkel');
     if (muis && !stil) {
       hero.addEventListener('mousemove', function (e) {
         var r = hero.getBoundingClientRect();
@@ -135,33 +191,117 @@
         var y = ((e.clientY - r.top) / r.height) * 2 - 1;
         tegels.forEach(function (t) {
           var d = parseFloat(t.dataset.diepte || '20');
-          t.style.transform = 'translate3d(' + (-x * d).toFixed(1) + 'px,' + (-y * d).toFixed(1) + 'px,0)';
+          // perspectief 1000 px, maximaal ±8° kantelen
+          t.style.transform = 'perspective(1000px) translate3d(' + (-x * d).toFixed(1) + 'px,' + (-y * d).toFixed(1) + 'px,0) rotateX(' + (-y * 8).toFixed(2) + 'deg) rotateY(' + (x * 8).toFixed(2) + 'deg)';
         });
+        if (cirkel) cirkel.style.translate = (-x * 18).toFixed(1) + 'px ' + (-y * 18).toFixed(1) + 'px';
       });
-      hero.addEventListener('mouseleave', function () { tegels.forEach(function (t) { t.style.transform = ''; }); });
+      hero.addEventListener('mouseleave', function () {
+        tegels.forEach(function (t) { t.style.transform = ''; });
+        if (cirkel) cirkel.style.translate = '';
+      });
     }
+    // De kop staat naast de foto's, niet erop: is de langste regel (afhankelijk
+    // van het lettertype) breder dan de ruimte tot de foto rechts ervan, dan
+    // wordt de kop iets kleiner (12 px lucht). Alleen vanaf 761 px.
+    var kop = hero.querySelector('.hero-tekst .kop-xl');
+    if (kop) {
+      var basisGrootte = kop.style.fontSize;
+      var pasKopIn = function () {
+        kop.style.fontSize = basisGrootte;
+        if (window.innerWidth <= 760) return;
+        for (var poging = 0; poging < 4; poging++) {
+          var bereik = document.createRange(); bereik.selectNodeContents(kop);
+          var regels = Array.prototype.slice.call(bereik.getClientRects()); // per regel(deel) van de tekst
+          var links = kop.getBoundingClientRect().left, factor = 1;
+          tegels.forEach(function (t) {
+            var r = t.getBoundingClientRect();
+            if (r.left <= links) return;
+            regels.forEach(function (g) {
+              if (g.width && g.bottom > r.top && g.top < r.bottom && g.right > r.left - 12) factor = Math.min(factor, (r.left - 12 - links) / (g.right - links));
+            });
+          });
+          if (factor >= 1) break;
+          kop.style.fontSize = Math.floor(parseFloat(getComputedStyle(kop).fontSize) * factor) + 'px';
+        }
+      };
+      pasKopIn();
+      window.addEventListener('resize', pasKopIn);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(pasKopIn);
+    }
+    if (!hero.hasAttribute('data-wissel')) return; // alleen de homepage heeft twee sets
+    var knoppen = Array.prototype.slice.call(hero.querySelectorAll('.hero-wissel button'));
+    var huidigeSet = 'a';
+    function zetSet(s) {
+      huidigeSet = s;
+      hero.classList.toggle('toon-b', s === 'b');
+      knoppen.forEach(function (k) { k.setAttribute('aria-pressed', k.dataset.set === s ? 'true' : 'false'); });
+      zetHeroKleur(s === 'b' ? SALIE : '');
+    }
+    heroSets.push(function () { if (huidigeSet !== 'a') zetSet('a'); });
+    knoppen.forEach(function (k) { k.addEventListener('click', function () { zetSet(k.dataset.set); }); });
+    if (!muis) tegels.forEach(function (t) { t.addEventListener('click', function () { zetSet(huidigeSet === 'a' ? 'b' : 'a'); }); });
     if (muis) {
-      var helft = '';
       hero.addEventListener('mousemove', function (e) {
-        var nu = e.clientX < window.innerWidth / 2 ? 'links' : 'rechts';
-        if (nu === helft) return;
-        helft = nu;
-        zetHeroKleur(nu === 'links' ? getComputedStyle(html).getPropertyValue('--terracotta').trim() : '#B4B19A');
+        var s = e.clientX < window.innerWidth / 2 ? 'a' : 'b';
+        if (s !== huidigeSet || heroKleurNu !== (s === 'b' ? SALIE : '')) zetSet(s);
       });
-      hero.addEventListener('mouseleave', function () { helft = ''; });
     }
-    tegels.forEach(function (t) {
-      function draai() { var om = t.classList.toggle('om'); t.setAttribute('aria-pressed', om ? 'true' : 'false'); }
-      t.setAttribute('aria-pressed', 'false');
-      if (!muis) t.addEventListener('click', draai);
-      t.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); draai(); } });
-    });
   });
 
   /* ---------------------------------------------------------------
      4. Portfolio: hover-lijst met foto's en achtergrondkleur
      --------------------------------------------------------------- */
-  document.querySelectorAll('.hoverlijst').forEach(function (lijst) {
+  // 4a. Portfolio met vijf sferen: alles tegelijk in 1 s rustig in-uit (laag in een
+  //     diepe tint, alle tekst wit, foto's met productregel, andere namen 0,35); wisselen
+  //     tussen items is een crossfade van 0,35 s. Weg, focus uit de lijst of Esc: terug.
+  document.querySelectorAll('.hoverlijst.sferen').forEach(function (lijst) {
+    var sectie = lijst.closest('.hoverlijst-sectie');
+    var knoppen = Array.prototype.slice.call(lijst.querySelectorAll('ul button'));
+    var sferen = Array.prototype.slice.call(lijst.querySelectorAll('.sfeer'));
+    var traagTimer = null;
+    function kies(k) {
+      var i = knoppen.indexOf(k);
+      knoppen.forEach(function (b) { b.classList.toggle('aan', b === k); });
+      sferen.forEach(function (s, n) { s.classList.toggle('aan', n === i); });
+      lijst.classList.add('actief');
+      if (sectie) sectie.classList.add('lijst-actief');
+      clearTimeout(traagTimer); laag.classList.add('traag'); // rustige overgang van 1 s bij aanwijzen
+      zetLaag(k.dataset.kleur);
+    }
+    function reset() {
+      if (!lijst.classList.contains('actief')) return;
+      lijst.classList.remove('actief');
+      if (sectie) sectie.classList.remove('lijst-actief');
+      knoppen.forEach(function (b) { b.classList.remove('aan'); });
+      lijst.style.setProperty('--my', '0');
+      laagBijwerken(true);
+      clearTimeout(traagTimer);
+      traagTimer = setTimeout(function () { laag.classList.remove('traag'); }, 1000); // daarna weer 0,75 s bij scrollen
+    }
+    knoppen.forEach(function (k) {
+      if (muis) k.addEventListener('mouseenter', function () { kies(k); });
+      k.addEventListener('focus', function () { kies(k); });
+      k.addEventListener('click', function () { kies(k); });
+    });
+    lijst.addEventListener('focusout', function (e) {
+      if (e.relatedTarget && lijst.contains(e.relatedTarget)) return;
+      if (muis && lijst.matches(':hover')) return; // de muis staat er nog op
+      reset();
+    });
+    lijst.addEventListener('keydown', function (e) { if (e.key === 'Escape') reset(); });
+    if (muis) {
+      lijst.addEventListener('mouseleave', reset);
+      if (!stil) {
+        lijst.addEventListener('mousemove', function (e) {
+          var r = lijst.getBoundingClientRect();
+          lijst.style.setProperty('--my', (((e.clientY - r.top) / r.height) * 2 - 1).toFixed(3));
+        });
+      }
+    }
+  });
+
+  document.querySelectorAll('.hoverlijst:not(.sferen)').forEach(function (lijst) {
     var sectie = lijst.closest('.hoverlijst-sectie');
     var groot = lijst.querySelector('.groot');
     var klein = lijst.querySelector('.klein-beeld');
@@ -202,34 +342,89 @@
   });
 
   /* ---------------------------------------------------------------
-     5. Personaliseren: woordenlijst, foto draait per techniek in beeld
+     5. Personaliseren: media-slider. Alleen een klik, Enter of Spatie wisselt
+        (aanwijzen en focus niet). De oude foto schuift in 1,2 s naar links weg,
+        de nieuwe draait van rechts in; de tekst gaat per regel omhoog weg en
+        de nieuwe komt vanaf 0,5 s binnen; de laag kleurt in 0,75 s mee.
+        Klik je tijdens een wissel, dan springt die eerst naar het eind.
      --------------------------------------------------------------- */
-  document.querySelectorAll('.woordenlijst').forEach(function (lijst) {
-    var sectie = lijst.closest('.woorden-sectie');
-    var knoppen = lijst.querySelectorAll('.woorden button');
-    var dias = lijst.querySelectorAll('.dia');
-    var teksten = lijst.querySelectorAll('.woorden-uitleg p');
-    var huidig = 0;
-    function kies(i) {
-      if (i === huidig) return;
-      dias.forEach(function (d, n) {
-        d.classList.toggle('aan', n === i);
-        d.classList.toggle('weg', n === huidig);
-        if (n !== i && n !== huidig) d.classList.remove('weg');
-      });
-      var vorige = dias[huidig];
-      setTimeout(function () { if (!vorige.classList.contains('aan')) { vorige.style.transition = 'none'; vorige.classList.remove('weg'); void vorige.offsetWidth; vorige.style.transition = ''; } }, stil ? 0 : 1000);
-      knoppen.forEach(function (b, n) { b.classList.toggle('aan', n === i); b.setAttribute('aria-pressed', n === i ? 'true' : 'false'); });
-      teksten.forEach(function (t, n) { t.classList.toggle('aan', n === i); });
-      if (sectie) { sectie.setAttribute('data-achtergrond', knoppen[i].dataset.kleur); laagBijwerken(true); }
-      huidig = i;
-    }
-    knoppen.forEach(function (b, n) {
-      if (muis) b.addEventListener('mouseenter', function () { kies(n); });
-      b.addEventListener('click', function () { kies(n); });
-      b.addEventListener('focus', function () { kies(n); });
+  document.querySelectorAll('.slider').forEach(function (slider) {
+    var sectie = slider.closest('.slider-sectie');
+    var lijst = slider.querySelector('.slider-tabs');
+    var paneel = slider.querySelector('.slider-teksten');
+    var tabs = Array.prototype.slice.call(slider.querySelectorAll('.slider-tab'));
+    var dias = Array.prototype.slice.call(slider.querySelectorAll('.dia'));
+    var teksten = Array.prototype.slice.call(slider.querySelectorAll('.techniek'));
+    if (!lijst || !paneel || !tabs.length) return;
+    // tabbladen (rollen pas met JavaScript; zonder JS staan de technieken onder elkaar)
+    lijst.setAttribute('role', 'tablist');
+    lijst.setAttribute('aria-label', 'Technieken');
+    paneel.setAttribute('role', 'tabpanel');
+    tabs.forEach(function (t, n) {
+      t.setAttribute('role', 'tab');
+      t.setAttribute('aria-controls', paneel.id);
     });
-    if (sectie) sectie.setAttribute('data-achtergrond', knoppen[0].dataset.kleur);
+    var huidig = 0, lopend = [], opruimen = null;
+    var EASE = 'cubic-bezier(.76,0,.24,1)';
+    function zetTabs(i) {
+      tabs.forEach(function (t, n) { t.setAttribute('aria-selected', n === i ? 'true' : 'false'); t.tabIndex = n === i ? 0 : -1; });
+      paneel.setAttribute('aria-labelledby', tabs[i].id);
+      teksten.forEach(function (x, n) { x.setAttribute('aria-hidden', n === i ? 'false' : 'true'); });
+    }
+    function naarHetEind() {
+      if (!opruimen) return;
+      lopend.forEach(function (a) { try { a.finish(); } catch (e) { /* al klaar */ } });
+      var f = opruimen; opruimen = null; f();
+    }
+    function regels(el) { return Array.prototype.slice.call(el.children); }
+    function kies(i) {
+      naarHetEind();
+      if (i === huidig) return;
+      var oud = huidig; huidig = i;
+      zetTabs(i);
+      if (sectie) { sectie.setAttribute('data-achtergrond', tabs[i].dataset.kleur); laagBijwerken(true); }
+      var dOud = dias[oud], dNieuw = dias[i], tOud = teksten[oud], tNieuw = teksten[i];
+      dNieuw.classList.add('aan'); tNieuw.classList.add('aan');
+      if (stil || !dNieuw.animate) { dOud.classList.remove('aan'); tOud.classList.remove('aan'); return; }
+      dNieuw.style.zIndex = '2'; dOud.style.zIndex = '1';
+      lopend = [
+        dOud.animate([{ transform: 'none' }, { transform: 'translateX(-150%)' }], { duration: 1200, easing: EASE, fill: 'forwards' }),
+        dNieuw.animate([{ transform: 'translateX(150%) rotate(90deg)' }, { transform: 'none' }], { duration: 1200, easing: EASE, fill: 'backwards' })
+      ];
+      regels(tOud).forEach(function (el, n) {
+        lopend.push(el.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-40px)', opacity: 0 }], { duration: 500, delay: n * 60, easing: 'cubic-bezier(.55,0,.1,1)', fill: 'forwards' }));
+      });
+      regels(tNieuw).forEach(function (el, n) {
+        lopend.push(el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 700, delay: 500 + n * 80, easing: 'cubic-bezier(.33,1,.68,1)', fill: 'backwards' }));
+      });
+      var deze = function () {
+        dOud.classList.remove('aan'); tOud.classList.remove('aan');
+        dOud.style.zIndex = ''; dNieuw.style.zIndex = '';
+        lopend.forEach(function (a) { a.cancel(); });
+        lopend = [];
+      };
+      opruimen = deze;
+      Promise.all(lopend.map(function (a) { return a.finished; })).then(function () {
+        if (opruimen === deze) { opruimen = null; deze(); }
+      }, function () { /* afgebroken door een nieuwe klik */ });
+    }
+    tabs.forEach(function (t, n) {
+      t.addEventListener('click', function () { kies(n); });
+    });
+    // pijltoetsen verplaatsen alleen de focus (handmatige activering met Enter of Spatie)
+    lijst.addEventListener('keydown', function (e) {
+      var n = tabs.indexOf(document.activeElement), doel = null;
+      if (n < 0) return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') doel = (n + 1) % tabs.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') doel = (n - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home') doel = 0;
+      else if (e.key === 'End') doel = tabs.length - 1;
+      if (doel === null) return;
+      e.preventDefault();
+      tabs[doel].focus();
+    });
+    zetTabs(0);
+    if (sectie) sectie.setAttribute('data-achtergrond', tabs[0].dataset.kleur);
   });
 
   /* ---------------------------------------------------------------
@@ -250,15 +445,18 @@
     kolom.addEventListener('mouseleave', dicht);
   });
   // Binnen de bovenkant blijft de kleur staan zoals bij Stock; wie de bovenkant
-  // verlaat, krijgt weer terracotta (wit op perzik of olijf leest slecht)
+  // verlaat, krijgt weer set A en terracotta. Bij focus alleen als de focus
+  // echt naar iets buiten de bovenkant gaat (een tik op een lege plek of op
+  // een tegel laat de gekozen set staan).
+  function terugNaarA() { heroSets.forEach(function (f) { f(); }); zetHeroKleur(''); }
   heroKleurEls.forEach(function (el) {
     el.addEventListener('mouseleave', function (e) {
       if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.hero-kleur')) return;
-      zetHeroKleur('');
+      terugNaarA();
     });
     el.addEventListener('focusout', function (e) {
-      if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.hero-kleur')) return;
-      zetHeroKleur('');
+      if (!e.relatedTarget || (e.relatedTarget.closest && e.relatedTarget.closest('.hero-kleur'))) return;
+      terugNaarA();
     });
   });
 
@@ -316,11 +514,18 @@
         var omgeving = huidig.closest('.op-kleur, .op-wit, .op-grijs') || huidig;
         kleuren.forEach(function (k) { balk.classList.toggle(k, omgeving.classList.contains(k)); });
       }
+      var diep = false;
       if (laatste) {
         var omg = laatste.closest('.op-kleur, .op-wit, .op-grijs') || laatste;
         balk.style.backgroundColor = omg.classList.contains('met-laag') ? laagKleur : (omg.style.backgroundColor || '');
+        // diepe portfoliotint onder de balk: wit logo; label en burger blijven inkt
+        diep = omg.classList.contains('met-laag') && DIEPE_TINTEN.indexOf((laagKleur || '').toUpperCase()) >= 0;
       }
-      if (burger) burger.classList.toggle('donker', voorbij && !balk.classList.contains('op-kleur'));
+      balk.classList.toggle('diep', diep);
+      // boven een lichte bovenkant (salie, perzik ...) zijn balklogo en burger donker
+      var inBovenkant = !!(laatste && laatste.closest('.hero-kleur'));
+      balk.classList.toggle('licht', heroLicht && inBovenkant);
+      if (burger) burger.classList.toggle('donker', voorbij ? (!balk.classList.contains('op-kleur') || (heroLicht && inBovenkant)) : heroLicht);
     };
     balkBijwerken = bijwerken;
     var gepland = false;
@@ -361,7 +566,7 @@
     var io = new IntersectionObserver(function (items) {
       items.forEach(function (it) { if (it.isIntersecting) { it.target.classList.add('in-beeld'); io.unobserve(it.target); } });
     }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta a, main .prijs, main .woorden-tekst, main .uitgelicht-tekst, main .formulier, main .contact-links').forEach(function (el, i) {
+    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier, main .contact-links').forEach(function (el, i) {
       if (el.closest('.hero') || el.closest('.statement')) return;
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';
@@ -370,28 +575,46 @@
     document.querySelectorAll('main .woorden-kop').forEach(function (el) { if (!el.closest('.hero')) io.observe(el); });
     /* 003 Zo werkt het: rondjes en lijnstukken tekenen zich één keer, 01 → 02 → 03 (CSS .stappen.teken) */
     document.querySelectorAll('main .stappen').forEach(function (el) { el.classList.add('teken'); io.observe(el); });
-    document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
+    document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld img, main .contact-foto').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
   }
 
   /* ---------------------------------------------------------------
-     8. Lopende tekst en draaiende badge, gekoppeld aan het scrollen
+     8. Lopende tekst (CSS: een halve spoorbreedte in 15 s, los van het
+        scrollen) pauzeert buiten beeld; de foto in Uitgelicht schuift licht
+        mee met de muis boven de lopende regel. De badge draait mee met scrollen.
      --------------------------------------------------------------- */
-  var sporen = Array.prototype.slice.call(document.querySelectorAll('.lopend-spoor'));
-  var badges = Array.prototype.slice.call(document.querySelectorAll('.badge'));
-  if (!stil && (sporen.length || badges.length)) {
-    var start = performance.now();
-    var tik = function (nu) {
-      var y = window.scrollY;
-      var drift = (nu - start) * 0.02;
-      sporen.forEach(function (s) {
-        var helft = s.scrollWidth / 2 || 1;
-        var x = (y * 0.45 + drift) % helft;
-        s.style.transform = 'translate3d(' + (-x).toFixed(1) + 'px,0,0)';
+  var lopers = Array.prototype.slice.call(document.querySelectorAll('.lopend'));
+  if ('IntersectionObserver' in window && lopers.length) {
+    var lopIo = new IntersectionObserver(function (items) {
+      items.forEach(function (it) { it.target.classList.toggle('pauze', !it.isIntersecting); });
+    });
+    lopers.forEach(function (l) { lopIo.observe(l); });
+  }
+  if (muis && !stil) {
+    document.querySelectorAll('.uitgelicht').forEach(function (blok) {
+      var beeld = blok.querySelector('.uitgelicht-beeld');
+      var regel = blok.querySelector('.lopend');
+      if (!beeld || !regel) return;
+      blok.addEventListener('mousemove', function (e) {
+        var r = regel.getBoundingClientRect();
+        if (e.clientY < r.top || e.clientY > r.bottom) { beeld.style.translate = ''; return; }
+        var b = beeld.getBoundingClientRect();
+        var dx = Math.max(-36, Math.min(36, (e.clientX - (b.left + b.width / 2 - (parseFloat(beeld.style.translate) || 0))) * 0.05));
+        beeld.style.translate = dx.toFixed(1) + 'px 0';
       });
+      blok.addEventListener('mouseleave', function () { beeld.style.translate = ''; });
+    });
+  }
+  var badges = Array.prototype.slice.call(document.querySelectorAll('.badge'));
+  if (!stil && badges.length) {
+    var draaiBadges = function () {
+      var y = window.scrollY;
       badges.forEach(function (b) { b.style.transform = 'rotate(' + (y * 0.18).toFixed(1) + 'deg)'; });
-      requestAnimationFrame(tik);
     };
-    requestAnimationFrame(tik);
+    var badgeGepland = false;
+    window.addEventListener('scroll', function () {
+      if (!badgeGepland) { badgeGepland = true; requestAnimationFrame(function () { badgeGepland = false; draaiBadges(); }); }
+    }, { passive: true });
   }
 
   /* ---------------------------------------------------------------
@@ -409,6 +632,7 @@
       cursor.classList.toggle('groot', !!doel && !tekst);
       if (tekst) cLabel.textContent = tekst;
       var kleurvlak = e.target.closest('.op-kleur, .statement, .menu-scherm');
+      if (kleurvlak && heroLicht && kleurvlak.closest('.hero-kleur')) kleurvlak = null;
       cursor.classList.toggle('op-kleur-c', !!kleurvlak && !tekst);
     });
     document.addEventListener('mouseleave', function () { cursor.classList.remove('zichtbaar'); });

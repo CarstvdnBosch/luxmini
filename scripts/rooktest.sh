@@ -36,6 +36,17 @@ check "Oud Wix-adres"         301 "$BASIS/aanbod"
 check "Onbekende pagina"      404 "$BASIS/bestaat-niet"
 check "Formulier (GET)"       303 "$BASIS/api/contact"
 
+# CSS en JS: geen lange cache zonder hercontrole (anders blijft na een release de oude versie staan)
+for pad in /assets/css/style.css /assets/js/main.js; do
+  cc=$(curl -sI "$BASIS$pad" | tr -d '\r' | grep -i '^cache-control:' | cut -d: -f2- | tr 'A-Z' 'a-z')
+  leeftijd=$(printf '%s' "$cc" | grep -o 'max-age=[0-9]*' | cut -d= -f2)
+  if [ -n "$leeftijd" ] && [ "$leeftijd" -gt 0 ] && ! printf '%s' "$cc" | grep -q -e must-revalidate -e no-cache; then
+    echo "x Cache $pad: '$cc' cachet lang zonder hercontrole"; fout=1
+  else
+    echo "✓ Cache $pad ($cc)"
+  fi
+done
+
 if [ "$fout" -ne 0 ]; then
   echo "Rooktest MISLUKT. Terugdraaien: Cloudflare-dashboard → Workers & Pages → luxmini → Deployments → vorige versie → Rollback."
   exit 1
