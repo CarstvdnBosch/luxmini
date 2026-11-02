@@ -6,12 +6,13 @@ Hosting: **Cloudflare Workers** (statische bestanden uit `public/` + een kleine 
 
 ## Werkwijze: AI-PDLC
 
-Elke wijziging volgt `docs/ai-pdlc.md`: **plannen → bouwen → controleren → release**. Start met `/website-update <wens>`.
+Elke wijziging volgt `docs/ai-pdlc.md`: **plannen → bouwen → controleren → ontwerpgate → release**. Start met `/website-update <wens>`.
 
-1. **website-planner** maakt een brief met acceptatiecriteria in `docs/wijzigingen/`.
+1. **website-planner** maakt een brief met acceptatiecriteria in `docs/wijzigingen/`. Bij zichtbare wijzigingen vult **website-ontwerper** (senior UX/UI) de ontwerprichting en ontwerpcriteria aan.
 2. **website-bouwer** voert die uit op een branch `wijziging/<naam>` en draait `npm test` en `python3 scripts/controleer.py`.
-3. **website-controleur** toetst onafhankelijk; bij NIET AKKOORD terug naar de bouwer (max. 3 rondes).
-4. Bij AKKOORD: branch pushen en pull request openen → GitHub draait de controles, Cloudflare maakt een preview → **een mens** bekijkt die en merget naar `main` → Cloudflare zet live, de rooktest controleert.
+3. **website-controleur** toetst onafhankelijk of het werkt en klopt; bij NIET AKKOORD terug naar de bouwer (max. 3 rondes).
+4. **Ontwerpgate:** **website-ontwerper** beoordeelt de schermen (desktop, tablet, mobiel; `python3 scripts/schermafdrukken.py`) tegen `docs/ontwerp/principes.md` en de ontwerpregels hieronder; bij ONTWERP NIET AKKOORD terug naar de bouwer (max. 3 rondes).
+5. Bij beide AKKOORD: branch pushen en pull request openen → GitHub draait de controles, Cloudflare maakt een preview → **een mens** bekijkt die en merget naar `main` → Cloudflare zet live, de rooktest controleert.
 
 Agents mergen nooit naar `main` en zetten nooit zelf iets live.
 
@@ -30,7 +31,8 @@ Agents mergen nooit naar `main` en zetten nooit zelf iets live.
 - `.github/workflows/` — `controle.yml` (gate 1 en 2 bij elke pull request), `rooktest.yml` (gate 3 na live zetten en dagelijks)
 - `tests/` — tests voor het formulier (`npm test`)
 - `scripts/controleer.py` — sitecontrole met screenshots; `scripts/rooktest.sh` — controle van de live site
-- `docs/` — AI-PDLC, wijzigingsbriefs, fotolijst (niet online)
+- `docs/` — AI-PDLC, wijzigingsbriefs, fotolijst, `ontwerp/` (UX-principes en ontwerpreviews) (niet online)
+- `scripts/schermafdrukken.py` — schermafdrukken per schermhoogte voor de ontwerpgate
 
 ## Ontwerpregels (niet zonder overleg veranderen)
 

@@ -66,7 +66,7 @@ De registratie blijft bij GoDaddy; alleen de nameservers gaan naar Cloudflare.
 1. Open deze map in Claude Code.
 2. Eenmalig: `npm install`, `pip install playwright opencv-python` en `playwright install chromium`. Doe op deze computer **geen** `wrangler login`: live zetten gaat alleen via Cloudflare Workers Builds na een merge.
 3. Typ bijvoorbeeld: `/website-update Voeg portfolio-item "Voor Lisa" toe met de foto's in ~/Downloads/lisa`
-4. De agents plannen, bouwen en controleren de wijziging, pushen een branch en openen een pull request. GitHub draait de controles; Cloudflare zet de preview-link erbij.
+4. De agents plannen, bouwen, controleren (werking én ontwerp, met een eigen UX/UI-ontwerper als poort) de wijziging, pushen een branch en openen een pull request. GitHub draait de controles; Cloudflare zet de preview-link erbij.
 5. Bekijk de preview op je computer en je telefoon. Is alles goed en zijn de controles groen, klik dan op **Merge**. Cloudflare zet de site live; de rooktest controleert hem daarna.
 
 Meer uitleg: `docs/ai-pdlc.md`. Gewenste nieuwe foto's: `docs/fotolijst.md`.
