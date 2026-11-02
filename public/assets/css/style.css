@@ -300,16 +300,75 @@ a:hover { opacity: .8; }
    Interacties naar het voorbeeld van stockdutchdesign.com
    ===================================================================== */
 
-/* ---------- Intro-scherm (eerste bezoek per sessie) ---------- */
+/* ---------- Intro-scherm (eerste bezoek per sessie, ca. 3,05 s) ----------
+   Het script in <head> zet .intro-aan alleen bij het eerste bezoek per sessie,
+   niet na een pagina-overgang en niet bij "minder beweging". De hele tijdlijn
+   staat hieronder in CSS en begint dus direct, zonder op "load" te wachten.
+   0,10 logo · 0,35 perzik vlak · 0,65 masker + foto · 0,75/0,87 tekstregels ·
+   1,90 uitgang (logo, regels, 2,00 figuur, 2,05 doek en pagina) · 3,05 klaar */
+:root { --p3-uit: cubic-bezier(.33,1,.68,1); --in-uit: cubic-bezier(.76,0,.24,1); --intro-y: 80px; }
 .intro-scherm { display: none; }
-/* Noodrem: ook als main.js niet laadt, schuift het scherm na 2,4 s altijd weg */
-.js .intro-scherm { display: flex; position: fixed; inset: 0; z-index: 100; background: var(--salie); align-items: center; justify-content: center; transition: transform .9s cubic-bezier(.76,0,.24,1); animation: intro-nood .9s 2.4s cubic-bezier(.76,0,.24,1) forwards; }
-@keyframes intro-nood { to { transform: translateY(-100%); visibility: hidden; pointer-events: none; } }
-.js .intro-scherm.weg { transform: translateY(-100%); pointer-events: none; }
-.js .intro-scherm.verborgen { display: none; }
-.intro-logo { overflow: hidden; }
-.intro-logo img { width: clamp(150px, 18vw, 240px); height: auto; transform: translateY(110%); animation: intro-logo 1s .15s cubic-bezier(.2,.7,.2,1) forwards; }
-@keyframes intro-logo { to { transform: none; } }
+.js.intro-aan .intro-scherm { display: block; position: fixed; inset: 0; z-index: 100; overflow: hidden; color: var(--wit);
+  /* klikken gaan na 2,3 s door naar de pagina; noodrem: altijd weg vóór 4,0 s, ook als main.js niet draait */
+  animation: intro-door 0s 2.3s forwards, intro-nood .3s 3.65s forwards; }
+@keyframes intro-door { to { pointer-events: none; } }
+@keyframes intro-nood { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+/* overslaan (tik, klik, toets, scroll): de uitgang is binnen 0,6 s klaar (0,5 s) */
+.js.intro-aan .intro-scherm.snel { transform: translateY(-100%); transition: transform .5s var(--in-uit); pointer-events: none; }
+.intro-doek { position: absolute; inset: 0; background: var(--terracotta); }
+.intro-inhoud { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; }
+.intro-logo img { width: 200px; height: auto; }
+.intro-podium { position: relative; display: flex; flex-direction: column; align-items: center; }
+.intro-figuur { position: relative; overflow: hidden; width: min(25vw, calc((100svh - 240px) * 25 / 35)); aspect-ratio: 25 / 35; }
+.intro-vlak, .intro-masker { position: absolute; inset: 0; }
+.intro-vlak { background: var(--perzik); }
+.intro-masker { overflow: hidden; }
+.intro-foto { width: 100%; height: 100%; object-fit: cover; }
+.intro-figuur.zonder-foto .intro-masker { visibility: hidden; } /* foto na 0,6 s niet geladen: alleen het perzik vlak */
+.intro-regel { margin: 0; overflow: hidden; white-space: nowrap; font-family: var(--display); font-weight: 400; font-size: clamp(40px, 4.4vw, 64px); line-height: 1.1; padding-bottom: .1em; }
+.intro-regel span { display: block; }
+/* desktop: regel 1 eindigt 24 px links van de figuur (40% hoogte), regel 2 begint 24 px rechts (62%) */
+@media (min-width: 1025px) {
+  .intro-regel { position: absolute; translate: 0 -50%; }
+  .intro-regel.r1 { right: calc(100% + 24px); top: 40%; text-align: right; }
+  .intro-regel.r2 { left: calc(100% + 24px); top: 62%; }
+}
+/* tot en met 1024 px: beide regels gecentreerd onder de figuur */
+@media (max-width: 1024px) {
+  .intro-figuur { width: min(36vw, calc((100svh - 400px) * 25 / 35)); }
+  .intro-regel { text-align: center; }
+  .intro-regel.r1 { margin-top: 24px; }
+}
+@media (max-width: 760px) {
+  :root { --intro-y: 48px; }
+  .intro-logo img { width: 160px; }
+  .intro-figuur { width: min(56vw, calc((100svh - 360px) * 25 / 35)); }
+  .intro-regel { font-size: 40px; }
+}
+/* de tijdlijn */
+.js.intro-aan .intro-logo { animation: intro-zichtbaar .5s .1s var(--p3-uit) both, intro-vervaag .3s 1.9s linear forwards; }
+.js.intro-aan .intro-vlak { animation: intro-van-onder .9s .35s var(--p3-uit) both; }
+.js.intro-aan .intro-masker { animation: intro-masker .9s .65s var(--p3-uit) both; }
+.js.intro-aan .intro-foto { animation: intro-foto .9s .65s var(--p3-uit) both; }
+.js.intro-aan .intro-regel span { animation: intro-van-onder .8s .75s var(--p3-uit) both; }
+.js.intro-aan .intro-regel.r2 span { animation-delay: .87s; }
+.js.intro-aan .intro-regel { animation: intro-schermhoog 1s 1.9s var(--in-uit) forwards; }
+.js.intro-aan .intro-regel.r2 { animation-delay: 1.96s; }
+.js.intro-aan .intro-figuur { animation: intro-figuur-weg 1s 2s var(--in-uit) forwards; }
+.js.intro-aan .intro-doek { animation: intro-doek-weg 1s 2.05s var(--p3-uit) forwards; }
+/* de pagina komt van 80 px (mobiel 48 px) omhoog terwijl het doek optrekt */
+.js.intro-aan .site-header, .js.intro-aan main { animation: intro-pagina 1s 2.05s var(--p3-uit) both; }
+@keyframes intro-zichtbaar { from { opacity: 0; } }
+@keyframes intro-vervaag { to { opacity: 0; } }
+@keyframes intro-van-onder { from { transform: translateY(100%); } }
+@keyframes intro-masker { from { transform: translateY(101%); } }
+@keyframes intro-foto { from { transform: translateY(-80%); } }
+@keyframes intro-schermhoog { to { transform: translateY(-100vh); } }
+@keyframes intro-figuur-weg { to { transform: translateY(calc(-100vh - 100%)); } }
+@keyframes intro-doek-weg { to { transform: translateY(-100%); } }
+@keyframes intro-pagina { from { transform: translateY(var(--intro-y)); } }
+/* "Naar de inhoud" komt na de eerste Tab boven de wegschuivende intro */
+.skip:focus { z-index: 110; }
 
 /* ---------- Pagina-overgang ---------- */
 .overgang { position: fixed; inset: 0; z-index: 99; background: var(--terracotta); transform: translateY(100%); pointer-events: none; transition: transform .6s cubic-bezier(.76,0,.24,1); }
@@ -428,8 +487,8 @@ html.menu-is-open { overflow: hidden; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .js .intro-scherm { display: none; }
-  .js .intro-scherm { animation: none; }
+  .js.intro-aan .intro-scherm { display: none; }
+  .js.intro-aan .site-header, .js.intro-aan main { animation: none; }
   .overgang, .dia, .menu-scherm, .menu-nav a, .menu-kolom, .menu-foto { transition: none; }
   .js .dia, .js .dia.aan { transition: none; } /* dia's wisselen direct */
   .js .woorden-kop .w > span, .js img.zoom, .js .hero .tegel, .js .hero .hero-cirkel { transform: none; translate: none; opacity: 1; transition: none; }

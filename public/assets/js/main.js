@@ -38,34 +38,66 @@
 
   function heroKlaar() { if (heroEl) heroEl.classList.add('klaar'); document.dispatchEvent(new Event('lux:klaar')); }
 
-  if (intro) {
-    var alGezien = opslag.lees('lux-intro-gezien') === '1';
-    if (stil || alGezien || vanOvergang) {
-      intro.classList.add('verborgen');
-      if (vanOvergang && overgang && !stil) {
-        overgang.style.transition = 'none';
-        overgang.classList.add('dicht');
-        requestAnimationFrame(function () {
-          overgang.style.transition = '';
-          overgang.classList.remove('dicht');
-          overgang.classList.add('open-boven');
-          setTimeout(function () { overgang.style.transition = 'none'; overgang.classList.remove('open-boven'); requestAnimationFrame(function () { overgang.style.transition = ''; }); }, 700);
-        });
-      }
-      setTimeout(heroKlaar, vanOvergang ? 250 : 0);
-    } else {
-      opslag.zet('lux-intro-gezien', '1');
-      var klaarIntro = function () {
-        intro.classList.add('weg');
-        setTimeout(heroKlaar, 250);
-        setTimeout(function () { intro.classList.add('verborgen'); }, 1000);
+  // Het script in <head> heeft al besloten of de intro komt (.intro-aan) en
+  // de tijdlijn loopt in CSS. Hier: hero-kop op ~2,35 s, klaar op ~3,05 s,
+  // overslaan met tik, klik, toets, scroll of vegen (dan klaar in 0,6 s).
+  if (intro && html.classList.contains('intro-aan') && !stil) {
+    (function () {
+      var doek = intro.querySelector('.intro-doek');
+      var figuur = intro.querySelector('.intro-figuur');
+      var foto = intro.querySelector('.intro-foto');
+      var bewegers = [document.querySelector('.site-header'), document.querySelector('main')].filter(Boolean);
+      var verstreken = 0;
+      try {
+        var an = doek && doek.getAnimations ? doek.getAnimations()[0] : null;
+        if (an && an.currentTime !== null) verstreken = Math.max(0, an.currentTime);
+      } catch (e) { /* oude browser: tel vanaf nu */ }
+      var klaar = false, snel = false, timers = [];
+      var na = function (ms, fn) { timers.push(setTimeout(fn, Math.max(0, ms - verstreken))); };
+      var opruimen = function () {
+        if (klaar) return;
+        klaar = true;
+        timers.forEach(clearTimeout);
+        signalen.forEach(function (s) { window.removeEventListener(s, overslaan, true); });
+        html.classList.remove('intro-aan');
+        intro.classList.remove('snel');
+        bewegers.forEach(function (el) { el.style.transform = ''; el.style.transition = ''; el.style.animation = ''; });
+        heroKlaar();
       };
-      if (document.readyState === 'complete') setTimeout(klaarIntro, 1100);
-      else window.addEventListener('load', function () { setTimeout(klaarIntro, 700); });
-      setTimeout(function () { if (!intro.classList.contains('weg')) klaarIntro(); }, 2600); // nooit langer wachten
-    }
+      var overslaan = function () {
+        if (klaar || snel) return;
+        snel = true;
+        // header en pagina vanaf hun huidige plek in 0,5 s naar 0 (binnen 0,6 s klaar)
+        bewegers.forEach(function (el) {
+          var nu = getComputedStyle(el).transform;
+          el.style.animation = 'none';
+          el.style.transform = nu === 'none' ? '' : nu;
+        });
+        void intro.offsetWidth;
+        bewegers.forEach(function (el) { el.style.transition = 'transform .5s cubic-bezier(.33,1,.68,1)'; el.style.transform = 'none'; });
+        intro.classList.add('snel');
+        heroKlaar();
+        timers.push(setTimeout(opruimen, 540));
+      };
+      var signalen = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'];
+      signalen.forEach(function (s) { window.addEventListener(s, overslaan, { capture: true, passive: true }); });
+      na(600, function () { if (foto && !(foto.complete && foto.naturalWidth > 0) && figuur) figuur.classList.add('zonder-foto'); });
+      na(2350, heroKlaar);           // woorden van de hero-kop komen op
+      na(3060, opruimen);            // de intro is klaar
+    })();
   } else {
-    heroKlaar();
+    html.classList.remove('intro-aan');
+    if (vanOvergang && overgang && !stil) {
+      overgang.style.transition = 'none';
+      overgang.classList.add('dicht');
+      requestAnimationFrame(function () {
+        overgang.style.transition = '';
+        overgang.classList.remove('dicht');
+        overgang.classList.add('open-boven');
+        setTimeout(function () { overgang.style.transition = 'none'; overgang.classList.remove('open-boven'); requestAnimationFrame(function () { overgang.style.transition = ''; }); }, 700);
+      });
+    }
+    setTimeout(heroKlaar, vanOvergang ? 250 : 0);
   }
 
   // Interne links naar een andere pagina: eerst het kleurvlak, dan pas wisselen.

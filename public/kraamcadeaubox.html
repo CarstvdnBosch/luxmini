@@ -17,12 +17,23 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;1,400&family=Source+Sans+3:wght@400;600;700&display=swap">
-<script>document.documentElement.classList.add('js');setTimeout(function(){if(!window.luxKlaar)document.documentElement.classList.remove('js')},2500)</script>
+<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;if(s.getItem('lux-intro-gezien')!=='1'&&s.getItem('lux-overgang')!=='1'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan')},2500)})(document)</script>
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 <a class="skip" href="#inhoud">Naar de inhoud</a>
-<div class="intro-scherm" aria-hidden="true"><div class="intro-logo"><img src="assets/img/logo-luxmini-wit.png" alt="" width="248" height="94"></div></div>
+<!-- Intro bij het eerste bezoek per sessie (alleen met JavaScript en zonder "minder beweging") -->
+<div class="intro-scherm" aria-hidden="true">
+  <div class="intro-doek"></div>
+  <div class="intro-inhoud">
+    <div class="intro-logo"><img src="assets/img/logo-luxmini-wit.png" alt="" width="248" height="93"></div>
+    <div class="intro-podium">
+      <div class="intro-figuur"><div class="intro-vlak"></div><div class="intro-masker"><img class="intro-foto" src="assets/img/p-knuffel-naam.jpg" alt="" width="675" height="900" loading="lazy"></div></div>
+      <p class="intro-regel r1"><span>Ieder nieuw leven</span></p>
+      <p class="intro-regel r2"><span>is bijzonder</span></p>
+    </div>
+  </div>
+</div>
 <div class="overgang" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"><span class="cursor-label"></span></div>
 <button class="burger" type="button" aria-expanded="false" aria-controls="menu-scherm" aria-label="Menu openen"><span></span><span></span><span></span></button>
