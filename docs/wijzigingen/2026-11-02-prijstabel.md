@@ -117,3 +117,4 @@ Alle vier besloten (2026-11-02):
 | Preview bekeken | [mens] | |
 | Live gezet (merge) | [mens] | |
 | Wens na review | Carst | Tabel midden op de pagina in plaats van links uitgelijnd met het label (wijzigt ontwerpcriterium 11). Gebouwd: `.prijstabel-blok` max. 880 px, `margin-inline: auto`, pijl-link gecentreerd. |
+| Controleren + ontwerpgate (wens) | website-controleur via gates / website-ontwerper | Eén CSS-regel; npm test en controleer.py groen, scrollWidth gelijk aan venster op 1440/768/390. ONTWERP AKKOORD: label links en tabel midden is consistent met sectie 002. |
