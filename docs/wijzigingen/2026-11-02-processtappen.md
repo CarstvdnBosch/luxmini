@@ -109,7 +109,8 @@ Wens van Carst: "Dit is een process flow… nu lijken het een beetje losse stapp
 |---|---|---|
 | Plannen | website-planner | Brief klaar, 2026-11-02 |
 | Bouwen | website-bouwer | Klaar, 2026-11-02, branch `wijziging/processtappen`. Sectie 003 is een `<ol class="stappen">` met drie `.stap`; rondjes, lijnstukken en pijlpuntjes in inkt (pseudo-elementen); horizontaal vanaf 1025 px, verticaal tot en met 1024 px; tekenen één keer via de bestaande IntersectionObserver (`.teken`/`.in-beeld`), klaar na ca. 1,2 s. `.kolommen`/`.kolom` weg. Nieuwe controle `controleer_stappen` in `scripts/controleer.py`; `.stappen` ook in eindstand gezet in de screenshotscripts. Gemeten: rondjes en koppen op 1440 op gelijke hoogte (verschil 0 px), 12 px lucht rond elk rondje, scrollWidth 1440/768/390 = vensterbreedte, alles `rgb(32,32,32)`. Ritme 002/003/004 gelijk aan vóór de wijziging. `npm test` 6/6 en `controleer.py` zonder fouten. Let op: op 768 staat "wordt." alleen op de laatste regel van alinea 01. |
-| Controleren | website-controleur | |
+| Controleren | website-controleur | Ronde 1: NIET AKKOORD, 2026-11-02. Eén must-fix: de scroll-controle in `controleer_stappen` vergeleek `scrollWidth` met `innerWidth`; bij `is_mobile` groeit `innerWidth` mee met te brede inhoud, dus 768 en 390 sloegen nooit aan. |
+| Bouwen (ronde 2) | website-bouwer | Klaar, 2026-11-02. `controleer_stappen` vergelijkt `scrollWidth` nu met de ingestelde vensterbreedte. Tegentest met een te breed element in `.stappen`: gevonden op 1440 (1859 > 1440), 768 (1039 > 768) en 390 (983 > 390). Op de schone code: `npm test` 6/6 en `controleer.py` zonder fouten. |
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | [mens] | |
 | Live gezet (merge) | [mens] | |

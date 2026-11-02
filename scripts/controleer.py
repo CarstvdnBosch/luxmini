@@ -150,7 +150,7 @@ LEES_STAPPEN = """() => {
   const items = lijsten.length === 1 ? [...lijsten[0].querySelectorAll(':scope > li')] : [];
   const koppen = items.map(li => { const h = li.querySelector('h2, h3'); if (!h) return '';
     const kopie = h.cloneNode(true); kopie.querySelectorAll('br').forEach(br => br.replaceWith(' ')); return schoon(kopie.textContent); });
-  return [lijsten.length, items.length, koppen, document.documentElement.scrollWidth, window.innerWidth];
+  return [lijsten.length, items.length, koppen, document.documentElement.scrollWidth];
 }"""
 
 def controleer_stappen(browser):
@@ -166,15 +166,16 @@ def controleer_stappen(browser):
         ctx.close()
         if stand is None:
             fouten.append(f"{tag}: sectie met data-label 003 ontbreekt"); continue
-        lijsten, items, koppen, breedte, venster = stand
+        lijsten, items, koppen, breedte = stand
         if lijsten != 1:
             fouten.append(f"{tag}: {lijsten} <ol> in de sectie, verwacht precies 1")
         if items != 3:
             fouten.append(f"{tag}: {items} <li> in de lijst, verwacht precies 3")
         if koppen != STAP_KOPPEN:
             fouten.append(f"{tag}: koppen zijn {koppen}, verwacht {STAP_KOPPEN}")
-        if breedte > venster:
-            fouten.append(f"{tag}: pagina scrollt horizontaal (scrollWidth {breedte} > {venster})")
+        # vergelijk met de ingestelde breedte b: bij is_mobile groeit innerWidth mee met te brede inhoud
+        if breedte > b:
+            fouten.append(f"{tag}: pagina scrollt horizontaal (scrollWidth {breedte} > {b})")
 
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
