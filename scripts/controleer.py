@@ -18,6 +18,8 @@ Wat het doet:
     binnen 1,5 s, aanwijzen niet)
   - controleert dat het portfolio precies vijf items telt, in de lijst en in
     de kaarten, en dat die overeenkomen
+  - controleert in public/_headers dat CSS en JS niet lang gecachet worden
+    zonder hercontrole
   - maakt screenshots in scripts/screenshots/
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
@@ -302,8 +304,32 @@ def controleer_tablet(browser):
         page.close()
     ctx.close()
 
+# Caching: CSS en JS mogen niet lang vastzitten zonder hercontrole (anders ziet een
+# terugkerende bezoeker na een release nog een week de oude opmaak en scripts)
+def cache_te_lang(waarde):
+    """True als een Cache-Control-waarde lang cachet zonder hercontrole."""
+    w = waarde.lower()
+    m = re.search(r"max-age=(\d+)", w)
+    return bool(m and int(m.group(1)) > 0 and "must-revalidate" not in w and "no-cache" not in w)
+
+def controleer_headers():
+    regels = (ROOT / "_headers").read_text(encoding="utf-8").splitlines()
+    pad, gevonden = None, {}
+    for r in regels:
+        if r and not r[0].isspace():
+            pad = r.strip()
+        elif pad and r.strip().lower().startswith("cache-control:"):
+            gevonden[pad] = r.split(":", 1)[1].strip()
+    for pad in ["/assets/css/*", "/assets/js/*"]:
+        waarde = gevonden.get(pad)
+        if waarde is None:
+            fouten.append(f"_headers: geen Cache-Control voor {pad}")
+        elif cache_te_lang(waarde):
+            fouten.append(f"_headers: {pad} cachet lang zonder hercontrole ({waarde}); gebruik max-age=0, must-revalidate")
+
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
+    controleer_headers()
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         controleer_prijstabel(browser)
