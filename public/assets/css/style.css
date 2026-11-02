@@ -605,7 +605,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .hoverlijst.sferen { position: relative; width: var(--B); margin-left: calc(50% - var(--B) / 2); --my: 0; }
 .hoverlijst.sferen ul { position: relative; z-index: 1; }
 /* bij aanwijzen (wens Carst, zoals Stock): de laag wordt een diepe tint en alle tekst wit;
-   wit haalt op die tinten 3:1, dus alleen grote tekst (namen, productregel 19 px vet) */
+   wit haalt op die tinten 3:1, dus alleen grote tekst (namen, productregel 19 px vet, 700) */
 .hoverlijst.sferen button { white-space: nowrap; color: var(--inkt); opacity: 1; transition: opacity 1s var(--rustig), color 1s var(--rustig); }
 .hoverlijst.sferen.actief button { color: var(--wit); opacity: .35; }
 .hoverlijst.sferen.actief button.aan { opacity: 1; }
@@ -619,7 +619,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .hoverlijst.sferen .groot::after { background: rgba(60,40,30,.28); } /* grote foto iets dieper, zodat witte namen erover beter lezen */
 .hoverlijst.sferen .groot { left: 25%; top: calc(var(--B) * -.03); width: min(30%, 440px); aspect-ratio: 30 / 41.66; translate: 0 calc(var(--my) * 40px); }
 .hoverlijst.sferen .klein-beeld { left: 58%; top: calc(var(--B) * .17); width: min(15%, 220px); aspect-ratio: 3 / 4; translate: 0 calc(var(--my) * 20px); }
-.productregel { position: absolute; left: 58%; top: calc(var(--B) * .17 + min(var(--B) * .15, 220px) * 4 / 3 + 16px); max-width: 30%; margin: 0; font-size: 19px; font-weight: 600; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; color: var(--wit); translate: 0 calc(var(--my) * 20px); transition: translate .6s cubic-bezier(.2,.7,.2,1); }
+.productregel { position: absolute; left: 58%; top: calc(var(--B) * .17 + min(var(--B) * .15, 220px) * 4 / 3 + 16px); max-width: 30%; margin: 0; font-size: 19px; font-weight: 700; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; color: var(--wit); translate: 0 calc(var(--my) * 20px); transition: translate .6s cubic-bezier(.2,.7,.2,1); }
 /* label en pijl-link vallen terug naar 0,2 terwijl een item actief is */
 .js .hoverlijst-sectie .sectie > .label, .js .hoverlijst-sectie .sectie > .pijl { transition: opacity 1s var(--rustig), color 1s var(--rustig), transform .9s cubic-bezier(.2,.7,.2,1); }
 .js .hoverlijst-sectie.lijst-actief .sectie > .label, .js .hoverlijst-sectie.lijst-actief .sectie > .pijl { opacity: .2; }
@@ -631,9 +631,9 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .sfeer-kaarten .kaart { background: var(--kaart-kleur, var(--grijsblauw)); padding: 12px 12px 18px; }
 .sfeer-kaarten .kaart img { aspect-ratio: 4 / 5; }
 .sfeer-kaarten .kaart figcaption { margin-top: 14px; font-size: inherit; }
-/* kaarten in de diepe tint met witte tekst (grote tekst: naam 24 px, productregel 19 px vet) */
+/* kaarten in de diepe tint met witte tekst (grote tekst: naam 24 px, productregel 19 px vet, 700) */
 .kaart-naam { display: block; font-family: var(--display); font-size: 24px; line-height: 1.2; color: var(--wit); }
-.kaart-regel { display: block; margin-top: 6px; font-family: var(--sans); font-size: 19px; font-weight: 600; line-height: 1.4; color: var(--wit); }
+.kaart-regel { display: block; margin-top: 6px; font-family: var(--sans); font-size: 19px; font-weight: 700; line-height: 1.4; color: var(--wit); }
 @media (max-width: 760px) { .kaarten.sfeer-kaarten { --kaart-rand: var(--rand); gap: 12px; } }
 @media (prefers-reduced-motion: reduce) {
   .hoverlijst.sferen button, .sfeer-beelden, .sfeer, .hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld, .productregel, .balk.diep,
