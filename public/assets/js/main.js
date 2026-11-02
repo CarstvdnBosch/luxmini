@@ -146,7 +146,7 @@
         var nu = e.clientX < window.innerWidth / 2 ? 'links' : 'rechts';
         if (nu === helft) return;
         helft = nu;
-        zetHeroKleur(nu === 'links' ? '#C7997E' : '#B4B19A');
+        zetHeroKleur(nu === 'links' ? getComputedStyle(html).getPropertyValue('--terracotta').trim() : '#B4B19A');
       });
       hero.addEventListener('mouseleave', function () { helft = ''; });
     }
@@ -197,7 +197,8 @@
         });
       }
     }
-    knoppen.forEach(function (k) { [k.dataset.groot, k.dataset.klein].forEach(function (s) { var i = new Image(); i.src = s; }); });
+    // foto's vooraf laden, alleen als de lijst zichtbaar is (op touch staan de kaarten er)
+    if (lijst.offsetParent !== null) knoppen.forEach(function (k) { [k.dataset.groot, k.dataset.klein].forEach(function (s) { var i = new Image(); i.src = s; }); });
   });
 
   /* ---------------------------------------------------------------
@@ -276,10 +277,11 @@
   function laagBijwerken(forceer) {
     // De laag wisselt zodra een sectie het onderste stukje van het scherm vult
     // (lijn op 88%). Zo staat witte tekst nooit lang op een lichte laag.
+    // De laatste sectie waarvan de bovenkant boven de lijn ligt telt, ook als
+    // de lijn onderaan de pagina in de footer valt (bijv. na End of #contact).
     var lijn = window.innerHeight * 0.88, kies = null;
     lagen.forEach(function (sec) {
-      var r = sec.getBoundingClientRect();
-      if (r.top <= lijn && r.bottom > lijn) kies = sec;
+      if (sec.getBoundingClientRect().top <= lijn) kies = sec;
     });
     if (kies && (forceer || kies !== laatsteLaag)) { laatsteLaag = kies; zetLaag(kies.getAttribute('data-achtergrond')); }
   }
@@ -305,6 +307,9 @@
       balk.classList.toggle('zichtbaar', voorbij);
       var huidig = null;
       secties.forEach(function (sec) { if (sec.getBoundingClientRect().top <= 90) huidig = sec; });
+      // Onderaan de pagina komt de laatste sectie nooit tot 90 px; toon dan haar label.
+      var doc = document.documentElement;
+      if (secties.length && window.scrollY + window.innerHeight >= doc.scrollHeight - 2) huidig = secties[secties.length - 1];
       if (huidig && huidig !== laatste) {
         laatste = huidig;
         label.innerHTML = huidig.getAttribute('data-label');

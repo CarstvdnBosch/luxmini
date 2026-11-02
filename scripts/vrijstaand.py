@@ -17,7 +17,7 @@ from PIL import Image, ImageOps, ImageFilter
 
 HUISKLEUREN = {
     "perzik": "#DEB799", "oker": "#C89F67", "salie": "#C3CFBC", "mauve": "#B5969E",
-    "olijf": "#B4B19A", "grijsblauw": "#E0E6E7", "terracotta": "#C7997E",
+    "olijf": "#B4B19A", "grijsblauw": "#E0E6E7", "terracotta": "#BC8565",
 }
 
 def hexrgb(h):

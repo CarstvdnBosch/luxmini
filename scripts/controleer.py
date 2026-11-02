@@ -6,10 +6,12 @@ Vereist:  pip install playwright  &&  playwright install chromium
 
 Wat het doet:
   - opent elke pagina op desktop (1440 px) en mobiel (390 px)
+  - controleert (bij minder beweging, 1440/768/390) dat laag en balk na een
+    #contact-link en na End op Contact staan (ontwerpcriterium 12)
   - maakt screenshots in scripts/screenshots/
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
-    interacties werken (foto omdraaien, hover-lijst)
+    interacties werken (foto omdraaien, hover-lijst met muis, kaarten op touch)
 Exitcode 1 als er fouten zijn, zodat een agent of CI het ziet.
 """
 import os, sys, pathlib, re, threading, functools
@@ -49,12 +51,58 @@ def bestaat(href, pagina):
         doel = doel / "index.html"
     return doel.exists()
 
+CONTACT_SCHERMEN = {"desktop": (1440, 900, False), "tablet": (768, 1024, True), "mobiel": (390, 844, True)}
+
+# Leest de kleur van de laag, de verwachte kleur van #contact (genormaliseerd naar rgb) en het balklabel
+STAND_CONTACT = """() => {
+  const norm = k => { const d = document.createElement('div'); d.style.backgroundColor = k; document.body.appendChild(d);
+    const c = getComputedStyle(d).backgroundColor; d.remove(); return c; };
+  const laag = document.querySelector('.achtergrond');
+  const contact = document.querySelector('#contact');
+  return [laag ? getComputedStyle(laag).backgroundColor : null,
+          contact ? norm(contact.getAttribute('data-achtergrond') || '') : null,
+          (document.querySelector('.balk .sectie-label') || {}).textContent || ''];
+}"""
+
+def controleer_contact(browser):
+    """Ontwerpcriterium 12: na een #contact-link of End kleurt de laag naar #contact en toont de balk Contact."""
+    for naam, (b, h, touch) in CONTACT_SCHERMEN.items():
+        ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch, reduced_motion="reduce")
+        ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
+        for pagina in ["index.html", "kraamcadeaubox.html"]:
+            for manier in ["link", "end"]:
+                page = ctx.new_page()
+                page.goto(url(pagina), wait_until="load")
+                page.wait_for_timeout(400)
+                tag = f"{pagina} [{naam}, minder beweging, {manier}]"
+                if manier == "link":
+                    link = page.query_selector('main a.pijl[href="#contact"]')
+                    if not link:
+                        fouten.append(f"{tag}: geen pijl-link naar #contact gevonden"); page.close(); continue
+                    link.scroll_into_view_if_needed()
+                    page.wait_for_timeout(300)
+                    link.click()
+                else:
+                    page.keyboard.press("End")
+                page.wait_for_timeout(1200)
+                laag, verwacht, label = page.evaluate(STAND_CONTACT)
+                if laag is None or verwacht is None:
+                    fouten.append(f"{tag}: .achtergrond of #contact ontbreekt")
+                elif laag != verwacht:
+                    fouten.append(f"{tag}: laag is {laag}, verwacht {verwacht} (kleur van #contact)")
+                if "Contact" not in label:
+                    fouten.append(f"{tag}: balk toont '{label.strip()}' in plaats van Contact")
+                page.close()
+        ctx.close()
+
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
+        controleer_contact(browser)
         for naam, (b, h) in SCHERMEN.items():
-            ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=(naam == "mobiel"))
+            touch = naam == "mobiel"  # has_touch + is_mobile: (hover: none) en (pointer: coarse), zoals op een telefoon
+            ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch)
             # intro-scherm overslaan, zodat de controle meteen de pagina ziet
             ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
             for pagina in PAGINAS:
@@ -81,7 +129,7 @@ def main():
                     if alt is None:
                         fouten.append(f"{tag}: afbeelding zonder alt-attribuut -> {src}")
                 # horizontaal scrollen
-                breed = page.evaluate("document.documentElement.scrollWidth > window.innerWidth + 1")
+                breed = page.evaluate(f"document.documentElement.scrollWidth > {b} + 1")
                 if breed:
                     fouten.append(f"{tag}: pagina scrollt horizontaal (iets is te breed)")
                 # placeholders
@@ -100,10 +148,27 @@ def main():
                         fouten.append(f"{tag}: foto draait niet om (tik of Enter-toets)")
                     page.focus(".tegel.t2"); page.keyboard.press("Enter")
                 if page.query_selector(".hoverlijst button"):
-                    page.click(".hoverlijst li:nth-child(2) button")
-                    page.wait_for_timeout(500)
-                    if not page.eval_on_selector(".hoverlijst", "e => e.classList.contains('actief')"):
-                        fouten.append(f"{tag}: hover-lijst toont geen foto's")
+                    lijst_zichtbaar = page.is_visible(".hoverlijst")
+                    kaarten_zichtbaar = page.is_visible(".kaarten")
+                    if touch:
+                        # op touch: hover-lijst verborgen, kaarten met dezelfde foto's, namen en alt-teksten
+                        if lijst_zichtbaar or not kaarten_zichtbaar:
+                            fouten.append(f"{tag}: op touch hoort de kaartenrij zichtbaar en de hover-lijst verborgen")
+                        knoppen = page.eval_on_selector_all(".hoverlijst button", "els => els.map(b => [b.dataset.groot, b.dataset.alt, b.textContent.trim()])")
+                        kaarten = page.eval_on_selector_all(".kaarten .kaart", "els => els.map(k => [k.querySelector('img').getAttribute('src'), k.querySelector('img').getAttribute('alt'), k.querySelector('figcaption').textContent.trim()])")
+                        if knoppen != kaarten:
+                            fouten.append(f"{tag}: kaarten wijken af van de hover-lijst (foto, alt of naam)")
+                        page.eval_on_selector(".kaarten", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
+                        page.wait_for_timeout(500)
+                        if not page.eval_on_selector(".kaarten .kaart img", "e => e.complete && e.naturalWidth > 0"):
+                            fouten.append(f"{tag}: eerste kaartfoto laadt niet")
+                    else:
+                        if not lijst_zichtbaar or kaarten_zichtbaar:
+                            fouten.append(f"{tag}: met muis hoort de hover-lijst zichtbaar en de kaartenrij verborgen")
+                        page.click(".hoverlijst li:nth-child(2) button")
+                        page.wait_for_timeout(500)
+                        if not page.eval_on_selector(".hoverlijst", "e => e.classList.contains('actief')"):
+                            fouten.append(f"{tag}: hover-lijst toont geen foto's")
 
                 if page.query_selector(".balk"):
                     page.evaluate("window.scrollTo(0, document.body.scrollHeight / 2)")

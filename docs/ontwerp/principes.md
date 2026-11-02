@@ -15,8 +15,8 @@ Jonge ouders en (groot)ouders, vrienden en collega's die een persoonlijk kraamca
 4. **Leesbaar boven sfeer:**
    - lopende tekst is minimaal 16 px (op mobiel ook);
    - regellengte is 45–75 tekens;
-   - kleine tekst heeft een contrast van minimaal 4,5:1 (WCAG AA): op terracotta dus inkt (6,4:1), geen wit (2,5:1);
-   - wit op terracotta alleen voor grote koppen vanaf 24 px. Gemeten is dat 2,5:1, dus net onder de norm van 3:1. Voorstel uit de review: een iets dieper terracotta `#BC8565` (3,1:1) voor vlakken met witte tekst.
+   - kleine tekst heeft een contrast van minimaal 4,5:1 (WCAG AA): op terracotta `#BC8565` dus inkt (5,2:1), geen wit;
+   - wit op terracotta `#BC8565` (3,1:1) alleen voor grote koppen en quotes vanaf 24 px.
 5. **Witruimte met bedoeling.** Er staat geen scherm vol niets. Tussen secties zit vast ritme: 96–160 px op desktop, 56–96 px op mobiel.
 6. **Beweging ondersteunt.** Beweging leidt nooit af van de inhoud. Zonder beweging (minder beweging, toetsenbord) is alles bereikbaar en leesbaar.
 7. **Echte beelden, scherp en warm.** We gebruiken alleen echte producten van Carien. Beelden worden nooit verder vergroot dan hun ware grootte. Waar nog geen goede foto is, staat dat in `docs/fotolijst.md`.
