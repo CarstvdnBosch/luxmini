@@ -10,6 +10,8 @@ Wat het doet:
     #contact-link en na End op Contact staan (ontwerpcriterium 12)
   - controleert de prijstabel van de kraamcadeaubox (prijzen, producten,
     vinkjes en aantallen)
+  - controleert "003 — Zo werkt het" op de kraamcadeaubox: één <ol> met drie
+    stappen, de juiste koppen en geen horizontaal scrollen (1440/768/390)
   - maakt screenshots in scripts/screenshots/
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
@@ -136,11 +138,50 @@ def controleer_prijstabel(browser):
     if voet != AANTALLEN:
         fouten.append(f"{tag}: voet toont {voet}, verwacht {AANTALLEN}")
 
+# 003 Zo werkt het: één genummerde reeks met deze koppen (brief processtappen, criterium 4)
+STAP_KOPPEN = ["Neem contact op", "Kies samen thema en maat", "Carien gaat aan de slag"]
+STAPPEN_SCHERMEN = {"desktop": (1440, 900, False), "tablet": (768, 1024, True), "mobiel": (390, 844, True)}
+
+LEES_STAPPEN = """() => {
+  const schoon = s => s.replace(/\\u00a0/g, ' ').replace(/\\s+/g, ' ').trim();
+  const sectie = [...document.querySelectorAll('main section[data-label]')].find(s => s.getAttribute('data-label').includes('003'));
+  if (!sectie) return null;
+  const lijsten = sectie.querySelectorAll('ol');
+  const items = lijsten.length === 1 ? [...lijsten[0].querySelectorAll(':scope > li')] : [];
+  const koppen = items.map(li => { const h = li.querySelector('h2, h3'); if (!h) return '';
+    const kopie = h.cloneNode(true); kopie.querySelectorAll('br').forEach(br => br.replaceWith(' ')); return schoon(kopie.textContent); });
+  return [lijsten.length, items.length, koppen, document.documentElement.scrollWidth, window.innerWidth];
+}"""
+
+def controleer_stappen(browser):
+    """Brief processtappen: sectie 003 is één <ol> met drie <li>, juiste koppen, geen horizontaal scrollen."""
+    for naam, (b, h, touch) in STAPPEN_SCHERMEN.items():
+        ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch)
+        ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
+        page = ctx.new_page()
+        page.goto(url("kraamcadeaubox.html"), wait_until="load")
+        page.wait_for_timeout(400)
+        tag = f"kraamcadeaubox.html [003 Zo werkt het, {naam}]"
+        stand = page.evaluate(LEES_STAPPEN)
+        ctx.close()
+        if stand is None:
+            fouten.append(f"{tag}: sectie met data-label 003 ontbreekt"); continue
+        lijsten, items, koppen, breedte, venster = stand
+        if lijsten != 1:
+            fouten.append(f"{tag}: {lijsten} <ol> in de sectie, verwacht precies 1")
+        if items != 3:
+            fouten.append(f"{tag}: {items} <li> in de lijst, verwacht precies 3")
+        if koppen != STAP_KOPPEN:
+            fouten.append(f"{tag}: koppen zijn {koppen}, verwacht {STAP_KOPPEN}")
+        if breedte > venster:
+            fouten.append(f"{tag}: pagina scrollt horizontaal (scrollWidth {breedte} > {venster})")
+
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         controleer_prijstabel(browser)
+        controleer_stappen(browser)
         controleer_contact(browser)
         for naam, (b, h) in SCHERMEN.items():
             touch = naam == "mobiel"  # has_touch + is_mobile: (hover: none) en (pointer: coarse), zoals op een telefoon
@@ -240,7 +281,7 @@ def main():
                     page.click(".woorden li:nth-child(1) button")
                     page.wait_for_timeout(1100)
                 # alles wat bij scrollen invaagt zichtbaar maken voor de screenshot
-                page.evaluate("document.querySelectorAll('.opkomen, .woorden-kop, img.zoom').forEach(e => e.classList.add('in-beeld')); document.querySelectorAll('.hero').forEach(h => h.classList.add('klaar'))")
+                page.evaluate("document.querySelectorAll('.opkomen, .woorden-kop, img.zoom, .stappen').forEach(e => e.classList.add('in-beeld')); document.querySelectorAll('.hero').forEach(h => h.classList.add('klaar'))")
                 page.wait_for_timeout(1000)
                 page.screenshot(path=str(SHOTS / f"{pagina.replace('.html','')}-{naam}.png"), full_page=True)
                 page.close()
