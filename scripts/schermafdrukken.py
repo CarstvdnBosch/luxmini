@@ -41,7 +41,7 @@ def main():
                 page = ctx.new_page()
                 page.goto(basis + pagina, wait_until="load")
                 page.wait_for_timeout(1000)
-                page.evaluate("document.querySelectorAll('.opkomen, .woorden-kop, img.zoom').forEach(e => e.classList.add('in-beeld')); document.querySelectorAll('.hero').forEach(e => e.classList.add('klaar'))")
+                page.evaluate("document.querySelectorAll('.opkomen, .woorden-kop, img.zoom, .stappen').forEach(e => e.classList.add('in-beeld')); document.querySelectorAll('.hero').forEach(e => e.classList.add('klaar'))")
                 hoogte = page.evaluate("document.documentElement.scrollHeight")
                 y, nr = 0, 0
                 while y < hoogte:
