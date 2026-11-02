@@ -361,7 +361,7 @@
     var io = new IntersectionObserver(function (items) {
       items.forEach(function (it) { if (it.isIntersecting) { it.target.classList.add('in-beeld'); io.unobserve(it.target); } });
     }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('main .label, main .quote, main .kolom .nr, main .kolom .klein, main .kolom .lijst-klein, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta a, main .prijs, main .woorden-tekst, main .uitgelicht-tekst, main .formulier, main .contact-links').forEach(function (el, i) {
+    document.querySelectorAll('main .label, main .quote, main .kolom .nr, main .kolom .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta a, main .prijs, main .woorden-tekst, main .uitgelicht-tekst, main .formulier, main .contact-links').forEach(function (el, i) {
       if (el.closest('.hero') || el.closest('.statement')) return;
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';

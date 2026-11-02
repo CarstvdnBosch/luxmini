@@ -8,6 +8,8 @@ Wat het doet:
   - opent elke pagina op desktop (1440 px) en mobiel (390 px)
   - controleert (bij minder beweging, 1440/768/390) dat laag en balk na een
     #contact-link en na End op Contact staan (ontwerpcriterium 12)
+  - controleert de prijstabel van de kraamcadeaubox (prijzen, producten,
+    vinkjes en aantallen)
   - maakt screenshots in scripts/screenshots/
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
@@ -95,10 +97,50 @@ def controleer_contact(browser):
                 page.close()
         ctx.close()
 
+# Prijstabel kraamcadeaubox: gegevens volgens CLAUDE.md en docs/ontwerp/bron/prijstabel-oude-site.png
+PRIJZEN = ["€ 35", "€ 50", "€ 65", "€ 80"]
+PRODUCTEN = {"Knuffel": 1, "Swaddle": 1, "Broekje": 1, "Sjaaltje": 2, "Shirtje": 3, "Douchehandschoen": 3, "Bijtring": 4}  # vanaf welk formaat
+AANTALLEN = ["3", "4", "6", "7"]
+
+LEES_PRIJSTABEL = """() => {
+  const schoon = s => s.replace(/\\u00a0/g, ' ').replace(/\\u00ad/g, '').replace(/\\s+/g, ' ').trim();
+  const t = document.querySelector('#formaten table');
+  if (!t) return null;
+  const koppen = [...t.querySelectorAll('thead th')].slice(1).map(th => schoon(th.textContent));
+  const rijen = [...t.querySelectorAll('tbody tr')].map(tr => [schoon(tr.querySelector('th') ? tr.querySelector('th').textContent : ''),
+    [...tr.querySelectorAll('td')].map(td => schoon((td.querySelector('.sr-only') || {}).textContent || ''))]);
+  const voet = [...t.querySelectorAll('tfoot td')].map(td => schoon(td.textContent));
+  return [koppen, rijen, voet];
+}"""
+
+def controleer_prijstabel(browser):
+    """Criterium 6 van de brief prijstabel: tabel, prijzen, producten, vinkjes en aantallen kloppen."""
+    tag = "kraamcadeaubox.html [prijstabel]"
+    page = browser.new_page()
+    page.goto(url("kraamcadeaubox.html"), wait_until="load")
+    stand = page.evaluate(LEES_PRIJSTABEL)
+    page.close()
+    if stand is None:
+        fouten.append(f"{tag}: #formaten bevat geen <table>"); return
+    koppen, rijen, voet = stand
+    if koppen != PRIJZEN:
+        fouten.append(f"{tag}: prijskolommen zijn {koppen}, verwacht {PRIJZEN}")
+    if [r[0] for r in rijen] != list(PRODUCTEN):
+        fouten.append(f"{tag}: productrijen zijn {[r[0] for r in rijen]}, verwacht {list(PRODUCTEN)}")
+    for naam, cellen in rijen:
+        if naam not in PRODUCTEN:
+            continue
+        verwacht = ["inbegrepen" if k >= PRODUCTEN[naam] else "niet inbegrepen" for k in range(1, 5)]
+        if cellen != verwacht:
+            fouten.append(f"{tag}: {naam} toont {cellen}, verwacht {verwacht}")
+    if voet != AANTALLEN:
+        fouten.append(f"{tag}: voet toont {voet}, verwacht {AANTALLEN}")
+
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
+        controleer_prijstabel(browser)
         controleer_contact(browser)
         for naam, (b, h) in SCHERMEN.items():
             touch = naam == "mobiel"  # has_touch + is_mobile: (hover: none) en (pointer: coarse), zoals op een telefoon
