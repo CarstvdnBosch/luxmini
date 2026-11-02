@@ -3,7 +3,8 @@ LUX mini — schermafdrukken per schermhoogte voor de ontwerpgate.
 
 Gebruik:  python3 scripts/schermafdrukken.py [pagina.html ...]
 Maakt voor desktop (1440), tablet (768) en mobiel (390) een afdruk van elk
-scherm van boven naar beneden, zoals een bezoeker de pagina doorloopt, in
+scherm van boven naar beneden (met 100 px overlap, zodat niets onder de vaste
+balk wegvalt), zoals een bezoeker de pagina doorloopt, in
 scripts/schermafdrukken/<scherm>-<pagina>-<nr>.png. Animaties die bij scrollen
 opkomen worden direct in eindstand gezet, zodat elk scherm compleet is.
 """
@@ -15,6 +16,7 @@ PROJECT = pathlib.Path(__file__).resolve().parent.parent
 ROOT = PROJECT / "public"
 UIT = PROJECT / "scripts" / "schermafdrukken"
 PAGINAS = sys.argv[1:] or ["index.html", "kraamcadeaubox.html"]
+OVERLAP = 100  # px: hoogte van de vaste balk plus marge
 SCHERMEN = {"d": (1440, 900, False), "t": (768, 1024, True), "m": (390, 844, True)}
 
 class Stil(SimpleHTTPRequestHandler):
@@ -23,8 +25,9 @@ class Stil(SimpleHTTPRequestHandler):
 
 def main():
     UIT.mkdir(parents=True, exist_ok=True)
-    for oud in UIT.glob("*.png"):
-        oud.unlink()
+    for pagina in PAGINAS:  # alleen oude afdrukken van de pagina's die nu gemaakt worden
+        for oud in UIT.glob(f"*-{pagina.replace('.html', '')}-*.png"):
+            oud.unlink()
     srv = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Stil, directory=str(ROOT)))
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     basis = f"http://127.0.0.1:{srv.server_address[1]}/"
@@ -44,7 +47,7 @@ def main():
                     page.evaluate(f"window.scrollTo({{ top: {y}, behavior: 'instant' }})")
                     page.wait_for_timeout(900)  # kleurlaag en balk laten bijkomen
                     page.screenshot(path=str(UIT / f"{code}-{pagina.replace('.html', '')}-{nr:02d}.png"))
-                    y += h
+                    y += h - OVERLAP  # overlap, zodat niets onder de vaste balk wegvalt
                     nr += 1
                 print(f"{code} {pagina}: {nr} schermen")
                 page.close()

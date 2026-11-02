@@ -13,7 +13,7 @@
 3. `npm test` en `python3 scripts/controleer.py` geven geen fouten.
 
 ## Ontwerprichting
-[Door website-ontwerper, alleen bij zichtbare wijzigingen: patronen, hiërarchie, mobiel gedrag en toetsbare ontwerpcriteria. Anders: n.v.t.]
+[Tekst van website-ontwerper (de planner zet die hier), alleen bij zichtbare wijzigingen: patronen, hiërarchie, mobiel gedrag en toetsbare ontwerpcriteria. Anders: n.v.t.]
 
 ## Bestanden
 - [bijv. public/index.html]

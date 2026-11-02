@@ -26,14 +26,23 @@ Elke zichtbare wijziging krijgt een professionele UX/UI-blik: richting bij het p
 ## Ontwerprichting
 n.v.t. (procesmatige wijziging)
 
+## Bestanden
+- `.claude/agents/website-ontwerper.md` (nieuw), `docs/ontwerp/principes.md` (nieuw), `docs/ontwerp/review-2026-11-02.md` (nieuw), `scripts/schermafdrukken.py` (nieuw)
+- `docs/ai-pdlc.md`, `CLAUDE.md`, `README.md`, `.claude/commands/website-update.md`, `.claude/agents/website-{planner,bouwer,controleur}.md`, `docs/wijzigingen/_sjabloon.md`, `.github/pull_request_template.md`, `.gitignore`
+
 ## Buiten scope
 De ontwerpverbeteringen zelf. Die volgen als aparte wijzigingen A, B en C uit de review.
+
+## Open vragen
+- De diepere terracotta en de nieuwe introductieregel uit de review vragen akkoord van Carst en Carien (wijziging B).
 
 ## Verloop
 | Stap | Wie | Uitkomst |
 |---|---|---|
-| Plannen | planner-rol | brief opgesteld |
+| Plannen | website-planner | brief opgesteld |
 | Bouwen | website-bouwer | agent, principes, script, procesdocumenten en nulmeting gemaakt |
+| Controleren | website-controleur | ronde 1 NIET AKKOORD: review punt 1 onjuist (tik toont wél een foto), ontwerper-agent sprak zichzelf tegen (alleen lezen vs. brief aanvullen) |
+| Bouwen | website-bouwer | ronde 2: review gecorrigeerd en echte schermnamen; ontwerper levert tekst, planner zet die in de brief; n.v.t.-route overal; script met 100 px overlap en wist alleen afdrukken van de gefotografeerde pagina's |
 | Controleren | website-controleur | |
 | Ontwerpgate | website-ontwerper | n.v.t. (geen zichtbare wijziging) |
 | Preview bekeken | Carst | |

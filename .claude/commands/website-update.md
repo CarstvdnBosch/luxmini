@@ -7,13 +7,13 @@ Wens: $ARGUMENTS
 
 Volg `docs/ai-pdlc.md`. Werk de stappen in deze volgorde af en sla er geen over:
 
-1. **Plannen:** laat de agent `website-planner` een brief maken in `docs/wijzigingen/`. Ziet de bezoeker iets van de wijziging, laat dan `website-ontwerper` (rol 1) de sectie *Ontwerprichting* en de ontwerpcriteria aanvullen. Staan er open vragen in die de wijziging blokkeren (ontbrekende tekst, foto of prijs), stop dan en leg die vragen aan mij voor.
+1. **Plannen:** laat de agent `website-planner` een brief maken in `docs/wijzigingen/`. Ziet de bezoeker iets van de wijziging, laat dan `website-ontwerper` (rol 1) de tekst voor de sectie *Ontwerprichting* en de ontwerpcriteria leveren, en laat de planner die in de brief zetten. Staan er open vragen in die de wijziging blokkeren (ontbrekende tekst, foto of prijs), stop dan en leg die vragen aan mij voor.
 2. **Bouwen:** laat `website-bouwer` de brief uitvoeren op een eigen branch.
 3. **Controleren:** laat `website-controleur` het werk onafhankelijk controleren.
    - NIET AKKOORD: geef de punten aan `website-bouwer` en laat daarna opnieuw controleren. Maximaal 3 rondes. Na 3 rondes stop je en vat je voor mij samen wat er nog misgaat.
 4. **Ontwerpgate:** laat `website-ontwerper` (rol 2) de schermen beoordelen. Bij alleen techniek of documentatie mag de ontwerper "n.v.t." geven.
    - ONTWERP NIET AKKOORD: geef de punten aan `website-bouwer`, laat daarna de controleur kort hercontroleren en de ontwerper opnieuw beoordelen. Maximaal 3 rondes.
-5. **Aanbieden:** bij AKKOORD van controleur én ontwerper:
+5. **Aanbieden:** bij AKKOORD van de controleur én ONTWERP AKKOORD (of n.v.t.) van de ontwerper:
    - push de branch naar GitHub (`git push -u origin <branch>`) en open een pull request naar `main` met `gh pr create`, gevuld volgens `.github/pull_request_template.md` (verwijs naar de brief);
    - GitHub draait gate 1 en 2; Cloudflare zet de preview-link in de pull request;
    - geef mij een korte samenvatting: wat er veranderd is, de link naar de brief en wat ik in de preview moet bekijken;

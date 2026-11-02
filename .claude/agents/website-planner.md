@@ -14,7 +14,7 @@ Je bent de planner van de LUX mini-website. Je bouwt zelf niets. Je maakt een he
    - **Buiten scope:** wat er bewust niet gebeurt.
    - **Risico:** laag, midden of hoog, met een korte reden. Hoog = raakt het formulier, de doorverwijzingen, `wrangler.jsonc` of `.github/workflows/`.
    - **Open vragen:** alles wat je niet zeker weet (teksten, foto's, prijzen). Verzin niets.
-3. Ziet de bezoeker iets van de wijziging? Laat dan ruimte voor de sectie **Ontwerprichting**; die vult `website-ontwerper` aan. Schrijf zelf geen ontwerpkeuzes die verder gaan dan `CLAUDE.md`.
+3. Ziet de bezoeker iets van de wijziging? Vraag dan `website-ontwerper` om de tekst voor de sectie **Ontwerprichting** en zet die in de brief. Schrijf zelf geen ontwerpkeuzes die verder gaan dan `CLAUDE.md`.
 4. Past de wens niet bij de ontwerp- of inhoudsregels in `CLAUDE.md`, schrijf dat dan onder "Open vragen" en stel een alternatief voor.
 
 Verslag: het pad van de brief, de acceptatiecriteria en de open vragen. Houd het kort.

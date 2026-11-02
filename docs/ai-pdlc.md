@@ -12,7 +12,7 @@ flowchart LR
   C -->|niet akkoord<br/>max. 3 rondes| B
   C -->|akkoord| O{4 · Ontwerpgate<br/>website-ontwerper}
   O -->|niet akkoord<br/>max. 3 rondes| B
-  O -->|ontwerp akkoord| G1[[Gate 1 · tests]]
+  O -->|ontwerp akkoord<br/>of n.v.t.| G1[[Gate 1 · tests]]
   G1 --> G2[[Gate 2 · sitecontrole]]
   G2 --> PV[Preview-link]
   PV --> M{Mens bekijkt<br/>en merget}
@@ -25,7 +25,7 @@ flowchart LR
 
 | Fase | Wie | Wat | Resultaat |
 |---|---|---|---|
-| 1 · Plannen | `website-planner` (+ `website-ontwerper` bij zichtbare wijzigingen) | Maakt van de wens een korte brief met toetsbare acceptatiecriteria en open vragen; de ontwerper vult de ontwerprichting en ontwerpcriteria aan | `docs/wijzigingen/<datum>-<naam>.md` |
+| 1 · Plannen | `website-planner` (+ `website-ontwerper` bij zichtbare wijzigingen) | Maakt van de wens een korte brief met toetsbare acceptatiecriteria en open vragen; de ontwerper levert de tekst voor de ontwerprichting en ontwerpcriteria, de planner zet die erin | `docs/wijzigingen/<datum>-<naam>.md` |
 | 2 · Bouwen | `website-bouwer` | Voert de brief uit op een eigen branch, draait de tests | Commit op `wijziging/<naam>` |
 | 3 · Controleren | `website-controleur` | Toetst onafhankelijk tegen de brief en `CLAUDE.md`: werking, inhoud, toegankelijkheid, techniek; past zelf niets aan | AKKOORD of verbeterpunten |
 | 4 · Ontwerpgate | `website-ontwerper` (senior UX/UI) | Beoordeelt de schermen op desktop, tablet en mobiel tegen `docs/ontwerp/principes.md`, de ontwerpregels in `CLAUDE.md` en de ontwerpcriteria in de brief; past zelf niets aan | ONTWERP AKKOORD of verbeterpunten |
