@@ -335,3 +335,7 @@ Alle genoemde foto's staan al in `public/assets/img/`. Er zijn geen nieuwe foto'
 | Bouwen (ronde 5) | website-bouwer | `.productregel` en `.kaart-regel` nu `font-weight: 700`. Berekend gewicht 700 en grootte 19 px gemeten op 1440 en 390; gewicht 700 van Source Sans 3 werd al geladen (`wght@400;600;700`). In `CLAUDE.md`, `principes.md` en de brief staat nu "19 px vet, gewicht 700". De curve stond in `CLAUDE.md` al precies zoals in de CSS: `cubic-bezier(.45,0,.55,1)`. `npm test`: 6 geslaagd; `controleer.py`: geen fouten. |
 | Preview bekeken | [mens] | |
 | Live gezet (merge) | [mens] | |
+| Controleren (ronde 3) | website-controleur | AKKOORD (ea6b3b5): balklabel inkt, productregel 700, geen terugval. |
+| Ontwerpgate (ronde 4) | website-ontwerper | ONTWERP AKKOORD: geen band achter de header (gemeten heen en terug), balklabel inkt, warme sluier akkoord. Kanttekening: gedimd label en pijl-link (wit 0,35) tijdens aanwijzen bewust geaccepteerd, zoals bij Stock. |
+| Live gezet (merge) | Claude op verzoek van Carst | Carst vroeg op 2 nov. 2026 de updates na akkoord van beide gates zelf live te zetten (merge #2–#6). |
+
