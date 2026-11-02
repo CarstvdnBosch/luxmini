@@ -112,7 +112,7 @@ Alle vier besloten (2026-11-02):
 |---|---|---|
 | Plannen | website-planner | Brief klaar (2026-11-02), ontwerprichting van website-ontwerper opgenomen |
 | Bouwen | website-bouwer | Klaar (2026-11-02). Tabel met caption, scope-koppen, vinkje/streepje met sr-only tekst, band op 2e en 4e prijskolom, pijl-link "Kies je thema". Gemeten: scrollWidth 390/768/1440 = schermbreedte; op 390 tabel 346 px (= container), kolommen 125/55 px, tabel eindigt 511 px onder de sectiestart (< 844); prijzen Libre Caslon Display 24/26/48 px op één regel; namen en voet 16 px; rijen 48/52/56 px; alle tekst en tekens in rgb(32,32,32), contrast min. 5,2:1 (terracotta), met band min. 6,2:1; 1440 tabel 880 px, links gelijk met label. Sectie 003 ongewijzigd (zelfde breedtes en padding). Zonder JS en bij minder beweging direct zichtbaar. `npm test` 6/6, `controleer.py` geen fouten (nieuwe prijstabelcontrole faalt aantoonbaar bij foute data). Let op: webfonts konden in de bouwomgeving niet laden; breedte van de prijzen op 390 is met een vervangende serif gemeten (42 van 47 px). |
-| Controleren | website-controleur | |
-| Ontwerpgate | website-ontwerper | |
+| Controleren | website-controleur | AKKOORD (ronde 1); nieuwe controle vangt 7 soorten fouten. |
+| Ontwerpgate | website-ontwerper | ONTWERP AKKOORD (2026-11-02). Alle 12 ontwerpcriteria ✔ op 1440, 768 en 390; letters gemeten op de preview met de echte webfonts (prijscel 55 px, geen overloop). Kan beter: P2 tikdoel `.pijl` 39 px (hele site, aparte wijziging), P3 meer ruimte onder de pijl-link op mobiel. |
 | Preview bekeken | [mens] | |
 | Live gezet (merge) | [mens] | |
