@@ -130,7 +130,7 @@ a:hover { opacity: .8; }
 }
 
 /* ---------- 001 Formaten: prijstabel (rustig, als in een tijdschrift) ---------- */
-.prijstabel-blok { display: flex; flex-direction: column; align-items: flex-start; gap: 40px; }
+.prijstabel-blok { display: flex; flex-direction: column; align-items: center; gap: 40px; width: 100%; max-width: 880px; margin-inline: auto; } /* tabel en pijl-link midden op de pagina (wens Carst) */
 .prijstabel { width: 100%; max-width: 880px; table-layout: fixed; border-collapse: collapse; color: var(--inkt); }
 .prijstabel th, .prijstabel td { padding: 0 12px; height: 56px; text-align: center; vertical-align: middle; font-weight: 400; }
 .prijstabel thead th:first-child { width: 32%; }

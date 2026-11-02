@@ -116,3 +116,5 @@ Alle vier besloten (2026-11-02):
 | Ontwerpgate | website-ontwerper | ONTWERP AKKOORD (2026-11-02). Alle 12 ontwerpcriteria ✔ op 1440, 768 en 390; letters gemeten op de preview met de echte webfonts (prijscel 55 px, geen overloop). Kan beter: P2 tikdoel `.pijl` 39 px (hele site, aparte wijziging), P3 meer ruimte onder de pijl-link op mobiel. |
 | Preview bekeken | [mens] | |
 | Live gezet (merge) | [mens] | |
+| Wens na review | Carst | Tabel midden op de pagina in plaats van links uitgelijnd met het label (wijzigt ontwerpcriterium 11). Gebouwd: `.prijstabel-blok` max. 880 px, `margin-inline: auto`, pijl-link gecentreerd. |
+| Controleren + ontwerpgate (wens) | website-controleur via gates / website-ontwerper | Eén CSS-regel; npm test en controleer.py groen, scrollWidth gelijk aan venster op 1440/768/390. ONTWERP AKKOORD: label links en tabel midden is consistent met sectie 002. |
