@@ -243,7 +243,12 @@ LEES_SETS = """() => {
     const c = [...t.classList].find(k => /^t\\d$/.test(k)); const b = t.querySelector('img.set-b');
     uit[c] = b ? (getComputedStyle(b).opacity === '1' ? 'B' : 'A') : 'vast'; });
   const k = document.querySelector('.hero-wissel button[data-set="b"]');
-  return [uit, k ? k.getAttribute('aria-pressed') : null, document.querySelectorAll('.tegel.om, .tegel[role="button"]').length];
+  const kleur = s => getComputedStyle(document.querySelector(s)).color;
+  const zicht = s => { const e = document.querySelector(s); return e ? getComputedStyle(e).opacity : null; };
+  // tekst in de bovenkant (kop, quote, lopende regel) en het logo in de header
+  const tekst = [kleur('.hero .kop-xl'), kleur('.hero-kleur .quote'), kleur('.hero-kleur .lopend-spoor')];
+  return [uit, k ? k.getAttribute('aria-pressed') : null, document.querySelectorAll('.tegel.om, .tegel[role="button"]').length,
+          tekst, [zicht('.site-header .logo-wit'), zicht('.site-header .logo-donker')]];
 }"""
 
 def controleer_setwissel(page, tag, naam):
@@ -255,8 +260,12 @@ def controleer_setwissel(page, tag, naam):
     else:
         page.mouse.move(b * 0.25, h * 0.5); page.wait_for_timeout(100)
         page.mouse.move(b * 0.8, h * 0.5, steps=4)
-    page.wait_for_timeout(600)
-    sets, gedrukt, oud = page.evaluate(LEES_SETS)
+    page.wait_for_timeout(1000)  # kleur- en logowissel duren 0,75 s
+    sets, gedrukt, oud, tekst, logo = page.evaluate(LEES_SETS)
+    if any(t != "rgb(32, 32, 32)" for t in tekst):
+        fouten.append(f"{tag}: in set B is de tekst in de bovenkant niet inkt ({tekst})")
+    if logo != ["0", "1"]:
+        fouten.append(f"{tag}: in set B staat niet het donkere logo in de header (opacity wit/donker = {logo})")
     if [sets.get(t) for t in WISSELEND] != ["B"] * 4 or [sets.get(t) for t in VAST] != ["vast"] * 2:
         fouten.append(f"{tag}: setwissel klopt niet, tegels staan op {sets} (verwacht t2, t3, t4, t6 op B; t1, t5 vast)")
     if naam == "mobiel" and gedrukt != "true":
@@ -268,8 +277,10 @@ def controleer_setwissel(page, tag, naam):
         page.tap(".hero-wissel button[data-set='a']")
     else:
         page.mouse.move(b * 0.25, h * 0.5, steps=4)
-    page.wait_for_timeout(600)
-    sets, _, _ = page.evaluate(LEES_SETS)
+    page.wait_for_timeout(1000)
+    sets, _, _, tekst, logo = page.evaluate(LEES_SETS)
+    if tekst[0] != "rgb(255, 255, 255)" or logo != ["1", "0"]:
+        fouten.append(f"{tag}: terug in set A is de kop niet wit of het logo niet wit ({tekst[0]}, {logo})")
     if [sets.get(t) for t in WISSELEND] != ["A"] * 4:
         fouten.append(f"{tag}: terug naar set A lukt niet, tegels staan op {sets}")
 
@@ -337,8 +348,11 @@ def main():
                     waarschuwingen.append(f"{tag}: nog in te vullen: {p}")
 
                 # interacties
-                if page.query_selector(".hero[data-wissel]"):
-                    controleer_setwissel(page, tag, naam)
+                if pagina == "index.html":  # setwissel is verplicht op de homepage
+                    if page.query_selector(".hero[data-wissel]"):
+                        controleer_setwissel(page, tag, naam)
+                    else:
+                        fouten.append(f"{tag}: .hero[data-wissel] ontbreekt (setwisseltest kan niet draaien)")
                 if page.query_selector("#portfolio"):
                     controleer_portfolio(page, tag)
                 if page.query_selector(".hoverlijst button"):
@@ -384,8 +398,11 @@ def main():
                     if page.get_attribute(".burger", "aria-expanded") != "false" or not page.eval_on_selector("#menu-scherm", "e => e.hidden"):
                         fouten.append(f"{tag}: menu sluit niet met Esc")
                 # Personaliseren: tabbladen (alleen klik wisselt, aanwijzen niet)
-                if page.query_selector(".slider [role='tab']"):
-                    controleer_tabbladen(page, tag, touch)
+                if pagina == "index.html":  # tabbladen zijn verplicht op de homepage
+                    if page.query_selector(".slider [role='tab']"):
+                        controleer_tabbladen(page, tag, touch)
+                    else:
+                        fouten.append(f"{tag}: geen tabbladen ([role=tab]) in Personaliseren (tabbladtest kan niet draaien)")
                 # alles wat bij scrollen invaagt zichtbaar maken voor de screenshot
                 page.evaluate("document.querySelectorAll('.opkomen, .woorden-kop, img.zoom, .stappen').forEach(e => e.classList.add('in-beeld')); document.querySelectorAll('.hero').forEach(h => h.classList.add('klaar'))")
                 page.wait_for_timeout(1000)

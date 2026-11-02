@@ -563,7 +563,7 @@
     document.querySelectorAll('main .woorden-kop').forEach(function (el) { if (!el.closest('.hero')) io.observe(el); });
     /* 003 Zo werkt het: rondjes en lijnstukken tekenen zich één keer, 01 → 02 → 03 (CSS .stappen.teken) */
     document.querySelectorAll('main .stappen').forEach(function (el) { el.classList.add('teken'); io.observe(el); });
-    document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld, main .contact-foto').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
+    document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld img, main .contact-foto').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
   }
 
   /* ---------------------------------------------------------------
