@@ -19,14 +19,17 @@ Agents mergen nooit naar `main` en zetten nooit zelf iets live.
 ## Mappen
 
 - `public/` — **alles wat online komt**
-  - `index.html` — homepage: maatwerk en personaliseren (hoofdfocus)
-  - `kraamcadeaubox.html` — tweede pagina: de kraamcadeaubox (formaten, thema's)
+  - `index.html` — homepage: één scrollpagina (hero, 001 De kraamcadeaubox, 002 Producten, 003 Het gevoel, statement, 004 Personaliseren, 005 Over Carien, 006 Instagram, 007 Contact); geen formulier
+  - `producten.html` — Producten: vijf categorieën om en om (babykleding, siliconen, babynest, prematuur, kraamcadeaubox), zoals Stock /media
+  - `kraamcadeaubox.html` — Kraamcadeaubox: paginakop met prijzen, negen thema's in het ritme van Stock /projecten, formaten en prijzen, zo werkt het
+  - `over.html` — Over Carien: kopfoto, het verhaal met fotorij, "Hoe ik werk" (tabbladen)
+  - `contact.html` — Contact: fotokop, contactgegevens en het contactformulier (`#formulier`, `POST /api/contact`)
   - `privacy.html`, `bedankt.html`, `404.html`, `robots.txt`, `sitemap.xml`
   - `_redirects` — doorverwijzingen van oude Wix-adressen; `_headers` — beveiliging en caching
   - `assets/css/style.css` — alle opmaak; kleuren als variabelen bovenaan
   - `assets/js/main.js` — intro, collage (sets wisselen), hover-lijst, tabbladen, vaste balk, opkomen bij scrollen
   - `assets/img/` — webversies van foto's (max. ~1400 px, JPEG kwaliteit ~80)
-- `src/worker.js` + `src/formulier.js` — contactformulier (`POST /api/contact`) → mail via Cloudflare Email Routing naar info.luxmini@gmail.com
+- `src/worker.js` + `src/contact.js` + `src/formulier.js` — contactformulier (`POST /api/contact`) → mail via Cloudflare Email Routing naar info.luxmini@gmail.com; bij een fout terug naar `/contact?verzonden=fout#formulier`
 - `wrangler.jsonc` — Cloudflare-configuratie
 - `.github/workflows/` — `controle.yml` (gate 1 en 2 bij elke pull request), `rooktest.yml` (gate 3 na live zetten en dagelijks)
 - `tests/` — tests voor het formulier (`npm test`)
@@ -40,7 +43,10 @@ Agents mergen nooit naar `main` en zetten nooit zelf iets live.
 - Kleuren (variabelen in `style.css`): terracotta `#BC8565` (hoofdkleur; witte tekst alleen voor koppen en quotes vanaf 24 px; kleine tekst op terracotta in inkt), wit, grijsblauw `#E0E6E7`, inkt `#202020`. Hoverkleuren portfolio: perzik `#DEB799`, oker `#C89F67`, salie `#C3CFBC`, mauve `#B5969E`, olijf `#B4B19A`.
 - Lettertypes: grote koppen en quotes in Libre Caslon Display, labels en pijl-links in Libre Caslon Text, lopende tekst in Source Sans 3 (vrije versie van de letter die Stock gebruikt). Kleine kapitalen met ruime spatiëring (`.caps`).
 - Logo: witte versie (`logo-luxmini-wit.png`) los op terracotta; donkere versie (`logo-luxmini-donker.png`) op wit/grijs.
-- Vaste balk (`.balk`) verschijnt na de hero en toont het label van de huidige sectie (`data-label`). Nieuwe secties krijgen een `data-label`.
+- Hoofdnavigatie: Producten · Kraamcadeaubox · Over · Contact, elk een eigen pagina (geen ankers). De huidige pagina heeft `aria-current="page"` en is onderstreept (1 px, 6 px onder de letters). Het menu over het hele scherm toont dezelfde vier items met subitems (ankers op die pagina's); op mobiel alleen de hoofditems. Header en menu zijn op alle pagina's gelijk.
+- Vaste balk (`.balk`) verschijnt na de hero (homepage) of na de eerste sectie van een subpagina (`.pagina-kop`, `.over-kop`, `.contact-kop`) en toont het label van de huidige sectie (`data-label`). Nieuwe secties krijgen een `data-label`.
+- Kraamcadeauboxpagina: geen collage, maar een paginakop op terracotta met de prijzen, daarna de negen thema's in het projectenritme van Stock (foto 58,33% breed, ritme 33,33 / 8,33 / 25 / 8,33%, lopende regel met de themanaam achter de foto, 30 s). Thema's gebruiken lichte paletkleuren met inkt, nooit terracotta, en buren nooit dezelfde kleur.
+- Het contactformulier staat alleen op `contact.html` (`#formulier`). Elders staat het gedeelde contactblok (WhatsApp, telefoon, mail en "Neem contact op" → `contact.html`). Op de contactpagina ligt de header over een donkere foto: navigatie en logo wit (`html.kop-donker`).
 - Foto's: warme, gebroken witte tinten. Nieuwe foto's krijgen dezelfde lichte warme kleurcorrectie. Zie `docs/fotolijst.md` voor gewenste nieuwe foto's.
 - Secties genummerd: `001 —`, `002 —` enzovoort, klein in serif.
 - Links als pijl-links (`.pijl`), geen opvallende knoppen.
@@ -48,7 +54,7 @@ Agents mergen nooit naar `main` en zetten nooit zelf iets live.
 - Witte tekst: alleen voor grote tekst (vanaf 24 px, of vanaf 19 px vet, gewicht 700) en alleen op terracotta `#BC8565` of op de diepe portfoliotinten bij aanwijzen: oker `#BC8B47`, salie `#839C75`, olijf `#999575`, perzik `#C88654`, mauve `#AE8C94` (wit haalt daarop 3:1). Nooit wit op de lichte paletkleuren (perzik, oker, salie, mauve, olijf, grijsblauw). Krijgt de bovenkant een lichte paletkleur, dan wordt alle tekst daar inkt en wisselt het logo naar de donkere versie (`html.hero-licht`). Uitzondering: tekst op een donkere foto (statement, open werkwijze-kolom).
 - Portfolio (wens Carst, zoals Stock): bij aanwijzen kleurt de laag naar de diepe tint van het item en wordt alle portfoliotekst wit (actieve naam 1, andere namen 0,35; productregel 19 px vet (700) in kapitalen); de foto's krijgen een warme sluier (groot 28%, klein 20%). Kaarten op touch: diepe tint met witte naam (24 px) en productregel (19 px vet, 700). Staat de balk boven deze tint, dan wordt het logo wit en blijft het label inkt.
 - Kleurwissels bij aanwijzen zijn rustig (in-uit `cubic-bezier(.45,0,.55,1)`): bovenkant (achtergrond, tekst, logo) 1,2 s, fotowissel in de hero 0,6 s, portfolio 1 s. Bij "minder beweging" direct.
-- Hero: collage van zes foto's (`.tegel.t1` t/m `.t6`) in twee sets. De foto's wisselen samen per schermhelft: links set A "Het atelier" op terracotta, rechts set B "Het cadeau" op salie (t2, t3, t4 en t6 wisselen, t1 en t5 blijven). Op touch en met het toetsenbord wisselt de set via de tabjes "Het atelier · Het cadeau" (`aria-pressed`); een tik op een tegel wisselt ook. Er wisselt niets vanzelf. Op desktop bewegen en kantelen de foto's licht mee met de muis (max. 8°). Tegels zijn geen knoppen en draaien niet los.
+- Hero (homepage): collage van zes foto's (`.tegel.t1` t/m `.t6`) in twee sets. De foto's wisselen samen per schermhelft: links set A "Het atelier" op terracotta, rechts set B "Het cadeau" op salie (t2, t3, t4 en t6 wisselen, t1 en t5 blijven). Op touch en met het toetsenbord wisselt de set via de tabjes "Het atelier · Het cadeau" (`aria-pressed`); een tik op een tegel wisselt ook. Er wisselt niets vanzelf. Op desktop bewegen en kantelen de foto's licht mee met de muis (max. 8°). Tegels zijn geen knoppen en draaien niet los.
 - Intro: één keer per sessie bij het eerste bezoek, op elke pagina, ongeveer 3 s (logo, perzik vlak met foto, "Ieder nieuw leven / is bijzonder", doek trekt op). Overslaan met tik, klik, toets, scroll of vegen; noodrem in CSS na 4,0 s. Geen intro bij "minder beweging", zonder JavaScript of na een pagina-overgang.
 - Mobiel moet altijd goed werken (390 px breed): niets mag horizontaal scrollen, tekst moet leesbaar blijven.
 - Toon: warm, persoonlijk, Nederlands, "je/jij". Korte zinnen.

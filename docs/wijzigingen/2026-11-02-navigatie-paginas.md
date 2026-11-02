@@ -366,6 +366,7 @@ De regel "Hero: collage van zes foto's …" geldt dan alleen voor de homepage.
 |---|---|---|
 | Plannen | website-planner | Brief klaar, ontwerprichting van website-ontwerper opgenomen |
 | Bouwen | website-bouwer | Gebouwd op `wijziging/navigatie-paginas`; `npm test` en `controleer.py` groen. CLAUDE.md niet aangepast (voorstel hierboven, wacht op Carst). |
+| CLAUDE.md | Claude (hoofdsessie) | Voorstel overgenomen, volgt uit Carsts wens; akkoord Carst gevraagd in de PR. |
 | Controleren | website-controleur | |
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | [mens] | |
