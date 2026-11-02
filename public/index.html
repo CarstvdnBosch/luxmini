@@ -296,52 +296,58 @@
   </div>
 </section>
 
-<!-- 005 Instagram -->
+<!-- 005 Instagram: één foto met tekst ernaast (mobiel eronder) -->
 <section class="op-grijs" data-label="<span>005 —</span> Instagram">
   <div class="wrap sectie">
     <p class="label"><span>005 —</span> Instagram</p>
-    <div class="insta-kop">
-      <h2 class="kop-l">Volg het atelier<br>op Instagram</h2>
-      <a class="pijl" href="https://www.instagram.com/Luxmini2020/"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>@luxmini2020</a>
-    </div>
-    <div class="insta">
-      <a href="https://www.instagram.com/Luxmini2020/"><img src="assets/img/ig-outfit-ladder.jpg" alt="Overslagshirtje met ruches en flared broekje aan een ladder" loading="lazy"></a>
-      <a href="https://www.instagram.com/Luxmini2020/"><img src="assets/img/ig-bijtringen.jpg" alt="Pastelkleurige siliconen bijtringen met bloemetjes" loading="lazy"></a>
-      <a href="https://www.instagram.com/Luxmini2020/"><img src="assets/img/ig-babynest.jpg" alt="Babynest van bruine teddystof met een lichte binnenkant" loading="lazy"></a>
-      <a href="https://www.instagram.com/Luxmini2020/"><img src="assets/img/ig-charme-roze.jpg" alt="Roze tashanger met pompon, kralen, een poesje en een veertje" loading="lazy"></a>
-      <a href="https://www.instagram.com/Luxmini2020/"><img src="assets/img/ig-speenkoord-paardje.jpg" alt="Hanger met houten paardje en siliconen kralen" loading="lazy"></a>
-      <a href="https://www.instagram.com/Luxmini2020/"><img src="assets/img/ig-charme-blauw.jpg" alt="Blauwe tashanger met pompon, kralen, een figuurtje en een kwast" loading="lazy"></a>
+    <div class="insta-blok">
+      <a class="insta-foto" href="https://www.instagram.com/Luxmini2020/"><img src="assets/img/ig-outfit-ladder.jpg" alt="Mauve overslagshirtje met ruches en een flared broekje aan een houten ladder, op Instagram" width="480" height="640" loading="lazy"></a>
+      <div class="insta-tekst">
+        <h2 class="kop-l">Volg het<br>atelier op<br>Instagram</h2>
+        <!-- LET OP: wacht op akkoord Carien -->
+        <p class="klein">Nieuwe stukjes uit het atelier, zo van de naaimachine.</p>
+        <a class="pijl" href="https://www.instagram.com/Luxmini2020/"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>@luxmini2020</a>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- 006 Contact -->
+<!-- 006 Contact: rij 1 tekst en links met een vierkante foto, rij 2 het formulier -->
 <section id="contact" class="op-kleur" data-label="<span>006 —</span> Contact">
-  <div class="wrap sectie">
+  <div class="wrap sectie contact-sectie">
     <p class="label"><span>006 —</span> Contact</p>
-    <h2 class="kop-xl contact-kop">Zin om samen iets moois te maken?</h2>
-    <div class="contact-links">
-      <a class="pijl" href="https://wa.me/31643791618"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>WhatsApp Carien</a>
-      <a class="pijl" href="tel:+31643791618"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>06 – 43 79 16 18</a>
-      <a class="pijl" href="mailto:info.luxmini@gmail.com"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>info.LUXmini@gmail.com</a>
+    <div class="contact-rij">
+      <div class="contact-tekst">
+        <h2 class="kop-l">Zin om samen<br>iets moois<br>te maken?</h2>
+        <div class="contact-lijst">
+          <a class="pijl" href="https://wa.me/31643791618"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>WhatsApp Carien</a>
+          <a class="pijl" href="tel:+31643791618"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>06 – 43 79 16 18</a>
+          <a class="pijl" href="mailto:info.luxmini@gmail.com"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>info.LUXmini@gmail.com</a>
+        </div>
+      </div>
+      <img class="contact-foto" src="assets/img/maatwerk-handwerk.jpg" alt="De handen van Carien bij de naaimachine, met het LUX-label in de stof" style="object-position: 60% 50%" loading="lazy">
     </div>
-    <form class="formulier" action="/api/contact" method="post">
-      <label>Naam<input type="text" name="naam" autocomplete="name" required></label>
-      <label>Telefoon (optioneel)<input type="tel" name="telefoon" autocomplete="tel"></label>
-      <label class="breed">E-mailadres<input type="email" name="email" autocomplete="email" required></label>
-      <label class="breed">Waar gaat je vraag over?
-        <select name="onderwerp">
-          <option>Iets op maat laten maken</option>
-          <option>Prematuurkleding</option>
-          <option>Kraamcadeaubox</option>
-          <option>Iets anders</option>
-        </select>
-      </label>
-      <label class="breed">Je idee<textarea name="bericht" rows="5" required placeholder="Bijv. wat je zoekt, naam, stof, maat of uitgerekende datum"></textarea></label>
-      <label class="val" aria-hidden="true">Laat dit veld leeg<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
-      <p class="melding">Je gegevens gebruiken we alleen om je vraag te beantwoorden. Zie de <a href="privacy.html">privacyverklaring</a>.</p>
-      <button class="verstuur" type="submit"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Verstuur bericht</button>
-    </form>
+    <div class="contact-formulier">
+      <!-- LET OP: wacht op akkoord Carien -->
+      <p class="klein contact-inleiding">Liever schrijven? Laat hier een bericht achter, Carien reageert persoonlijk.</p>
+      <form class="formulier" action="/api/contact" method="post">
+        <label>Naam<input type="text" name="naam" autocomplete="name" required></label>
+        <label>Telefoon (optioneel)<input type="tel" name="telefoon" autocomplete="tel"></label>
+        <label class="breed">E-mailadres<input type="email" name="email" autocomplete="email" required></label>
+        <label class="breed">Waar gaat je vraag over?
+          <select name="onderwerp">
+            <option>Iets op maat laten maken</option>
+            <option>Prematuurkleding</option>
+            <option>Kraamcadeaubox</option>
+            <option>Iets anders</option>
+          </select>
+        </label>
+        <label class="breed">Je idee<textarea name="bericht" rows="5" required placeholder="Bijv. wat je zoekt, naam, stof, maat of uitgerekende datum"></textarea></label>
+        <label class="val" aria-hidden="true">Laat dit veld leeg<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+        <p class="melding">Je gegevens gebruiken we alleen om je vraag te beantwoorden. Zie de <a href="privacy.html">privacyverklaring</a>.</p>
+        <button class="verstuur" type="submit"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Verstuur bericht</button>
+      </form>
+    </div>
   </div>
 </section>
 

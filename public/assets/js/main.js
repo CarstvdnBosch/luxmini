@@ -554,7 +554,7 @@
     var io = new IntersectionObserver(function (items) {
       items.forEach(function (it) { if (it.isIntersecting) { it.target.classList.add('in-beeld'); io.unobserve(it.target); } });
     }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta a, main .prijs, main .uitgelicht-tekst, main .formulier, main .contact-links').forEach(function (el, i) {
+    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier, main .contact-links').forEach(function (el, i) {
       if (el.closest('.hero') || el.closest('.statement')) return;
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';
@@ -563,7 +563,7 @@
     document.querySelectorAll('main .woorden-kop').forEach(function (el) { if (!el.closest('.hero')) io.observe(el); });
     /* 003 Zo werkt het: rondjes en lijnstukken tekenen zich één keer, 01 → 02 → 03 (CSS .stappen.teken) */
     document.querySelectorAll('main .stappen').forEach(function (el) { el.classList.add('teken'); io.observe(el); });
-    document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
+    document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld, main .contact-foto').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
   }
 
   /* ---------------------------------------------------------------
