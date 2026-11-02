@@ -326,11 +326,46 @@ Een bezoeker vindt via vier duidelijke menu-items (Producten, Kraamcadeaubox, Ov
 - **Rooktest:** welke vaste tekst per nieuwe pagina moet `rooktest.sh` controleren? Voorstel: de `h1` ("Producten", "Over Carien", "Contact"). Na merge controleert de rooktest de live site; zolang de nameservers nog niet naar Cloudflare gaan, draait die op het workers.dev-adres.
 - KvK-nummer (`[nummer]`) staat nog open; niet nodig voor deze wijziging, wel zichtbaar in de footer van de nieuwe pagina's.
 
+## Besluiten op de open vragen (doorgegeven bij de bouwopdracht)
+- Over-blok op de homepage houdt `id="over"`.
+- Rooktest zoekt per nieuwe pagina de paginakop (`h1`-tekst): "Producten", "Over Carien", "Contact".
+- KvK blijft plaatshouder `[nummer]`.
+- De ontwerpregels in `CLAUDE.md` gaan mee in deze wijziging (balk, hoofdnavigatie, kraamcadeaubox zonder collage, formulier alleen op `contact.html`). **Dit heeft akkoord van Carst nodig in de pull request.** De bouwer heeft `CLAUDE.md` zelf niet aangepast: een wijziging aan `CLAUDE.md` moet van een mens komen. De voorgestelde tekst staat hieronder; Carst kan die overnemen (of de bouwer daar expliciet opdracht voor geven).
+
+## Voorstel voor CLAUDE.md (wacht op akkoord Carst)
+
+**Sectie "Mappen", vervang de regels over de pagina's door:**
+
+```
+  - `index.html` — homepage: één scrollpagina (hero, 001 De kraamcadeaubox, 002 Producten, 003 Het gevoel, statement, 004 Personaliseren, 005 Over Carien, 006 Instagram, 007 Contact); geen formulier
+  - `producten.html` — Producten: vijf categorieën om en om (babykleding, siliconen, babynest, prematuur, kraamcadeaubox), zoals Stock /media
+  - `kraamcadeaubox.html` — Kraamcadeaubox: paginakop met prijzen, negen thema's in het ritme van Stock /projecten, formaten en prijzen, zo werkt het
+  - `over.html` — Over Carien: kopfoto, het verhaal met fotorij, "Hoe ik werk" (tabbladen)
+  - `contact.html` — Contact: fotokop, contactgegevens en het contactformulier (`#formulier`, `POST /api/contact`)
+```
+
+en de regel over de Worker:
+
+```
+- `src/worker.js` + `src/contact.js` + `src/formulier.js` — contactformulier (`POST /api/contact`) → mail via Cloudflare Email Routing naar info.luxmini@gmail.com; bij een fout terug naar `/contact?verzonden=fout#formulier`
+```
+
+**Sectie "Ontwerpregels", nieuwe of gewijzigde regels:**
+
+```
+- Hoofdnavigatie: Producten · Kraamcadeaubox · Over · Contact, elk een eigen pagina (geen ankers). De huidige pagina heeft `aria-current="page"` en is onderstreept (1 px, 6 px onder de letters). Het menu over het hele scherm toont dezelfde vier items met subitems (ankers op die pagina's); op mobiel alleen de hoofditems. Header en menu zijn op alle pagina's gelijk.
+- Vaste balk (`.balk`) verschijnt na de hero (homepage) of na de eerste sectie van een subpagina (`.pagina-kop`, `.over-kop`, `.contact-kop`) en toont het label van de huidige sectie (`data-label`). Nieuwe secties krijgen een `data-label`.
+- Kraamcadeauboxpagina: geen collage, maar een paginakop op terracotta met de prijzen, daarna de negen thema's in het projectenritme van Stock (foto 58,33% breed, ritme 33,33 / 8,33 / 25 / 8,33%, lopende regel met de themanaam achter de foto, 30 s). Thema's gebruiken lichte paletkleuren met inkt, nooit terracotta, en buren nooit dezelfde kleur.
+- Het contactformulier staat alleen op `contact.html` (`#formulier`). Elders staat het gedeelde contactblok (WhatsApp, telefoon, mail en "Neem contact op" → `contact.html`). Op de contactpagina ligt de header over een donkere foto: navigatie en logo wit (`html.kop-donker`).
+```
+
+De regel "Hero: collage van zes foto's …" geldt dan alleen voor de homepage.
+
 ## Verloop
 | Stap | Wie | Uitkomst |
 |---|---|---|
 | Plannen | website-planner | Brief klaar, ontwerprichting van website-ontwerper opgenomen |
-| Bouwen | website-bouwer | |
+| Bouwen | website-bouwer | Gebouwd op `wijziging/navigatie-paginas`; `npm test` en `controleer.py` groen. CLAUDE.md niet aangepast (voorstel hierboven, wacht op Carst). |
 | Controleren | website-controleur | |
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | [mens] | |
