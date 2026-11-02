@@ -1,0 +1,51 @@
+# LUX mini — automatische controle bij elke pull request (onderdeel van de AI-PDLC, zie docs/ai-pdlc.md)
+#
+#   Gate 1 · tests        formulierlogica + Cloudflare-configuratie (dry-run, zet niets live)
+#   Gate 2 · sitecontrole links, foto's, alt-teksten, mobiel, JavaScript-fouten en interacties
+#
+# Live zetten doet Cloudflare Workers Builds zelf na een merge naar main.
+# In GitHub staan deze twee gates als "verplichte controles" op main: zonder groen kan er niet gemerged worden.
+name: Controle
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: controle-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: "Gate 1 · Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci || npm install
+      - run: npm test
+      - name: Cloudflare-configuratie controleren (dry-run)
+        run: npx wrangler deploy --dry-run --outdir dist
+
+  sitecontrole:
+    name: "Gate 2 · Sitecontrole"
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright/python:v1.47.0-jammy
+    steps:
+      - uses: actions/checkout@v4
+      - name: Playwright voor Python (zelfde versie als de browsers in de container)
+        run: pip install --no-cache-dir playwright==1.47.0
+      - run: python3 scripts/controleer.py
+      - name: Screenshots bewaren
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: scripts/screenshots/
+          retention-days: 14
