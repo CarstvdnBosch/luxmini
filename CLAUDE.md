@@ -65,3 +65,4 @@ Agents mergen nooit naar `main` en zetten nooit zelf iets live.
 1. Origineel in de mediamap bewaren (buiten deze site).
 2. Webversie maken: max. 1400 px lange zijde, JPEG kwaliteit 80, bestandsnaam in kleine letters met streepjes (`box-thema.jpg`).
 3. In `public/assets/img/` zetten en met een beschrijvende `alt`-tekst gebruiken.
+4. Een bestaande foto vervangen? Geef de nieuwe versie altijd een **nieuwe bestandsnaam** (bijv. `box-thema-2.jpg`). Foto's worden 30 dagen in de browser bewaard; met dezelfde naam ziet een terugkerende bezoeker nog de oude. CSS en JS worden bij elk bezoek opnieuw gecontroleerd (`public/_headers`).
