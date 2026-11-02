@@ -25,8 +25,9 @@ In deze volgorde blijft de oude Wix-site gewoon bereikbaar tot de allerlaatste s
 2. Workers & Pages → **Create** → **Import a repository** → GitHub → kies `luxmini`. Laat de standaardinstellingen staan:
    - Build command: `echo "$WORKERS_CI_COMMIT_SHA" > public/versie.txt` (zo kan de rooktest zien dat de nieuwe versie live staat);
    - Deploy command: `npx wrangler deploy`;
-   - Non-production branch deploy command: `npx wrangler versions upload`;
-   - zet **Builds for non-production branches** aan, dan krijgt elke pull request een eigen preview-link;
+   - Preview command: laat de standaard `npx wrangler preview` staan;
+   - let op: Cloudflare vult bij *Deploy command* soms `npx wrangler versions upload` in. Dat zet niets live; vervang het door `npx wrangler deploy`;
+   - zet daarna onder Settings → Builds **Builds for non-production branches** aan, dan krijgt elke pull request een eigen preview-link;
    - controleer dat er **geen builds voor pull requests uit forks** draaien (de repository is openbaar: anders kan code van vreemden een preview op jouw account krijgen).
 3. Cloudflare bouwt `main` en zet de site op `https://luxmini.<jouw-subdomein>.workers.dev`. Er is geen API-token nodig: GitHub en Cloudflare regelen de toegang onderling.
 4. **Faalt deze eerste build op e-mail** (melding over `send_email` of Email Routing)? Email Routing staat dan nog niet aan; dat komt pas in stap 4. Laat Claude in een pull request het `send_email`-blok in `wrangler.jsonc` tijdelijk uitzetten. De site werkt dan gewoon; alleen het formulier geeft netjes een foutmelding met de WhatsApp-, bel- en mailopties, tot Email Routing aanstaat en het blok terugkomt.
