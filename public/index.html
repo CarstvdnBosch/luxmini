@@ -191,35 +191,36 @@
   </div>
 </section>
 
-<!-- 002 Portfolio -->
+<!-- 002 Portfolio: vijf sferen. Met een muis: aanwijzen of focus kleurt de achtergrond,
+     toont twee foto's en een productregel. Op touch en zonder JavaScript: vijf kaarten. -->
 <section id="portfolio" class="op-wit hoverlijst-sectie" data-label="<span>002 —</span> Portfolio">
   <div class="wrap sectie">
     <p class="label"><span>002 —</span> Portfolio</p>
-    <div class="hoverlijst">
-      <img class="groot" src="assets/img/p-sjaaltje-kleur.jpg" alt="">
-      <img class="klein-beeld" src="assets/img/p-knuffel-naam.jpg" alt="">
+    <div class="hoverlijst sferen">
+      <div class="sfeer-beelden" aria-hidden="true">
+        <!-- LET OP: wacht op akkoord Carien -->
+        <div class="sfeer" data-i="0"><img class="groot" src="assets/img/p-swaddle-open-kleur.jpg" alt="" loading="lazy"><img class="klein-beeld" src="assets/img/p-knuffel-naam.jpg" alt="" loading="lazy"><p class="productregel" id="sfeer-regel-1">Swaddle · knuffel met naam</p></div>
+        <div class="sfeer" data-i="1"><img class="groot" src="assets/img/p-sjaaltje-kleur.jpg" alt="" loading="lazy"><img class="klein-beeld" src="assets/img/pers-naam.jpg" alt="" loading="lazy"><p class="productregel" id="sfeer-regel-2">Sjaaltje · doos met naam</p></div>
+        <div class="sfeer" data-i="2"><img class="groot" src="assets/img/p-shirtje-roze-kleur-vierkant.jpg" alt="" loading="lazy"><img class="klein-beeld" src="assets/img/ig-jasje-teddy.jpg" alt="" loading="lazy"><p class="productregel" id="sfeer-regel-3">Shirtje · omkeerbaar jasje</p></div>
+        <div class="sfeer" data-i="3"><img class="groot" src="assets/img/p-bijtring-giraf-kleur.jpg" alt="" loading="lazy"><img class="klein-beeld" src="assets/img/ig-speenkoord-paardje.jpg" alt="" loading="lazy"><p class="productregel" id="sfeer-regel-4">Bijtring · hanger</p></div>
+        <div class="sfeer" data-i="4"><img class="groot" src="assets/img/p-bijtring-kleur.jpg" alt="" loading="lazy"><img class="klein-beeld" src="assets/img/ig-babynest.jpg" alt="" loading="lazy"><p class="productregel" id="sfeer-regel-5">Bijtring met naam · babynest</p></div>
+      </div>
+      <!-- LET OP: wacht op akkoord Carien -->
       <ul>
-        <li><button type="button" data-cursor="bekijk" data-kleur="#DEB799" data-groot="assets/img/p-sjaaltje-kleur.jpg" data-klein="assets/img/p-knuffel-naam.jpg" data-alt="Sjaaltje met geborduurde naam Sem">Voor Sem</button></li>
-        <li><button type="button" data-cursor="bekijk" data-kleur="#C3CFBC" data-groot="assets/img/ig-babynest.jpg" data-klein="assets/img/pers-stoffen.jpg" data-alt="Babynest van bruine teddystof met een lichte binnenkant">Babynest</button></li>
-        <li><button type="button" data-cursor="bekijk" data-kleur="#C89F67" data-groot="assets/img/p-bijtring-kleur.jpg" data-klein="assets/img/over-naaimachine.jpg" data-alt="Bijtring met linnen zakje met naam Tobi">Voor Tobi</button></li>
-        <li><button type="button" data-cursor="bekijk" data-kleur="#E0E6E7" data-groot="assets/img/ig-outfit-ladder.jpg" data-klein="assets/img/p-shirtje-roze-kleur-vierkant.jpg" data-alt="Mauve overslagshirtje met ruches en flared broekje met bloemenprint">Ruches en flared broekje</button></li>
-        <li><button type="button" data-cursor="bekijk" data-kleur="#B4B19A" data-groot="assets/img/ig-jasje-teddy.jpg" data-klein="assets/img/ig-jasje-tricot.jpg" data-alt="Babyjasje met capuchon, aan twee kanten te dragen: de teddykant en de gladde kant">Jasje, twee kanten te dragen</button></li>
-        <li><button type="button" data-cursor="bekijk" data-kleur="#B5969E" data-groot="assets/img/ig-speenkoord-paardje.jpg" data-klein="assets/img/ig-bijtringen.jpg" data-alt="Siliconen hanger met kralen en een houten paardje">Hanger met houten paardje</button></li>
-        <li><button type="button" data-cursor="bekijk" data-kleur="#DEB799" data-groot="assets/img/p-knuffel.jpg" data-klein="assets/img/hero-box-open.jpg" data-alt="Mintgroene knuffeldoek in konijnvorm">Konijntje in mint</button></li>
-        <li><button type="button" data-cursor="bekijk" data-kleur="#BC8565" data-groot="assets/img/p-swaddle-open-kleur.jpg" data-klein="assets/img/stof-giraf.jpg" data-alt="Swaddle met bosdierenprint">Swaddle met bosdieren</button></li>
-        <li><button type="button" data-cursor="bekijk" data-kleur="#C89F67" data-groot="assets/img/box-giraf.jpg" data-klein="assets/img/stof-giraf.jpg" data-alt="Kraamcadeaubox thema Giraf">Kraamcadeaubox Giraf</button></li>
+        <li><button type="button" data-cursor="bekijk" data-kleur="#C89F67" data-groot="assets/img/p-swaddle-open-kleur.jpg" data-alt="Opgerolde swaddle met een print van vosjes en egeltjes" aria-describedby="sfeer-regel-1">Welkom op de wereld</button></li>
+        <li><button type="button" data-cursor="bekijk" data-kleur="#C3CFBC" data-groot="assets/img/p-sjaaltje-kleur.jpg" data-alt="Sjaaltje met de geborduurde naam Sem" aria-describedby="sfeer-regel-2">Helemaal van jou</button></li>
+        <li><button type="button" data-cursor="bekijk" data-kleur="#B4B19A" data-groot="assets/img/p-shirtje-roze-kleur-vierkant.jpg" data-alt="Mauve overslagshirtje met lange mouwen" aria-describedby="sfeer-regel-3">Klaar voor het eerste uitje</button></li>
+        <li><button type="button" data-cursor="bekijk" data-kleur="#DEB799" data-groot="assets/img/p-bijtring-giraf-kleur.jpg" data-alt="Bijtring van siliconen kralen met girafprint en een houten ring" aria-describedby="sfeer-regel-4">Iets om vast te houden</button></li>
+        <li><button type="button" data-cursor="bekijk" data-kleur="#B5969E" data-groot="assets/img/p-bijtring-kleur.jpg" data-alt="Bijtring met een linnen zakje met de naam Tobi" aria-describedby="sfeer-regel-5">Voor de allerkleinsten</button></li>
       </ul>
     </div>
-    <div class="kaarten" role="region" aria-label="Portfolio" tabindex="0">
-      <figure class="kaart"><img src="assets/img/p-sjaaltje-kleur.jpg" alt="Sjaaltje met geborduurde naam Sem" loading="lazy"><figcaption>Voor Sem</figcaption></figure>
-      <figure class="kaart"><img src="assets/img/ig-babynest.jpg" alt="Babynest van bruine teddystof met een lichte binnenkant" loading="lazy"><figcaption>Babynest</figcaption></figure>
-      <figure class="kaart"><img src="assets/img/p-bijtring-kleur.jpg" alt="Bijtring met linnen zakje met naam Tobi" loading="lazy"><figcaption>Voor Tobi</figcaption></figure>
-      <figure class="kaart"><img src="assets/img/ig-outfit-ladder.jpg" alt="Mauve overslagshirtje met ruches en flared broekje met bloemenprint" loading="lazy"><figcaption>Ruches en flared broekje</figcaption></figure>
-      <figure class="kaart"><img src="assets/img/ig-jasje-teddy.jpg" alt="Babyjasje met capuchon, aan twee kanten te dragen: de teddykant en de gladde kant" loading="lazy"><figcaption>Jasje, twee kanten te dragen</figcaption></figure>
-      <figure class="kaart"><img src="assets/img/ig-speenkoord-paardje.jpg" alt="Siliconen hanger met kralen en een houten paardje" loading="lazy"><figcaption>Hanger met houten paardje</figcaption></figure>
-      <figure class="kaart"><img src="assets/img/p-knuffel.jpg" alt="Mintgroene knuffeldoek in konijnvorm" loading="lazy"><figcaption>Konijntje in mint</figcaption></figure>
-      <figure class="kaart"><img src="assets/img/p-swaddle-open-kleur.jpg" alt="Swaddle met bosdierenprint" loading="lazy"><figcaption>Swaddle met bosdieren</figcaption></figure>
-      <figure class="kaart"><img src="assets/img/box-giraf.jpg" alt="Kraamcadeaubox thema Giraf" loading="lazy"><figcaption>Kraamcadeaubox Giraf</figcaption></figure>
+    <!-- LET OP: wacht op akkoord Carien -->
+    <div class="kaarten sfeer-kaarten" role="region" aria-label="Portfolio" tabindex="0">
+      <figure class="kaart" style="--kaart-kleur: #C89F67"><img src="assets/img/p-swaddle-open-kleur.jpg" alt="Opgerolde swaddle met een print van vosjes en egeltjes" loading="lazy"><figcaption><span class="kaart-naam">Welkom op de wereld</span><span class="kaart-regel">Swaddle · knuffel met naam</span></figcaption></figure>
+      <figure class="kaart" style="--kaart-kleur: #C3CFBC"><img src="assets/img/p-sjaaltje-kleur.jpg" alt="Sjaaltje met de geborduurde naam Sem" loading="lazy"><figcaption><span class="kaart-naam">Helemaal van jou</span><span class="kaart-regel">Sjaaltje · doos met naam</span></figcaption></figure>
+      <figure class="kaart" style="--kaart-kleur: #B4B19A"><img src="assets/img/p-shirtje-roze-kleur-vierkant.jpg" alt="Mauve overslagshirtje met lange mouwen" loading="lazy"><figcaption><span class="kaart-naam">Klaar voor het eerste uitje</span><span class="kaart-regel">Shirtje · omkeerbaar jasje</span></figcaption></figure>
+      <figure class="kaart" style="--kaart-kleur: #DEB799"><img src="assets/img/p-bijtring-giraf-kleur.jpg" alt="Bijtring van siliconen kralen met girafprint en een houten ring" loading="lazy"><figcaption><span class="kaart-naam">Iets om vast te houden</span><span class="kaart-regel">Bijtring · hanger</span></figcaption></figure>
+      <figure class="kaart" style="--kaart-kleur: #B5969E"><img src="assets/img/p-bijtring-kleur.jpg" alt="Bijtring met een linnen zakje met de naam Tobi" loading="lazy"><figcaption><span class="kaart-naam">Voor de allerkleinsten</span><span class="kaart-regel">Bijtring met naam · babynest</span></figcaption></figure>
     </div>
     <a class="pijl midden" href="#contact"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Laat iets voor jou maken</a>
   </div>

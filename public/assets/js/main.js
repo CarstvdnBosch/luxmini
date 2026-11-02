@@ -34,7 +34,12 @@
   laag.setAttribute('aria-hidden', 'true');
   document.body.insertBefore(laag, document.body.firstChild);
   var laagKleur = '';
-  function zetLaag(kleur) { if (kleur && kleur !== laagKleur) { laagKleur = kleur; laag.style.backgroundColor = kleur; } }
+  function zetLaag(kleur) {
+    if (kleur && kleur !== laagKleur) {
+      laagKleur = kleur; laag.style.backgroundColor = kleur;
+      if (typeof balkBijwerken === 'function') balkBijwerken(); // de balk kleurt mee
+    }
+  }
   var balkBijwerken = null;
 
   /* ---------------------------------------------------------------
@@ -243,7 +248,52 @@
   /* ---------------------------------------------------------------
      4. Portfolio: hover-lijst met foto's en achtergrondkleur
      --------------------------------------------------------------- */
-  document.querySelectorAll('.hoverlijst').forEach(function (lijst) {
+  // 4a. Portfolio met vijf sferen: alles tegelijk in 0,75 s (laag, foto's,
+  //     productregel, andere namen + label + pijl-link naar 0,2); wisselen
+  //     tussen items is een crossfade van 0,35 s. Weg, focus uit de lijst of Esc: terug.
+  document.querySelectorAll('.hoverlijst.sferen').forEach(function (lijst) {
+    var sectie = lijst.closest('.hoverlijst-sectie');
+    var knoppen = Array.prototype.slice.call(lijst.querySelectorAll('ul button'));
+    var sferen = Array.prototype.slice.call(lijst.querySelectorAll('.sfeer'));
+    function kies(k) {
+      var i = knoppen.indexOf(k);
+      knoppen.forEach(function (b) { b.classList.toggle('aan', b === k); });
+      sferen.forEach(function (s, n) { s.classList.toggle('aan', n === i); });
+      lijst.classList.add('actief');
+      if (sectie) sectie.classList.add('lijst-actief');
+      zetLaag(k.dataset.kleur);
+    }
+    function reset() {
+      if (!lijst.classList.contains('actief')) return;
+      lijst.classList.remove('actief');
+      if (sectie) sectie.classList.remove('lijst-actief');
+      knoppen.forEach(function (b) { b.classList.remove('aan'); });
+      lijst.style.setProperty('--my', '0');
+      laagBijwerken(true);
+    }
+    knoppen.forEach(function (k) {
+      if (muis) k.addEventListener('mouseenter', function () { kies(k); });
+      k.addEventListener('focus', function () { kies(k); });
+      k.addEventListener('click', function () { kies(k); });
+    });
+    lijst.addEventListener('focusout', function (e) {
+      if (e.relatedTarget && lijst.contains(e.relatedTarget)) return;
+      if (muis && lijst.matches(':hover')) return; // de muis staat er nog op
+      reset();
+    });
+    lijst.addEventListener('keydown', function (e) { if (e.key === 'Escape') reset(); });
+    if (muis) {
+      lijst.addEventListener('mouseleave', reset);
+      if (!stil) {
+        lijst.addEventListener('mousemove', function (e) {
+          var r = lijst.getBoundingClientRect();
+          lijst.style.setProperty('--my', (((e.clientY - r.top) / r.height) * 2 - 1).toFixed(3));
+        });
+      }
+    }
+  });
+
+  document.querySelectorAll('.hoverlijst:not(.sferen)').forEach(function (lijst) {
     var sectie = lijst.closest('.hoverlijst-sectie');
     var groot = lijst.querySelector('.groot');
     var klein = lijst.querySelector('.klein-beeld');

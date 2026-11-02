@@ -12,6 +12,8 @@ Wat het doet:
     vinkjes en aantallen)
   - controleert "003 — Zo werkt het" op de kraamcadeaubox: één <ol> met drie
     stappen, de juiste koppen en geen horizontaal scrollen (1440/768/390)
+  - controleert dat het portfolio precies vijf items telt, in de lijst en in
+    de kaarten, en dat die overeenkomen
   - maakt screenshots in scripts/screenshots/
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
@@ -178,6 +180,27 @@ def controleer_stappen(browser):
         if breedte > b:
             fouten.append(f"{tag}: pagina scrollt horizontaal (scrollWidth {breedte} > {b})")
 
+# Portfolio: precies vijf sferen, in de hoverlijst en in de kaarten (brief stock-pariteit, criterium 11 en 13)
+LEES_PORTFOLIO = """() => {
+  const s = document.querySelector('#portfolio');
+  const knoppen = [...s.querySelectorAll('.hoverlijst ul button')].map(b => [b.textContent.trim(), b.dataset.groot]);
+  const kaarten = [...s.querySelectorAll('.kaarten .kaart')].map(k => [(k.querySelector('.kaart-naam') || k).textContent.trim(), k.querySelector('img').getAttribute('src')]);
+  const regels = [...s.querySelectorAll('.kaarten .kaart .kaart-regel')].map(r => r.textContent.trim());
+  const beelden = s.querySelectorAll('.hoverlijst .sfeer').length;
+  return [knoppen, kaarten, regels, beelden];
+}"""
+
+def controleer_portfolio(page, tag):
+    knoppen, kaarten, regels, beelden = page.evaluate(LEES_PORTFOLIO)
+    if len(knoppen) != 5 or len(kaarten) != 5:
+        fouten.append(f"{tag}: portfolio telt {len(knoppen)} items in de lijst en {len(kaarten)} kaarten, verwacht precies 5 en 5")
+    if knoppen != kaarten:
+        fouten.append(f"{tag}: lijst en kaarten in het portfolio komen niet overeen ({knoppen} tegen {kaarten})")
+    if len(regels) != len(kaarten) or not all(regels):
+        fouten.append(f"{tag}: niet elke portfoliokaart heeft een productregel")
+    if beelden != len(knoppen):
+        fouten.append(f"{tag}: de lijst heeft {beelden} fotoparen voor {len(knoppen)} items")
+
 # Hero: de foto's wisselen samen per schermhelft (brief stock-pariteit, criterium 4 en 7)
 WISSELEND, VAST = ["t2", "t3", "t4", "t6"], ["t1", "t5"]
 LEES_SETS = """() => {
@@ -263,6 +286,8 @@ def main():
                 # interacties
                 if page.query_selector(".hero[data-wissel]"):
                     controleer_setwissel(page, tag, naam)
+                if page.query_selector("#portfolio"):
+                    controleer_portfolio(page, tag)
                 if page.query_selector(".hoverlijst button"):
                     lijst_zichtbaar = page.is_visible(".hoverlijst")
                     kaarten_zichtbaar = page.is_visible(".kaarten")
@@ -271,7 +296,7 @@ def main():
                         if lijst_zichtbaar or not kaarten_zichtbaar:
                             fouten.append(f"{tag}: op touch hoort de kaartenrij zichtbaar en de hover-lijst verborgen")
                         knoppen = page.eval_on_selector_all(".hoverlijst button", "els => els.map(b => [b.dataset.groot, b.dataset.alt, b.textContent.trim()])")
-                        kaarten = page.eval_on_selector_all(".kaarten .kaart", "els => els.map(k => [k.querySelector('img').getAttribute('src'), k.querySelector('img').getAttribute('alt'), k.querySelector('figcaption').textContent.trim()])")
+                        kaarten = page.eval_on_selector_all(".kaarten .kaart", "els => els.map(k => [k.querySelector('img').getAttribute('src'), k.querySelector('img').getAttribute('alt'), (k.querySelector('.kaart-naam') || k.querySelector('figcaption')).textContent.trim()])")
                         if knoppen != kaarten:
                             fouten.append(f"{tag}: kaarten wijken af van de hover-lijst (foto, alt of naam)")
                         page.eval_on_selector(".kaarten", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
