@@ -20,6 +20,17 @@
     "AFZENDER": "website@luxmini.nl",
     "ONTVANGER": "info.luxmini@gmail.com"
   },
+  // Previews (elke pull request een eigen link) krijgen dezelfde instellingen.
+  // Let op: een testbericht via een preview gaat dus echt naar Carien.
+  "previews": {
+    "vars": {
+      "AFZENDER": "website@luxmini.nl",
+      "ONTVANGER": "info.luxmini@gmail.com"
+    },
+    "send_email": [
+      { "name": "MAIL", "destination_address": "info.luxmini@gmail.com" }
+    ]
+  },
   "workers_dev": true,
   "preview_urls": true,
   "observability": { "enabled": true }
