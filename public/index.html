@@ -239,29 +239,41 @@
   </div>
 </section>
 
-<!-- 003 Personaliseren: woordenlijst waarbij de foto per techniek in beeld draait -->
-<section id="personaliseren" class="op-wit woorden-sectie" data-label="<span>003 —</span> Personaliseren">
-  <div class="wrap sectie">
-    <p class="label"><span>003 —</span> Personaliseren</p>
-    <div class="woordenlijst">
-      <div class="woorden-tekst">
-        <ul class="woorden">
-          <li><button type="button" data-cursor="kies" class="aan" aria-pressed="true" data-index="0" data-kleur="#C89F67">Borduren</button></li>
-          <li><button type="button" data-cursor="kies" aria-pressed="false" data-index="1" data-kleur="#DEB799">Belettering</button></li>
-          <li><button type="button" data-cursor="kies" aria-pressed="false" data-index="2" data-kleur="#B5969E">Siliconen</button></li>
-        </ul>
-        <!-- LET OP: deze uitleg per techniek moet Carien nog goedkeuren -->
-        <div class="woorden-uitleg" aria-live="polite">
-          <p class="klein aan" data-index="0">Een naam, geboortedatum of klein figuurtje, geborduurd op kleding, knuffels en zakjes.</p>
-          <p class="klein" data-index="1">Een naam of tekst als belettering op shirtjes en andere kleding.</p>
-          <p class="klein" data-index="2">Bijtring, speenkoord, sleutelhanger, Maxi-Cosi-hanger en mobiel, in jouw kleuren en met naam.</p>
-        </div>
+<!-- 003 Personaliseren: media-slider zoals bij Stock. Een klik op een tabblad (niet aanwijzen)
+     draait de nieuwe foto van rechts in, de oude schuift naar links weg en de kleur wisselt.
+     Zonder JavaScript staan de drie technieken onder elkaar. -->
+<section id="personaliseren" class="op-wit slider-sectie" data-label="<span>003 —</span> Personaliseren">
+  <div class="slider">
+    <p class="label slider-label"><span>003 —</span> Personaliseren</p>
+    <div class="slider-beelden">
+      <figure class="dia aan" data-i="0"><img src="assets/img/pers-sjaaltje-naam.jpg" alt="Sjaaltje met de geborduurde naam Sem" loading="lazy"></figure>
+      <!-- Tijdelijke foto tot er een echte foto van belettering op kleding is (docs/fotolijst.md) -->
+      <figure class="dia" data-i="1"><img src="assets/img/hero-box-dicht.jpg" alt="Doos met de naam Sem en geboortedatum in letters" style="object-position: 75% 50%" loading="lazy"></figure>
+      <figure class="dia" data-i="2"><img src="assets/img/p-bijtring-naam.jpg" alt="Bijtring met roze siliconen kralen, een parelmoerring en de naam Eva in letterkralen" loading="lazy"></figure>
+    </div>
+    <div class="slider-tabs">
+      <button type="button" class="slider-tab" id="tab-borduren" data-i="0" data-kleur="#C89F67"><span>Borduren</span></button>
+      <button type="button" class="slider-tab" id="tab-belettering" data-i="1" data-kleur="#DEB799"><span>Belettering</span></button>
+      <button type="button" class="slider-tab" id="tab-siliconen" data-i="2" data-kleur="#B5969E"><span>Siliconen</span></button>
+    </div>
+    <div class="slider-teksten" id="techniek-paneel">
+      <!-- LET OP: wacht op akkoord Carien -->
+      <div class="techniek aan" data-i="0">
+        <h2 class="kop-l">Borduren</h2>
+        <p class="klein">Een naam, geboortedatum of klein figuurtje, geborduurd op kleding, knuffels en zakjes.</p>
         <a class="pijl" href="#contact"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bespreek je idee</a>
       </div>
-      <div class="woorden-podium">
-        <figure class="dia aan" data-index="0"><img src="assets/img/pers-sjaaltje-naam.jpg" alt="Sjaaltje met de geborduurde naam Sem" loading="lazy"></figure>
-        <figure class="dia" data-index="1"><img src="assets/img/hero-box-dicht.jpg" alt="Doos met de naam Sem en geboortedatum in letters" loading="lazy"></figure>
-        <figure class="dia" data-index="2"><img src="assets/img/ig-speenkoord-paardje.jpg" alt="Siliconen hanger met kralen, blaadjes en een houten paardje" loading="lazy"></figure>
+      <!-- LET OP: wacht op akkoord Carien -->
+      <div class="techniek" data-i="1">
+        <h2 class="kop-l">Belettering</h2>
+        <p class="klein">Een naam of tekst als belettering op shirtjes en andere kleding.</p>
+        <a class="pijl" href="#contact"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bespreek je idee</a>
+      </div>
+      <!-- LET OP: wacht op akkoord Carien -->
+      <div class="techniek" data-i="2">
+        <h2 class="kop-l">Siliconen</h2>
+        <p class="klein">Bijtring, speenkoord, sleutelhanger, Maxi-Cosi-hanger en mobiel, in jouw kleuren en met naam.</p>
+        <a class="pijl" href="#contact"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bespreek je idee</a>
       </div>
     </div>
   </div>

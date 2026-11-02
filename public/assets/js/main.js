@@ -334,34 +334,89 @@
   });
 
   /* ---------------------------------------------------------------
-     5. Personaliseren: woordenlijst, foto draait per techniek in beeld
+     5. Personaliseren: media-slider. Alleen een klik, Enter of Spatie wisselt
+        (aanwijzen en focus niet). De oude foto schuift in 1,2 s naar links weg,
+        de nieuwe draait van rechts in; de tekst gaat per regel omhoog weg en
+        de nieuwe komt vanaf 0,5 s binnen; de laag kleurt in 0,75 s mee.
+        Klik je tijdens een wissel, dan springt die eerst naar het eind.
      --------------------------------------------------------------- */
-  document.querySelectorAll('.woordenlijst').forEach(function (lijst) {
-    var sectie = lijst.closest('.woorden-sectie');
-    var knoppen = lijst.querySelectorAll('.woorden button');
-    var dias = lijst.querySelectorAll('.dia');
-    var teksten = lijst.querySelectorAll('.woorden-uitleg p');
-    var huidig = 0;
-    function kies(i) {
-      if (i === huidig) return;
-      dias.forEach(function (d, n) {
-        d.classList.toggle('aan', n === i);
-        d.classList.toggle('weg', n === huidig);
-        if (n !== i && n !== huidig) d.classList.remove('weg');
-      });
-      var vorige = dias[huidig];
-      setTimeout(function () { if (!vorige.classList.contains('aan')) { vorige.style.transition = 'none'; vorige.classList.remove('weg'); void vorige.offsetWidth; vorige.style.transition = ''; } }, stil ? 0 : 1000);
-      knoppen.forEach(function (b, n) { b.classList.toggle('aan', n === i); b.setAttribute('aria-pressed', n === i ? 'true' : 'false'); });
-      teksten.forEach(function (t, n) { t.classList.toggle('aan', n === i); });
-      if (sectie) { sectie.setAttribute('data-achtergrond', knoppen[i].dataset.kleur); laagBijwerken(true); }
-      huidig = i;
-    }
-    knoppen.forEach(function (b, n) {
-      if (muis) b.addEventListener('mouseenter', function () { kies(n); });
-      b.addEventListener('click', function () { kies(n); });
-      b.addEventListener('focus', function () { kies(n); });
+  document.querySelectorAll('.slider').forEach(function (slider) {
+    var sectie = slider.closest('.slider-sectie');
+    var lijst = slider.querySelector('.slider-tabs');
+    var paneel = slider.querySelector('.slider-teksten');
+    var tabs = Array.prototype.slice.call(slider.querySelectorAll('.slider-tab'));
+    var dias = Array.prototype.slice.call(slider.querySelectorAll('.dia'));
+    var teksten = Array.prototype.slice.call(slider.querySelectorAll('.techniek'));
+    if (!lijst || !paneel || !tabs.length) return;
+    // tabbladen (rollen pas met JavaScript; zonder JS staan de technieken onder elkaar)
+    lijst.setAttribute('role', 'tablist');
+    lijst.setAttribute('aria-label', 'Technieken');
+    paneel.setAttribute('role', 'tabpanel');
+    tabs.forEach(function (t, n) {
+      t.setAttribute('role', 'tab');
+      t.setAttribute('aria-controls', paneel.id);
     });
-    if (sectie) sectie.setAttribute('data-achtergrond', knoppen[0].dataset.kleur);
+    var huidig = 0, lopend = [], opruimen = null;
+    var EASE = 'cubic-bezier(.76,0,.24,1)';
+    function zetTabs(i) {
+      tabs.forEach(function (t, n) { t.setAttribute('aria-selected', n === i ? 'true' : 'false'); t.tabIndex = n === i ? 0 : -1; });
+      paneel.setAttribute('aria-labelledby', tabs[i].id);
+      teksten.forEach(function (x, n) { x.setAttribute('aria-hidden', n === i ? 'false' : 'true'); });
+    }
+    function naarHetEind() {
+      if (!opruimen) return;
+      lopend.forEach(function (a) { try { a.finish(); } catch (e) { /* al klaar */ } });
+      var f = opruimen; opruimen = null; f();
+    }
+    function regels(el) { return Array.prototype.slice.call(el.children); }
+    function kies(i) {
+      naarHetEind();
+      if (i === huidig) return;
+      var oud = huidig; huidig = i;
+      zetTabs(i);
+      if (sectie) { sectie.setAttribute('data-achtergrond', tabs[i].dataset.kleur); laagBijwerken(true); }
+      var dOud = dias[oud], dNieuw = dias[i], tOud = teksten[oud], tNieuw = teksten[i];
+      dNieuw.classList.add('aan'); tNieuw.classList.add('aan');
+      if (stil || !dNieuw.animate) { dOud.classList.remove('aan'); tOud.classList.remove('aan'); return; }
+      dNieuw.style.zIndex = '2'; dOud.style.zIndex = '1';
+      lopend = [
+        dOud.animate([{ transform: 'none' }, { transform: 'translateX(-150%)' }], { duration: 1200, easing: EASE, fill: 'forwards' }),
+        dNieuw.animate([{ transform: 'translateX(150%) rotate(90deg)' }, { transform: 'none' }], { duration: 1200, easing: EASE, fill: 'backwards' })
+      ];
+      regels(tOud).forEach(function (el, n) {
+        lopend.push(el.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-40px)', opacity: 0 }], { duration: 500, delay: n * 60, easing: 'cubic-bezier(.55,0,.1,1)', fill: 'forwards' }));
+      });
+      regels(tNieuw).forEach(function (el, n) {
+        lopend.push(el.animate([{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 700, delay: 500 + n * 80, easing: 'cubic-bezier(.33,1,.68,1)', fill: 'backwards' }));
+      });
+      var deze = function () {
+        dOud.classList.remove('aan'); tOud.classList.remove('aan');
+        dOud.style.zIndex = ''; dNieuw.style.zIndex = '';
+        lopend.forEach(function (a) { a.cancel(); });
+        lopend = [];
+      };
+      opruimen = deze;
+      Promise.all(lopend.map(function (a) { return a.finished; })).then(function () {
+        if (opruimen === deze) { opruimen = null; deze(); }
+      }, function () { /* afgebroken door een nieuwe klik */ });
+    }
+    tabs.forEach(function (t, n) {
+      t.addEventListener('click', function () { kies(n); });
+    });
+    // pijltoetsen verplaatsen alleen de focus (handmatige activering met Enter of Spatie)
+    lijst.addEventListener('keydown', function (e) {
+      var n = tabs.indexOf(document.activeElement), doel = null;
+      if (n < 0) return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') doel = (n + 1) % tabs.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') doel = (n - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home') doel = 0;
+      else if (e.key === 'End') doel = tabs.length - 1;
+      if (doel === null) return;
+      e.preventDefault();
+      tabs[doel].focus();
+    });
+    zetTabs(0);
+    if (sectie) sectie.setAttribute('data-achtergrond', tabs[0].dataset.kleur);
   });
 
   /* ---------------------------------------------------------------
@@ -499,7 +554,7 @@
     var io = new IntersectionObserver(function (items) {
       items.forEach(function (it) { if (it.isIntersecting) { it.target.classList.add('in-beeld'); io.unobserve(it.target); } });
     }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta a, main .prijs, main .woorden-tekst, main .uitgelicht-tekst, main .formulier, main .contact-links').forEach(function (el, i) {
+    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta a, main .prijs, main .uitgelicht-tekst, main .formulier, main .contact-links').forEach(function (el, i) {
       if (el.closest('.hero') || el.closest('.statement')) return;
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';

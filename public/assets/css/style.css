@@ -482,30 +482,6 @@ html.menu-is-open { overflow: hidden; }
   .uitgelicht { --ub-links: 10%; --ub-b: 36%; --ub-h: calc(var(--u) * 48); --tekst-links: 54%; --tekst-b: 38%; }
 }
 
-/* ---------- Personaliseren: woordenlijst met draaiende foto ---------- */
-.woorden-sectie { transition: background .6s ease; }
-.woordenlijst { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px clamp(32px, 6vw, 96px); align-items: center; }
-.woorden-tekst { display: flex; flex-direction: column; gap: 28px; }
-.woorden { list-style: none; margin: 0; padding: 0; }
-.woorden button { font-family: var(--display); font-size: clamp(44px, 6.4vw, 92px); line-height: 1.08; color: rgba(32,32,32,.28); background: none; border: 0; padding: 0; cursor: pointer; transition: color .35s ease; text-align: left; }
-.woorden button.aan, .woorden button:hover { color: var(--inkt); }
-.woorden-uitleg { position: relative; min-height: 64px; }
-.woorden-uitleg p { max-width: 360px; }
-.js .woorden-uitleg p { position: absolute; inset: 0 auto auto 0; opacity: 0; transform: translateY(10px); transition: opacity .4s ease, transform .4s ease; max-width: 360px; }
-.js .woorden-uitleg p.aan { position: relative; opacity: 1; transform: none; }
-.woorden-podium { position: relative; display: grid; gap: 16px; max-width: 460px; width: 100%; justify-self: center; }
-.dia { margin: 0; }
-.dia img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; box-shadow: 0 30px 60px rgba(32,32,32,.18); }
-/* met JavaScript: één foto tegelijk, die in beeld draait */
-.js .woorden-podium { display: block; aspect-ratio: 4 / 5; }
-/* wachtende en vertrokken dia's staan onzichtbaar (ook de schaduw); zichtbaar
-   zodra .aan, en tijdens het vertrek nog 1 s zichtbaar */
-.js .dia { position: absolute; inset: 0; visibility: hidden; transform: translate(150%, 0) rotate(90deg); transition: transform 1s cubic-bezier(.76,0,.24,1), visibility 0s linear 1s; }
-.js .dia img { height: 100%; }
-.js .dia.aan { visibility: visible; transform: none; z-index: 2; transition: transform 1s cubic-bezier(.76,0,.24,1), visibility 0s; }
-.js .dia.weg { transform: translate(-150%, 0) rotate(-90deg); }
-.woorden-sectie { overflow: hidden; }
-
 /* ---------- Koppen per woord uit een masker ---------- */
 .js .woorden-kop .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .06em; margin-bottom: -.06em; }
 .js .woorden-kop .w > span { display: inline-block; transform: translateY(105%); transition: transform 1s cubic-bezier(.2,.7,.2,1); transition-delay: calc(var(--i, 0) * 45ms); }
@@ -534,16 +510,13 @@ html.menu-is-open { overflow: hidden; }
   .uitgelicht { --ub-links: 19%; --ub-top: 0px; --ub-b: 62%; --ub-h: calc(var(--u) * 82.667); --lopend-fs: 56px; }
   .uitgelicht-tekst { width: auto; margin: 0 var(--rand); padding-top: calc(var(--ub-top) + var(--ub-h) + 32px); }
   .intro.kort { padding-bottom: 24px; }
-  .woordenlijst { grid-template-columns: minmax(0, 1fr); }
-  .woorden-podium { max-width: 300px; order: -1; }
   .menu-binnen { align-items: flex-start; padding-top: 96px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .js.intro-aan .intro-scherm { display: none; }
   .js.intro-aan .site-header, .js.intro-aan main { animation: none; }
-  .overgang, .dia, .menu-scherm, .menu-nav a, .menu-kolom, .menu-foto { transition: none; }
-  .js .dia, .js .dia.aan { transition: none; } /* dia's wisselen direct */
+  .overgang, .menu-scherm, .menu-nav a, .menu-kolom, .menu-foto { transition: none; }
   .js .lopend-spoor { animation: none; } /* lopende tekst staat stil en begint met "— Ieder" */
   .js img.zoom.uitgelicht-beeld { transition: none; }
   .js .woorden-kop .w > span, .js img.zoom, .js .hero .tegel, .js .hero .hero-cirkel { transform: none; translate: none; opacity: 1; transition: none; }
@@ -658,3 +631,66 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .js .hoverlijst-sectie .sectie > .label, .js .hoverlijst-sectie .sectie > .pijl { transition: none; }
   .hoverlijst.sferen .groot, .hoverlijst.sferen .klein-beeld, .productregel { translate: none; }
 }
+
+/* =====================================================================
+   003 Personaliseren: media-slider (naar Stock)
+   Zonder JavaScript: de drie technieken onder elkaar, tekst links en foto rechts.
+   ===================================================================== */
+.slider-sectie { overflow: clip; } /* het draaien blijft binnen de sectie */
+.slider { max-width: var(--max); margin: 0 auto; padding: var(--ritme) var(--rand) calc(var(--ritme) / 2); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px clamp(32px, 6vw, 96px); align-items: center; }
+.slider-label { grid-column: 1 / -1; }
+.slider-beelden, .slider-teksten { display: contents; }
+.slider-tabs { display: none; }
+.techniek { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; color: var(--inkt); }
+.techniek .klein { max-width: 360px; }
+.dia { margin: 0; width: 100%; max-width: 460px; justify-self: center; }
+.dia img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+.techniek[data-i="0"] { grid-row: 2; grid-column: 1; } .dia[data-i="0"] { grid-row: 2; grid-column: 2; }
+.techniek[data-i="1"] { grid-row: 3; grid-column: 1; } .dia[data-i="1"] { grid-row: 3; grid-column: 2; }
+.techniek[data-i="2"] { grid-row: 4; grid-column: 1; } .dia[data-i="2"] { grid-row: 4; grid-column: 2; }
+@media (max-width: 760px) {
+  .slider { grid-template-columns: minmax(0, 1fr); }
+  .dia[data-i="0"] { grid-row: 2; grid-column: 1; } .techniek[data-i="0"] { grid-row: 3; grid-column: 1; }
+  .dia[data-i="1"] { grid-row: 4; grid-column: 1; } .techniek[data-i="1"] { grid-row: 5; grid-column: 1; }
+  .dia[data-i="2"] { grid-row: 6; grid-column: 1; } .techniek[data-i="2"] { grid-row: 7; grid-column: 1; }
+}
+/* tabbladen: kleine kapitalen in volle inkt, het actieve onderstreept (1 px, 6 px onder de letters) */
+.slider-tab { font-family: var(--sans); font-size: 14px; font-weight: 600; line-height: 1; letter-spacing: .32em; text-transform: uppercase; white-space: nowrap; color: var(--inkt); background: none; border: 0; padding: 0; min-height: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.slider-tab span { position: relative; display: inline-block; margin-right: -.32em; padding-right: .32em; } /* letterspatiëring na de laatste letter telt niet mee */
+.slider-tab span::after { content: ""; position: absolute; left: 0; right: .32em; bottom: -6px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left center; transition: transform .5s cubic-bezier(.2,.7,.2,1); }
+.slider-tab[aria-selected="true"] span::after { transform: none; }
+
+/* met JavaScript: één techniek tegelijk */
+.js .slider-tabs { display: flex; justify-content: center; }
+.js .slider-beelden { display: block; position: relative; overflow: hidden; } /* beeldvlak is een masker: oude foto schuift eruit, nieuwe draait erin */
+.js .slider-teksten { display: grid; }
+.js .techniek { grid-area: 1 / 1; visibility: hidden; }
+.js .techniek.aan { visibility: visible; }
+.js .dia { position: absolute; inset: 0; max-width: none; visibility: hidden; }
+.js .dia.aan { visibility: visible; }
+.js .dia img { height: 100%; aspect-ratio: auto; }
+.js .techniek[data-i], .js .dia[data-i] { grid-row: auto; grid-column: auto; }
+.js .techniek[data-i] { grid-area: 1 / 1; }
+
+/* desktop (vanaf 1025 px) en tablet: label linksboven, tekst links, beeld rechts, tabbladen onderaan */
+@media (min-width: 761px) {
+  .js .slider-sectie { height: clamp(720px, 100svh, 1000px); }
+  .js .slider { display: block; position: relative; height: 100%; width: var(--B); max-width: none; padding: 0; --tekst-links: 16.66%; --tekst-b: clamp(320px, 25%, 380px); --beeld-links: 50%; --beeld-h: min(calc(var(--u) * 44), calc(100svh - 220px)); }
+  .js .slider-label { position: absolute; left: var(--rand); top: var(--ritme); }
+  .js .slider-teksten { position: absolute; left: var(--tekst-links); width: var(--tekst-b); top: 50%; transform: translateY(-50%); }
+  .js .slider-beelden { position: absolute; left: var(--beeld-links); top: 50%; height: var(--beeld-h); aspect-ratio: 3 / 4; transform: translateY(-50%); }
+  .js .slider-tabs { position: absolute; left: 50%; bottom: 48px; transform: translateX(-50%); gap: 48px; }
+}
+@media (min-width: 761px) and (max-width: 1024px) {
+  .js .slider { --tekst-links: 8%; --tekst-b: 38%; --beeld-links: 52%; --beeld-h: min(calc(var(--u) * 53.333), calc(100svh - 260px)); }
+}
+/* mobiel: label, beeld (72%, 3:4), tabbladen in drie kolommen, kop, tekst en pijl-link */
+@media (max-width: 760px) {
+  .js .slider { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .js .slider-beelden { width: calc(var(--u) * 72); aspect-ratio: 3 / 4; justify-self: center; }
+  .js .slider-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-inline: calc(-1 * var(--rand) + 8px); }
+  .slider-tab { font-size: 13px; letter-spacing: .12em; }
+  .slider-tab span { margin-right: -.12em; padding-right: .12em; }
+  .slider-tab span::after { right: .12em; }
+}
+@media (prefers-reduced-motion: reduce) { .slider-tab span::after { transition: none; } }

@@ -12,6 +12,8 @@ Wat het doet:
     vinkjes en aantallen)
   - controleert "003 — Zo werkt het" op de kraamcadeaubox: één <ol> met drie
     stappen, de juiste koppen en geen horizontaal scrollen (1440/768/390)
+  - controleert de tabbladen in Personaliseren (klik wisselt foto en kop
+    binnen 1,5 s, aanwijzen niet)
   - controleert dat het portfolio precies vijf items telt, in de lijst en in
     de kaarten, en dat die overeenkomen
   - maakt screenshots in scripts/screenshots/
@@ -201,6 +203,36 @@ def controleer_portfolio(page, tag):
     if beelden != len(knoppen):
         fouten.append(f"{tag}: de lijst heeft {beelden} fotoparen voor {len(knoppen)} items")
 
+# Personaliseren: tabbladen als media-slider (brief stock-pariteit, criterium 14 en 15)
+LEES_TABBLAD = """() => {
+  const s = document.querySelector('.slider'); const tabs = [...s.querySelectorAll('[role="tab"]')];
+  const zichtbaar = e => getComputedStyle(e).visibility === 'visible' && e.getAnimations().length === 0;
+  const dias = [...s.querySelectorAll('.dia')].filter(d => getComputedStyle(d).visibility === 'visible').map(d => [d.dataset.i, d.getAnimations().length]);
+  const koppen = [...s.querySelectorAll('.techniek')].filter(d => getComputedStyle(d).visibility === 'visible').map(d => [d.dataset.i, d.querySelector('h2').textContent.trim()]);
+  return [tabs.map(t => t.getAttribute('aria-selected')), dias, koppen, tabs.map(t => t.textContent.trim())];
+}"""
+
+def controleer_tabbladen(page, tag, touch):
+    page.eval_on_selector(".slider", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
+    page.wait_for_timeout(300)
+    if not touch:
+        page.hover(".slider [role='tab']:nth-of-type(2)")
+        page.wait_for_timeout(400)
+        geselecteerd, _, _, _ = page.evaluate(LEES_TABBLAD)
+        if geselecteerd[1] == "true":
+            fouten.append(f"{tag}: aanwijzen wisselt het tabblad in Personaliseren (alleen klik hoort te wisselen)")
+    page.click(".slider [role='tab']:nth-of-type(2)")
+    page.wait_for_timeout(1500)
+    geselecteerd, dias, koppen, namen = page.evaluate(LEES_TABBLAD)
+    if geselecteerd != ["false", "true", "false"]:
+        fouten.append(f"{tag}: na een klik op het tweede tabblad is aria-selected {geselecteerd}")
+    if dias != [["1", 0]]:
+        fouten.append(f"{tag}: na 1,5 s staat in Personaliseren niet alleen de foto van het tweede tabblad stil ({dias})")
+    if [k[0] for k in koppen] != ["1"] or koppen[0][1] != namen[1]:
+        fouten.append(f"{tag}: na 1,5 s toont Personaliseren niet de kop van het tweede tabblad ({koppen})")
+    page.click(".slider [role='tab']:nth-of-type(1)")
+    page.wait_for_timeout(1500)
+
 # Hero: de foto's wisselen samen per schermhelft (brief stock-pariteit, criterium 4 en 7)
 WISSELEND, VAST = ["t2", "t3", "t4", "t6"], ["t1", "t5"]
 LEES_SETS = """() => {
@@ -330,14 +362,9 @@ def main():
                     page.wait_for_timeout(900)
                     if page.get_attribute(".burger", "aria-expanded") != "false" or not page.eval_on_selector("#menu-scherm", "e => e.hidden"):
                         fouten.append(f"{tag}: menu sluit niet met Esc")
-                # woordenlijst: tweede techniek kiezen
-                if page.query_selector(".woordenlijst"):
-                    page.click(".woorden li:nth-child(2) button")
-                    page.wait_for_timeout(1100)
-                    if not page.eval_on_selector(".dia[data-index='1']", "e => e.classList.contains('aan')"):
-                        fouten.append(f"{tag}: woordenlijst wisselt de foto niet")
-                    page.click(".woorden li:nth-child(1) button")
-                    page.wait_for_timeout(1100)
+                # Personaliseren: tabbladen (alleen klik wisselt, aanwijzen niet)
+                if page.query_selector(".slider [role='tab']"):
+                    controleer_tabbladen(page, tag, touch)
                 # alles wat bij scrollen invaagt zichtbaar maken voor de screenshot
                 page.evaluate("document.querySelectorAll('.opkomen, .woorden-kop, img.zoom, .stappen').forEach(e => e.classList.add('in-beeld')); document.querySelectorAll('.hero').forEach(h => h.classList.add('klaar'))")
                 page.wait_for_timeout(1000)
