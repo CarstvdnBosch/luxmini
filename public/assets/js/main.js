@@ -60,6 +60,8 @@
       var doek = intro.querySelector('.intro-doek');
       var figuur = intro.querySelector('.intro-figuur');
       var foto = intro.querySelector('.intro-foto');
+      // de foto pas nu laden: zonder intro (herhaald bezoek, minder beweging, geen JS) wordt hij nooit opgehaald
+      if (foto && foto.dataset.src && !foto.getAttribute('src')) foto.src = foto.dataset.src;
       var bewegers = [document.querySelector('.site-header'), document.querySelector('main')].filter(Boolean);
       var verstreken = 0;
       try {
