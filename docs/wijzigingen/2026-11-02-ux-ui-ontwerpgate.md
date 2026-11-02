@@ -43,6 +43,8 @@ De ontwerpverbeteringen zelf. Die volgen als aparte wijzigingen A, B en C uit de
 | Bouwen | website-bouwer | agent, principes, script, procesdocumenten en nulmeting gemaakt |
 | Controleren | website-controleur | ronde 1 NIET AKKOORD: review punt 1 onjuist (tik toont wél een foto), ontwerper-agent sprak zichzelf tegen (alleen lezen vs. brief aanvullen) |
 | Bouwen | website-bouwer | ronde 2: review gecorrigeerd en echte schermnamen; ontwerper levert tekst, planner zet die in de brief; n.v.t.-route overal; script met 100 px overlap en wist alleen afdrukken van de gefotografeerde pagina's |
+| Controleren | website-controleur | ronde 2 NIET AKKOORD: door de overlap verschoven schermnummers in de review; prijsrij-punt was een snij-artefact |
+| Bouwen | website-bouwer | ronde 3: alle verwijzingen nagelopen tegen nieuwe afdrukken, prijsrij-punt geschrapt, scriptversie vermeld |
 | Controleren | website-controleur | |
 | Ontwerpgate | website-ontwerper | n.v.t. (geen zichtbare wijziging) |
 | Preview bekeken | Carst | |
