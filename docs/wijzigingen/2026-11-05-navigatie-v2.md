@@ -260,3 +260,6 @@ Een bezoeker ziet in één oogopslag de vijf dingen die zij zoekt (hoe Carien we
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | [mens] | |
 | Live gezet (merge) | [mens] | |
+| Controleren (ronde 1) | website-controleur | AKKOORD. Beslispunten voor Carst bij GO: quote van Carien op Prematuurkleding (wacht op haar akkoord) en zichtbaar "[prijs]". Kan beter: LCP-foto Prematuurkleding niet lazy; alt "geboortedatum" bij de boxen. |
+| Ontwerpgate (ronde 1) | website-ontwerper | ONTWERP NIET AKKOORD: tikdoelen in het menu op touch onder 44 px (subitems 28 px op 768, hoofditems 40 px op 390). P2: eerste scherm Portfolio en Prematuurkleding zonder foto op desktop; contactkolom menu 21 px. P3: lang balklabel op mobiel. |
+| Herstel ronde 1 | Claude (hoofdsessie) | Touch: alle menulinks (hoofd, sub, contactkolom) minimaal 44 px, menu past nog in beeld (768: onderkant 892 px; 390: WhatsApp op 491 px). Prematuurkleding: foto fetchpriority high, niet lazy. Alt-teksten boxen: "een datum". Balklabel "002 — Knuffels en babynest". |

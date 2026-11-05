@@ -1079,3 +1079,11 @@ html.zacht-scrollen { scroll-behavior: auto; }
 @media (prefers-reduced-motion: reduce) {
   .js .portfolio-groep .groep-kop, .js .portfolio-groep .werk figcaption, .js .werk-beeld::after { transition: none; }
 }
+
+/* Touch: tikdoelen in het menu minimaal 44 px (ontwerpgate navigatie v2, P1) */
+@media (pointer: coarse) {
+  .menu-nav > ul > li > a { min-height: 44px; }
+  .menu-nav .menu-sub a { padding: 8px 0; min-height: 44px; box-sizing: border-box; }
+  .menu-kolom a { display: inline-flex; align-items: center; min-height: 44px; }
+  .menu-kolom { gap: 0; }
+}
