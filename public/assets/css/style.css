@@ -1087,3 +1087,13 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .menu-kolom a { display: inline-flex; align-items: center; min-height: 44px; }
   .menu-kolom { gap: 0; }
 }
+
+/* ---------- Kraamcadeauboxen 002: thema's als compact raster (wens Carst 5 nov.: minder scrollen) ---------- */
+.themaraster { list-style: none; margin: 32px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 24px; }
+.themakaart figure { margin: 0; }
+.themakaart img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.themakaart figcaption { margin-top: 12px; font-family: var(--display); font-size: 24px; line-height: 1.15; }
+.themas-onder { margin-top: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 40px; }
+.themas-onder .klein { margin: 0; font-size: 16px; }
+@media (max-width: 1024px) { .themaraster { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .themaraster { gap: 20px 12px; margin-top: 20px; } .themakaart figcaption { font-size: 20px; margin-top: 8px; } }
