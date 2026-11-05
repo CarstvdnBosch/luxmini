@@ -27,6 +27,7 @@ test('hoofdnavigatie brengt je naar elke pagina', async ({ page }, info) => {
       await page.locator('.menu-scherm a', { hasText: new RegExp(`^\\s*${tekst}\\s*$`, 'i') }).first().click();
     }
     await expect(page).toHaveURL(doel);
+    await page.waitForLoadState('load'); // pas klikken als het script van de nieuwe pagina draait
     await expect(page.locator('h1')).toBeVisible();
   }
 });
