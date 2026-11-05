@@ -1009,7 +1009,9 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .js .site-header .menu { flex-wrap: nowrap; white-space: nowrap; gap: 0 clamp(18px, 1.9vw, 30px); letter-spacing: clamp(.16em, .02em + .9vw, .3em); }
 }
 
-/* menu over het hele scherm: vijf hoofditems met elf subitems passen op 1440 x 900 zonder scrollen */
+/* menu over het hele scherm: subitems 24 px ingesprongen (.menu-nav ul zette de inspringing op 0) */
+.menu-nav .menu-sub { padding-left: 24px; }
+/* vijf hoofditems met elf subitems passen op 1440 x 900 zonder scrollen */
 @media (min-width: 761px) {
   .menu-nav > ul > li > a { font-size: clamp(36px, 3.6vw, 52px); }
   .menu-sub { margin: 0 0 10px; }
@@ -1028,14 +1030,15 @@ html.zacht-scrollen { scroll-behavior: auto; }
 /* ---------- Werkwijze 004: Wat ik maak (compact, op grijsblauw) ----------
    Vijf rijen: kleine foto (max. 240 px, nooit groter dan het bestand) en tekst; mobiel foto 96 px links. */
 .maak-lijst { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px clamp(32px, 5vw, 80px); }
-.maak-rij { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 1fr); gap: 0 32px; align-items: start; scroll-margin-top: 84px; }
-.maak-rij img { width: auto; max-width: 100%; height: auto; }
+.maak-rij { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 0 32px; align-items: start; scroll-margin-top: 84px; }
+/* breedte uit het width-attribuut (bestand), begrensd op de kolom: ruimte staat vast vóór het laden (geen CLS) */
+.maak-rij img { max-width: 100%; height: auto; }
 .maak-tekst { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .maak-kop { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(28px, 2.4vw, 36px); line-height: 1.1; }
 .maak-tekst .klein { max-width: 360px; }
 @media (max-width: 1024px) {
   .maak-lijst { grid-template-columns: minmax(0, 1fr); gap: 48px; }
-  .maak-rij { grid-template-columns: minmax(0, 200px) minmax(0, 1fr); }
+  .maak-rij { grid-template-columns: 200px minmax(0, 1fr); }
 }
 @media (max-width: 760px) {
   .maak-lijst { gap: 40px; }
@@ -1046,14 +1049,14 @@ html.zacht-scrollen { scroll-behavior: auto; }
 
 /* ---------- Portfolio: vier groepen in metselwerk ----------
    Kolommen met CSS columns: 4 vanaf 1025 px, 3 op tablet, 2 op mobiel. Elke foto houdt zijn eigen
-   verhouding en wordt nooit breder getoond dan het bestand (width: auto tot max. 100%). */
+   verhouding en wordt nooit breder getoond dan het bestand (width-attribuut, max. 100%). */
 .portfolio-links .pijl { min-height: 44px; }
 .portfolio-groep .sectie { gap: 40px; }
 .groep-kop { color: var(--inkt); }
 .werken { columns: 4; column-gap: 32px; }
 .werk { margin: 0 0 32px; break-inside: avoid; display: flex; flex-direction: column; align-items: flex-start; }
 .werk-beeld { position: relative; display: block; max-width: 100%; }
-.werk-beeld img { width: auto; max-width: 100%; height: auto; }
+.werk-beeld img { max-width: 100%; height: auto; } /* breedte = width-attribuut (het bestand), nooit breder; vaste ruimte vóór het laden */
 .werk figcaption { margin-top: 12px; font-family: var(--display); font-size: 24px; line-height: 1.2; color: var(--inkt); }
 @media (max-width: 1024px) { .werken { columns: 3; column-gap: 24px; } .werk { margin-bottom: 24px; } }
 @media (max-width: 760px) {
