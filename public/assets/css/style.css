@@ -822,7 +822,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .categorie-tekst { grid-column: 2; grid-row: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
 .categorie-tekst .klein { max-width: 360px; }
 .categorie-foto { grid-column: 4; grid-row: 1 / 5; width: 100%; max-width: 480px; }
-.categorie-foto img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+.categorie-foto img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
 .categorie-foto.klein-bestand { max-width: 324px; justify-self: center; } /* babynest: alleen de kleine Instagram-versie */
 .categorie.gespiegeld .categorie-rij { grid-template-columns: 16.667% 33.333% 8.334% 25% 16.666%; }
 .categorie.gespiegeld .categorie-label, .categorie.gespiegeld .categorie-tekst { grid-column: 4; }

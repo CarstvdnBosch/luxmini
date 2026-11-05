@@ -650,7 +650,8 @@
       items.forEach(function (it) { if (it.isIntersecting) { it.target.classList.add('in-beeld'); io.unobserve(it.target); } });
     }, { rootMargin: '0px 0px -8% 0px' });
     document.querySelectorAll('main .label, main .quote, main .stap .klein, main .formaat, main .formaten-voet, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier').forEach(function (el, i) {
-      if (el.closest('.hero') || el.closest('.statement')) return;
+      // niet in de hero, het statement of de paginakop: wat bij het openen al in beeld staat, staat er meteen (snellere LCP)
+      if (el.closest('.hero') || el.closest('.statement') || el.closest('.pagina-kop, .over-kop, .contact-kop')) return;
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';
       io.observe(el);
