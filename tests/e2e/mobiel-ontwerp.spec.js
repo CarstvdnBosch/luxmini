@@ -7,7 +7,8 @@ test.beforeEach(({}, info) => { test.skip(!['mobiel', 'iphone'].includes(info.pr
 // Alles wat je kunt aantikken (zichtbaar, niet verborgen achter een gesloten menu)
 const TIKBAAR = 'main a[href], main button, main input:not([type=hidden]), main select, main textarea, main [role=tab], header a[href], header button, .balk a[href], .balk button, footer a[href]';
 
-for (const { pad, naam } of PAGINAS) {
+// ook de 404-pagina: daar komen bezoekers binnen via oude webshop-links
+for (const { pad, naam } of [...PAGINAS, { pad: '/bestaat-niet-meer', naam: '404' }]) {
   test(`${naam}: mobiele ontwerpprincipes`, async ({ page }) => {
     await page.goto(pad);
     await wachtOpRust(page);
