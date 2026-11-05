@@ -2,7 +2,7 @@
 // Draait tegen een lokale kopie van public/ (scripts/serveer.mjs), op drie schermen.
 //   npm run test:e2e            toegankelijkheid, SEO, veiligheid, links (blokkerend)
 //   npm run test:visueel        schermvergelijking met de goedgekeurde basis (waarschuwing)
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 const POORT = 4173;
 const VISUEEL = !!process.env.VISUEEL;
@@ -34,6 +34,8 @@ export default defineConfig({
     { name: 'desktop', use: { viewport: { width: 1440, height: 900 } } },
     { name: 'tablet', use: { viewport: { width: 768, height: 1024 }, hasTouch: true, isMobile: true } },
     { name: 'mobiel', use: { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true } },
+    // Safari op de iPhone (WebKit, de motor van Safari): veel bezoekers gebruiken dit. Viewport met de balken van Safari.
+    { name: 'iphone', use: { ...devices['iPhone 13'] } },
   ],
   webServer: {
     command: `node scripts/serveer.mjs ${POORT}`,

@@ -16,7 +16,7 @@ Alleen bij wijzigingen die de bezoeker ziet. Lever de tekst voor de sectie **Ont
 - toetsbare ontwerpcriteria, bijvoorbeeld "op 390 px staat de WhatsApp-knop zonder scrollen in beeld".
 
 ## Rol 2 · Ontwerpgate (na de controleur, vóór de pull request)
-1. Maak schermafdrukken per schermhoogte: `python3 scripts/schermafdrukken.py`. Ze komen in `scripts/schermafdrukken/` (desktop 1440, tablet 768, mobiel 390). Draai ook `npm run test:visueel` en bekijk in `rapport/visueel-html/` welke schermen afwijken van de goedgekeurde basis: zeg per verschil of het bedoeld is. Neem de toegankelijkheidsuitslag (axe, in `rapport/playwright-html/`) mee in je oordeel over leesbaarheid en contrast.
+1. Maak schermafdrukken per schermhoogte: `python3 scripts/schermafdrukken.py`. Ze komen in `scripts/schermafdrukken/` (desktop 1440, tablet 768, mobiel 390). Toets mobiel apart (besluit Carst): loop de tien regels onder "Mobiel" in `docs/ontwerp/principes.md` langs op 390 px. Kijk ook naar de iPhone/Safari-uitslag van `tests/e2e/mobiel-ontwerp.spec.js` in het validatierapport, en geef in je verslag een aparte regel "Mobiel: ✔/✘". Draai ook `npm run test:visueel` en bekijk in `rapport/visueel-html/` welke schermen afwijken van de goedgekeurde basis: zeg per verschil of het bedoeld is. Neem de toegankelijkheidsuitslag (axe, in `rapport/playwright-html/`) mee in je oordeel over leesbaarheid en contrast.
 2. Bekijk de schermen van de pagina's die de wijziging raakt, plus één scherm ervoor en erna. Beoordeel alleen wat je echt ziet.
 3. Toets de schermen aan de ontwerpchecklist hieronder en aan de ontwerpcriteria in de brief.
 

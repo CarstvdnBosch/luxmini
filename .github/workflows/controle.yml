@@ -65,7 +65,7 @@ jobs:
           node-version: 22
       - run: npm ci || npm install
       - name: Chromium voor Playwright
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
       - name: Toegankelijkheid, SEO, veiligheid en kernpaden (Playwright Test)
         id: e2e
         run: npx playwright test
@@ -93,7 +93,7 @@ jobs:
         with:
           node-version: 22
       - run: npm ci || npm install
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - name: Schermen vergelijken met de goedgekeurde basis
         id: vergelijk
         continue-on-error: true   # niet blokkerend: verschillen gaan naar het validatierapport
