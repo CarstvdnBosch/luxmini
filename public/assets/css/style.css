@@ -822,7 +822,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 /* babynest: de kleine foto (324 px) vult geen scherm; het blok wordt zo hoog als de inhoud (compact, geen leeg vlak) */
 @media (min-width: 1025px) { .categorie:has(.klein-bestand) { min-height: 0; } }
 /* homepage: productblokken zo hoog als de inhoud, foto tot foto max. ca. 160 px (ontwerpgate homepage, P1: minder scrollen) */
-.categorie.compact { padding: calc(var(--ritme) * .5) 0; }
+.categorie.compact { padding: max(32px, calc(var(--ritme) * .5)) 0; }
 @media (min-width: 1025px) { .categorie.compact { min-height: 0; } }
 .categorie-rij { width: var(--B); margin-left: calc(50% - var(--B) / 2); display: grid; grid-template-columns: 16.666% 25% 8.334% 33.333% 16.667%; grid-template-rows: 1fr auto auto 1fr; }
 .categorie-label { grid-column: 2; grid-row: 2; margin-bottom: 32px; }
