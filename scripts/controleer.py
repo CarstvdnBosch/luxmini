@@ -228,13 +228,17 @@ HOME_BLOKKEN = [("babykleding", "001 — Babykleding", "babykleding", "inspirati
                 ("kraamcadeauboxen", "005 — Kraamcadeauboxen", "kraamcadeaubox", "kraamcadeauboxen.html")]
 LICHTE_KLEUREN = {"#DEB799", "#C89F67", "#C3CFBC", "#B5969E", "#B4B19A", "#E0E6E7"}
 
+# Producttekst per blok (letterlijk; was "Wat ik maak" op Werkwijze, sinds 5 nov. alleen op de homepage)
+PRODUCTTEKSTEN = {
+    'babykleding': ('Babykleding met naam', 'Een naam, geboortedatum of klein figuurtje, geborduurd of als belettering op kleding.'),
+    'siliconen': ('Siliconen items', 'Bijtring, speenkoord, sleutelhanger, Maxi-Cosi-hanger en mobiel, in jouw kleuren en met naam.'),
+    'babynest': ('Babynest', 'Een babynest in de stof en kleur die jij kiest.'),
+    'prematuur': ('Prematuurkleding', 'Maatwerk in (prematuur)babykleding. Ook prematuurmaten.'),
+    'kraamcadeaubox': ('Kraamcadeaubox', 'Handgemaakte babyproducten in één thema, met naam en geboortedatum. Vanaf € 35.'),
+}
+
 def wat_ik_maak():
-    """Kop en tekst per rij van "Wat ik maak" op werkwijze.html: de bron voor de homepage (letterlijk)."""
-    html = (ROOT / "werkwijze.html").read_text(encoding="utf-8")
-    uit = {}
-    for id_, blok in re.findall(r'<li class="maak-rij" id="([^"]+)">(.*?)</li>', html, re.S):
-        uit[id_] = (re.search(r'<h2 class="maak-kop">([^<]+)</h2>', blok).group(1).strip(), re.search(r'<p class="klein">([^<]+)</p>', blok).group(1).strip())
-    return uit
+    return PRODUCTTEKSTEN
 
 def bestandsbreedte(src):
     """Breedte van het bestand in public/ (0 als het niet bestaat)."""
@@ -437,7 +441,7 @@ def controleer_headers():
 INTRO_WEG = "try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}"
 HOOFDMENU = [("Werkwijze", "werkwijze"), ("Kraamcadeauboxen", "kraamcadeauboxen"), ("Prematuurkleding", "prematuurkleding"), ("Babynest", "babynest"), ("Inspiratie", "inspiratie"), ("Contact", "contact")]
 HEADER_VANAF = 1280  # gemeten: vanaf deze breedte passen de zes links naast het logo (logo krimpt niet)
-MENU_SUBS = [("Het atelier", "werkwijze#atelier"), ("Hoe ik werk", "werkwijze#hoe-ik-werk"), ("Personaliseren", "werkwijze#personaliseren"), ("Wat ik maak", "werkwijze#wat-ik-maak"),
+MENU_SUBS = [("Het atelier", "werkwijze#atelier"), ("Hoe ik werk", "werkwijze#hoe-ik-werk"), ("Personaliseren", "werkwijze#personaliseren"), 
              ("Thema's", "kraamcadeauboxen#themas"), ("Formaten en prijzen", "kraamcadeauboxen#formaten"), ("Zo werkt het", "kraamcadeauboxen#werkwijze"),
              ("Kleding", "inspiratie#kleding"), ("Knuffels, swaddles en babynest", "inspiratie#textiel"), ("Siliconen en hangers", "inspiratie#siliconen"), ("Kraamcadeauboxen", "inspiratie#boxen")]
 INKT = "rgb(32, 32, 32)"
@@ -462,7 +466,7 @@ def controleer_bestanden():
         d = r.split()
         if len(d) >= 3 and not r.startswith("#"):
             regels[d[0]] = (d[1], d[2])
-    verwacht = {"/producten": "/werkwijze", "/producten.html": "/werkwijze", "/over": "/werkwijze", "/over.html": "/werkwijze", "/over-lux": "/werkwijze",
+    verwacht = {"/producten": "/", "/producten.html": "/", "/over": "/werkwijze", "/over.html": "/werkwijze", "/over-lux": "/werkwijze",
                 "/kraamcadeaubox": "/kraamcadeauboxen", "/kraamcadeaubox.html": "/kraamcadeauboxen", "/aanbod": "/kraamcadeauboxen", "/aanbod/": "/kraamcadeauboxen",
                 "/shop": "/kraamcadeauboxen", "/product-page/*": "/kraamcadeauboxen", "/klantenservice": "/contact", "/account/*": "/",
                 "/portfolio": "/inspiratie", "/portfolio.html": "/inspiratie"}
@@ -581,7 +585,7 @@ def controleer_navigatie(browser):
       const hoofd = m.querySelector('.menu-nav > ul > li > a').getBoundingClientRect().left, sub = m.querySelector('.menu-sub a');
       return [as.length, as.filter(a => !z(a)).map(a => a.textContent.trim()), m.scrollHeight - m.clientHeight,
               Math.round(sub.getBoundingClientRect().left - hoofd), getComputedStyle(sub).fontSize, getComputedStyle(sub).fontFamily.split(',')[0]]; }""")
-    if st[0] != 17 or st[1] or st[2] > 0:
+    if st[0] != 16 or st[1] or st[2] > 0:  # 6 hoofditems + 10 subitems (Wat ik maak is weg)
         fouten.append(f"index.html [1440 x 900, menu]: niet alle hoofd- en subitems staan zonder scrollen in beeld ({st[:3]})")
     if abs(st[3] - 24) > 2 or st[4] != "16px" or "Libre Caslon Text" not in st[5]:
         fouten.append(f"index.html [1440 x 900, menu]: subitems niet 24 px ingesprongen in Libre Caslon Text 16 px ({st[3:]})")
@@ -742,7 +746,7 @@ def controleer_werkwijze(browser):
     if "moeder van twee dochters en oma van vier kleinkinderen" not in verhaal or "net iets anders en persoonlijks." not in verhaal:
         fouten.append("werkwijze.html: het verhaal van Carien is niet de bestaande tekst")
     secties = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()])")
-    if secties != [["", "— Werkwijze"], ["atelier", "001 — Het atelier"], ["hoe-ik-werk", "002 — Hoe ik werk"], ["personaliseren", "003 — Personaliseren"], ["wat-ik-maak", "004 — Wat ik maak"], ["contact", "005 — Contact"]]:
+    if secties != [["", "— Werkwijze"], ["atelier", "001 — Het atelier"], ["hoe-ik-werk", "002 — Hoe ik werk"], ["personaliseren", "003 — Personaliseren"], ["contact", "004 — Contact"]]:
         fouten.append(f"{tag}: volgorde of labels van de secties kloppen niet ({secties})")
     # criterium 7: geen dubbele onderdelen (wat van de homepage verhuisde staat er alleen als het er nog niet stond) en geen lege secties
     dubbel = page.evaluate("""() => { const tel = s => document.querySelectorAll('main ' + s).length;
@@ -751,11 +755,16 @@ def controleer_werkwijze(browser):
       const leeg = [...document.querySelectorAll('main > section')].filter(s => !s.innerText.trim() && !s.querySelector('img')).map(s => s.id);
       return [tel('.verhaal'), tel('.hoe'), tel('.slider'), tel('.maak-lijst'), tel('.kernwaarden, .uitgelicht, .sferen, .hoverlijst'),
               koppen.filter((k, i) => koppen.indexOf(k) !== i), quotes.filter((k, i) => quotes.indexOf(k) !== i), leeg]; }""")
-    if dubbel[:5] != [1, 1, 1, 1, 0] or dubbel[5] or dubbel[6] or dubbel[7]:
+    if dubbel[:5] != [1, 1, 1, 0, 0] or dubbel[5] or dubbel[6] or dubbel[7]:
         fouten.append(f"{tag}: dubbele of lege onderdelen op Werkwijze (verhaal, hoe, slider, wat ik maak, homepage-blokken, dubbele koppen, dubbele quotes, lege secties: {dubbel})")
-    for oud in ["atelier", "hoe-ik-werk", "babykleding", "siliconen", "babynest", "prematuur", "kraamcadeaubox"]:
+    for oud in ["atelier", "hoe-ik-werk"]:
         if not page.query_selector(f"#{oud}"):
-            fouten.append(f"werkwijze.html: anker #{oud} ontbreekt (oude adressen /over# en /producten#)")
+            fouten.append(f"werkwijze.html: anker #{oud} ontbreekt (oude adressen /over#)")
+    # oude adressen /producten#… landen op de homepage (besluit Carst 5 nov.: Wat ik maak weg)
+    home = (ROOT / "index.html").read_text(encoding="utf-8")
+    for oud in ["babykleding", "siliconen", "babynest", "prematuur", "kraamcadeaubox"]:
+        if f'id="{oud}"' not in home:
+            fouten.append(f"index.html: anker #{oud} ontbreekt (oude adressen /producten#)")
     # Hoe ik werk: aanwijzen wisselt niet, klik, Enter en Spatie wel
     page.eval_on_selector("#hoe-ik-werk", "e => e.scrollIntoView()"); page.wait_for_timeout(300)
     lees = "() => [[...document.querySelectorAll('.hoe-tab')].map(t => t.getAttribute('aria-selected')), [...document.querySelectorAll('.hoe-stap')].map(s => getComputedStyle(s).visibility)]"
@@ -790,20 +799,9 @@ def controleer_werkwijze(browser):
     if page.evaluate(LEES_TABS_SLIDER) != ["false", "true", "false"]:
         fouten.append(f"{tag}: Spatie op Belettering wisselt de slider niet ({page.evaluate(LEES_TABS_SLIDER)})")
     ctx.close()
-    # Wat ik maak: vijf rijen met id, foto max. 240 px (mobiel 96 px), nooit groter dan het bestand, en werkende pijl-links
-    for naam, (b, h, touch) in {"desktop": (1440, 900, False), "tablet": (768, 1024, True), "mobiel": (390, 844, True)}.items():
-        ctx, page = nieuwe_pagina(browser, "werkwijze.html", b, h, touch, reduced_motion="reduce")
-        tag = f"werkwijze.html [{naam}, Wat ik maak]"
-        page.eval_on_selector("#wat-ik-maak", "e => e.scrollIntoView()"); page.wait_for_timeout(300)
-        rijen = page.evaluate("""() => [...document.querySelectorAll('#wat-ik-maak .maak-rij')].map(r => { const i = r.querySelector('img'), b = i.getBoundingClientRect();
-          return [r.id, [...r.querySelectorAll('a.pijl')].map(a => a.getAttribute('href')), b.width, i.naturalWidth, !!r.querySelector('h2, h3') && !!r.querySelector('p.klein'), i.complete && i.naturalWidth > 0]; })""")
-        if [(r[0], r[1]) for r in rijen] != [(i, [d]) for i, d in MAAK_RIJEN]:
-            fouten.append(f"{tag}: rijen of pijl-links kloppen niet ({[(r[0], r[1]) for r in rijen]})")
-        for r in rijen:
-            maximaal = 96 if naam == "mobiel" else 240
-            if r[2] > maximaal + 0.5 or r[2] > r[3] + 0.5 or not r[4] or not r[5]:
-                fouten.append(f"{tag}: rij {r[0]}: foto {r[2]:.0f} px breed (max. {maximaal}, bestand {r[3]}) of kop/tekst ontbreekt")
-        ctx.close()
+    # Wat ik maak is weg (besluit Carst 5 nov.): de producttekst staat alleen nog op de homepage
+    if (ROOT / "werkwijze.html").read_text(encoding="utf-8").count("maak-rij"):
+        fouten.append("werkwijze.html: 'Wat ik maak' staat er nog (besluit Carst: weghalen)")
     # 390 x 844: h1 "Werkwijze" en de kop in het eerste scherm, de kop onder de foto
     ctx, page = nieuwe_pagina(browser, "werkwijze.html", 390, 844, True)
     st = page.evaluate("""() => { const f = document.querySelector('.over-kop-foto').getBoundingClientRect(), k = document.querySelector('.over-kop .kop-xl').getBoundingClientRect(), h = document.querySelector('h1').getBoundingClientRect();

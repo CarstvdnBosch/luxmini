@@ -1128,3 +1128,6 @@ html.zacht-scrollen { scroll-behavior: auto; }
 /* ---------- Prematuurkleding en Babynest: prijsrichtlijn als eigen, compact blok ---------- */
 .prijs-sectie .sectie { gap: 24px; }
 .prijs-sectie .prijs { margin: 0; }
+/* anker voor oude adressen (/producten#prematuur, #kraamcadeaubox): bovenaan het blok, neemt geen ruimte in */
+.anker { position: absolute; top: 0; left: 0; width: 1px; height: 1px; }
+.categorie { position: relative; }

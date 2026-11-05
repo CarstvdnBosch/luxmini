@@ -104,7 +104,7 @@ test('sitemap en robots kloppen', async ({ request }) => {
 
 // Doorverwijzingen (brief navigatie-v2, criterium 4; homepage per product, criterium 5): 301 en Location rechtstreeks naar het eindadres, zonder tussenstap.
 const DOORVERWIJZINGEN = {
-  '/producten': '/werkwijze', '/producten.html': '/werkwijze', '/over': '/werkwijze', '/over.html': '/werkwijze', '/over-lux': '/werkwijze',
+  '/producten': '/', '/producten.html': '/', '/over': '/werkwijze', '/over.html': '/werkwijze', '/over-lux': '/werkwijze',
   '/kraamcadeaubox': '/kraamcadeauboxen', '/kraamcadeaubox.html': '/kraamcadeauboxen', '/aanbod': '/kraamcadeauboxen', '/aanbod/': '/kraamcadeauboxen',
   '/shop': '/kraamcadeauboxen', '/product-page/x': '/kraamcadeauboxen', '/klantenservice': '/contact',
   '/portfolio': '/inspiratie', '/portfolio.html': '/inspiratie', '/portfolio/': '/inspiratie',
