@@ -47,7 +47,9 @@ async function lighthouse() {
   for (const m of manifest) {
     const lhr = (await leesJson(m.jsonPath)) || (await leesJson(`rapport/lighthouse/${m.jsonPath.split('/').pop()}`));
     const a = n => lhr && lhr.audits[n] ? lhr.audits[n].numericValue : null;
-    rijen.push({ pad: new URL(m.url).pathname, s: m.summary, lcp: a('largest-contentful-paint'), cls: a('cumulative-layout-shift'), kb: a('total-byte-weight') });
+    const item = (n, i = 0) => { try { const it = lhr.audits[n].details.items; const x = it[i] && (it[i].node || (it[i].items && it[i].items[0] && it[i].items[0].node)); return x ? (x.selector || x.snippet || '').slice(0, 90) : ''; } catch { return ''; } };
+    rijen.push({ pad: new URL(m.url).pathname, s: m.summary, lcp: a('largest-contentful-paint'), cls: a('cumulative-layout-shift'), kb: a('total-byte-weight'),
+      lcpEl: lhr ? item('largest-contentful-paint-element') : '', clsEl: lhr ? item('layout-shift-elements') || item('layout-shifts') : '' });
   }
   const fout = asserties.filter(x => x.level === 'error' && !x.passed).map(x => `${new URL(x.url).pathname}: ${x.auditId} (${x.actual} ${x.operator} ${x.expected})`);
   const waarschuwing = asserties.filter(x => x.level === 'warn' && !x.passed).map(x => `${new URL(x.url).pathname}: ${x.auditId}`);
@@ -148,6 +150,8 @@ if (lh) {
   const pct = v => v == null ? '-' : Math.round(v * 100);
   for (const r of lh.rijen) md.push(`| ${r.pad} | ${pct(r.s.performance)} | ${pct(r.s.accessibility)} | ${pct(r.s['best-practices'])} | ${pct(r.s.seo)} | ${r.lcp == null ? '-' : (r.lcp / 1000).toFixed(1) + ' s'} | ${r.cls == null ? '-' : r.cls.toFixed(3)} | ${r.kb == null ? '-' : Math.round(r.kb / 1024) + ' kB'} |`);
   md.push('');
+  const details = lh.rijen.filter(r => r.lcpEl || r.clsEl);
+  if (details.length) { md.push(''); md.push('<details><summary>Grootste element (LCP) en verspringen (CLS) per pagina</summary>'); md.push(''); for (const r of details) md.push(`- ${r.pad}: LCP \`${r.lcpEl || '-'}\`; verspringt het meest: \`${r.clsEl || '-'}\``); md.push(''); md.push('</details>'); md.push(''); }
   md.push('Grenzen: snelheid ≥ 70, toegankelijk ≥ 95, best practices ≥ 90, SEO ≥ 90, LCP ≤ 4,0 s, CLS ≤ 0,1, gewicht ≤ 3,5 MB per pagina.');
   if (lh.fout.length) { md.push(''); for (const f of lh.fout) md.push(`- ❌ ${f}`); }
   if (lh.waarschuwing.length) { md.push(''); md.push(`Waarschuwingen: ${lh.waarschuwing.join('; ')}`); }

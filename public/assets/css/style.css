@@ -1,3 +1,10 @@
+/* Lettertypes zelf gehost (SIL Open Font License, zie assets/fonts/OFL-*.txt): sneller dan Google Fonts,
+   geen verzoek naar een derde partij en minder verspringen bij het laden (harness: Lighthouse CLS/LCP). */
+@font-face { font-family: 'Libre Caslon Display'; src: url('../fonts/libre-caslon-display-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Libre Caslon Text'; src: url('../fonts/libre-caslon-text-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Libre Caslon Text'; src: url('../fonts/libre-caslon-text-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Source Sans 3'; src: url('../fonts/source-sans-3-var.woff2') format('woff2'); font-weight: 400 700; font-style: normal; font-display: swap; }
+
 /* LUX mini — stijl B (editorial). Kleuren en maten staan als variabelen bovenaan. */
 :root {
   --terracotta: #BC8565;        /* wit 3,1:1 (alleen koppen vanaf 24 px), inkt 5,2:1 */
