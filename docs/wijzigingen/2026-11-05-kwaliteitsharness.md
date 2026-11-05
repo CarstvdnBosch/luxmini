@@ -34,5 +34,7 @@
 |---|---|---|
 | Plannen | Claude (hoofdsessie) | Besluiten met Carst in het gesprek (5 nov.); brief geschreven |
 | Bouwen | Claude (hoofdsessie) | Harness, workflows, rapport en GO / NO-GO gebouwd; harness vond te lange titels/description, ontbrekende description op privacy en ontbrekende HSTS: opgelost |
+| Eerste meting in GitHub | Claude (hoofdsessie) | axe: 4 links met afwijkende toegankelijke naam (prijskaarten) → opgelost. Lighthouse: CLS tot 0,35 en LCP tot 6,5 s door Google Fonts → lettertypes zelf gehost met preload (CLS 0); LCP-foto's kleiner (srcset, fetchpriority); paginakop direct zichtbaar; testserver comprimeert zoals Cloudflare. Producten, kraamcadeaubox, over, contact nu 99–100. |
+| Open (besluit Carst) | Carst | Homepage: LCP 4,8 s en TBT 0,7 s door de intro van ca. 3 s (snelheid 64). Kiezen: intro inkorten/aanpassen, of een eigen grens voor de homepage. |
 | Controleren | website-controleur | Volgt na 6 nov. 13:00 (weeklimiet) |
 | Ontwerpgate | website-ontwerper | n.v.t. (alleen techniek; titels en meta-tags zijn niet zichtbaar op de pagina) |
