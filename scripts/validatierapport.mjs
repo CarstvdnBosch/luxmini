@@ -44,7 +44,7 @@ async function lighthouse() {
   const asserties = (await leesJson('.lighthouseci/assertion-results.json')) || [];
   if (!manifest) return null;
   const rijen = [];
-  for (const m of manifest) {
+  for (const m of manifest.filter(x => x.isRepresentativeRun !== false)) { // bij meerdere metingen alleen de mediaan
     const lhr = (await leesJson(m.jsonPath)) || (await leesJson(`rapport/lighthouse/${m.jsonPath.split('/').pop()}`));
     const a = n => lhr && lhr.audits[n] ? lhr.audits[n].numericValue : null;
     const item = (n, i = 0) => { try { const it = lhr.audits[n].details.items; const x = it[i] && (it[i].node || (it[i].items && it[i].items[0] && it[i].items[0].node)); return x ? (x.selector || x.snippet || '').slice(0, 90) : ''; } catch { return ''; } };
