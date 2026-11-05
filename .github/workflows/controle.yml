@@ -45,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Playwright voor Python (zelfde versie als de browsers in de container)
-        run: pip install --no-cache-dir playwright==1.47.0
+        run: pip install --no-cache-dir playwright==1.47.0 pillow
       - run: python3 scripts/controleer.py
       - name: Screenshots bewaren
         if: always()
