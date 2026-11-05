@@ -7,3 +7,6 @@ __pycache__/
 dist/
 public/versie.txt
 scripts/schermafdrukken/
+rapport/
+.lighthouseci/
+test-results/

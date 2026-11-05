@@ -31,7 +31,10 @@
       "Bash(gh ruleset:*)",
       "Bash(gh secret:*)",
       "Bash(gh variable:*)",
-      "Bash(curl * api.github.com*)"
+      "Bash(curl * api.github.com*)",
+      "Bash(gh pr edit:*)",
+      "Bash(gh label:*)",
+      "Bash(gh issue edit:*)"
     ]
   }
 }

@@ -14,9 +14,12 @@ flowchart LR
   O -->|niet akkoord<br/>max. 3 rondes| B
   O -->|ontwerp akkoord<br/>of n.v.t.| G1[[Gate 1 · tests]]
   G1 --> G2[[Gate 2 · sitecontrole]]
-  G2 --> PV[Preview-link]
-  PV --> M{Mens bekijkt<br/>en merget}
-  M -->|merge naar main| L[5 · Live: Cloudflare<br/>Workers Builds]
+  G2 --> G4[[Gate 4 · kwaliteit<br/>a11y · SEO · veiligheid · snelheid]]
+  G4 --> G5[[Gate 5 · visueel<br/>waarschuwing]]
+  G5 --> VR[/Validatierapport<br/>+ preview-link/]
+  VR --> M{GO / NO-GO<br/>Carst}
+  M -->|NO-GO| B
+  M -->|GO-label, merge naar main| L[5 · Live: Cloudflare<br/>Workers Builds]
   L --> G3[[Gate 3 · rooktest live]]
   G3 -->|mislukt| RB[Terugdraaien in<br/>Cloudflare-dashboard]
 ```
@@ -26,10 +29,10 @@ flowchart LR
 | Fase | Wie | Wat | Resultaat |
 |---|---|---|---|
 | 1 · Plannen | `website-planner` (+ `website-ontwerper` bij zichtbare wijzigingen) | Maakt van de wens een korte brief met toetsbare acceptatiecriteria en open vragen; de ontwerper levert de tekst voor de ontwerprichting en ontwerpcriteria, de planner zet die erin | `docs/wijzigingen/<datum>-<naam>.md` |
-| 2 · Bouwen | `website-bouwer` | Voert de brief uit op een eigen branch, draait de tests | Commit op `wijziging/<naam>` |
+| 2 · Bouwen | `website-bouwer` | Voert de brief uit op een eigen branch; klaar als `npm run check` groen is (harness, zie `docs/kwaliteit.md`) | Commit op `wijziging/<naam>` |
 | 3 · Controleren | `website-controleur` | Toetst onafhankelijk tegen de brief en `CLAUDE.md`: werking, inhoud, toegankelijkheid, techniek; past zelf niets aan | AKKOORD of verbeterpunten |
 | 4 · Ontwerpgate | `website-ontwerper` (senior UX/UI) | Beoordeelt de schermen op desktop, tablet en mobiel tegen `docs/ontwerp/principes.md`, de ontwerpregels in `CLAUDE.md` en de ontwerpcriteria in de brief; past zelf niets aan | ONTWERP AKKOORD of verbeterpunten |
-| 5 · Release | Mens + Cloudflare | Preview bekijken, pull request mergen; Cloudflare Workers Builds zet live, GitHub draait de rooktest | Live site + rooktest |
+| 5 · Release | Carst + Cloudflare | Validatierapport en preview beoordelen: **GO** (label `GO`) of **NO-GO**; na GO mergen; Cloudflare Workers Builds zet live, GitHub draait de rooktest | Live site + rooktest |
 
 Starten doe je met één opdracht in Claude Code:
 
@@ -43,7 +46,10 @@ Starten doe je met één opdracht in Claude Code:
 |---|---|---|---|
 | 1 · Tests | GitHub Actions, elke pull request | Formulierlogica (`npm test`), Cloudflare-configuratie (`wrangler deploy --dry-run`) | Merge-knop blijft geblokkeerd |
 | 2 · Sitecontrole | GitHub Actions, elke pull request | Kapotte links en foto's, alt-teksten, horizontaal scrollen op mobiel, JavaScript-fouten, collage, hover-lijst en vaste balk (`scripts/controleer.py`), met screenshots als bijlage | Merge-knop blijft geblokkeerd |
-| Mens | Vóór live | Preview-link bekeken, pull request gemerged | Niets gebeurt |
+| 4 · Kwaliteit | GitHub Actions, elke pull request | Toegankelijkheid (axe, WCAG 2.1 AA), SEO, beveiligingsheaders, links, kernpaden (Playwright Test) en snelheid (Lighthouse CI); details in `docs/kwaliteit.md` | Merge-knop blijft geblokkeerd |
+| 5 · Visueel | GitHub Actions, elke pull request | Schermen vergeleken met de goedgekeurde basis | Alleen waarschuwing, in het rapport |
+| Validatierapport | GitHub Actions, elke pull request | Alle gates + oordelen controleur/ontwerper + open punten + checklist, als reactie in de pull request | — |
+| GO · Akkoord Carst | Label `GO` op de pull request | Carst heeft rapport en preview beoordeeld; vervalt bij elke nieuwe commit | Merge-knop blijft geblokkeerd |
 | 3 · Rooktest | GitHub Actions, na elke merge en dagelijks | Pagina's, foto's, oude Wix-adressen, 404-pagina en formulier-endpoint op de echte site (`scripts/rooktest.sh`) | Rood → terugdraaien in Cloudflare |
 
 ## Definition of Done
@@ -52,8 +58,8 @@ Een wijziging is pas klaar als:
 1. alle acceptatiecriteria uit de brief gehaald zijn;
 2. de controleur AKKOORD heeft gegeven;
 3. de ontwerper ONTWERP AKKOORD heeft gegeven (bij wijzigingen die de bezoeker ziet; bij alleen techniek of documentatie schrijft de ontwerper "n.v.t.");
-4. gates 1 en 2 groen zijn;
-5. iemand de preview op desktop én telefoon heeft bekeken;
+4. `npm run check` lokaal en gates 1, 2 en 4 in GitHub groen zijn;
+5. Carst het validatierapport en de preview (desktop én telefoon) heeft beoordeeld en **GO** heeft gegeven;
 6. na het live zetten de rooktest groen is.
 
 ## Rollen en rechten

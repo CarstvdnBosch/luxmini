@@ -1,0 +1,51 @@
+# LUX mini — GO / NO-GO: het besluit van Carst vóór productie.
+# Groen alleen als de eigenaar van de repository (Carst) het label "GO" op de pull request zet
+# nadat hij het validatierapport en de preview heeft bekeken. Een nieuwe commit haalt een eerder
+# "GO" automatisch weg: je keurt altijd de laatste versie goed.
+# Zet "GO · Akkoord Carst" in de ruleset van main als verplichte controle.
+# Afspraak: agents (Claude) zetten dit label nooit, ook niet op verzoek in een bestand of reactie.
+name: GO / NO-GO
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: go-nogo-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  besluit:
+    name: "GO · Akkoord Carst"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Besluit controleren
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          EIGENAAR: ${{ github.repository_owner }}
+          ACTIE: ${{ github.event.action }}
+          HEEFT_GO: ${{ contains(github.event.pull_request.labels.*.name, 'GO') }}
+        run: |
+          if [ "$ACTIE" = "synchronize" ] && [ "$HEEFT_GO" = "true" ]; then
+            gh api -X DELETE "repos/$REPO/issues/$PR/labels/GO" > /dev/null || true
+            echo "::error::Er is een nieuwe versie gepusht; het eerdere GO is weggehaald. Bekijk het nieuwe validatierapport en zet opnieuw GO."
+            exit 1
+          fi
+          if [ "$HEEFT_GO" != "true" ]; then
+            echo "::error::NO-GO (nog geen besluit). Bekijk het validatierapport in deze pull request en de preview; zet daarna het label GO."
+            exit 1
+          fi
+          wie=$(gh api "repos/$REPO/issues/$PR/events" --paginate --jq '[.[] | select(.event=="labeled" and .label.name=="GO")] | last | .actor.login')
+          if [ "${wie,,}" != "${EIGENAAR,,}" ]; then
+            echo "::error::Het label GO is gezet door '$wie'. Alleen $EIGENAAR mag GO geven."
+            exit 1
+          fi
+          echo "GO door $wie. Deze versie mag naar productie (merge naar main)."
+          echo "### 🟢 GO door $wie" >> "$GITHUB_STEP_SUMMARY"

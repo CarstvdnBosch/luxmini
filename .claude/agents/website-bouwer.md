@@ -12,13 +12,14 @@ Werkwijze:
 3. Volg de **Ontwerprichting** in de brief en `docs/ontwerp/principes.md`. Pas zo weinig mogelijk aan om de acceptatiecriteria te halen. Hergebruik bestaande klassen in `public/assets/css/style.css`. Denk aan mobiel (`max-width: 760px`). Nieuwe secties krijgen een `data-label`.
 4. Nieuwe foto's: maak een webversie (max. 1400 px, JPEG 80, warme correctie zoals in `CLAUDE.md`) in `public/assets/img/` met een duidelijke naam en een beschrijvende `alt`.
 5. Verzin geen feiten, prijzen, reviews of quotes. Ontbreekt iets, gebruik dan een zichtbare plaatshouder zoals `[KvK-nummer]` en meld het.
-6. Draai beide controles en los fouten op die door jouw wijziging komen:
-   - `npm test`
-   - `python3 scripts/controleer.py`
+6. Draai de harness en los fouten op die door jouw wijziging komen (zie `docs/kwaliteit.md`):
+   - `npm run check` — tests, sitecontrole, toegankelijkheid, SEO, veiligheid, kernpaden, snelheid; daarna het validatierapport in `rapport/`.
+   - Je bent pas klaar als `npm run check` groen is. Los een rode test op door de site te verbeteren, nooit door een test, grens of axe-regel losser te zetten (dat mag alleen met akkoord van Carst in de brief).
+   - Visuele verschillen (Gate 5) zijn een waarschuwing: noem ze in je verslag en zeg of ze bedoeld zijn.
 7. Commit met een duidelijke Nederlandse boodschap, bijvoorbeeld `Portfolio: item "Voor Lisa" toegevoegd`. Push nog niet; dat gebeurt na akkoord van de controleur. Merge nooit en push nooit naar `main`.
 
 Verslag (kort):
 - per acceptatiecriterium: gehaald of niet, en hoe;
 - de gewijzigde bestanden;
-- de uitkomst van beide controles;
+- de uitkomst van `npm run check` (per gate) en het advies uit `rapport/validatierapport.md`;
 - wat er nog openstaat.

@@ -2,6 +2,11 @@
 #
 #   Gate 1 · tests        formulierlogica + Cloudflare-configuratie (dry-run, zet niets live)
 #   Gate 2 · sitecontrole links, foto's, alt-teksten, mobiel, JavaScript-fouten en interacties
+#   Gate 4 · kwaliteit    toegankelijkheid (axe, WCAG 2.1 AA), SEO, beveiligingsheaders, kernpaden (Playwright Test)
+#                         en snelheid (Lighthouse CI): blokkerend
+#   Gate 5 · visueel      schermvergelijking met de goedgekeurde basis: alleen waarschuwing
+#   Validatierapport      bundelt alles voor het GO / NO-GO-besluit van Carst (reactie in de pull request)
+#   (Gate 3 is de rooktest na live zetten: rooktest.yml. Het besluit zelf: go-nogo.yml.)
 #
 # Live zetten doet Cloudflare Workers Builds zelf na een merge naar main.
 # In GitHub staan deze twee gates als "verplichte controles" op main: zonder groen kan er niet gemerged worden.
@@ -49,3 +54,123 @@ jobs:
           name: screenshots
           path: scripts/screenshots/
           retention-days: 14
+
+  kwaliteit:
+    name: "Gate 4 · Kwaliteit"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci || npm install
+      - name: Chromium voor Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Toegankelijkheid, SEO, veiligheid en kernpaden (Playwright Test)
+        id: e2e
+        run: npx playwright test
+      - name: Snelheid en kwaliteit per pagina (Lighthouse CI)
+        id: lighthouse
+        if: always()
+        run: npx lhci autorun
+      - name: Resultaten bewaren
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kwaliteit
+          path: |
+            rapport/
+            .lighthouseci/
+          include-hidden-files: true
+          retention-days: 30
+
+  visueel:
+    name: "Gate 5 · Visueel (waarschuwing)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci || npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Schermen vergelijken met de goedgekeurde basis
+        id: vergelijk
+        continue-on-error: true   # niet blokkerend: verschillen gaan naar het validatierapport
+        run: VISUEEL=1 npx playwright test
+      - name: Melding bij verschil
+        if: steps.vergelijk.outcome == 'failure'
+        run: echo "::warning::Schermen wijken af van de basis (of er is nog geen basis). Bekijk het artefact 'visueel' en het validatierapport."
+      - name: Resultaten bewaren
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visueel
+          path: |
+            rapport/visueel.json
+            rapport/visueel-html/
+            rapport/playwright-resultaten/
+          retention-days: 30
+
+  validatierapport:
+    name: "Validatierapport (GO / NO-GO)"
+    needs: [tests, sitecontrole, kwaliteit, visueel]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: kwaliteit
+          path: .
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: visueel
+          path: rapport-visueel
+        continue-on-error: true
+      - name: Rapport maken
+        env:
+          GATE1: ${{ needs.tests.result }}
+          GATE2: ${{ needs.sitecontrole.result }}
+          GATE4: ${{ needs.kwaliteit.result }}
+          GATE5: ${{ needs.visueel.result }}
+          PR_NUMMER: ${{ github.event.pull_request.number }}
+          PR_TITEL: ${{ github.event.pull_request.title }}
+          BRANCH: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PREVIEW_DOMEIN: ${{ vars.PREVIEW_DOMEIN || 'luxmini.carstvdbosch.workers.dev' }}
+        run: |
+          if [ -f rapport-visueel/visueel.json ]; then cp rapport-visueel/visueel.json rapport/visueel.json; fi
+          # Cloudflare Workers Builds: preview per branch op <branch>-<worker>.<subdomein>.workers.dev
+          alias=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+          export PREVIEW_URL="https://${alias}-${PREVIEW_DOMEIN}"
+          node scripts/validatierapport.mjs > /dev/null
+          cat rapport/validatierapport.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Rapport in de pull request zetten (of bijwerken)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          { echo '<!-- validatierapport -->'; cat rapport/validatierapport.md; } > reactie.md
+          id=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate --jq '.[] | select(.body | startswith("<!-- validatierapport -->")) | .id' | tail -1)
+          if [ -n "$id" ]; then gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$id" -F body=@reactie.md > /dev/null
+          else gh api -X POST "repos/${{ github.repository }}/issues/$PR/comments" -F body=@reactie.md > /dev/null; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validatierapport
+          path: |
+            rapport/validatierapport.md
+            rapport/validatierapport.html
+          retention-days: 90
