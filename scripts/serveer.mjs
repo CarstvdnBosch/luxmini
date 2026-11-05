@@ -1,11 +1,12 @@
 // Kleine statische server voor de tests: serveert public/ zoals Cloudflare dat doet
 // (schone adressen: /producten → producten.html, 404.html bij onbekende paden,
-// _redirects voor oude Wix-adressen en de headers uit _headers).
+// _redirects voor oude Wix-adressen, de headers uit _headers en compressie (brotli/gzip) zoals Cloudflare).
 // Gebruik: node scripts/serveer.mjs [poort]   (standaard 4173)
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { brotliCompressSync, gzipSync } from 'node:zlib';
 
 const ROOT = fileURLToPath(new URL('../public/', import.meta.url));
 const POORT = Number(process.argv[2] || process.env.POORT || 4173);
@@ -48,8 +49,16 @@ createServer(async (req, res) => {
     const bestand = normalize(join(ROOT, k));
     if (!bestand.startsWith(ROOT)) break;
     if (await bestaat(bestand)) {
-      const body = await readFile(bestand);
-      res.writeHead(200, { 'Content-Type': TYPES[extname(bestand)] || 'application/octet-stream', ...headersVoor(pad) });
+      let body = await readFile(bestand);
+      const type = TYPES[extname(bestand)] || 'application/octet-stream';
+      const extra = {};
+      const ae = req.headers['accept-encoding'] || '';
+      if (/^(text|application\/(xml|json))|javascript|svg/.test(type)) {
+        if (/\bbr\b/.test(ae)) { body = brotliCompressSync(body); extra['Content-Encoding'] = 'br'; }
+        else if (/gzip/.test(ae)) { body = gzipSync(body); extra['Content-Encoding'] = 'gzip'; }
+        extra['Vary'] = 'Accept-Encoding';
+      }
+      res.writeHead(200, { 'Content-Type': type, ...extra, ...headersVoor(pad) });
       return res.end(body);
     }
   }
