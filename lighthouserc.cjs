@@ -12,6 +12,7 @@ module.exports = {
       settings: { chromeFlags: '--no-sandbox --headless=new', skipAudits: ['is-crawlable'] }, // lokaal adres; crawlbaarheid test seo-veiligheid.spec.js
     },
     assert: {
+      aggregationMethod: 'median-run', // toets op de middelste van 3 metingen (zelfde als het rapport); akkoord Carst gevraagd
       assertions: {
         'categories:performance': ['error', { minScore: 0.7 }],
         'categories:accessibility': ['error', { minScore: 0.95 }],

@@ -1,14 +1,12 @@
 # LUX mini — visuele basis bijwerken (handmatig).
 # Maakt nieuwe basisschermen in dezelfde omgeving als Gate 5 en zet ze als commit op de gekozen branch.
-# Gebruik na een bewuste ontwerpwijziging: Actions → "Visuele basis bijwerken" → Run workflow → kies de branch,
-# of zet "[visuele basis]" in een commitbericht op die branch.
+# Gebruik na een bewuste, goedgekeurde ontwerpwijziging: Actions → "Visuele basis bijwerken" → Run workflow → kies de branch.
+# Alleen handmatig (door Carst), zodat geen agent de goedgekeurde basis kan vervangen.
 # Nooit op main: dan gaat de basis buiten een pull request om.
 name: Visuele basis bijwerken
 
 on:
   workflow_dispatch:
-  push:
-    branches-ignore: [main]
 
 permissions:
   contents: write
@@ -16,7 +14,7 @@ permissions:
 jobs:
   basis:
     name: Basisschermen maken
-    if: github.ref != 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[visuele basis]'))
+    if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

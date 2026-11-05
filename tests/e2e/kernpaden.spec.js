@@ -24,6 +24,8 @@ test('hoofdnavigatie brengt je naar elke pagina', async ({ page }, info) => {
       await page.locator('header nav a', { hasText: new RegExp(`^${tekst}$`, 'i') }).first().click();
     } else {
       await page.locator('.burger').first().click();
+      await expect(page.locator('.menu-scherm')).toBeVisible();
+      await expect(page.locator('.burger').first()).toHaveAttribute('aria-expanded', 'true');
       await page.locator('.menu-scherm a', { hasText: new RegExp(`^\\s*${tekst}\\s*$`, 'i') }).first().click();
     }
     await expect(page).toHaveURL(doel);

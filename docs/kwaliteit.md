@@ -54,4 +54,4 @@ Resultaten staan in `rapport/` (niet in git): `playwright-html/index.html` (met 
 
 ## Visuele basis bijwerken
 
-Na een bewuste ontwerpwijziging: GitHub → Actions → **Visuele basis bijwerken** → *Run workflow* → kies de branch van de pull request, of zet `[visuele basis]` in een commitbericht op die branch. De nieuwe basis komt als commit op die branch en is daarmee zichtbaar in de pull request. Push daarna nog een commit (of draai de controles opnieuw), zodat Gate 5 en het rapport de nieuwe basis gebruiken.
+Na een bewuste ontwerpwijziging: GitHub → Actions → **Visuele basis bijwerken** → *Run workflow* → kies de branch van de pull request. Alleen Carst doet dit, na een goedgekeurde ontwerpwijziging. De nieuwe basis komt als commit op die branch en is daarmee zichtbaar in de pull request. Push daarna nog een commit (of draai de controles opnieuw), zodat Gate 5 en het rapport de nieuwe basis gebruiken.

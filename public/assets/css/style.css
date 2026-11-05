@@ -171,9 +171,9 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 }
 
 /* ---------- 002 Formaten: vier prijskaarten naast elkaar (wens Carst: zoals een prijsoverzicht met kaarten) ---------- */
-.formaten-blok { width: 100%; max-width: 1240px; margin-inline: auto; display: flex; flex-direction: column; align-items: center; gap: 32px; }
+.formaten-blok { width: 100%; max-width: 1240px; margin-inline: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
 .formaten { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
-.formaat { display: flex; flex-direction: column; background: var(--wit); color: var(--inkt); border: 1px solid rgba(32,32,32,.1); border-radius: 20px; padding: 32px 28px 36px; }
+.formaat { display: flex; flex-direction: column; background: var(--wit); color: var(--inkt); border: 1px solid rgba(32,32,32,.1); border-radius: 4px; padding: 32px 28px 36px; } /* bijna recht: past bij de editoriale stijl */
 .formaat .takje { width: 48px; height: 48px; margin-bottom: 28px; }
 .formaat-prijs { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(40px, 3.4vw, 52px); line-height: 1; }
 .formaat-aantal { margin: 12px 0 0; font-family: var(--serif); font-size: 16px; }
@@ -183,7 +183,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .formaat-lijst { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.35; }
 .formaat-lijst li { display: flex; gap: 10px; align-items: flex-start; }
 .formaat-lijst .vink { flex: none; width: 18px; height: 18px; margin-top: 1px; }
-.formaten-voet { margin: 0; max-width: 640px; text-align: center; font-size: 16px; }
+.formaten-voet { margin: 0; max-width: 640px; font-size: 16px; }
 @media (max-width: 1024px) { .formaten { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) {
   .formaten { grid-template-columns: 1fr; gap: 16px; }
@@ -992,6 +992,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .gegevens-kolom p, .gegevens-kolom address { margin: 0 0 12px; font-size: 17px; line-height: 1.7; font-style: normal; }
 .gegevens .pijl { font-size: 17px; }
 @media (min-width: 761px) { .gegevens { min-height: min(88svh, 820px); } } /* zo blijft de laag wit zolang de gegevens in beeld zijn */
+@media (max-width: 1024px) { .gegevens-kolommen { grid-template-columns: repeat(2, minmax(0, 1fr)); } } /* tablet: e-mailadres past (ontwerpgate ronde 2) */
+.gegevens-kolommen a { overflow-wrap: anywhere; }
 @media (max-width: 760px) { .gegevens-kolommen { grid-template-columns: minmax(0, 1fr); gap: 36px; } }
 
 /* ---------- Contact 002: het formulier ---------- */

@@ -369,7 +369,9 @@ De regel "Hero: collage van zes foto's …" geldt dan alleen voor de homepage.
 | CLAUDE.md | Claude (hoofdsessie) | Voorstel overgenomen, volgt uit Carsts wens; akkoord Carst gevraagd in de PR. |
 | Ontwerpgate (ronde 1) | website-ontwerper | ONTWERP NIET AKKOORD: wit logo op witte balk bij "Hoe ik werk" (P1), tabs op tablet 20 px (P1). |
 | Herstel ronde 1 + wens Carst | Claude (hoofdsessie) | Laag bij "Hoe ik werk" altijd terracotta; tabs op tablet 24 px en bredere kolom; ruimte tussen stappen op mobiel; geen sluier op de kopfoto op mobiel; kop onder het gezicht van Carien. Wens Carst (3 nov.): prijzen als vier kaarten naast elkaar (zoals een prijsoverzicht met kaarten), met per kaart prijs, aantal, pijl-link en "Alles uit de box van …, plus:". controleer.py controleert de kaarten. |
-| Controleren | website-controleur | Ronde 1 afgebroken (weeklimiet), opnieuw na 6 nov. 13:00. |
+| Controleren (ronde 1) | website-controleur | AKKOORD (werking, inhoud, techniek; getoetst op wijziging/kwaliteitsharness, 5 nov.). Kanttekeningen: secties 001 op Over en Contact kleuren vroeg terracotta (leesbaar, inkt 5,2:1); akkoord Carst op aangepaste ontwerpregels nog vast te leggen. |
+| Ontwerpgate (ronde 2) | website-ontwerper | ONTWERP NIET AKKOORD: e-mailadres overlapt adres op tablet (Contact 001). P1-punten ronde 1 en prijskaarten in orde. |
+| Herstel ronde 2 | Claude (hoofdsessie) | Contactgegevens tot 1024 px in twee kolommen, e-mailadres breekt netjes; prijskaarten hoeken 4 px en links uitgelijnd (P2/P3). |
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | [mens] | |
 | Live gezet (merge) | [mens] | |
