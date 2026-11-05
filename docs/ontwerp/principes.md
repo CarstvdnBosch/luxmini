@@ -24,14 +24,14 @@ Jonge ouders en (groot)ouders, vrienden en collega's die een persoonlijk kraamca
 8. **Eerlijk en warm.** We verzinnen geen reviews of claims. We schrijven korte zinnen, met "je".
 
 ## Mobiel (besluit Carst 5 nov. 2026: extra toets op mobiel ontwerp)
-De meeste bezoekers komen op hun telefoon, vaak met Safari op een iPhone. Daarom gelden op mobiel deze regels. Ze worden automatisch getoetst in `tests/e2e/mobiel-ontwerp.spec.js`, op Chromium (390 × 844) en op WebKit/Safari (iPhone, 390 × 664), en de ontwerpgate kijkt er apart naar.
+De meeste bezoekers komen op hun telefoon, vaak met Safari op een iPhone. Daarom gelden op mobiel deze regels. Regels 1 tot en met 7 en regel 9 worden automatisch getoetst in `tests/e2e/mobiel-ontwerp.spec.js`, op Chromium (390 × 844) en op WebKit/Safari (iPhone, 390 × 664). Regel 10 controleert `scripts/controleer.py`. Regel 8 (regellengte) beoordeelt de ontwerpgate; op een telefoon is een regel van nature korter. De ontwerpgate kijkt bovendien naar alle tien regels.
 1. **Tikdoelen minimaal 44 px.** Elke link, knop, tab en elk veld is minstens 44 px hoog. Alleen een link midden in een zin mag kleiner.
 2. **Lopende tekst minimaal 16 px**, ook kleine regels zoals de privacyzin onder het formulier.
 3. **Formuliervelden minimaal 16 px.** Anders zoomt Safari in zodra je een veld aantikt.
 4. **Inzoomen nooit blokkeren.** Geen `user-scalable=no` of `maximum-scale=1`.
 5. **Niets steekt buiten het scherm.** Er is geen horizontaal scrollen; alleen bewust veegbare rijen mogen breder zijn.
 6. **Foto's nooit groter dan het bestand**, ook niet op een smal scherm.
-7. **Contact binnen één tik.** Elke pagina heeft een pijl-link naar het contactformulier. In het menu staan WhatsApp, telefoon en mail zonder scrollen in beeld.
+7. **Contact binnen één tik.** Elke pagina heeft een pijl-link naar het contactformulier. De enige uitzondering is de bedankpagina, die je pas ziet nadat je het formulier hebt verstuurd. In het menu staan WhatsApp, telefoon en mail zonder scrollen in beeld.
 8. **Regels hooguit ca. 75 tekens.**
 9. **De vaste balk bedekt nooit een kop.** Na een ankerlink staat de kop onder de balk.
 10. **Foto boven, tekst eronder.** Elk productblok heeft één duidelijke volgende stap. Een scherm is nooit leeg.

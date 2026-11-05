@@ -26,8 +26,8 @@ for (const { pad, naam } of PAGINAS) {
         return r.height < 43.5 || r.width < 24;
       }).map(el => `${naam(el)} (${Math.round(el.getBoundingClientRect().width)}×${Math.round(el.getBoundingClientRect().height)})`);
       // 2. lopende tekst minimaal 16 px (alinea's en lijstregels met echte zinnen)
-      uit.kleineTekst = [...document.querySelectorAll('main p, main li, main dd, main figcaption, main td')].filter(zichtbaar)
-        .filter(el => !el.closest('.caps, .label, nav') && el.textContent.trim().length > 40 && parseFloat(getComputedStyle(el).fontSize) < 16)
+      uit.kleineTekst = [...document.querySelectorAll('main p, main li, main dd, main figcaption, main td, footer p, footer li')].filter(zichtbaar)
+        .filter(el => !el.closest('.caps, .label, main nav') && el.textContent.trim().length > 40 && parseFloat(getComputedStyle(el).fontSize) < 16)
         .map(el => `${naam(el)} (${getComputedStyle(el).fontSize})`);
       // 3. formuliervelden minimaal 16 px (anders zoomt Safari in bij aantikken)
       uit.veldZoom = [...document.querySelectorAll('input:not([type=hidden]), select, textarea')].filter(zichtbaar)
@@ -45,8 +45,8 @@ for (const { pad, naam } of PAGINAS) {
       uit.vergroot = [...document.querySelectorAll('main img')].filter(zichtbaar).filter(i => i.complete && i.naturalWidth && i.getBoundingClientRect().width > i.naturalWidth + 1)
         .map(i => `${i.getAttribute('src')} (${Math.round(i.getBoundingClientRect().width)} > ${i.naturalWidth})`);
       // 7. contact binnen één tik: een link naar het formulier (of je staat op de contactpagina)
-      uit.contact = !!document.querySelector('main a[href$="contact.html#formulier"], main a[href$="/contact#formulier"], main form[action="/api/contact"]') || !document.querySelector('main section');
-      // 8. regellengte lopende tekst hooguit ~75 tekens (grof: breedte / gemiddelde letterbreedte)
+      uit.contact = !!document.querySelector('main a[href$="contact.html#formulier"], main a[href$="/contact#formulier"], main form[action="/api/contact"]');
+      // 8. regellengte: op 390 px van nature kort; vangnet tegen te brede tekstblokken (ontwerpgate beoordeelt regel 8)
       uit.langeRegels = [...document.querySelectorAll('main p')].filter(zichtbaar).filter(p => { const fs = parseFloat(getComputedStyle(p).fontSize); return p.textContent.trim().length > 80 && p.getBoundingClientRect().width / (fs * 0.5) > 80; }).map(naam);
       return uit;
     }, TIKBAAR);
@@ -57,12 +57,13 @@ for (const { pad, naam } of PAGINAS) {
     expect(m.zoomGeblokkeerd, 'inzoomen is geblokkeerd in de viewport-meta').toBe(false);
     expect(m.buitenScherm, 'elementen die buiten het scherm steken').toEqual([]);
     expect(m.vergroot, 'foto’s groter getoond dan het bestand').toEqual([]);
+    // uitzondering (principes.md, regel 7): de bedankpagina, die je pas ziet nádat je het formulier verstuurde
     if (naam !== 'bedankt') expect(m.contact, 'geen link naar het contactformulier op deze pagina').toBe(true);
     expect(m.langeRegels, 'regels langer dan ca. 75 tekens').toEqual([]);
   });
 }
 
-test('menu op de telefoon: zes hoofditems en WhatsApp zonder scrollen, tikdoelen 44 px', async ({ page }) => {
+test('menu op de telefoon: zes hoofditems, WhatsApp, telefoon en mail zonder scrollen, tikdoelen 44 px', async ({ page }) => {
   await page.goto('/');
   await page.locator('.burger').first().click();
   await expect(page.locator('.menu-scherm')).toBeVisible();
@@ -70,12 +71,12 @@ test('menu op de telefoon: zes hoofditems en WhatsApp zonder scrollen, tikdoelen
   const m = await page.evaluate(() => {
     const zicht = [...document.querySelectorAll('.menu-scherm a')].filter(a => a.offsetParent && a.getBoundingClientRect().height > 0);
     const hoofd = [...document.querySelectorAll('.menu-nav > ul > li > a')];
-    const wa = document.querySelector('.menu-scherm a[href^="https://wa.me"]').getBoundingClientRect();
-    return { hoofd: hoofd.length, inBeeld: hoofd.every(a => a.getBoundingClientRect().bottom <= innerHeight), wa: wa.bottom <= innerHeight, klein: zicht.filter(a => a.getBoundingClientRect().height < 43.5).map(a => a.textContent.trim()) };
+    const kanalen = ['https://wa.me', 'tel:', 'mailto:'].map(p => document.querySelector(`.menu-scherm a[href^="${p}"]`).getBoundingClientRect());
+    return { hoofd: hoofd.length, inBeeld: hoofd.every(a => a.getBoundingClientRect().bottom <= innerHeight), wa: kanalen.every(r => r.height > 0 && r.bottom <= innerHeight), klein: zicht.filter(a => a.getBoundingClientRect().height < 43.5).map(a => a.textContent.trim()) };
   });
   expect(m.hoofd).toBe(6);
   expect(m.inBeeld, 'hoofditems in beeld zonder scrollen').toBe(true);
-  expect(m.wa, 'WhatsApp in beeld zonder scrollen').toBe(true);
+  expect(m.wa, 'WhatsApp, telefoon en mail in beeld zonder scrollen').toBe(true);
   expect(m.klein, 'menulinks kleiner dan 44 px').toEqual([]);
 });
 
