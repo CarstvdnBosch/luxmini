@@ -484,8 +484,8 @@ html.menu-is-open { overflow: hidden; }
 .lopend-los { padding: 0 0 clamp(64px, 8vw, 110px); }
 .uitgelicht-tekst { position: relative; z-index: 3; width: var(--tekst-b); margin: 0 0 0 var(--tekst-links); padding-top: calc(var(--lopend-midden) + var(--lopend-fs) * .55 + 32px); display: flex; flex-direction: column; gap: 16px; }
 .uitgelicht-tekst .caps { font-size: 14px; margin: 0; }
-/* tussen de quote en Uitgelicht het vaste ritme (max. 160 px desktop, 96 px mobiel) */
-.intro.kort { padding-bottom: 0; }
+/* homepage: onder de quote het vaste ritme, daarna de productblokken */
+.intro.kort { padding-bottom: var(--ritme); }
 @media (max-width: 1024px) {
   .uitgelicht { --ub-links: 10%; --ub-b: 36%; --ub-h: calc(var(--u) * 48); --tekst-links: 54%; --tekst-b: 38%; }
 }
@@ -516,7 +516,6 @@ html.menu-is-open { overflow: hidden; }
   /* mobiel: foto 62% breed en gecentreerd, lopende regel 56 px op het midden, tekst 32 px eronder */
   .uitgelicht { --ub-links: 19%; --ub-top: 0px; --ub-b: 62%; --ub-h: calc(var(--u) * 82.667); --lopend-fs: 56px; }
   .uitgelicht-tekst { width: auto; margin: 0 var(--rand); padding-top: calc(var(--ub-top) + var(--ub-h) + 32px); }
-  .intro.kort { padding-bottom: 24px; }
   .menu-binnen { align-items: flex-start; padding-top: 96px; }
 }
 
@@ -755,8 +754,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 @media (prefers-reduced-motion: reduce) { .insta-foto img { transition: none; } }
 
-/* tot en met 1199 px alleen de burger, zodat de vijf links nooit over twee regels lopen (navigatie v2) */
-@media (min-width: 761px) and (max-width: 1199px) {
+/* tot en met 1279 px alleen de burger, zodat de zes links nooit over twee regels lopen (gemeten: vanaf 1280 px passen ze naast het logo) */
+@media (min-width: 761px) and (max-width: 1279px) {
   .js .site-header .menu { display: none; }
 }
 /* kraamcadeaubox op mobiel: geen wisselrij, dus de onderste rij foto's sluit dichter aan */
@@ -1000,18 +999,19 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .formulier-sectie .contact-sectie { padding-bottom: var(--ritme); }
 
 /* =====================================================================
-   Navigatie v2: Werkwijze · Kraamcadeauboxen · Prematuurkleding · Portfolio · Contact
+   Navigatie: Werkwijze · Kraamcadeauboxen · Prematuurkleding · Babynest · Inspiratie · Contact
    ===================================================================== */
 
-/* header: vijf links op één regel naast het logo, vanaf 1200 px (daaronder de burger) */
-@media (min-width: 1200px) {
+/* header: zes links op één regel naast het logo, vanaf 1280 px (daaronder de burger); het logo krimpt nooit */
+.site-header .logo { flex: none; }
+@media (min-width: 1280px) {
   .js .site-header .wrap { flex-wrap: nowrap; }
   .js .site-header .menu { flex-wrap: nowrap; white-space: nowrap; gap: 0 clamp(18px, 1.9vw, 30px); letter-spacing: clamp(.16em, .02em + .9vw, .3em); }
 }
 
 /* menu over het hele scherm: subitems 24 px ingesprongen (.menu-nav ul zette de inspringing op 0) */
 .menu-nav .menu-sub { padding-left: 24px; }
-/* vijf hoofditems met elf subitems passen op 1440 x 900 zonder scrollen */
+/* zes hoofditems met elf subitems passen op 1440 x 900 zonder scrollen */
 @media (min-width: 761px) {
   .menu-nav > ul > li > a { font-size: clamp(36px, 3.6vw, 52px); }
   .menu-sub { margin: 0 0 10px; }
@@ -1086,6 +1086,11 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .menu-nav .menu-sub a { padding: 8px 0; min-height: 44px; box-sizing: border-box; }
   .menu-kolom a { display: inline-flex; align-items: center; min-height: 44px; }
   .menu-kolom { gap: 0; }
+  /* ook burger, balklogo en footerlinks minimaal 44 px (brief homepage per product, criterium 4) */
+  .js .burger { width: 44px; height: 44px; }
+  .balk .links { min-height: 44px; }
+  .site-footer a { display: inline-flex; align-items: center; min-height: 44px; }
+  .site-header .logo, .site-header .menu a { min-height: 44px; }
 }
 
 /* ---------- Kraamcadeauboxen 002: thema's als compact raster (wens Carst 5 nov.: minder scrollen) ---------- */
@@ -1097,3 +1102,20 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .themas-onder .klein { margin: 0; font-size: 16px; }
 @media (max-width: 1024px) { .themaraster { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .themaraster { gap: 20px 12px; margin-top: 20px; } .themakaart figcaption { font-size: 20px; margin-top: 8px; } }
+
+/* ---------- Homepage 006: Inspiratie in vier foto's (mobiel twee kolommen) ----------
+   Foto's 3:4, nooit breder dan het bestand (kleinste bestand 675 px; kolom max. ca. 300 px). */
+.inspiratie-rij { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px 24px; }
+.inspiratie-rij figure { margin: 0; }
+.inspiratie-rij img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
+.inspiratie-rij figcaption { margin-top: 12px; font-family: var(--display); font-size: 24px; line-height: 1.2; }
+#inspiratie .sectie { gap: 40px; }
+@media (max-width: 760px) {
+  .inspiratie-rij { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+  .inspiratie-rij figcaption { font-size: 20px; margin-top: 8px; }
+  #inspiratie .sectie { gap: 28px; }
+}
+
+/* ---------- Prematuurkleding en Babynest: prijsrichtlijn als eigen, compact blok ---------- */
+.prijs-sectie .sectie { gap: 24px; padding-bottom: var(--ritme); }
+.prijs-sectie .prijs { margin: 0; }
