@@ -350,7 +350,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .intro-scherm { display: none; }
 .js.intro-aan .intro-scherm { display: block; position: fixed; inset: 0; z-index: 100; overflow: hidden; color: var(--wit);
   /* klikken gaan na 2,3 s door naar de pagina; noodrem: altijd weg vóór 4,0 s, ook als main.js niet draait */
-  animation: intro-door 0s 2.3s forwards, intro-nood .3s 3.65s forwards; }
+  animation: intro-door 0s 1.15s forwards, intro-nood .3s 2.2s forwards; } /* intro ca. 1,5 s (besluit Carst 5 nov.: snellere homepage) */
 @keyframes intro-door { to { pointer-events: none; } }
 @keyframes intro-nood { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 /* overslaan (tik, klik, toets, scroll): de uitgang is binnen 0,6 s klaar (0,5 s) */
@@ -386,18 +386,18 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .intro-regel { font-size: 40px; }
 }
 /* de tijdlijn */
-.js.intro-aan .intro-logo { animation: intro-zichtbaar .5s .1s var(--p3-uit) both, intro-vervaag .3s 1.9s linear forwards; }
-.js.intro-aan .intro-vlak { animation: intro-van-onder .9s .35s var(--p3-uit) both; }
-.js.intro-aan .intro-masker { animation: intro-masker .9s .65s var(--p3-uit) both; }
-.js.intro-aan .intro-foto { animation: intro-foto .9s .65s var(--p3-uit) both; }
-.js.intro-aan .intro-regel span { animation: intro-van-onder .8s .75s var(--p3-uit) both; }
-.js.intro-aan .intro-regel.r2 span { animation-delay: .87s; }
-.js.intro-aan .intro-regel { animation: intro-schermhoog 1s 1.9s var(--in-uit) forwards; }
-.js.intro-aan .intro-regel.r2 { animation-delay: 1.96s; }
-.js.intro-aan .intro-figuur { animation: intro-figuur-weg 1s 2s var(--in-uit) forwards; }
-.js.intro-aan .intro-doek { animation: intro-doek-weg 1s 2.05s var(--p3-uit) forwards; }
+.js.intro-aan .intro-logo { animation: intro-zichtbaar .3s .05s var(--p3-uit) both, intro-vervaag .2s .95s linear forwards; }
+.js.intro-aan .intro-vlak { animation: intro-van-onder .5s .15s var(--p3-uit) both; }
+.js.intro-aan .intro-masker { animation: intro-masker .5s .3s var(--p3-uit) both; }
+.js.intro-aan .intro-foto { animation: intro-foto .5s .3s var(--p3-uit) both; }
+.js.intro-aan .intro-regel span { animation: intro-van-onder .45s .35s var(--p3-uit) both; }
+.js.intro-aan .intro-regel.r2 span { animation-delay: .42s; }
+.js.intro-aan .intro-regel { animation: intro-schermhoog .6s .95s var(--in-uit) forwards; }
+.js.intro-aan .intro-regel.r2 { animation-delay: 1s; }
+.js.intro-aan .intro-figuur { animation: intro-figuur-weg .6s 1s var(--in-uit) forwards; }
+.js.intro-aan .intro-doek { animation: intro-doek-weg .6s 1.05s var(--p3-uit) forwards; }
 /* de pagina komt van 80 px (mobiel 48 px) omhoog terwijl het doek optrekt */
-.js.intro-aan .site-header, .js.intro-aan main { animation: intro-pagina 1s 2.05s var(--p3-uit) both; }
+.js.intro-aan .site-header, .js.intro-aan main { animation: intro-pagina .6s 1.05s var(--p3-uit) both; }
 @keyframes intro-zichtbaar { from { opacity: 0; } }
 @keyframes intro-vervaag { to { opacity: 0; } }
 @keyframes intro-van-onder { from { transform: translateY(100%); } }

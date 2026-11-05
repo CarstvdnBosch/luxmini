@@ -55,7 +55,7 @@
   function heroKlaar() { if (heroEl) heroEl.classList.add('klaar'); document.dispatchEvent(new Event('lux:klaar')); }
 
   // Het script in <head> heeft al besloten of de intro komt (.intro-aan) en
-  // de tijdlijn loopt in CSS. Hier: hero-kop op ~2,35 s, klaar op ~3,05 s,
+  // de tijdlijn loopt in CSS (ca. 1,5 s). Hier: hero-kop op ~1,1 s, klaar op ~1,65 s,
   // overslaan met tik, klik, toets, scroll of vegen (dan klaar in 0,6 s).
   if (intro && html.classList.contains('intro-aan') && !stil) {
     (function () {
@@ -99,9 +99,9 @@
       };
       var signalen = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'];
       signalen.forEach(function (s) { window.addEventListener(s, overslaan, { capture: true, passive: true }); });
-      na(600, function () { if (foto && !(foto.complete && foto.naturalWidth > 0) && figuur) figuur.classList.add('zonder-foto'); });
-      na(2350, heroKlaar);           // woorden van de hero-kop komen op
-      na(3060, opruimen);            // de intro is klaar
+      na(300, function () { if (foto && !(foto.complete && foto.naturalWidth > 0) && figuur) figuur.classList.add('zonder-foto'); });
+      na(1100, heroKlaar);           // woorden van de hero-kop komen op
+      na(1650, opruimen);            // de intro is klaar
     })();
   } else {
     html.classList.remove('intro-aan');

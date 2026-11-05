@@ -48,3 +48,16 @@ test('kraamcadeaubox: vier prijzen van € 35 tot € 80', async ({ page }) => {
   const prijzen = (await page.locator('#formaten .formaat-prijs').allTextContents()).map(t => t.replace(/\s+/g, ' ').trim());
   expect(prijzen).toEqual(['€ 35', '€ 50', '€ 65', '€ 80']);
 });
+
+test('intro speelt bij het eerste bezoek en is binnen 2 s weg (besluit Carst: ca. 1,5 s)', async ({ browser }, info) => {
+  test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveClass(/intro-aan/);
+  const start = Date.now();
+  await expect(page.locator('html')).not.toHaveClass(/intro-aan/, { timeout: 4000 });
+  expect(Date.now() - start, 'duur van de intro in ms').toBeLessThan(2000);
+  await expect(page.locator('.hero h1')).toBeVisible();
+  await ctx.close();
+});
