@@ -5,9 +5,18 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test",
+    "test:visueel": "VISUEEL=1 playwright test",
+    "test:snelheid": "lhci autorun",
+    "sitecontrole": "python3 scripts/controleer.py",
+    "rapport": "node scripts/validatierapport.mjs",
+    "check": "npm test && npm run sitecontrole && npm run test:e2e && npm run test:snelheid; status=$?; npm run test:visueel > /dev/null 2>&1; npm run rapport > /dev/null; exit $status"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@lhci/cli": "^0.15.0",
+    "@playwright/test": "1.63.0",
     "wrangler": "^4.0.0"
   }
 }

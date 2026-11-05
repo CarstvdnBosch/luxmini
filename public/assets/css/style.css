@@ -1,3 +1,10 @@
+/* Lettertypes zelf gehost (SIL Open Font License, zie assets/fonts/OFL-*.txt): sneller dan Google Fonts,
+   geen verzoek naar een derde partij en minder verspringen bij het laden (harness: Lighthouse CLS/LCP). */
+@font-face { font-family: 'Libre Caslon Display'; src: url('../fonts/libre-caslon-display-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Libre Caslon Text'; src: url('../fonts/libre-caslon-text-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Libre Caslon Text'; src: url('../fonts/libre-caslon-text-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Source Sans 3'; src: url('../fonts/source-sans-3-var.woff2') format('woff2'); font-weight: 400 700; font-style: normal; font-display: swap; }
+
 /* LUX mini — stijl B (editorial). Kleuren en maten staan als variabelen bovenaan. */
 :root {
   --terracotta: #BC8565;        /* wit 3,1:1 (alleen koppen vanaf 24 px), inkt 5,2:1 */
@@ -50,7 +57,10 @@ a:hover { opacity: .8; }
 .logo img { height: 44px; width: auto; }
 .menu { display: flex; flex-wrap: wrap; gap: 0 30px; font-size: 13px; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; }
 .menu a { text-decoration: none; padding: 14px 0; }
-.menu a[aria-current="page"] { border-bottom: 1px solid currentColor; }
+/* huidige pagina: onderstreept, 1 px dik en 6 px onder de letters */
+.menu a[aria-current="page"] { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
+/* contactpagina: de header ligt over een donkere foto, dus navigatie en logo wit */
+html.kop-donker .site-header { color: var(--wit); }
 
 /* ---------- Labels, koppen, links ---------- */
 .label { margin: 0; font-family: var(--serif); font-size: 16px; }
@@ -59,7 +69,7 @@ a:hover { opacity: .8; }
 .kop-m { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(34px, 3.4vw, 50px); line-height: 1.08; }
 .klein { font-size: 16px; line-height: 1.7; max-width: 420px; margin: 0; }
 .caps { font-size: 14px; font-weight: 600; letter-spacing: .64em; text-transform: uppercase; }
-.pijl { font-family: var(--serif); font-size: 15px; text-decoration: none; display: inline-flex; align-items: center; gap: 14px; padding: 8px 0; }
+.pijl { font-family: var(--serif); font-size: 15px; text-decoration: none; display: inline-flex; align-items: center; gap: 14px; padding: 8px 0; min-height: 44px; } /* altijd minimaal 44 px hoog (aantikken) */
 .pijl svg { width: 28px; height: 10px; flex: none; }
 .quote { margin: 0; font-family: var(--display); font-size: clamp(26px, 2.8vw, 40px); line-height: 1.25; letter-spacing: .02em; }
 
@@ -160,23 +170,27 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .stappen.teken .stap::before, .stappen.teken.in-beeld .stap::before { transform: none; transition: none; }
 }
 
-/* ---------- 001 Formaten: prijstabel (rustig, als in een tijdschrift) ---------- */
-.prijstabel-blok { display: flex; flex-direction: column; align-items: center; gap: 40px; width: 100%; max-width: 880px; margin-inline: auto; } /* tabel en pijl-link midden op de pagina (wens Carst) */
-.prijstabel { width: 100%; max-width: 880px; table-layout: fixed; border-collapse: collapse; color: var(--inkt); }
-.prijstabel th, .prijstabel td { padding: 0 12px; height: 56px; text-align: center; vertical-align: middle; font-weight: 400; }
-.prijstabel thead th:first-child { width: 32%; }
-.prijstabel tr > :first-child { padding-left: 0; }
-/* prijzen in inkt (ook op perzik en olijf leesbaar), niet in wit */
-.prijstabel thead th { height: auto; padding-top: 8px; padding-bottom: 20px; vertical-align: bottom; font-family: var(--display); font-size: clamp(24px, 3.4vw, 48px); line-height: 1; white-space: nowrap; }
-.prijstabel tbody th { text-align: left; font-family: var(--sans); font-size: 16px; line-height: 1.25; hyphens: manual; }
-.prijstabel tfoot th, .prijstabel tfoot td { font-family: var(--serif); font-size: 16px; }
-.prijstabel tfoot th { text-align: left; }
-/* dunne rijlijnen in inkt, zoals de hairlines in .kern-kolom */
-.prijstabel thead th, .prijstabel tbody th, .prijstabel tbody td { border-bottom: 1px solid rgba(32,32,32,.2); }
-/* zachte band op de 2e en 4e prijskolom, van kop tot voet */
-.prijstabel tr > :nth-child(3), .prijstabel tr > :nth-child(5) { background: rgba(255,255,255,.14); }
-.prijstabel .vink { display: inline-block; width: 18px; height: 18px; vertical-align: middle; }
-.prijstabel .streep { display: inline-block; width: 12px; height: 0; border-top: 1px solid currentColor; vertical-align: middle; }
+/* ---------- 002 Formaten: vier prijskaarten naast elkaar (wens Carst: zoals een prijsoverzicht met kaarten) ---------- */
+.formaten-blok { width: 100%; max-width: 1240px; margin-inline: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
+.formaten { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.formaat { display: flex; flex-direction: column; background: var(--wit); color: var(--inkt); border: 1px solid rgba(32,32,32,.1); border-radius: 4px; padding: 32px 28px 36px; } /* bijna recht: past bij de editoriale stijl */
+.formaat .takje { width: 48px; height: 48px; margin-bottom: 28px; }
+.formaat-prijs { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(40px, 3.4vw, 52px); line-height: 1; }
+.formaat-aantal { margin: 12px 0 0; font-family: var(--serif); font-size: 16px; }
+.formaat-regel { margin: 4px 0 0; font-size: 16px; line-height: 1.4; color: #4a4a4a; min-height: 2.8em; }
+.formaat .pijl { margin-top: 20px; min-height: 44px; }
+.formaat-kop { margin: 20px 0 0; padding-top: 24px; border-top: 1px solid rgba(32,32,32,.15); font-size: 16px; font-weight: 600; }
+.formaat-lijst { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.35; }
+.formaat-lijst li { display: flex; gap: 10px; align-items: flex-start; }
+.formaat-lijst .vink { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+.formaten-voet { margin: 0; max-width: 640px; font-size: 16px; }
+@media (max-width: 1024px) { .formaten { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .formaten { grid-template-columns: 1fr; gap: 16px; }
+  .formaat { padding: 28px 24px 30px; }
+  .formaat .takje { margin-bottom: 20px; }
+  .formaat-regel { min-height: 0; }
+}
 
 /* ---------- Hover-lijst (portfolio / thema's) ---------- */
 .hoverlijst-sectie { transition: background .5s ease; }
@@ -222,10 +236,11 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .duo .beelden { flex: 1 1 420px; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .duo .beelden img { aspect-ratio: 3 / 4; object-fit: cover; width: 100%; }
 .duo .beelden img:first-child { margin-top: 64px; }
+/* één staande foto (Over-teaser op de homepage), maximaal 420 px breed */
+.duo .beelden.een { grid-template-columns: minmax(0, 420px); justify-content: center; }
+.duo .beelden.een img:first-child { margin-top: 0; }
 
 /* ---------- Contact ---------- */
-.contact-kop { margin: 0 auto; text-align: center; max-width: 980px; }
-.contact-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 48px; }
 .formulier { max-width: 720px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; }
 .formulier label { display: flex; flex-direction: column; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
 .formulier .breed { grid-column: 1 / -1; }
@@ -250,8 +265,6 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 
 /* ---------- Tablet ---------- */
 @media (max-width: 1024px) {
-  .prijstabel thead th:first-child { width: 34%; }
-  .prijstabel tbody th, .prijstabel tbody td, .prijstabel tfoot th, .prijstabel tfoot td { height: 52px; }
 }
 
 /* ---------- Mobiel ---------- */
@@ -278,14 +291,10 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .hoverlijst .klein-beeld { display: none; }
   .hoverlijst.actief .groot { display: block; }
   .klein { max-width: none; }
-  .prijstabel thead th:first-child { width: 36%; }
-  .prijstabel th, .prijstabel td { padding-left: 4px; padding-right: 4px; }
-  .prijstabel thead th { font-size: 24px; padding-bottom: 14px; }
-  .prijstabel tbody th, .prijstabel tbody td, .prijstabel tfoot th, .prijstabel tfoot td { height: 48px; }
-  .prijstabel-blok { gap: 32px; }
   .kaarten { --kaart-rand: var(--rand); gap: 12px; }
   .formulier { grid-template-columns: minmax(0, 1fr); }
   .duo .beelden img:first-child { margin-top: 32px; }
+  .duo .beelden.een img:first-child { margin-top: 0; }
   .pagina { padding-top: 150px; }
 }
 
@@ -341,7 +350,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .intro-scherm { display: none; }
 .js.intro-aan .intro-scherm { display: block; position: fixed; inset: 0; z-index: 100; overflow: hidden; color: var(--wit);
   /* klikken gaan na 2,3 s door naar de pagina; noodrem: altijd weg vóór 4,0 s, ook als main.js niet draait */
-  animation: intro-door 0s 2.3s forwards, intro-nood .3s 3.65s forwards; }
+  animation: intro-door 0s 1.15s forwards, intro-nood .3s 2.2s forwards; } /* intro ca. 1,5 s (besluit Carst 5 nov.: snellere homepage) */
 @keyframes intro-door { to { pointer-events: none; } }
 @keyframes intro-nood { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 /* overslaan (tik, klik, toets, scroll): de uitgang is binnen 0,6 s klaar (0,5 s) */
@@ -377,18 +386,18 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .intro-regel { font-size: 40px; }
 }
 /* de tijdlijn */
-.js.intro-aan .intro-logo { animation: intro-zichtbaar .5s .1s var(--p3-uit) both, intro-vervaag .3s 1.9s linear forwards; }
-.js.intro-aan .intro-vlak { animation: intro-van-onder .9s .35s var(--p3-uit) both; }
-.js.intro-aan .intro-masker { animation: intro-masker .9s .65s var(--p3-uit) both; }
-.js.intro-aan .intro-foto { animation: intro-foto .9s .65s var(--p3-uit) both; }
-.js.intro-aan .intro-regel span { animation: intro-van-onder .8s .75s var(--p3-uit) both; }
-.js.intro-aan .intro-regel.r2 span { animation-delay: .87s; }
-.js.intro-aan .intro-regel { animation: intro-schermhoog 1s 1.9s var(--in-uit) forwards; }
-.js.intro-aan .intro-regel.r2 { animation-delay: 1.96s; }
-.js.intro-aan .intro-figuur { animation: intro-figuur-weg 1s 2s var(--in-uit) forwards; }
-.js.intro-aan .intro-doek { animation: intro-doek-weg 1s 2.05s var(--p3-uit) forwards; }
+.js.intro-aan .intro-logo { animation: intro-zichtbaar .3s .05s var(--p3-uit) both, intro-vervaag .2s .95s linear forwards; }
+.js.intro-aan .intro-vlak { animation: intro-van-onder .5s .15s var(--p3-uit) both; }
+.js.intro-aan .intro-masker { animation: intro-masker .5s .3s var(--p3-uit) both; }
+.js.intro-aan .intro-foto { animation: intro-foto .5s .3s var(--p3-uit) both; }
+.js.intro-aan .intro-regel span { animation: intro-van-onder .45s .35s var(--p3-uit) both; }
+.js.intro-aan .intro-regel.r2 span { animation-delay: .42s; }
+.js.intro-aan .intro-regel { animation: intro-schermhoog .6s .95s var(--in-uit) forwards; }
+.js.intro-aan .intro-regel.r2 { animation-delay: 1s; }
+.js.intro-aan .intro-figuur { animation: intro-figuur-weg .6s 1s var(--in-uit) forwards; }
+.js.intro-aan .intro-doek { animation: intro-doek-weg .6s 1.05s var(--p3-uit) forwards; }
 /* de pagina komt van 80 px (mobiel 48 px) omhoog terwijl het doek optrekt */
-.js.intro-aan .site-header, .js.intro-aan main { animation: intro-pagina 1s 2.05s var(--p3-uit) both; }
+.js.intro-aan .site-header, .js.intro-aan main { animation: intro-pagina .6s 1.05s var(--p3-uit) both; }
 @keyframes intro-zichtbaar { from { opacity: 0; } }
 @keyframes intro-vervaag { to { opacity: 0; } }
 @keyframes intro-van-onder { from { transform: translateY(100%); } }
@@ -746,8 +755,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 @media (prefers-reduced-motion: reduce) { .insta-foto img { transition: none; } }
 
-/* tablet (761–1024 px): alleen de burger, zodat het menu niet over twee regels loopt */
-@media (min-width: 761px) and (max-width: 1024px) {
+/* tot en met 1199 px alleen de burger, zodat de vijf links nooit over twee regels lopen (navigatie v2) */
+@media (min-width: 761px) and (max-width: 1199px) {
   .js .site-header .menu { display: none; }
 }
 /* kraamcadeaubox op mobiel: geen wisselrij, dus de onderste rij foto's sluit dichter aan */
@@ -762,4 +771,319 @@ html.zacht-scrollen { scroll-behavior: auto; }
    van kleur wisselt (anders schuiven twee overgangen over elkaar en zie je een band) */
 @media (min-width: 761px) {
   .js .site-header.hero-kleur { background-color: transparent !important; }
+}
+
+/* =====================================================================
+   Navigatie met losse pagina's (Producten, Kraamcadeaubox, Over, Contact)
+   naar de pagina's van stockdutchdesign.com (/media, /projecten, /over-ons, /contact)
+   ===================================================================== */
+
+/* ---------- Menu over het hele scherm: subitems onder de hoofditems ---------- */
+.menu-sub { list-style: none; margin: 2px 0 14px; padding: 0 0 0 24px; opacity: 0; transition: opacity .6s .35s ease; }
+.menu-scherm.open .menu-sub { opacity: 1; }
+.menu-nav .menu-sub li { overflow: visible; }
+.menu-nav .menu-sub a { display: inline-block; font-family: var(--serif); font-size: 16px; line-height: 1.5; padding: 3px 0; transform: none; }
+@media (max-width: 760px) {
+  .menu-sub { display: none; } /* mobiel: alleen de hoofditems; de pagina's hebben zelf ankers */
+  .menu-nav > ul > li > a { font-size: 36px; }
+  .menu-binnen { gap: 32px; }
+}
+@media (prefers-reduced-motion: reduce) { .menu-sub { transition: none; } }
+
+/* ---------- Homepage: "Bekijk alle producten" onder de drie kolommen (altijd zichtbaar) ---------- */
+.kern-meer { position: relative; z-index: 3; display: flex; justify-content: center; padding: 0 var(--rand) 48px; }
+
+/* ---------- Paginakop (Producten, Kraamcadeaubox): terracotta, links op 8,33%, max. 50% breed ---------- */
+.pagina-kop { padding: clamp(160px, calc(var(--u) * 20.83), 300px) 0 calc(var(--u) * 10.41); }
+.pagina-kop-binnen { width: var(--B); margin-left: calc(50% - var(--B) / 2); padding-left: calc(var(--B) * .0833); display: flex; flex-direction: column; align-items: flex-start; gap: 28px; }
+.pagina-kop-binnen > * { max-width: calc(var(--B) * .5); }
+.pagina-kop h1 { margin: 0; }
+.pagina-kop .caps { margin: 0; }
+.pagina-quote { margin: 0; font-size: clamp(32px, 3.6vw, 52px); }
+.pagina-quote p { margin: 0; }
+.pagina-prijs { margin: 0; font-size: 16px; line-height: 1.5; }
+.pagina-links { display: flex; flex-wrap: wrap; gap: 0 40px; margin-top: -8px; }
+@media (max-width: 760px) {
+  .pagina-kop { padding: 48px 0 var(--ritme); }
+  .pagina-kop-binnen { width: auto; margin-left: 0; padding: 0 var(--rand); gap: 22px; }
+  .pagina-kop-binnen > * { max-width: none; }
+  .pagina-kop .quote { font-size: 28px; }
+  .pagina-links { flex-direction: column; margin-top: -4px; }
+}
+
+/* ---------- Producten: vijf categorieën om en om, de laag kleurt per categorie ----------
+   Kolommen in % van het ontwerpvak: 16,666 | 25 | 8,334 | 33,333 | 16,667 (gespiegeld omgekeerd).
+   Alle tekst is inkt (de categoriekleuren zijn licht). */
+/* ongeveer één scherm hoog, zodat de laag de kleur houdt zolang de categorie in beeld is */
+.categorie { padding: var(--ritme) 0; }
+@media (min-width: 1025px) { .categorie { min-height: min(100svh, 1000px); display: flex; flex-direction: column; justify-content: center; } }
+.categorie-rij { width: var(--B); margin-left: calc(50% - var(--B) / 2); display: grid; grid-template-columns: 16.666% 25% 8.334% 33.333% 16.667%; grid-template-rows: 1fr auto auto 1fr; }
+.categorie-label { grid-column: 2; grid-row: 2; margin-bottom: 32px; }
+.categorie-tekst { grid-column: 2; grid-row: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
+.categorie-tekst .klein { max-width: 360px; }
+.categorie-foto { grid-column: 4; grid-row: 1 / 5; width: 100%; max-width: 480px; }
+.categorie-foto img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
+.categorie-foto.klein-bestand { max-width: 324px; justify-self: center; } /* babynest: alleen de kleine Instagram-versie */
+.categorie.gespiegeld .categorie-rij { grid-template-columns: 16.667% 33.333% 8.334% 25% 16.666%; }
+.categorie.gespiegeld .categorie-label, .categorie.gespiegeld .categorie-tekst { grid-column: 4; }
+.categorie.gespiegeld .categorie-foto { grid-column: 2; }
+.kop-cat { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(40px, 4.6vw, 66px); line-height: 1.02; }
+@media (min-width: 761px) and (max-width: 1024px) {
+  .categorie-rij { grid-template-columns: 8% 40% 0 44% 8%; }
+  .categorie.gespiegeld .categorie-rij { grid-template-columns: 8% 44% 0 40% 8%; }
+  .categorie-label, .categorie-tekst { padding-right: 24px; }
+  .categorie.gespiegeld .categorie-label, .categorie.gespiegeld .categorie-tekst { padding: 0 0 0 32px; }
+}
+@media (max-width: 760px) {
+  .categorie { padding: var(--ritme) 0 0; }
+  .categorie:last-of-type { padding-bottom: var(--ritme); }
+  .categorie-rij, .categorie.gespiegeld .categorie-rij { width: auto; margin-left: 0; padding: 0 var(--rand); grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 24px; }
+  .categorie-label, .categorie-tekst, .categorie-foto, .categorie.gespiegeld .categorie-label, .categorie.gespiegeld .categorie-tekst, .categorie.gespiegeld .categorie-foto { grid-column: 1; grid-row: auto; }
+  .categorie-label { margin-bottom: 0; }
+  .categorie-foto { max-width: none; }
+  .categorie-tekst { gap: 20px; }
+  .kop-cat { font-size: 40px; }
+}
+
+/* ---------- Kraamcadeaubox: negen thema's in het ritme van Stock /projecten ----------
+   Foto 58,33% breed (840 x 480 op 1440), lopende regel met de themanaam erachter. */
+.thema { overflow-x: clip; padding-bottom: calc(var(--u) * 10.41); }
+.thema-vak { position: relative; width: var(--B); margin-left: calc(50% - var(--B) / 2); --l: 33.333%; --r: 8.333%; }
+.ritme-2 .thema-vak, .ritme-4 .thema-vak { --l: 8.333%; --r: 33.333%; }
+.ritme-3 .thema-vak { --l: 25%; --r: 16.667%; }
+.thema-label { padding: var(--ritme) 0 calc(var(--u) * 6.94) var(--rand); }
+.thema-beeld { position: relative; }
+.thema-lopend { position: absolute; left: 0; right: 0; top: calc(var(--u) * 19); z-index: 0; opacity: .2; }
+.thema .lopend-spoor { font-size: clamp(64px, 9vw, 140px); color: var(--inkt); }
+.js .thema .lopend-spoor { animation-duration: 30s; } /* een halve spoorbreedte in 30 s */
+.thema-foto { position: relative; z-index: 1; margin: 0 var(--r) 0 var(--l); aspect-ratio: 58.333 / 33.333; overflow: hidden; }
+/* parallax binnen de foto: 120% hoog, main.js schuift hem hooguit 8% op of neer (zonder JS: midden) */
+.thema-foto img { position: absolute; left: 0; top: -10%; width: 100%; height: 120%; object-fit: cover; transform: translate3d(0, var(--parallax, 0px), 0); }
+.thema-onder { position: relative; z-index: 1; margin: calc(var(--u) * 3.47) var(--r) 0 var(--l); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 32px; }
+.thema-slot { margin: calc(var(--u) * 10.41) auto 0; text-align: center; padding: 0 var(--rand); }
+@media (min-width: 761px) and (max-width: 1024px) {
+  .thema-vak, .ritme-2 .thema-vak, .ritme-3 .thema-vak, .ritme-4 .thema-vak { --l: 8%; --r: 16%; }
+  .mobiel-rechts .thema-vak { --l: 16%; --r: 8%; }
+  .thema .lopend-spoor { font-size: 80px; }
+}
+@media (max-width: 760px) {
+  .thema { padding-bottom: 56px; }
+  .thema-label { padding-bottom: 32px; }
+  .thema-foto { width: calc((100% - 2 * var(--rand)) * .82); margin: 0 0 0 var(--rand); aspect-ratio: 4 / 3; }
+  .mobiel-rechts .thema-foto { margin: 0 var(--rand) 0 auto; }
+  .thema-foto img { top: 0; height: 100%; transform: none; } /* geen parallax op mobiel */
+  .thema-lopend { top: calc((100% - 2 * var(--rand)) * .82 * .375 - 31px); }
+  .thema .lopend-spoor { font-size: 56px; }
+  .thema-onder { margin: 24px var(--rand) 0; flex-direction: column; align-items: flex-start; gap: 4px; }
+}
+
+/* ---------- Over: kop met foto in het midden (zoals Stock /over-ons) ---------- */
+.over-kop-vak { position: relative; width: var(--B); margin-left: calc(50% - var(--B) / 2); height: min(calc(var(--u) * 83.33), 1100px); }
+.over-kop-foto { position: absolute; left: 33.333%; width: 33.333%; top: calc(var(--u) * 13.89); height: calc(var(--u) * 50); overflow: hidden; }
+.over-kop-foto img { width: 100%; height: 100%; object-fit: cover; object-position: 35% 50%; filter: brightness(.85); }
+/* sluier: de foto heeft lichte ramen; met deze sluier haalt de witte kop erover minstens 3:1 */
+.over-kop-foto::after { content: ""; position: absolute; inset: 0; background: rgba(32,32,32,.4); }
+.over-kop-tekst { position: relative; z-index: 2; padding: calc(var(--u) * 40) 16.667% 0 8.333%; /* kop onder het gezicht van Carien (ontwerpgate, kan beter 3) */ display: flex; flex-direction: column; align-items: flex-start; gap: 28px; }
+.over-kop-tekst h1 { margin: 0; color: var(--inkt); } /* klein label op terracotta: inkt (5,2:1); wit haalt daar geen 4,5:1 */
+.over-kop .kop-xl { font-size: clamp(40px, 6.11vw, 88px); line-height: .98; }
+.over-kop .badge { left: auto; top: auto; right: 12.5%; bottom: calc(var(--u) * 12.5); }
+@media (max-width: 760px) {
+  .over-kop-vak { width: auto; margin-left: 0; height: auto; padding: 32px var(--rand) var(--ritme); display: flex; flex-direction: column; }
+  .over-kop-foto { position: relative; left: auto; top: auto; width: 72vw; height: auto; aspect-ratio: 3 / 4; align-self: center; }
+  .over-kop-foto img { height: 100%; filter: none; } /* geen tekst over de foto op mobiel: geen sluier, Carien warm in beeld */
+  .over-kop-foto::after { display: none; }
+  .over-kop-tekst { padding: 32px 0 0; }
+  .over-kop .kop-xl { font-size: 40px; line-height: 1; }
+  .over-kop .badge { right: 4%; bottom: auto; top: calc(32px + 96vw - 52px); width: 64px; }
+}
+
+/* ---------- Over 001: het verhaal en een fotorij die je kunt vegen ---------- */
+.atelier { padding: var(--ritme) 0; }
+.atelier-vak { width: var(--B); margin-left: calc(50% - var(--B) / 2); display: grid; grid-template-columns: 8.333% 33.333% 8.334% 50%; row-gap: 56px; align-items: center; }
+.atelier-label { grid-column: 2 / -1; grid-row: 1; }
+.atelier-tekst { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 36px; }
+.verhaal { margin: 0; font-size: 18px; line-height: 1.7; max-width: 60ch; }
+.atelier .quote { color: var(--inkt); }
+.fotorij { grid-column: 4; grid-row: 2; display: grid; grid-auto-flow: column; grid-auto-columns: 360px; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: thin; padding-bottom: 10px; }
+.fotorij:focus-visible { outline-offset: -2px; }
+.fotorij-item { margin: 0; scroll-snap-align: start; min-width: 0; }
+.fotorij-item img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+@media (max-width: 1024px) {
+  .atelier-vak { width: auto; margin-left: 0; padding-left: var(--rand); grid-template-columns: minmax(0, 1fr); row-gap: 40px; }
+  .atelier-label, .atelier-tekst, .fotorij { grid-column: 1; grid-row: auto; }
+  .atelier-tekst { padding-right: var(--rand); }
+  .fotorij { grid-auto-columns: 300px; scroll-padding-inline: 0; }
+}
+@media (max-width: 760px) {
+  .fotorij { grid-auto-columns: 72vw; gap: 12px; }
+  .verhaal { font-size: 17px; }
+}
+
+/* ---------- Over 002: Hoe ik werk ----------
+   Mobiel en zonder JavaScript: foto als band (3:2) en de drie stappen onder elkaar op terracotta.
+   Met JavaScript vanaf 761 px: donkere foto over de volle hoogte, links een menu, rechts de actieve stap. */
+.hoe-foto { position: relative; max-width: 1800px; margin: 0 auto; }
+.hoe-foto img { width: 100%; aspect-ratio: 3 / 2; max-height: 900px; object-fit: cover; }
+.hoe-vak { max-width: var(--max); margin: 0 auto; padding: var(--ritme) var(--rand) calc(var(--ritme) / 2); display: flex; flex-direction: column; gap: 48px; }
+.hoe-tabs[hidden] { display: none; }
+.hoe:not(.tabs-aan) .hoe-stappen { display: flex; flex-direction: column; gap: 48px; } /* onder elkaar: ruimte tussen de stappen */
+.hoe-stap { display: flex; flex-direction: column; gap: 14px; }
+.hoe-stap .kop-xl { font-size: 36px; line-height: 1.05; }
+.hoe-nr { display: block; margin-bottom: 10px; font-family: var(--serif); font-size: 16px; color: var(--inkt); }
+.hoe-zin, .hoe-copy { margin: 0; font-size: 18px; line-height: 1.6; max-width: 60ch; }
+.hoe-tab { display: flex; align-items: center; gap: 0; min-height: 44px; padding: 6px 0; font-family: var(--serif); font-size: 24px; line-height: 1.3; text-align: left; color: var(--wit); background: none; border: 0; cursor: pointer; opacity: .6; transition: opacity .3s ease; -webkit-tap-highlight-color: transparent; }
+.hoe-tab .nr { margin-right: 12px; }
+.hoe-tab::before { content: ""; flex: none; width: 0; height: 1px; margin-right: 0; background: currentColor; transition: width .4s cubic-bezier(.2,.7,.2,1), margin .4s cubic-bezier(.2,.7,.2,1); }
+.hoe-tab[aria-selected="true"] { opacity: 1; }
+.hoe-tab[aria-selected="true"]::before { width: 24px; margin-right: 14px; }
+@media (min-width: 761px) {
+  .hoe.tabs-aan { position: relative; height: clamp(680px, 100svh, 900px); overflow: hidden; } /* max. 900 px: de foto (1800 x 900) wordt nooit vergroot */
+  .hoe.tabs-aan .hoe-foto { position: absolute; inset: 0; }
+  .hoe.tabs-aan .hoe-foto img { height: 100%; aspect-ratio: auto; max-height: none; }
+  .hoe.tabs-aan .hoe-foto::after { content: ""; position: absolute; inset: 0; background: rgba(32,32,32,.62); } /* 62% inkt: witte tekst van 18 px haalt 4,5:1, ook boven de witte machine */
+  .hoe.tabs-aan .hoe-vak { position: relative; z-index: 1; height: 100%; max-width: none; width: var(--B); margin-left: calc(50% - var(--B) / 2); padding: 0; display: grid; grid-template-columns: 8.333% 25% 8.333% 50% 8.334%; align-items: center; gap: 0; color: var(--wit); }
+  .hoe.tabs-aan .hoe-label { position: absolute; left: 8.333%; top: var(--ritme); color: var(--wit); }
+  .hoe.tabs-aan .hoe-tabs { grid-column: 2; display: flex; flex-direction: column; gap: 10px; }
+  .hoe.tabs-aan .hoe-stappen { grid-column: 4; display: grid; }
+  .hoe.tabs-aan .hoe-stap { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity .4s ease, visibility 0s .4s; }
+  .hoe.tabs-aan .hoe-stap.aan { opacity: 1; visibility: visible; transition: opacity .4s ease; }
+  .hoe.tabs-aan .hoe-stap .kop-xl { font-size: clamp(48px, 6.11vw, 88px); line-height: .98; margin-bottom: 14px; }
+  .hoe.tabs-aan .hoe-nr { display: none; }
+  .hoe.tabs-aan .hoe-zin, .hoe.tabs-aan .hoe-copy { color: var(--wit); }
+}
+@media (min-width: 761px) and (max-width: 1024px) {
+  .hoe.tabs-aan .hoe-vak { grid-template-columns: 8% 34% 4% 46% 8%; } /* tabs van 24 px passen naast de tekst */
+  .hoe-tab { font-size: 24px; } /* 24 px: telt als grote tekst, zodat de niet-actieve tabs (0,6) de 3:1 halen (ontwerpgate, punt 2) */
+}
+@media (prefers-reduced-motion: reduce) { .hoe-tab, .hoe-tab::before, .hoe.tabs-aan .hoe-stap, .hoe.tabs-aan .hoe-stap.aan { transition: none; } }
+
+/* lopende regel boven het contactblok (Over) */
+#contact > .lopend-los { padding: var(--ritme) 0 0; }
+
+/* ---------- Contact: fotokop over de volle hoogte (zoals Stock /contact) ---------- */
+.contact-kop { position: relative; z-index: 1; height: clamp(640px, 100svh, 1000px); display: flex; align-items: center; background: #000; color: var(--wit); }
+.contact-kop-foto { position: absolute; inset: 0; overflow: hidden; }
+.contact-kop-foto img { width: 100%; height: 100%; object-fit: cover; opacity: .6; transform: translate3d(0, var(--parallax, 0px), 0); }
+/* extra sluier links (onder de tekst) en boven (onder de navigatie): de foto heeft lichte stof en een lichte wand */
+.contact-kop-foto::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.5) 0, rgba(0,0,0,0) 200px), linear-gradient(90deg, rgba(0,0,0,.45) 0, rgba(0,0,0,.45) 58%, rgba(0,0,0,0) 85%); }
+.contact-kop-tekst { position: relative; z-index: 2; width: var(--B); margin-left: calc(50% - var(--B) / 2); padding: 64px 0 0 8.333%; display: flex; flex-direction: column; align-items: flex-start; }
+.contact-kop-tekst > * { max-width: calc(var(--B) * .5); }
+.contact-kop h1 { margin: 0 0 24px; }
+.contact-kop .kop-xl { font-size: clamp(44px, 6.11vw, 88px); line-height: .98; color: var(--wit); }
+.contact-kop-links { display: flex; flex-wrap: wrap; gap: 0 40px; margin-top: 40px; }
+.contact-kop-links .pijl { font-size: 17px; color: var(--wit); }
+/* badge half over de rand (zoals Stock), met een terracotta vlak zodat hij op de foto en op wit zichtbaar is */
+.contact-kop .badge { left: 75%; top: auto; bottom: calc(var(--u) * -4); z-index: 3; color: var(--inkt); background: var(--terracotta); border-radius: 50%; }
+@media (max-width: 760px) {
+  .contact-kop { height: 88svh; min-height: 560px; }
+  .contact-kop-foto::after { background: rgba(0,0,0,.45); }
+  .contact-kop-tekst { width: auto; margin-left: 0; padding: 0 var(--rand); }
+  .contact-kop-tekst > * { max-width: none; }
+  .contact-kop .kop-xl { font-size: 44px; }
+  .contact-kop-links { flex-direction: column; margin-top: 28px; }
+  .contact-kop .badge { left: auto; right: var(--rand); bottom: -35px; }
+}
+
+/* ---------- Contact 001: gegevens in drie kolommen ---------- */
+.gegevens { padding: max(56px, calc(var(--u) * 10.41)) 0 max(48px, calc(var(--u) * 6.94)); }
+.gegevens .wrap { display: flex; flex-direction: column; gap: 48px; }
+.gegevens-kolommen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px clamp(32px, 4vw, 64px); }
+.gegevens-kop { margin: 0 0 14px; font-family: var(--serif); font-weight: 400; font-size: 20px; line-height: 1.3; }
+.gegevens-kolom p, .gegevens-kolom address { margin: 0 0 12px; font-size: 17px; line-height: 1.7; font-style: normal; }
+.gegevens .pijl { font-size: 17px; }
+@media (min-width: 761px) { .gegevens { min-height: min(88svh, 820px); } } /* zo blijft de laag wit zolang de gegevens in beeld zijn */
+@media (max-width: 1024px) { .gegevens-kolommen { grid-template-columns: repeat(2, minmax(0, 1fr)); } } /* tablet: e-mailadres past (ontwerpgate ronde 2) */
+.gegevens-kolommen a { overflow-wrap: anywhere; }
+@media (max-width: 760px) { .gegevens-kolommen { grid-template-columns: minmax(0, 1fr); gap: 36px; } }
+
+/* ---------- Contact 002: het formulier ---------- */
+.formulier-sectie .contact-sectie { padding-bottom: var(--ritme); }
+
+/* =====================================================================
+   Navigatie v2: Werkwijze · Kraamcadeauboxen · Prematuurkleding · Portfolio · Contact
+   ===================================================================== */
+
+/* header: vijf links op één regel naast het logo, vanaf 1200 px (daaronder de burger) */
+@media (min-width: 1200px) {
+  .js .site-header .wrap { flex-wrap: nowrap; }
+  .js .site-header .menu { flex-wrap: nowrap; white-space: nowrap; gap: 0 clamp(18px, 1.9vw, 30px); letter-spacing: clamp(.16em, .02em + .9vw, .3em); }
+}
+
+/* menu over het hele scherm: subitems 24 px ingesprongen (.menu-nav ul zette de inspringing op 0) */
+.menu-nav .menu-sub { padding-left: 24px; }
+/* vijf hoofditems met elf subitems passen op 1440 x 900 zonder scrollen */
+@media (min-width: 761px) {
+  .menu-nav > ul > li > a { font-size: clamp(36px, 3.6vw, 52px); }
+  .menu-sub { margin: 0 0 10px; }
+  .menu-nav .menu-sub a { padding: 2px 0; }
+  .menu-binnen { padding-top: 96px; padding-bottom: 40px; }
+}
+
+/* homepage 003: "Bekijk het portfolio" en "Laat iets voor jou maken" naast elkaar (mobiel onder elkaar) */
+.pijl-rij { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 40px; }
+.js .hoverlijst-sectie .sectie > .pijl-rij { transition: opacity 1s var(--rustig), color 1s var(--rustig); }
+.js .hoverlijst-sectie.lijst-actief .sectie > .pijl-rij { opacity: .2; }
+.js #portfolio.lijst-actief .sectie > .pijl-rij { color: var(--wit); opacity: .35; }
+@media (max-width: 760px) { .pijl-rij { flex-direction: column; align-items: flex-start; align-self: flex-start; } }
+@media (prefers-reduced-motion: reduce) { .js .hoverlijst-sectie .sectie > .pijl-rij { transition: none; } }
+
+/* ---------- Werkwijze 004: Wat ik maak (compact, op grijsblauw) ----------
+   Vijf rijen: kleine foto (max. 240 px, nooit groter dan het bestand) en tekst; mobiel foto 96 px links. */
+.maak-lijst { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px clamp(32px, 5vw, 80px); }
+.maak-rij { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 0 32px; align-items: start; scroll-margin-top: 84px; }
+/* breedte uit het width-attribuut (bestand), begrensd op de kolom: ruimte staat vast vóór het laden (geen CLS) */
+.maak-rij img { max-width: 100%; height: auto; }
+.maak-tekst { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.maak-kop { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(28px, 2.4vw, 36px); line-height: 1.1; }
+.maak-tekst .klein { max-width: 360px; }
+@media (max-width: 1024px) {
+  .maak-lijst { grid-template-columns: minmax(0, 1fr); gap: 48px; }
+  .maak-rij { grid-template-columns: 200px minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .maak-lijst { gap: 40px; }
+  .maak-rij { grid-template-columns: 96px minmax(0, 1fr); gap: 0 18px; }
+  .maak-kop { font-size: 26px; }
+  .maak-tekst { gap: 10px; }
+}
+
+/* ---------- Portfolio: vier groepen in metselwerk ----------
+   Kolommen met CSS columns: 4 vanaf 1025 px, 3 op tablet, 2 op mobiel. Elke foto houdt zijn eigen
+   verhouding en wordt nooit breder getoond dan het bestand (width-attribuut, max. 100%). */
+.portfolio-links .pijl { min-height: 44px; }
+.portfolio-groep .sectie { gap: 40px; }
+.groep-kop { color: var(--inkt); }
+.werken { columns: 4; column-gap: 32px; }
+.werk { margin: 0 0 32px; break-inside: avoid; display: flex; flex-direction: column; align-items: flex-start; }
+.werk-beeld { position: relative; display: block; max-width: 100%; }
+.werk-beeld img { max-width: 100%; height: auto; } /* breedte = width-attribuut (het bestand), nooit breder; vaste ruimte vóór het laden */
+.werk figcaption { margin-top: 12px; font-family: var(--display); font-size: 24px; line-height: 1.2; color: var(--inkt); }
+@media (max-width: 1024px) { .werken { columns: 3; column-gap: 24px; } .werk { margin-bottom: 24px; } }
+@media (max-width: 760px) {
+  .werken { columns: 2; column-gap: 12px; }
+  .werk { margin-bottom: 20px; }
+  .werk figcaption { margin-top: 8px; font-size: 20px; }
+  .portfolio-groep .sectie { gap: 32px; }
+}
+/* bij aanwijzen (alleen met een muis): de laag wordt de diepe tint van de groep (main.js), groepskop en het
+   aangewezen bijschrift worden wit, de andere bijschriften wit op 0,35 en de andere foto's krijgen een
+   warme sluier van 20%. Label en pijl-links blijven inkt (5,4:1; wit haalt daar maar 3:1). */
+@media (hover: hover) and (pointer: fine) {
+  .js .portfolio-groep .groep-kop, .js .portfolio-groep .werk figcaption { transition: color 1s var(--rustig), opacity 1s var(--rustig); }
+  .js .werk-beeld::after { content: ""; position: absolute; inset: 0; background: rgba(60,40,30,.2); opacity: 0; pointer-events: none; transition: opacity 1s var(--rustig); }
+  .js .portfolio-groep.aangewezen .groep-kop { color: var(--wit); }
+  .js .portfolio-groep.aangewezen .werk figcaption { color: var(--wit); opacity: .35; }
+  .js .portfolio-groep.aangewezen .werk.aan figcaption { opacity: 1; }
+  .js .portfolio-groep.aangewezen .werk:not(.aan) .werk-beeld::after { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .js .portfolio-groep .groep-kop, .js .portfolio-groep .werk figcaption, .js .werk-beeld::after { transition: none; }
+}
+
+/* Touch: tikdoelen in het menu minimaal 44 px (ontwerpgate navigatie v2, P1) */
+@media (pointer: coarse) {
+  .menu-nav > ul > li > a { min-height: 44px; }
+  .menu-nav .menu-sub a { padding: 8px 0; min-height: 44px; box-sizing: border-box; }
+  .menu-kolom a { display: inline-flex; align-items: center; min-height: 44px; }
+  .menu-kolom { gap: 0; }
 }

@@ -12,6 +12,8 @@
     zet: function (k, v) { try { window.sessionStorage.setItem(k, v); } catch (e) { /* niet erg */ } }
   };
   var heroEl = document.querySelector('.hero');
+  // De vaste balk verschijnt na de hero (homepage) of na de eerste sectie van een subpagina
+  var kopEl = heroEl || document.querySelector('main > .pagina-kop, main > .over-kop, main > .contact-kop');
 
   /* Kleurhulpjes (naar stockdutchdesign.com): de bovenkant van de pagina
      (.hero-kleur) en één vaste achtergrondlaag voor de rest */
@@ -41,6 +43,19 @@
     }
   }
   var balkBijwerken = null;
+  // Niet-dringende onderdelen starten elk in een eigen taak na de eerste weergave,
+  // zodat het laden geen lange blokkerende taak wordt (Lighthouse TBT).
+  var later = function (fn) { setTimeout(fn, 0); };
+  // Foto's van hero-set B ("Het cadeau") pas na het laden ophalen: ze zijn eerst onzichtbaar
+  var laadSetB = function () {
+    document.querySelectorAll('img.set-b[data-src]').forEach(function (img) {
+      if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src'); img.removeAttribute('data-srcset');
+    });
+  };
+  if (document.readyState === 'complete') later(laadSetB); else window.addEventListener('load', function () { later(laadSetB); });
+  ['pointerover', 'focusin', 'touchstart'].forEach(function (s) { document.addEventListener(s, function h(e) { if (e.target.closest && e.target.closest('.hero')) { laadSetB(); document.removeEventListener(s, h); } }, { passive: true }); });
 
   /* ---------------------------------------------------------------
      1. Intro-scherm en pagina-overgang
@@ -53,7 +68,7 @@
   function heroKlaar() { if (heroEl) heroEl.classList.add('klaar'); document.dispatchEvent(new Event('lux:klaar')); }
 
   // Het script in <head> heeft al besloten of de intro komt (.intro-aan) en
-  // de tijdlijn loopt in CSS. Hier: hero-kop op ~2,35 s, klaar op ~3,05 s,
+  // de tijdlijn loopt in CSS (ca. 1,5 s). Hier: hero-kop op ~1,1 s, klaar op ~1,65 s,
   // overslaan met tik, klik, toets, scroll of vegen (dan klaar in 0,6 s).
   if (intro && html.classList.contains('intro-aan') && !stil) {
     (function () {
@@ -97,9 +112,9 @@
       };
       var signalen = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'];
       signalen.forEach(function (s) { window.addEventListener(s, overslaan, { capture: true, passive: true }); });
-      na(600, function () { if (foto && !(foto.complete && foto.naturalWidth > 0) && figuur) figuur.classList.add('zonder-foto'); });
-      na(2350, heroKlaar);           // woorden van de hero-kop komen op
-      na(3060, opruimen);            // de intro is klaar
+      na(300, function () { if (foto && !(foto.complete && foto.naturalWidth > 0) && figuur) figuur.classList.add('zonder-foto'); });
+      na(1100, heroKlaar);           // woorden van de hero-kop komen op
+      na(1650, opruimen);            // de intro is klaar
     })();
   } else {
     html.classList.remove('intro-aan');
@@ -249,6 +264,7 @@
     }
   });
 
+  later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
   /* ---------------------------------------------------------------
      4. Portfolio: hover-lijst met foto's en achtergrondkleur
      --------------------------------------------------------------- */
@@ -301,6 +317,34 @@
     }
   });
 
+  // 4b. Portfoliopagina: met een muis kleurt de laag bij aanwijzen in 1 s (rustig) naar de diepe tint
+  //     van de groep (data-diep); CSS maakt kop en bijschrift wit. Weg uit het raster: terug naar de
+  //     lichte groepskleur. Op touch en zonder JavaScript: geen hoverstand, alles in inkt.
+  if (muis) {
+    document.querySelectorAll('.portfolio-groep[data-diep]').forEach(function (groep) {
+      var raster = groep.querySelector('.werken');
+      var werken = Array.prototype.slice.call(groep.querySelectorAll('.werk'));
+      if (!raster || !werken.length) return;
+      var traagTimer = null;
+      werken.forEach(function (w) {
+        w.addEventListener('mouseenter', function () {
+          werken.forEach(function (x) { x.classList.toggle('aan', x === w); });
+          groep.classList.add('aangewezen');
+          clearTimeout(traagTimer); laag.classList.add('traag');
+          zetLaag(groep.getAttribute('data-diep'));
+        });
+      });
+      raster.addEventListener('mouseleave', function () {
+        if (!groep.classList.contains('aangewezen')) return;
+        groep.classList.remove('aangewezen');
+        werken.forEach(function (x) { x.classList.remove('aan'); });
+        laagBijwerken(true);
+        clearTimeout(traagTimer);
+        traagTimer = setTimeout(function () { laag.classList.remove('traag'); }, 1000);
+      });
+    });
+  }
+
   document.querySelectorAll('.hoverlijst:not(.sferen)').forEach(function (lijst) {
     var sectie = lijst.closest('.hoverlijst-sectie');
     var groot = lijst.querySelector('.groot');
@@ -339,6 +383,8 @@
     }
     // foto's vooraf laden, alleen als de lijst zichtbaar is (op touch staan de kaarten er)
     if (lijst.offsetParent !== null) knoppen.forEach(function (k) { [k.dataset.groot, k.dataset.klein].forEach(function (s) { var i = new Image(); i.src = s; }); });
+  });
+
   });
 
   /* ---------------------------------------------------------------
@@ -465,7 +511,7 @@
          vloeit naar de kleur van de sectie waarvan het midden in beeld is
      --------------------------------------------------------------- */
   var lagen = Array.prototype.slice.call(document.querySelectorAll('main > section')).filter(function (sec) {
-    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement');
+    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement') && !sec.matches('.contact-kop, .pagina-kop, .over-kop'); // koppen houden hun eigen kleur, zoals de bovenkant van de homepage
   });
   lagen.forEach(function (sec) {
     if (!sec.hasAttribute('data-achtergrond')) sec.setAttribute('data-achtergrond', getComputedStyle(sec).backgroundColor);
@@ -492,16 +538,100 @@
   }
 
   /* ---------------------------------------------------------------
+     5d. Over, "Hoe ik werk": vanaf 761 px een menu met drie stappen.
+         Alleen een klik, Enter of Spatie wisselt (aanwijzen en focus niet);
+         de tekst wisselt met een crossfade van 0,4 s (CSS). Mobiel en zonder
+         JavaScript staan de stappen onder elkaar.
+     --------------------------------------------------------------- */
+  document.querySelectorAll('.hoe').forEach(function (sec) {
+    var lijst = sec.querySelector('.hoe-tabs');
+    var paneel = sec.querySelector('.hoe-stappen');
+    var tabs = Array.prototype.slice.call(sec.querySelectorAll('.hoe-tab'));
+    var stappen = Array.prototype.slice.call(sec.querySelectorAll('.hoe-stap'));
+    if (!lijst || !paneel || !tabs.length) return;
+    var breed = window.matchMedia('(min-width: 761px)');
+    var huidig = 0;
+    function zetTabs() {
+      tabs.forEach(function (t, n) { t.setAttribute('aria-selected', n === huidig ? 'true' : 'false'); t.tabIndex = n === huidig ? 0 : -1; });
+      stappen.forEach(function (s, n) { s.classList.toggle('aan', n === huidig); s.setAttribute('aria-hidden', n === huidig ? 'false' : 'true'); });
+      paneel.setAttribute('aria-labelledby', tabs[huidig].id);
+    }
+    function stand() {
+      var aan = breed.matches;
+      sec.classList.toggle('tabs-aan', aan);
+      lijst.hidden = !aan;
+      // altijd terracotta: zo staat het witte balklogo nooit op een witte balk (ontwerpgate navigatie, punt 1)
+      sec.setAttribute('data-achtergrond', '#BC8565');
+      laagBijwerken(true);
+      if (aan) {
+        lijst.setAttribute('role', 'tablist'); lijst.setAttribute('aria-label', 'Hoe ik werk');
+        paneel.setAttribute('role', 'tabpanel');
+        tabs.forEach(function (t) { t.setAttribute('role', 'tab'); t.setAttribute('aria-controls', paneel.id); });
+        zetTabs();
+      } else { // onder elkaar: alles leesbaar, geen tab-rollen
+        paneel.removeAttribute('role'); paneel.removeAttribute('aria-labelledby');
+        stappen.forEach(function (s) { s.removeAttribute('aria-hidden'); });
+      }
+    }
+    tabs.forEach(function (t, n) { t.addEventListener('click', function () { huidig = n; zetTabs(); }); });
+    lijst.addEventListener('keydown', function (e) { // pijltoetsen verplaatsen alleen de focus
+      var n = tabs.indexOf(document.activeElement), doel = null;
+      if (n < 0) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') doel = (n + 1) % tabs.length;
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') doel = (n - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home') doel = 0;
+      else if (e.key === 'End') doel = tabs.length - 1;
+      if (doel === null) return;
+      e.preventDefault(); tabs[doel].focus();
+    });
+    if (breed.addEventListener) breed.addEventListener('change', stand);
+    stand();
+  });
+
+  later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
+  /* ---------------------------------------------------------------
+     5e. Lichte parallax (alleen met een muis en zonder "minder beweging"):
+         de themafoto's schuiven binnen hun kader hooguit 9% op of neer,
+         de kopfoto van Contact zakt langzaam mee met scrollen.
+     --------------------------------------------------------------- */
+  var parallaxEls = Array.prototype.slice.call(document.querySelectorAll('.thema-foto img, .contact-kop-foto img'));
+  if (parallaxEls.length && muis && !stil) {
+    var parallaxBijwerken = function () {
+      var vh = window.innerHeight;
+      parallaxEls.forEach(function (img) {
+        var kader = img.parentNode.getBoundingClientRect();
+        if (kader.bottom < -50 || kader.top > vh + 50) return;
+        var y;
+        if (img.closest('.contact-kop-foto')) y = Math.max(0, -kader.top) * 0.3;
+        else if (window.innerWidth <= 760) y = 0;
+        else {
+          var p = ((kader.top + kader.height / 2) - vh / 2) / (vh / 2 + kader.height / 2);
+          y = -Math.max(-1, Math.min(1, p)) * kader.height * 0.09;
+        }
+        img.style.setProperty('--parallax', y.toFixed(1) + 'px');
+      });
+    };
+    var parallaxGepland = false;
+    window.addEventListener('scroll', function () {
+      if (!parallaxGepland) { parallaxGepland = true; requestAnimationFrame(function () { parallaxGepland = false; parallaxBijwerken(); }); }
+    }, { passive: true });
+    window.addEventListener('resize', parallaxBijwerken);
+    parallaxBijwerken();
+  }
+
+  });
+
+  /* ---------------------------------------------------------------
      6. Vaste balk met sectielabel; burger kleurt mee
      --------------------------------------------------------------- */
   var balk = document.querySelector('.balk');
   var secties = Array.prototype.slice.call(document.querySelectorAll('[data-label]'));
-  if (balk && heroEl) {
+  if (balk && kopEl) {
     var label = balk.querySelector('.sectie-label');
     var kleuren = ['op-kleur', 'op-wit', 'op-grijs'];
     var laatste = null;
     var bijwerken = function () {
-      var voorbij = heroEl.getBoundingClientRect().bottom < 40;
+      var voorbij = kopEl.getBoundingClientRect().bottom < 40;
       balk.classList.toggle('zichtbaar', voorbij);
       var huidig = null;
       secties.forEach(function (sec) { if (sec.getBoundingClientRect().top <= 90) huidig = sec; });
@@ -566,8 +696,9 @@
     var io = new IntersectionObserver(function (items) {
       items.forEach(function (it) { if (it.isIntersecting) { it.target.classList.add('in-beeld'); io.unobserve(it.target); } });
     }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier, main .contact-links').forEach(function (el, i) {
-      if (el.closest('.hero') || el.closest('.statement')) return;
+    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .formaat, main .formaten-voet, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier').forEach(function (el, i) {
+      // niet in de hero, het statement of de paginakop: wat bij het openen al in beeld staat, staat er meteen (snellere LCP)
+      if (el.closest('.hero') || el.closest('.statement') || el.closest('.pagina-kop, .over-kop, .contact-kop')) return;
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';
       io.observe(el);
@@ -578,6 +709,7 @@
     document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld img, main .contact-foto').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
   }
 
+  later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
   /* ---------------------------------------------------------------
      8. Lopende tekst (CSS: een halve spoorbreedte in 15 s, los van het
         scrollen) pauzeert buiten beeld; de foto in Uitgelicht schuift licht
@@ -617,6 +749,9 @@
     }, { passive: true });
   }
 
+  });
+
+  later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
   /* ---------------------------------------------------------------
      9. Eigen cursor (alleen met een muis)
      --------------------------------------------------------------- */
@@ -631,7 +766,7 @@
       cursor.classList.toggle('label', !!tekst);
       cursor.classList.toggle('groot', !!doel && !tekst);
       if (tekst) cLabel.textContent = tekst;
-      var kleurvlak = e.target.closest('.op-kleur, .statement, .menu-scherm');
+      var kleurvlak = e.target.closest('.op-kleur, .statement, .menu-scherm, .contact-kop');
       if (kleurvlak && heroLicht && kleurvlak.closest('.hero-kleur')) kleurvlak = null;
       cursor.classList.toggle('op-kleur-c', !!kleurvlak && !tekst);
     });
@@ -643,6 +778,8 @@
     };
     requestAnimationFrame(volg);
   }
+
+  });
 
   /* ---------------------------------------------------------------
      10. Vloeiend scrollen zoals stockdutchdesign.com
@@ -734,6 +871,14 @@
     if (m) {
       m.setAttribute('role', 'alert');
       m.innerHTML = '<strong>Je bericht is niet verstuurd.</strong> Controleer je naam, e-mailadres en bericht, of stuur Carien een WhatsApp of mail.';
+      // contact.html?verzonden=fout#formulier: zorg dat de melding zonder scrollen in beeld staat
+      var toonMelding = function () {
+        setTimeout(function () {
+          var r = m.getBoundingClientRect();
+          if (r.top < 0 || r.bottom > window.innerHeight) m.scrollIntoView({ block: 'center', behavior: 'instant' });
+        }, 60);
+      };
+      if (document.readyState === 'complete') toonMelding(); else window.addEventListener('load', toonMelding);
     }
   }
   document.querySelectorAll('[data-jaar]').forEach(function (el) { el.textContent = new Date().getFullYear(); });

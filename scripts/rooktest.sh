@@ -29,10 +29,19 @@ for poging in 1 2 3; do  # even geduld na het uitrollen
 done
 
 check "Homepage"              200 "$BASIS/"                  "Samen"
-check "Kraamcadeaubox"        200 "$BASIS/kraamcadeaubox"    "Kies je formaat"
+check "Werkwijze"             200 "$BASIS/werkwijze"         "Werkwijze</h1>"
+check "Kraamcadeauboxen"      200 "$BASIS/kraamcadeauboxen"  "Kies je formaat"
+check "Prematuurkleding"      200 "$BASIS/prematuurkleding"  "Prematuurkleding</h1>"
+check "Portfolio"             200 "$BASIS/portfolio"         "Portfolio</h1>"
 check "Privacy"               200 "$BASIS/privacy"           "Privacyverklaring"
+check "Contact"               200 "$BASIS/contact"           "Contact</h1>"
+check "Contactformulier"      200 "$BASIS/contact"           'action="/api/contact"'
 check "Afbeelding"            200 "$BASIS/assets/img/hero-box-open.jpg"
+check "Oud adres producten"   301 "$BASIS/producten"
+check "Oud adres over"        301 "$BASIS/over"
+check "Oud adres kraamcadeaubox" 301 "$BASIS/kraamcadeaubox"
 check "Oud Wix-adres"         301 "$BASIS/aanbod"
+check "Oud adres klantenservice" 301 "$BASIS/klantenservice"
 check "Onbekende pagina"      404 "$BASIS/bestaat-niet"
 check "Formulier (GET)"       303 "$BASIS/api/contact"
 

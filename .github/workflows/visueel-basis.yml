@@ -1,0 +1,34 @@
+# LUX mini — visuele basis bijwerken (handmatig).
+# Maakt nieuwe basisschermen in dezelfde omgeving als Gate 5 en zet ze als commit op de gekozen branch.
+# Gebruik na een bewuste, goedgekeurde ontwerpwijziging: Actions → "Visuele basis bijwerken" → Run workflow → kies de branch.
+# Alleen handmatig (door Carst), zodat geen agent de goedgekeurde basis kan vervangen.
+# Nooit op main: dan gaat de basis buiten een pull request om.
+name: Visuele basis bijwerken
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  basis:
+    name: Basisschermen maken
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci || npm install
+      - run: npx playwright install --with-deps chromium
+      - run: VISUEEL=1 npx playwright test --update-snapshots
+      - name: Basis committen
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/e2e/basis
+          git diff --cached --quiet && { echo "Basis was al actueel."; exit 0; }
+          git commit -m "Visuele basis bijgewerkt (${GITHUB_REF_NAME})"
+          git push
