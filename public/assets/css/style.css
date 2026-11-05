@@ -333,6 +333,9 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .caps { letter-spacing: .4em; font-size: 12px; }
   .balk .menu { display: none; }
   .balk .wrap { min-height: 56px; }
+  /* balklabel op één regel naast het logo, ook '005 — Kraamcadeauboxen' (brief homepage per product) */
+  .balk .links { gap: 16px; }
+  .balk .sectie-label { font-size: 14px; white-space: nowrap; }
 }
 
 /* =====================================================================
@@ -816,13 +819,15 @@ html.zacht-scrollen { scroll-behavior: auto; }
 /* ongeveer één scherm hoog, zodat de laag de kleur houdt zolang de categorie in beeld is */
 .categorie { padding: var(--ritme) 0; }
 @media (min-width: 1025px) { .categorie { min-height: min(100svh, 1000px); display: flex; flex-direction: column; justify-content: center; } }
+/* babynest: de kleine foto (324 px) vult geen scherm; het blok wordt zo hoog als de inhoud (compact, geen leeg vlak) */
+@media (min-width: 1025px) { .categorie:has(.klein-bestand) { min-height: 0; } }
 .categorie-rij { width: var(--B); margin-left: calc(50% - var(--B) / 2); display: grid; grid-template-columns: 16.666% 25% 8.334% 33.333% 16.667%; grid-template-rows: 1fr auto auto 1fr; }
 .categorie-label { grid-column: 2; grid-row: 2; margin-bottom: 32px; }
 .categorie-tekst { grid-column: 2; grid-row: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
 .categorie-tekst .klein { max-width: 360px; }
 .categorie-foto { grid-column: 4; grid-row: 1 / 5; width: 100%; max-width: 480px; }
 .categorie-foto img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
-.categorie-foto.klein-bestand { max-width: 324px; justify-self: center; } /* babynest: alleen de kleine Instagram-versie */
+.categorie-foto.klein-bestand { max-width: 324px; justify-self: center; align-self: center; } /* babynest: alleen de kleine Instagram-versie, midden in het blok */
 .categorie.gespiegeld .categorie-rij { grid-template-columns: 16.667% 33.333% 8.334% 25% 16.666%; }
 .categorie.gespiegeld .categorie-label, .categorie.gespiegeld .categorie-tekst { grid-column: 4; }
 .categorie.gespiegeld .categorie-foto { grid-column: 2; }
@@ -1098,6 +1103,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .themakaart figure { margin: 0; }
 .themakaart img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
 .themakaart figcaption { margin-top: 12px; font-family: var(--display); font-size: 24px; line-height: 1.15; }
+#themas .sectie { gap: 40px; } /* compact: label dicht bij het raster */
 .themas-onder { margin-top: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 40px; }
 .themas-onder .klein { margin: 0; font-size: 16px; }
 @media (max-width: 1024px) { .themaraster { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -1117,5 +1123,5 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 
 /* ---------- Prematuurkleding en Babynest: prijsrichtlijn als eigen, compact blok ---------- */
-.prijs-sectie .sectie { gap: 24px; padding-bottom: var(--ritme); }
+.prijs-sectie .sectie { gap: 24px; }
 .prijs-sectie .prijs { margin: 0; }
