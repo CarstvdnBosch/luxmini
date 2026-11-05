@@ -23,3 +23,4 @@ Op Werkwijze stond "Wat ik maak". Die indeling staat nu ook op de homepage, waar
 | Stap | Wie | Uitkomst |
 |---|---|---|
 | Plannen en bouwen | Claude (hoofdsessie) | Gebouwd. Sitecontrole en e2e (74 groen) lokaal groen. |
+| Eerste meting GitHub | Claude (hoofdsessie) | Gate 4: Kraamcadeauboxen LCP 4,29 s (grens 4,0): de statementfoto staat door de lagere kop nu in het eerste scherm. Opgelost met een 800 px-versie (srcset) en fetchpriority high. |
