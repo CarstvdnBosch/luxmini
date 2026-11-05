@@ -17,12 +17,12 @@ for (const { pad, naam } of PAGINAS) {
   });
 }
 
-// Vijf hoofdpagina's in deze volgorde (navigatie v2); op desktop (1440 px, dus >= 1200) staan ze in de header.
+// Zes hoofdpagina's in deze volgorde (brief homepage per product); op desktop (1440 px, dus >= 1280) staan ze in de header.
 const HOOFDMENU = [['Werkwijze', /\/werkwijze(\.html)?$/], ['Kraamcadeauboxen', /\/kraamcadeauboxen(\.html)?$/],
-  ['Prematuurkleding', /\/prematuurkleding(\.html)?$/], ['Portfolio', /\/portfolio(\.html)?$/], ['Contact', /\/contact(\.html)?$/]];
+  ['Prematuurkleding', /\/prematuurkleding(\.html)?$/], ['Babynest', /\/babynest(\.html)?$/], ['Inspiratie', /\/inspiratie(\.html)?$/], ['Contact', /\/contact(\.html)?$/]];
 
-test('header: vijf links in de juiste volgorde, elk met het juiste doel', async ({ page }, info) => {
-  test.skip(info.project.name !== 'desktop', 'de header-links staan er vanaf 1200 px; daaronder de burger');
+test('header: zes links in de juiste volgorde, elk met het juiste doel', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'de header-links staan er vanaf 1280 px; daaronder de burger');
   await page.goto('/');
   const links = page.locator('header nav.menu a');
   await expect(links).toHaveText(HOOFDMENU.map(([t]) => t));
@@ -65,8 +65,8 @@ test('kraamcadeauboxen: vier prijzen van € 35 tot € 80', async ({ page }) =>
   expect(prijzen).toEqual(['€ 35', '€ 50', '€ 65', '€ 80']);
 });
 
-// Oude adressen (301 naar /werkwijze): het anker gaat mee en de kop van die sectie staat in beeld.
-for (const [oud, nieuw, anker] of [['/producten#siliconen', '/werkwijze', 'siliconen'], ['/over#hoe-ik-werk', '/werkwijze', 'hoe-ik-werk']]) {
+// Oude adressen (301): het anker gaat mee en de kop van die sectie staat in beeld.
+for (const [oud, nieuw, anker] of [['/producten#siliconen', '/werkwijze', 'siliconen'], ['/over#hoe-ik-werk', '/werkwijze', 'hoe-ik-werk'], ['/portfolio#siliconen', '/inspiratie', 'siliconen']]) {
   test(`oud adres ${oud} landt op ${nieuw}#${anker} met de kop in beeld`, async ({ page }) => {
     await page.goto(oud);
     await expect(page).toHaveURL(new RegExp(`${nieuw}#${anker}$`));
@@ -75,6 +75,37 @@ for (const [oud, nieuw, anker] of [['/producten#siliconen', '/werkwijze', 'silic
     await expect(kop).toBeInViewport();
   });
 }
+
+// Contactmomenten (criterium 6): buiten de contactpagina leidt elke contact-link in de inhoud naar het formulier.
+for (const { pad, naam } of PAGINAS.filter(p => p.naam !== 'contact')) {
+  test(`${naam}: geen WhatsApp, telefoon of mail als link in de inhoud; contact gaat naar het formulier`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'HTML is per scherm gelijk');
+    await page.goto(pad);
+    const direct = await page.locator('main a.pijl[href^="https://wa.me"], main a.pijl[href^="tel:"], main a.pijl[href^="mailto:"], main .contact-lijst a[href^="https://wa.me"], main .contact-lijst a[href^="tel:"], main .contact-lijst a[href^="mailto:"]').count();
+    expect(direct, 'directe contactlinks in de inhoud').toBe(0);
+    const doelen = await page.locator('main a[href*="contact"]').evaluateAll(as => as.map(a => a.getAttribute('href')));
+    for (const d of doelen) expect(d, 'contact-link in de inhoud').toMatch(/^(contact\.html|\/contact)#formulier$/);
+    await expect(page.locator('#menu-scherm a[href^="https://wa.me/31643791618"]')).toHaveCount(1);
+  });
+}
+
+test('homepage: vijf productblokken, Inspiratie, Instagram en contact in deze volgorde', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'volgorde is per scherm gelijk');
+  await page.goto('/');
+  const labels = await page.locator('main > section').evaluateAll(s => s.map(x => x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()));
+  expect(labels).toEqual(['— LUX mini', '001 — Babykleding', '002 — Siliconen items', '003 — Babynest', '004 — Prematuurkleding', '005 — Kraamcadeauboxen', '006 — Inspiratie', '007 — Instagram', '008 — Contact']);
+  const doelen = await page.locator('main > section.categorie').evaluateAll(s => s.map(x => [...x.querySelectorAll('a.pijl')].map(a => a.getAttribute('href'))));
+  expect(doelen).toEqual([['inspiratie.html#kleding'], ['inspiratie.html#siliconen'], ['babynest.html'], ['prematuurkleding.html'], ['kraamcadeauboxen.html']]);
+});
+
+test('kraamcadeauboxen: negen thema\'s binnen twee schermen (1440 x 900)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'gemeten op 1440 x 900');
+  await page.goto('/kraamcadeauboxen');
+  await expect(page.locator('#themas .themaraster > li')).toHaveCount(9);
+  const hoogte = await page.evaluate(() => { const s = document.querySelector('#themas').getBoundingClientRect();
+    return Math.max(...[...document.querySelectorAll('#themas .themaraster > li')].map(k => k.getBoundingClientRect().bottom)) - s.top; });
+  expect(hoogte, 'hoogte van label tot het laatste thema').toBeLessThanOrEqual(2 * 900);
+});
 
 test('intro speelt bij het eerste bezoek en is binnen 2 s weg (besluit Carst: ca. 1,5 s)', async ({ browser }, info) => {
   test.skip(info.project.name !== 'desktop', 'één keer is genoeg');

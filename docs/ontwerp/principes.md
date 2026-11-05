@@ -10,7 +10,7 @@ Jonge ouders en (groot)ouders, vrienden en collega's die een persoonlijk kraamca
 
 ## Principes
 1. **Eén scherm, één boodschap.** Elk scherm heeft één hoofdpunt en een duidelijke volgende stap (pijl-link of contact).
-2. **Contact is nooit ver weg.** WhatsApp is het belangrijkste kanaal. Het staat bovenaan elke pagina en in het menu, en het is altijd binnen één klik te bereiken.
+2. **Contact is nooit ver weg.** Elke pagina heeft binnen één klik een pijl-link naar het contactformulier (besluit Carst, 5 nov. 2026). WhatsApp, telefoon en mail staan in het menu, in de footer en op de contactpagina.
 3. **Laten zien, niet vertellen.** Het portfolio en de thema's tonen foto's, ook op touch. Wat op desktop bij aanwijzen verschijnt, moet op mobiel zonder aanwijzen zichtbaar zijn.
 4. **Leesbaar boven sfeer:**
    - lopende tekst is minimaal 16 px (op mobiel ook);

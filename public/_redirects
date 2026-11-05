@@ -1,6 +1,6 @@
 # Oude adressen doorsturen naar de nieuwe pagina's (behoudt Google-vindbaarheid).
 # Altijd rechtstreeks naar het eindadres, zonder tussenstap. Het anker (#siliconen enz.) neemt de browser mee.
-# Let op: geen regel voor /contact, /werkwijze, /kraamcadeauboxen, /prematuurkleding of /portfolio; dat zijn gewone pagina's.
+# Let op: geen regel voor /contact, /werkwijze, /kraamcadeauboxen, /prematuurkleding, /babynest of /inspiratie; dat zijn gewone pagina's.
 /producten              /werkwijze          301
 /producten.html         /werkwijze          301
 /over                   /werkwijze          301
@@ -14,3 +14,5 @@
 /product-page/*         /kraamcadeauboxen   301
 /klantenservice         /contact            301
 /account/*              /                   301
+/portfolio              /inspiratie         301
+/portfolio.html         /inspiratie         301

@@ -523,8 +523,11 @@
     // (lijn op 88%). Zo staat witte tekst nooit lang op een lichte laag.
     // De laatste sectie waarvan de bovenkant boven de lijn ligt telt, ook als
     // de lijn onderaan de pagina in de footer valt (bijv. na End of #contact).
-    var lijn = window.innerHeight * 0.88, kies = null;
+    // Secties met witte tekst (terracotta, .op-kleur) wisselen al op 88%, zodat wit nooit op een lichte laag staat;
+    // secties met alleen inkt pas op de helft, zodat een compact blok in rust zijn eigen kleur houdt (ontwerpgate homepage).
+    var vh = window.innerHeight, kies = null;
     lagen.forEach(function (sec) {
+      var lijn = vh * (sec.classList.contains('op-kleur') ? 0.88 : 0.5);
       if (sec.getBoundingClientRect().top <= lijn) kies = sec;
     });
     if (kies && (forceer || kies !== laatsteLaag)) { laatsteLaag = kies; zetLaag(kies.getAttribute('data-achtergrond')); }

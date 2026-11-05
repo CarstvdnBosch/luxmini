@@ -17,8 +17,8 @@ Dit is het vaste kwaliteitsnet onder elke wijziging aan luxmini.nl. Het is gemaa
 | Gate | Tool | Wat | Blokkeert |
 |---|---|---|---|
 | 1 · Tests | `node --test`, wrangler dry-run | Formulierlogica, Cloudflare-configuratie | ja |
-| 2 · Sitecontrole | `scripts/controleer.py` (Playwright Python) | Interacties: intro, collage, tabbladen, balk, prijskaarten, stappen, ankers, mobiel | ja |
-| 4 · Kwaliteit | Playwright Test + axe-core | **Toegankelijkheid** WCAG 2.1 AA op 8 pagina's × 3 schermen + het menu; **SEO** (titel, description, canonical, één h1, og:title, lang); **veiligheid** (beveiligingsheaders, `rel=noopener`, geen geheimen in `public/`); **links** en ankers; **kernpaden** (navigatie, contact, formulierlabels, prijzen, geen consolefouten, geen horizontaal scrollen) | ja |
+| 2 · Sitecontrole | `scripts/controleer.py` (Playwright Python) | Interacties: intro, collage, tabbladen, balk, prijskaarten, stappen, ankers, mobiel; homepage per product (teksten uit Wat ik maak), thema-raster, Prematuurkleding en Babynest, zes menu-items vanaf 1280 px, tikdoelen 44 px op touch, contactmomenten naar het formulier | ja |
+| 4 · Kwaliteit | Playwright Test + axe-core | **Toegankelijkheid** WCAG 2.1 AA op 9 pagina's × 3 schermen + het menu; **SEO** (titel, description, canonical, één h1, og:title, lang); **veiligheid** (beveiligingsheaders, `rel=noopener`, geen geheimen in `public/`); **links** en ankers; **kernpaden** (navigatie, contact, formulierlabels, prijzen, opbouw homepage, thema's binnen twee schermen, contactmomenten, oude adressen, geen consolefouten, geen horizontaal scrollen) | ja |
 | 4 · Kwaliteit | Lighthouse CI (mobiel, trage 4G) | **Snelheid**: score ≥ 70, LCP ≤ 4,0 s, CLS ≤ 0,1, TBT ≤ 300 ms, ≤ 3,5 MB per pagina; toegankelijk ≥ 95, best practices ≥ 90, SEO ≥ 90 | ja |
 | 5 · Visueel | Playwright `toHaveScreenshot` | Elke pagina op 3 schermen vergeleken met de goedgekeurde basis (`tests/e2e/basis/`) | nee, waarschuwing |
 | Validatierapport | `scripts/validatierapport.mjs` | Bundelt alles + oordelen controleur/ontwerper + open punten (LET OP) + checklist | — |
