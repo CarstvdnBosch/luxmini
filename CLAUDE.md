@@ -21,10 +21,11 @@ Agents mergen nooit zonder GO van Carst, zetten nooit zelf het label `GO` en zet
 ## Mappen
 
 - `public/` — **alles wat online komt**
-  - `index.html` — homepage: één scrollpagina (hero, 001 De kraamcadeaubox, 002 Producten, 003 Het gevoel, statement, 004 Personaliseren, 005 Over Carien, 006 Instagram, 007 Contact); geen formulier
-  - `producten.html` — Producten: vijf categorieën om en om (babykleding, siliconen, babynest, prematuur, kraamcadeaubox), zoals Stock /media
-  - `kraamcadeaubox.html` — Kraamcadeaubox: paginakop met prijzen, negen thema's in het ritme van Stock /projecten, formaten en prijzen, zo werkt het
-  - `over.html` — Over Carien: kopfoto, het verhaal met fotorij, "Hoe ik werk" (tabbladen)
+  - `index.html` — homepage: één scrollpagina (hero, 001 De kraamcadeaubox, 002 Werkwijze, 003 Portfolio, statement, 004 Personaliseren, 005 Over Carien, 006 Instagram, 007 Contact); geen formulier
+  - `werkwijze.html` — Werkwijze (Over en Producten samen): kopfoto, 001 Het atelier (verhaal met fotorij), 002 Hoe ik werk (tabbladen), 003 Personaliseren (slider), 004 Wat ik maak (vijf rijen met de oude productankers), contact
+  - `kraamcadeauboxen.html` — Kraamcadeauboxen: paginakop met prijzen, negen thema's in het ritme van Stock /projecten, formaten en prijzen, zo werkt het
+  - `prematuurkleding.html` — Prematuurkleding: paginakop met Cariens quote, prijsrichtlijn en WhatsApp, 001 Maatwerk, 002 Zo werkt het, contact
+  - `portfolio.html` — Portfolio: vier groepen in metselwerk (kleding, knuffels/swaddles/babynest, siliconen en hangers, kraamcadeauboxen); bij aanwijzen de diepe tint van de groep
   - `contact.html` — Contact: fotokop, contactgegevens en het contactformulier (`#formulier`, `POST /api/contact`)
   - `privacy.html`, `bedankt.html`, `404.html`, `robots.txt`, `sitemap.xml`
   - `_redirects` — doorverwijzingen van oude Wix-adressen; `_headers` — beveiliging en caching
@@ -46,9 +47,9 @@ Agents mergen nooit zonder GO van Carst, zetten nooit zelf het label `GO` en zet
 - Kleuren (variabelen in `style.css`): terracotta `#BC8565` (hoofdkleur; witte tekst alleen voor koppen en quotes vanaf 24 px; kleine tekst op terracotta in inkt), wit, grijsblauw `#E0E6E7`, inkt `#202020`. Hoverkleuren portfolio: perzik `#DEB799`, oker `#C89F67`, salie `#C3CFBC`, mauve `#B5969E`, olijf `#B4B19A`.
 - Lettertypes: grote koppen en quotes in Libre Caslon Display, labels en pijl-links in Libre Caslon Text, lopende tekst in Source Sans 3 (vrije versie van de letter die Stock gebruikt). Kleine kapitalen met ruime spatiëring (`.caps`).
 - Logo: witte versie (`logo-luxmini-wit.png`) los op terracotta; donkere versie (`logo-luxmini-donker.png`) op wit/grijs.
-- Hoofdnavigatie: Producten · Kraamcadeaubox · Over · Contact, elk een eigen pagina (geen ankers). De huidige pagina heeft `aria-current="page"` en is onderstreept (1 px, 6 px onder de letters). Het menu over het hele scherm toont dezelfde vier items met subitems (ankers op die pagina's); op mobiel alleen de hoofditems. Header en menu zijn op alle pagina's gelijk.
-- Vaste balk (`.balk`) verschijnt na de hero (homepage) of na de eerste sectie van een subpagina (`.pagina-kop`, `.over-kop`, `.contact-kop`) en toont het label van de huidige sectie (`data-label`). Nieuwe secties krijgen een `data-label`.
-- Kraamcadeauboxpagina: geen collage, maar een paginakop op terracotta met de prijzen, daarna de negen thema's in het projectenritme van Stock (foto 58,33% breed, ritme 33,33 / 8,33 / 25 / 8,33%, lopende regel met de themanaam achter de foto, 30 s). Thema's gebruiken lichte paletkleuren met inkt, nooit terracotta, en buren nooit dezelfde kleur.
+- Hoofdnavigatie: Werkwijze · Kraamcadeauboxen · Prematuurkleding · Portfolio · Contact, elk een eigen pagina (geen ankers). Het menu staat in de header vanaf 1200 px; daaronder alleen de burger. De huidige pagina heeft `aria-current="page"` en is onderstreept (1 px, 6 px onder de letters). Het menu over het hele scherm toont dezelfde vijf items met subitems (ankers op die pagina's); op mobiel alleen de hoofditems. Header en menu zijn op alle pagina's gelijk.
+- Vaste balk (`.balk`) verschijnt na de hero (homepage) of na de eerste sectie van een subpagina (`.pagina-kop` op Kraamcadeauboxen, Prematuurkleding en Portfolio, `.over-kop` op Werkwijze, `.contact-kop` op Contact) en toont het label van de huidige sectie (`data-label`). Nieuwe secties krijgen een `data-label`.
+- Kraamcadeauboxenpagina (`kraamcadeauboxen.html`): geen collage, maar een paginakop op terracotta met de prijzen, daarna de negen thema's in het projectenritme van Stock (foto 58,33% breed, ritme 33,33 / 8,33 / 25 / 8,33%, lopende regel met de themanaam achter de foto, 30 s). Thema's gebruiken lichte paletkleuren met inkt, nooit terracotta, en buren nooit dezelfde kleur.
 - Het contactformulier staat alleen op `contact.html` (`#formulier`). Elders staat het gedeelde contactblok (WhatsApp, telefoon, mail en "Neem contact op" → `contact.html`). Op de contactpagina ligt de header over een donkere foto: navigatie en logo wit (`html.kop-donker`).
 - Foto's: warme, gebroken witte tinten. Nieuwe foto's krijgen dezelfde lichte warme kleurcorrectie. Zie `docs/fotolijst.md` voor gewenste nieuwe foto's.
 - Secties genummerd: `001 —`, `002 —` enzovoort, klein in serif.

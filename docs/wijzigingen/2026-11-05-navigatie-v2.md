@@ -255,7 +255,7 @@ Een bezoeker ziet in één oogopslag de vijf dingen die zij zoekt (hoe Carien we
 | Stap | Wie | Uitkomst |
 |---|---|---|
 | Plannen | website-planner | Brief klaar, ontwerprichting van website-ontwerper volledig opgenomen |
-| Bouwen | website-bouwer | |
+| Bouwen | website-bouwer | Klaar op `wijziging/navigatie-v2`: vijf pagina's, menu, 301's, harness bijgewerkt. Lokaal groen: `npm test`, `controleer.py`, kernpaden en SEO/veiligheid. axe en Lighthouse niet lokaal (pakketten ontbreken), draaien in GitHub. Gate 5: nog geen basis. |
 | Controleren | website-controleur | |
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | [mens] | |
