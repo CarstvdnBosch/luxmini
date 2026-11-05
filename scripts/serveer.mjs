@@ -1,6 +1,6 @@
 // Kleine statische server voor de tests: serveert public/ zoals Cloudflare dat doet
-// (schone adressen: /producten → producten.html, 404.html bij onbekende paden,
-// _redirects voor oude Wix-adressen, de headers uit _headers en compressie (brotli/gzip) zoals Cloudflare).
+// (schone adressen: /werkwijze → werkwijze.html, 404.html bij onbekende paden,
+// _redirects voor oude adressen (bijv. /producten → 301 /werkwijze), de headers uit _headers en compressie (brotli/gzip) zoals Cloudflare).
 // Gebruik: node scripts/serveer.mjs [poort]   (standaard 4173)
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';

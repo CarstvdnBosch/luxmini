@@ -91,11 +91,27 @@ test('sitemap en robots kloppen', async ({ request }) => {
     const r = await request.get(new URL(a).pathname, { maxRedirects: 0 });
     expect(r.status(), `sitemap-adres ${a}`).toBe(200);
   }
-  for (const p of ['/producten', '/kraamcadeaubox', '/over', '/contact']) {
-    expect(adressen.some(a => new URL(a).pathname === p), `${p} staat in de sitemap`).toBe(true);
-  }
+  const paden = adressen.map(a => new URL(a).pathname).sort();
+  expect(paden, 'adressen in de sitemap').toEqual(['/', '/contact', '/kraamcadeauboxen', '/portfolio', '/prematuurkleding', '/privacy', '/werkwijze']);
+  for (const oud of ['/producten', '/kraamcadeaubox', '/over']) expect(paden, `${oud} hoort niet meer in de sitemap`).not.toContain(oud);
   const robots = await (await request.get('/robots.txt')).text();
   expect(robots).toMatch(/Sitemap:\s*https:\/\/www\.luxmini\.nl\/sitemap\.xml/i);
+});
+
+// Doorverwijzingen (brief navigatie-v2, criterium 4): 301 en Location rechtstreeks naar het eindadres, zonder tussenstap.
+const DOORVERWIJZINGEN = {
+  '/producten': '/werkwijze', '/producten.html': '/werkwijze', '/over': '/werkwijze', '/over.html': '/werkwijze', '/over-lux': '/werkwijze',
+  '/kraamcadeaubox': '/kraamcadeauboxen', '/kraamcadeaubox.html': '/kraamcadeauboxen', '/aanbod': '/kraamcadeauboxen', '/aanbod/': '/kraamcadeauboxen',
+  '/shop': '/kraamcadeauboxen', '/product-page/x': '/kraamcadeauboxen', '/klantenservice': '/contact',
+};
+test('oude adressen geven 301 rechtstreeks naar het eindadres', async ({ request }) => {
+  for (const [van, naar] of Object.entries(DOORVERWIJZINGEN)) {
+    const r = await request.get(van, { maxRedirects: 0 });
+    expect(r.status(), `${van} geeft 301`).toBe(301);
+    expect(new URL(r.headers()['location'], 'http://x').pathname, `${van} gaat rechtstreeks naar ${naar}`).toBe(naar);
+    const eind = await request.get(naar, { maxRedirects: 0 });
+    expect(eind.status(), `${naar} is een eindadres (200, geen tweede doorverwijzing)`).toBe(200);
+  }
 });
 
 test('geen geheimen in public/', async () => {

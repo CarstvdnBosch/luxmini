@@ -17,16 +17,29 @@ for (const { pad, naam } of PAGINAS) {
   });
 }
 
+// Vijf hoofdpagina's in deze volgorde (navigatie v2); op desktop (1440 px, dus >= 1200) staan ze in de header.
+const HOOFDMENU = [['Werkwijze', /\/werkwijze(\.html)?$/], ['Kraamcadeauboxen', /\/kraamcadeauboxen(\.html)?$/],
+  ['Prematuurkleding', /\/prematuurkleding(\.html)?$/], ['Portfolio', /\/portfolio(\.html)?$/], ['Contact', /\/contact(\.html)?$/]];
+
+test('header: vijf links in de juiste volgorde, elk met het juiste doel', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'de header-links staan er vanaf 1200 px; daaronder de burger');
+  await page.goto('/');
+  const links = page.locator('header nav.menu a');
+  await expect(links).toHaveText(HOOFDMENU.map(([t]) => t));
+  const doelen = await links.evaluateAll(as => as.map(a => new URL(a.href).pathname));
+  doelen.forEach((d, i) => expect(d, `doel van ${HOOFDMENU[i][0]}`).toMatch(HOOFDMENU[i][1]));
+});
+
 test('hoofdnavigatie brengt je naar elke pagina', async ({ page }, info) => {
   await page.goto('/');
-  for (const [tekst, doel] of [['Producten', /producten/], ['Kraamcadeaubox', /kraamcadeaubox/], ['Over', /over/], ['Contact', /contact/]]) {
+  for (const [tekst, doel] of HOOFDMENU) {
     if (info.project.name === 'desktop') {
-      await page.locator('header nav a', { hasText: new RegExp(`^${tekst}$`, 'i') }).first().click();
+      await page.locator('header nav.menu a', { hasText: new RegExp(`^${tekst}$`, 'i') }).first().click();
     } else {
       await page.locator('.burger').first().click();
       await expect(page.locator('.menu-scherm')).toBeVisible();
       await expect(page.locator('.burger').first()).toHaveAttribute('aria-expanded', 'true');
-      await page.locator('.menu-scherm a', { hasText: new RegExp(`^\\s*${tekst}\\s*$`, 'i') }).first().click();
+      await page.locator('.menu-nav > ul > li > a', { hasText: new RegExp(`^\\s*${tekst}\\s*$`, 'i') }).first().click();
     }
     await expect(page).toHaveURL(doel);
     await page.waitForLoadState('load'); // pas klikken als het script van de nieuwe pagina draait
@@ -46,11 +59,22 @@ test('contact: WhatsApp, telefoon en formulier zijn bereikbaar', async ({ page }
   }
 });
 
-test('kraamcadeaubox: vier prijzen van € 35 tot € 80', async ({ page }) => {
-  await page.goto('/kraamcadeaubox');
+test('kraamcadeauboxen: vier prijzen van € 35 tot € 80', async ({ page }) => {
+  await page.goto('/kraamcadeauboxen');
   const prijzen = (await page.locator('#formaten .formaat-prijs').allTextContents()).map(t => t.replace(/\s+/g, ' ').trim());
   expect(prijzen).toEqual(['€ 35', '€ 50', '€ 65', '€ 80']);
 });
+
+// Oude adressen (301 naar /werkwijze): het anker gaat mee en de kop van die sectie staat in beeld.
+for (const [oud, nieuw, anker] of [['/producten#siliconen', '/werkwijze', 'siliconen'], ['/over#hoe-ik-werk', '/werkwijze', 'hoe-ik-werk']]) {
+  test(`oud adres ${oud} landt op ${nieuw}#${anker} met de kop in beeld`, async ({ page }) => {
+    await page.goto(oud);
+    await expect(page).toHaveURL(new RegExp(`${nieuw}#${anker}$`));
+    await page.waitForTimeout(300);
+    const kop = page.locator(`[id="${anker}"]`).locator('h1, h2, .label').first();
+    await expect(kop).toBeInViewport();
+  });
+}
 
 test('intro speelt bij het eerste bezoek en is binnen 2 s weg (besluit Carst: ca. 1,5 s)', async ({ browser }, info) => {
   test.skip(info.project.name !== 'desktop', 'één keer is genoeg');

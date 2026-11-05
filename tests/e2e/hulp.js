@@ -4,9 +4,10 @@ import { test as basis, expect } from '@playwright/test';
 // De pagina's die online komen (zelfde lijst als sitemap.xml + de vaste extra's).
 export const PAGINAS = [
   { pad: '/', naam: 'home' },
-  { pad: '/producten', naam: 'producten' },
-  { pad: '/kraamcadeaubox', naam: 'kraamcadeaubox' },
-  { pad: '/over', naam: 'over' },
+  { pad: '/werkwijze', naam: 'werkwijze' },
+  { pad: '/kraamcadeauboxen', naam: 'kraamcadeauboxen' },
+  { pad: '/prematuurkleding', naam: 'prematuurkleding' },
+  { pad: '/portfolio', naam: 'portfolio' },
   { pad: '/contact', naam: 'contact' },
   { pad: '/privacy', naam: 'privacy' },
   { pad: '/bedankt', naam: 'bedankt' },
