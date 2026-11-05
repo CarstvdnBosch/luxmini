@@ -56,6 +56,7 @@ test('beveiligingsheaders op elke pagina', async ({ request }) => {
 
 test('geen kapotte interne links, foto’s of bestanden', async ({ page, request }) => {
   const gezien = new Map();
+  const ids = new Map();
   for (const { pad } of PAGINAS) {
     await page.goto(pad);
     const adressen = await page.evaluate(() => [
@@ -69,12 +70,15 @@ test('geen kapotte interne links, foto’s of bestanden', async ({ page, request
       if (u.origin !== new URL(page.url()).origin) continue;
       const sleutel = u.pathname;
       if (!gezien.has(sleutel)) gezien.set(sleutel, { status: (await request.get(sleutel, { maxRedirects: 0 })).status(), van: pad });
-      // ankers moeten bestaan op de doelpagina
+      // ankers moeten bestaan op de doelpagina (id's per pagina één keer opgehaald)
       if (u.hash && u.hash.length > 1) {
-        const doel = sleutel === new URL(page.url()).pathname ? page : null;
-        const bestaat = doel ? await page.locator(`[id="${decodeURIComponent(u.hash.slice(1))}"]`).count()
-          : await (async () => { const p2 = await page.context().newPage(); await p2.goto(sleutel); const n = await p2.locator(`[id="${decodeURIComponent(u.hash.slice(1))}"]`).count(); await p2.close(); return n; })();
-        expect(bestaat, `${pad}: anker ${sleutel}${u.hash} bestaat niet`).toBeGreaterThan(0);
+        if (!ids.has(sleutel)) {
+          const p2 = await page.context().newPage();
+          await p2.goto(sleutel);
+          ids.set(sleutel, new Set(await p2.evaluate(() => [...document.querySelectorAll('[id]')].map(e => e.id))));
+          await p2.close();
+        }
+        expect(ids.get(sleutel).has(decodeURIComponent(u.hash.slice(1))), `${pad}: anker ${sleutel}${u.hash} bestaat niet`).toBe(true);
       }
     }
   }
