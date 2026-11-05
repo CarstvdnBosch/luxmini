@@ -755,8 +755,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 @media (prefers-reduced-motion: reduce) { .insta-foto img { transition: none; } }
 
-/* tablet (761–1024 px): alleen de burger, zodat het menu niet over twee regels loopt */
-@media (min-width: 761px) and (max-width: 1024px) {
+/* tot en met 1199 px alleen de burger, zodat de vijf links nooit over twee regels lopen (navigatie v2) */
+@media (min-width: 761px) and (max-width: 1199px) {
   .js .site-header .menu { display: none; }
 }
 /* kraamcadeaubox op mobiel: geen wisselrij, dus de onderste rij foto's sluit dichter aan */
@@ -998,3 +998,81 @@ html.zacht-scrollen { scroll-behavior: auto; }
 
 /* ---------- Contact 002: het formulier ---------- */
 .formulier-sectie .contact-sectie { padding-bottom: var(--ritme); }
+
+/* =====================================================================
+   Navigatie v2: Werkwijze · Kraamcadeauboxen · Prematuurkleding · Portfolio · Contact
+   ===================================================================== */
+
+/* header: vijf links op één regel naast het logo, vanaf 1200 px (daaronder de burger) */
+@media (min-width: 1200px) {
+  .js .site-header .wrap { flex-wrap: nowrap; }
+  .js .site-header .menu { flex-wrap: nowrap; white-space: nowrap; gap: 0 clamp(18px, 1.9vw, 30px); letter-spacing: clamp(.16em, .02em + .9vw, .3em); }
+}
+
+/* menu over het hele scherm: vijf hoofditems met elf subitems passen op 1440 x 900 zonder scrollen */
+@media (min-width: 761px) {
+  .menu-nav > ul > li > a { font-size: clamp(36px, 3.6vw, 52px); }
+  .menu-sub { margin: 0 0 10px; }
+  .menu-nav .menu-sub a { padding: 2px 0; }
+  .menu-binnen { padding-top: 96px; padding-bottom: 40px; }
+}
+
+/* homepage 003: "Bekijk het portfolio" en "Laat iets voor jou maken" naast elkaar (mobiel onder elkaar) */
+.pijl-rij { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 40px; }
+.js .hoverlijst-sectie .sectie > .pijl-rij { transition: opacity 1s var(--rustig), color 1s var(--rustig); }
+.js .hoverlijst-sectie.lijst-actief .sectie > .pijl-rij { opacity: .2; }
+.js #portfolio.lijst-actief .sectie > .pijl-rij { color: var(--wit); opacity: .35; }
+@media (max-width: 760px) { .pijl-rij { flex-direction: column; align-items: flex-start; align-self: flex-start; } }
+@media (prefers-reduced-motion: reduce) { .js .hoverlijst-sectie .sectie > .pijl-rij { transition: none; } }
+
+/* ---------- Werkwijze 004: Wat ik maak (compact, op grijsblauw) ----------
+   Vijf rijen: kleine foto (max. 240 px, nooit groter dan het bestand) en tekst; mobiel foto 96 px links. */
+.maak-lijst { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px clamp(32px, 5vw, 80px); }
+.maak-rij { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 1fr); gap: 0 32px; align-items: start; scroll-margin-top: 84px; }
+.maak-rij img { width: auto; max-width: 100%; height: auto; }
+.maak-tekst { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.maak-kop { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(28px, 2.4vw, 36px); line-height: 1.1; }
+.maak-tekst .klein { max-width: 360px; }
+@media (max-width: 1024px) {
+  .maak-lijst { grid-template-columns: minmax(0, 1fr); gap: 48px; }
+  .maak-rij { grid-template-columns: minmax(0, 200px) minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .maak-lijst { gap: 40px; }
+  .maak-rij { grid-template-columns: 96px minmax(0, 1fr); gap: 0 18px; }
+  .maak-kop { font-size: 26px; }
+  .maak-tekst { gap: 10px; }
+}
+
+/* ---------- Portfolio: vier groepen in metselwerk ----------
+   Kolommen met CSS columns: 4 vanaf 1025 px, 3 op tablet, 2 op mobiel. Elke foto houdt zijn eigen
+   verhouding en wordt nooit breder getoond dan het bestand (width: auto tot max. 100%). */
+.portfolio-links .pijl { min-height: 44px; }
+.portfolio-groep .sectie { gap: 40px; }
+.groep-kop { color: var(--inkt); }
+.werken { columns: 4; column-gap: 32px; }
+.werk { margin: 0 0 32px; break-inside: avoid; display: flex; flex-direction: column; align-items: flex-start; }
+.werk-beeld { position: relative; display: block; max-width: 100%; }
+.werk-beeld img { width: auto; max-width: 100%; height: auto; }
+.werk figcaption { margin-top: 12px; font-family: var(--display); font-size: 24px; line-height: 1.2; color: var(--inkt); }
+@media (max-width: 1024px) { .werken { columns: 3; column-gap: 24px; } .werk { margin-bottom: 24px; } }
+@media (max-width: 760px) {
+  .werken { columns: 2; column-gap: 12px; }
+  .werk { margin-bottom: 20px; }
+  .werk figcaption { margin-top: 8px; font-size: 20px; }
+  .portfolio-groep .sectie { gap: 32px; }
+}
+/* bij aanwijzen (alleen met een muis): de laag wordt de diepe tint van de groep (main.js), groepskop en het
+   aangewezen bijschrift worden wit, de andere bijschriften wit op 0,35 en de andere foto's krijgen een
+   warme sluier van 20%. Label en pijl-links blijven inkt (5,4:1; wit haalt daar maar 3:1). */
+@media (hover: hover) and (pointer: fine) {
+  .js .portfolio-groep .groep-kop, .js .portfolio-groep .werk figcaption { transition: color 1s var(--rustig), opacity 1s var(--rustig); }
+  .js .werk-beeld::after { content: ""; position: absolute; inset: 0; background: rgba(60,40,30,.2); opacity: 0; pointer-events: none; transition: opacity 1s var(--rustig); }
+  .js .portfolio-groep.aangewezen .groep-kop { color: var(--wit); }
+  .js .portfolio-groep.aangewezen .werk figcaption { color: var(--wit); opacity: .35; }
+  .js .portfolio-groep.aangewezen .werk.aan figcaption { opacity: 1; }
+  .js .portfolio-groep.aangewezen .werk:not(.aan) .werk-beeld::after { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .js .portfolio-groep .groep-kop, .js .portfolio-groep .werk figcaption, .js .werk-beeld::after { transition: none; }
+}

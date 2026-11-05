@@ -317,6 +317,34 @@
     }
   });
 
+  // 4b. Portfoliopagina: met een muis kleurt de laag bij aanwijzen in 1 s (rustig) naar de diepe tint
+  //     van de groep (data-diep); CSS maakt kop en bijschrift wit. Weg uit het raster: terug naar de
+  //     lichte groepskleur. Op touch en zonder JavaScript: geen hoverstand, alles in inkt.
+  if (muis) {
+    document.querySelectorAll('.portfolio-groep[data-diep]').forEach(function (groep) {
+      var raster = groep.querySelector('.werken');
+      var werken = Array.prototype.slice.call(groep.querySelectorAll('.werk'));
+      if (!raster || !werken.length) return;
+      var traagTimer = null;
+      werken.forEach(function (w) {
+        w.addEventListener('mouseenter', function () {
+          werken.forEach(function (x) { x.classList.toggle('aan', x === w); });
+          groep.classList.add('aangewezen');
+          clearTimeout(traagTimer); laag.classList.add('traag');
+          zetLaag(groep.getAttribute('data-diep'));
+        });
+      });
+      raster.addEventListener('mouseleave', function () {
+        if (!groep.classList.contains('aangewezen')) return;
+        groep.classList.remove('aangewezen');
+        werken.forEach(function (x) { x.classList.remove('aan'); });
+        laagBijwerken(true);
+        clearTimeout(traagTimer);
+        traagTimer = setTimeout(function () { laag.classList.remove('traag'); }, 1000);
+      });
+    });
+  }
+
   document.querySelectorAll('.hoverlijst:not(.sferen)').forEach(function (lijst) {
     var sectie = lijst.closest('.hoverlijst-sectie');
     var groot = lijst.querySelector('.groot');
