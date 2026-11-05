@@ -1,7 +1,7 @@
 // Lighthouse CI: snelheid en kwaliteit per pagina (blokkerend), zie docs/kwaliteit.md.
 // Meet met mobiele instellingen (trage 4G, middelmatige telefoon): zo bezoeken de meeste ouders de site.
 // Grenzen zijn vastgezet na de eerste meting (nov. 2026); aanscherpen mag, verruimen alleen met akkoord van Carst.
-const PAGINAS = ['/', '/werkwijze', '/kraamcadeauboxen', '/prematuurkleding', '/portfolio', '/contact'];
+const PAGINAS = ['/', '/werkwijze', '/kraamcadeauboxen', '/prematuurkleding', '/babynest', '/inspiratie', '/contact'];
 module.exports = {
   ci: {
     collect: {

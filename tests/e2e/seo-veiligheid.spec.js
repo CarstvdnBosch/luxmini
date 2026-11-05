@@ -92,17 +92,18 @@ test('sitemap en robots kloppen', async ({ request }) => {
     expect(r.status(), `sitemap-adres ${a}`).toBe(200);
   }
   const paden = adressen.map(a => new URL(a).pathname).sort();
-  expect(paden, 'adressen in de sitemap').toEqual(['/', '/contact', '/kraamcadeauboxen', '/portfolio', '/prematuurkleding', '/privacy', '/werkwijze']);
-  for (const oud of ['/producten', '/kraamcadeaubox', '/over']) expect(paden, `${oud} hoort niet meer in de sitemap`).not.toContain(oud);
+  expect(paden, 'adressen in de sitemap').toEqual(['/', '/babynest', '/contact', '/inspiratie', '/kraamcadeauboxen', '/prematuurkleding', '/privacy', '/werkwijze']);
+  for (const oud of ['/producten', '/kraamcadeaubox', '/over', '/portfolio']) expect(paden, `${oud} hoort niet meer in de sitemap`).not.toContain(oud);
   const robots = await (await request.get('/robots.txt')).text();
   expect(robots).toMatch(/Sitemap:\s*https:\/\/www\.luxmini\.nl\/sitemap\.xml/i);
 });
 
-// Doorverwijzingen (brief navigatie-v2, criterium 4): 301 en Location rechtstreeks naar het eindadres, zonder tussenstap.
+// Doorverwijzingen (brief navigatie-v2, criterium 4; homepage per product, criterium 5): 301 en Location rechtstreeks naar het eindadres, zonder tussenstap.
 const DOORVERWIJZINGEN = {
   '/producten': '/werkwijze', '/producten.html': '/werkwijze', '/over': '/werkwijze', '/over.html': '/werkwijze', '/over-lux': '/werkwijze',
   '/kraamcadeaubox': '/kraamcadeauboxen', '/kraamcadeaubox.html': '/kraamcadeauboxen', '/aanbod': '/kraamcadeauboxen', '/aanbod/': '/kraamcadeauboxen',
   '/shop': '/kraamcadeauboxen', '/product-page/x': '/kraamcadeauboxen', '/klantenservice': '/contact',
+  '/portfolio': '/inspiratie', '/portfolio.html': '/inspiratie', '/portfolio/': '/inspiratie',
 };
 test('oude adressen geven 301 rechtstreeks naar het eindadres', async ({ request }) => {
   for (const [van, naar] of Object.entries(DOORVERWIJZINGEN)) {
