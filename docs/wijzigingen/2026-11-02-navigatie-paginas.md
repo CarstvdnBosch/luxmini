@@ -372,6 +372,8 @@ De regel "Hero: collage van zes foto's …" geldt dan alleen voor de homepage.
 | Controleren (ronde 1) | website-controleur | AKKOORD (werking, inhoud, techniek; getoetst op wijziging/kwaliteitsharness, 5 nov.). Kanttekeningen: secties 001 op Over en Contact kleuren vroeg terracotta (leesbaar, inkt 5,2:1); akkoord Carst op aangepaste ontwerpregels nog vast te leggen. |
 | Ontwerpgate (ronde 2) | website-ontwerper | ONTWERP NIET AKKOORD: e-mailadres overlapt adres op tablet (Contact 001). P1-punten ronde 1 en prijskaarten in orde. |
 | Herstel ronde 2 | Claude (hoofdsessie) | Contactgegevens tot 1024 px in twee kolommen, e-mailadres breekt netjes; prijskaarten hoeken 4 px en links uitgelijnd (P2/P3). |
+| Ontwerpgate (ronde 3) | website-ontwerper | ONTWERP AKKOORD. Kan beter (P2): Contact 001 op tablet kleurt al terracotta door de 88%-lijn; P3: stempel schuift kort onder het menu-icoon op mobiel. |
+| Akkoord ontwerpregels | Carst (5 nov., in het gesprek) | Akkoord op de aangepaste ontwerpregels in CLAUDE.md (navigatie, vaste balk, kraamcadeauboxpagina zonder collage, formulier alleen op Contact). |
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | [mens] | |
 | Live gezet (merge) | [mens] | |

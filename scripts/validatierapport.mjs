@@ -96,14 +96,17 @@ const lh = await lighthouse();
 const briefs = await brief();
 const open = await openPunten();
 
+const geenBasis = !(await readdir('tests/e2e/basis').catch(() => [])).length;
 const gate = (naam, waarde, toelichting, blokkerend = true) => ({ naam, status: waarde || 'onbekend', toelichting, blokkerend });
 const gates = [
   gate('Gate 1 · Tests (formulier + Cloudflare-configuratie)', E.GATE1, 'npm test en wrangler dry-run'),
   gate('Gate 2 · Sitecontrole', E.GATE2, 'scripts/controleer.py: links, foto’s, interacties, pagina’s'),
   gate('Gate 4 · Kwaliteit', E.GATE4 || (e2e ? (e2e.fout ? 'failure' : 'success') : undefined),
     e2e ? `${e2e.goed} van ${e2e.totaal - e2e.overgeslagen} tests groen${e2e.wankel ? ` (${e2e.wankel} pas bij herhaling)` : ''}; Lighthouse ${lh ? (lh.fout.length ? `${lh.fout.length} grens(en) overschreden` : 'binnen alle grenzen') : 'niet gemeten'}` : 'toegankelijkheid, SEO, veiligheid, kernpaden, snelheid'),
-  gate('Gate 5 · Visuele vergelijking', vis ? (vis.fout ? 'warn' : 'success') : (E.GATE5 || 'onbekend'),
-    vis ? (vis.fout ? `${vis.fout} scherm(en) wijken af van de basis: bekijk ze in het artefact "visueel"` : 'geen verschil met de goedgekeurde basis') : 'niet gedraaid', false),
+  geenBasis
+    ? gate('Gate 5 · Visuele vergelijking', 'skipped', 'nog geen goedgekeurde basis: na GO maakt Carst die met "Visuele basis bijwerken"; tot dan is er niets te vergelijken', false)
+    : gate('Gate 5 · Visuele vergelijking', vis ? (vis.fout ? 'warn' : 'success') : (E.GATE5 || 'onbekend'),
+      vis ? (vis.fout ? `${vis.fout} scherm(en) wijken af van de basis: bekijk ze in het artefact "visueel"` : 'geen verschil met de goedgekeurde basis') : 'niet gedraaid', false),
 ];
 const pdlc = briefs.map(b => ({ b, c: oordeel(b.controleur), o: oordeel(b.ontwerp) }));
 const blokkerendRood = gates.filter(g => g.blokkerend && g.status !== 'success');
@@ -180,7 +183,7 @@ for (const c of [
   'Teksten kloppen en Carien kan zich erin vinden (geen verzonnen feiten)',
   'Prijzen kloppen: € 35, € 50, € 65 en € 80',
   'WhatsApp-, bel- en maillink openen de juiste gegevens',
-  'Visuele verschillen (Gate 5) zijn bedoeld',
+  ...(geenBasis ? [] : ['Visuele verschillen (Gate 5) zijn bedoeld']),
 ]) md.push(`- [ ] ${c}`);
 md.push('');
 md.push('## 5. Jouw besluit');
