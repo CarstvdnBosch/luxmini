@@ -24,3 +24,5 @@ Op Werkwijze stond "Wat ik maak". Die indeling staat nu ook op de homepage, waar
 |---|---|---|
 | Plannen en bouwen | Claude (hoofdsessie) | Gebouwd. Sitecontrole en e2e (74 groen) lokaal groen. |
 | Eerste meting GitHub | Claude (hoofdsessie) | Gate 4: Kraamcadeauboxen LCP 4,29 s (grens 4,0): de statementfoto staat door de lagere kop nu in het eerste scherm. Opgelost met een 800 px-versie (srcset) en fetchpriority high. |
+| Controleren | website-controleur | AKKOORD (criteria 1–5; niets versoepeld, producttekst nu strenger vergeleken). |
+| Ontwerpgate | website-ontwerper | ONTWERP AKKOORD. Kan beter: balklogo tijdens de overgang naar Contact op terracotta. |
