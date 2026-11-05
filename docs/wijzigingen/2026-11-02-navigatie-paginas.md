@@ -367,7 +367,9 @@ De regel "Hero: collage van zes foto's …" geldt dan alleen voor de homepage.
 | Plannen | website-planner | Brief klaar, ontwerprichting van website-ontwerper opgenomen |
 | Bouwen | website-bouwer | Gebouwd op `wijziging/navigatie-paginas`; `npm test` en `controleer.py` groen. CLAUDE.md niet aangepast (voorstel hierboven, wacht op Carst). |
 | CLAUDE.md | Claude (hoofdsessie) | Voorstel overgenomen, volgt uit Carsts wens; akkoord Carst gevraagd in de PR. |
-| Controleren | website-controleur | |
+| Ontwerpgate (ronde 1) | website-ontwerper | ONTWERP NIET AKKOORD: wit logo op witte balk bij "Hoe ik werk" (P1), tabs op tablet 20 px (P1). |
+| Herstel ronde 1 + wens Carst | Claude (hoofdsessie) | Laag bij "Hoe ik werk" altijd terracotta; tabs op tablet 24 px en bredere kolom; ruimte tussen stappen op mobiel; geen sluier op de kopfoto op mobiel; kop onder het gezicht van Carien. Wens Carst (3 nov.): prijzen als vier kaarten naast elkaar (zoals een prijsoverzicht met kaarten), met per kaart prijs, aantal, pijl-link en "Alles uit de box van …, plus:". controleer.py controleert de kaarten. |
+| Controleren | website-controleur | Ronde 1 afgebroken (weeklimiet), opnieuw na 6 nov. 13:00. |
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | [mens] | |
 | Live gezet (merge) | [mens] | |

@@ -10,7 +10,7 @@ Wat het doet:
     via sessionStorage (lux-intro-gezien)
   - controleert (bij minder beweging, 1440/768/390) dat laag en balk na een
     #contact-link en na End op Contact staan (ontwerpcriterium 12)
-  - controleert de prijstabel van de kraamcadeaubox (prijzen, producten,
+  - controleert de prijskaarten van de kraamcadeaubox (prijzen, producten,
     vinkjes en aantallen)
   - controleert "003 — Zo werkt het" op de kraamcadeaubox: één <ol> met drie
     stappen, de juiste koppen en geen horizontaal scrollen (1440/768/390)
@@ -139,37 +139,37 @@ AANTALLEN = ["3", "4", "6", "7"]
 
 LEES_PRIJSTABEL = """() => {
   const schoon = s => s.replace(/\\u00a0/g, ' ').replace(/\\u00ad/g, '').replace(/\\s+/g, ' ').trim();
-  const t = document.querySelector('#formaten table');
-  if (!t) return null;
-  const koppen = [...t.querySelectorAll('thead th')].slice(1).map(th => schoon(th.textContent));
-  const rijen = [...t.querySelectorAll('tbody tr')].map(tr => [schoon(tr.querySelector('th') ? tr.querySelector('th').textContent : ''),
-    [...tr.querySelectorAll('td')].map(td => schoon((td.querySelector('.sr-only') || {}).textContent || ''))]);
-  const voet = [...t.querySelectorAll('tfoot td')].map(td => schoon(td.textContent));
-  return [koppen, rijen, voet];
+  const kaarten = [...document.querySelectorAll('#formaten .formaten > li.formaat')];
+  if (!kaarten.length) return null;
+  return kaarten.map(k => [schoon((k.querySelector('.formaat-prijs') || {}).textContent || ''),
+    schoon((k.querySelector('.formaat-aantal') || {}).textContent || ''),
+    [...k.querySelectorAll('.formaat-lijst > li')].map(li => schoon(li.textContent)),
+    !!k.querySelector('a.pijl[href="contact.html#formulier"]')]);
 }"""
 
 def controleer_prijstabel(browser):
-    """Criterium 6 van de brief prijstabel: tabel, prijzen, producten, vinkjes en aantallen kloppen."""
-    tag = "kraamcadeaubox.html [prijstabel]"
+    """Prijskaarten kraamcadeaubox: vier kaarten, juiste prijzen, aantallen en inhoud (opgeteld) en een link naar het formulier."""
+    tag = "kraamcadeaubox.html [prijskaarten]"
     page = browser.new_page()
     page.goto(url("kraamcadeaubox.html"), wait_until="load")
     stand = page.evaluate(LEES_PRIJSTABEL)
     page.close()
     if stand is None:
-        fouten.append(f"{tag}: #formaten bevat geen <table>"); return
-    koppen, rijen, voet = stand
-    if koppen != PRIJZEN:
-        fouten.append(f"{tag}: prijskolommen zijn {koppen}, verwacht {PRIJZEN}")
-    if [r[0] for r in rijen] != list(PRODUCTEN):
-        fouten.append(f"{tag}: productrijen zijn {[r[0] for r in rijen]}, verwacht {list(PRODUCTEN)}")
-    for naam, cellen in rijen:
-        if naam not in PRODUCTEN:
-            continue
-        verwacht = ["inbegrepen" if k >= PRODUCTEN[naam] else "niet inbegrepen" for k in range(1, 5)]
-        if cellen != verwacht:
-            fouten.append(f"{tag}: {naam} toont {cellen}, verwacht {verwacht}")
-    if voet != AANTALLEN:
-        fouten.append(f"{tag}: voet toont {voet}, verwacht {AANTALLEN}")
+        fouten.append(f"{tag}: #formaten bevat geen prijskaarten (.formaten > li.formaat)"); return
+    if [k[0] for k in stand] != PRIJZEN:
+        fouten.append(f"{tag}: prijzen zijn {[k[0] for k in stand]}, verwacht {PRIJZEN}")
+    if [k[1].split(' ')[0] for k in stand] != AANTALLEN:
+        fouten.append(f"{tag}: aantallen zijn {[k[1] for k in stand]}, verwacht {AANTALLEN}")
+    inhoud = []
+    for i, k in enumerate(stand, 1):
+        inhoud += k[2]
+        verwacht = [n for n, vanaf in PRODUCTEN.items() if vanaf <= i]
+        if sorted(inhoud) != sorted(verwacht):
+            fouten.append(f"{tag}: box {i} bevat {inhoud}, verwacht {verwacht}")
+        if len(inhoud) != int(AANTALLEN[i - 1]):
+            fouten.append(f"{tag}: box {i} telt {len(inhoud)} producten, kaart zegt {AANTALLEN[i - 1]}")
+        if not k[3]:
+            fouten.append(f"{tag}: kaart {i} heeft geen pijl-link naar contact.html#formulier")
 
 # 003 Zo werkt het: één genummerde reeks met deze koppen (brief processtappen, criterium 4)
 STAP_KOPPEN = ["Neem contact op", "Kies samen thema en maat", "Carien gaat aan de slag"]

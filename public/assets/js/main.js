@@ -516,8 +516,8 @@
       var aan = breed.matches;
       sec.classList.toggle('tabs-aan', aan);
       lijst.hidden = !aan;
-      // over de donkere foto blijft de laag wit (zoals het atelier ervoor); onder elkaar is het terracotta
-      sec.setAttribute('data-achtergrond', aan ? '#FFFFFF' : '#BC8565');
+      // altijd terracotta: zo staat het witte balklogo nooit op een witte balk (ontwerpgate navigatie, punt 1)
+      sec.setAttribute('data-achtergrond', '#BC8565');
       laagBijwerken(true);
       if (aan) {
         lijst.setAttribute('role', 'tablist'); lijst.setAttribute('aria-label', 'Hoe ik werk');
@@ -649,7 +649,7 @@
     var io = new IntersectionObserver(function (items) {
       items.forEach(function (it) { if (it.isIntersecting) { it.target.classList.add('in-beeld'); io.unobserve(it.target); } });
     }, { rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .prijstabel, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier').forEach(function (el, i) {
+    document.querySelectorAll('main .label, main .quote, main .stap .klein, main .formaat, main .formaten-voet, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier').forEach(function (el, i) {
       if (el.closest('.hero') || el.closest('.statement')) return;
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';

@@ -163,23 +163,27 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .stappen.teken .stap::before, .stappen.teken.in-beeld .stap::before { transform: none; transition: none; }
 }
 
-/* ---------- 001 Formaten: prijstabel (rustig, als in een tijdschrift) ---------- */
-.prijstabel-blok { display: flex; flex-direction: column; align-items: center; gap: 40px; width: 100%; max-width: 880px; margin-inline: auto; } /* tabel en pijl-link midden op de pagina (wens Carst) */
-.prijstabel { width: 100%; max-width: 880px; table-layout: fixed; border-collapse: collapse; color: var(--inkt); }
-.prijstabel th, .prijstabel td { padding: 0 12px; height: 56px; text-align: center; vertical-align: middle; font-weight: 400; }
-.prijstabel thead th:first-child { width: 32%; }
-.prijstabel tr > :first-child { padding-left: 0; }
-/* prijzen in inkt (ook op perzik en olijf leesbaar), niet in wit */
-.prijstabel thead th { height: auto; padding-top: 8px; padding-bottom: 20px; vertical-align: bottom; font-family: var(--display); font-size: clamp(24px, 3.4vw, 48px); line-height: 1; white-space: nowrap; }
-.prijstabel tbody th { text-align: left; font-family: var(--sans); font-size: 16px; line-height: 1.25; hyphens: manual; }
-.prijstabel tfoot th, .prijstabel tfoot td { font-family: var(--serif); font-size: 16px; }
-.prijstabel tfoot th { text-align: left; }
-/* dunne rijlijnen in inkt, zoals de hairlines in .kern-kolom */
-.prijstabel thead th, .prijstabel tbody th, .prijstabel tbody td { border-bottom: 1px solid rgba(32,32,32,.2); }
-/* zachte band op de 2e en 4e prijskolom, van kop tot voet */
-.prijstabel tr > :nth-child(3), .prijstabel tr > :nth-child(5) { background: rgba(255,255,255,.14); }
-.prijstabel .vink { display: inline-block; width: 18px; height: 18px; vertical-align: middle; }
-.prijstabel .streep { display: inline-block; width: 12px; height: 0; border-top: 1px solid currentColor; vertical-align: middle; }
+/* ---------- 002 Formaten: vier prijskaarten naast elkaar (wens Carst: zoals een prijsoverzicht met kaarten) ---------- */
+.formaten-blok { width: 100%; max-width: 1240px; margin-inline: auto; display: flex; flex-direction: column; align-items: center; gap: 32px; }
+.formaten { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.formaat { display: flex; flex-direction: column; background: var(--wit); color: var(--inkt); border: 1px solid rgba(32,32,32,.1); border-radius: 20px; padding: 32px 28px 36px; }
+.formaat .takje { width: 48px; height: 48px; margin-bottom: 28px; }
+.formaat-prijs { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(40px, 3.4vw, 52px); line-height: 1; }
+.formaat-aantal { margin: 12px 0 0; font-family: var(--serif); font-size: 16px; }
+.formaat-regel { margin: 4px 0 0; font-size: 16px; line-height: 1.4; color: #4a4a4a; min-height: 2.8em; }
+.formaat .pijl { margin-top: 20px; min-height: 44px; }
+.formaat-kop { margin: 20px 0 0; padding-top: 24px; border-top: 1px solid rgba(32,32,32,.15); font-size: 16px; font-weight: 600; }
+.formaat-lijst { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.35; }
+.formaat-lijst li { display: flex; gap: 10px; align-items: flex-start; }
+.formaat-lijst .vink { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+.formaten-voet { margin: 0; max-width: 640px; text-align: center; font-size: 16px; }
+@media (max-width: 1024px) { .formaten { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .formaten { grid-template-columns: 1fr; gap: 16px; }
+  .formaat { padding: 28px 24px 30px; }
+  .formaat .takje { margin-bottom: 20px; }
+  .formaat-regel { min-height: 0; }
+}
 
 /* ---------- Hover-lijst (portfolio / thema's) ---------- */
 .hoverlijst-sectie { transition: background .5s ease; }
@@ -254,8 +258,6 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 
 /* ---------- Tablet ---------- */
 @media (max-width: 1024px) {
-  .prijstabel thead th:first-child { width: 34%; }
-  .prijstabel tbody th, .prijstabel tbody td, .prijstabel tfoot th, .prijstabel tfoot td { height: 52px; }
 }
 
 /* ---------- Mobiel ---------- */
@@ -282,11 +284,6 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .hoverlijst .klein-beeld { display: none; }
   .hoverlijst.actief .groot { display: block; }
   .klein { max-width: none; }
-  .prijstabel thead th:first-child { width: 36%; }
-  .prijstabel th, .prijstabel td { padding-left: 4px; padding-right: 4px; }
-  .prijstabel thead th { font-size: 24px; padding-bottom: 14px; }
-  .prijstabel tbody th, .prijstabel tbody td, .prijstabel tfoot th, .prijstabel tfoot td { height: 48px; }
-  .prijstabel-blok { gap: 32px; }
   .kaarten { --kaart-rand: var(--rand); gap: 12px; }
   .formulier { grid-template-columns: minmax(0, 1fr); }
   .duo .beelden img:first-child { margin-top: 32px; }
@@ -879,14 +876,15 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .over-kop-foto img { width: 100%; height: 100%; object-fit: cover; object-position: 35% 50%; filter: brightness(.85); }
 /* sluier: de foto heeft lichte ramen; met deze sluier haalt de witte kop erover minstens 3:1 */
 .over-kop-foto::after { content: ""; position: absolute; inset: 0; background: rgba(32,32,32,.4); }
-.over-kop-tekst { position: relative; z-index: 2; padding: calc(var(--u) * 27.78) 16.667% 0 8.333%; display: flex; flex-direction: column; align-items: flex-start; gap: 28px; }
+.over-kop-tekst { position: relative; z-index: 2; padding: calc(var(--u) * 40) 16.667% 0 8.333%; /* kop onder het gezicht van Carien (ontwerpgate, kan beter 3) */ display: flex; flex-direction: column; align-items: flex-start; gap: 28px; }
 .over-kop-tekst h1 { margin: 0; color: var(--inkt); } /* klein label op terracotta: inkt (5,2:1); wit haalt daar geen 4,5:1 */
 .over-kop .kop-xl { font-size: clamp(40px, 6.11vw, 88px); line-height: .98; }
 .over-kop .badge { left: auto; top: auto; right: 12.5%; bottom: calc(var(--u) * 12.5); }
 @media (max-width: 760px) {
   .over-kop-vak { width: auto; margin-left: 0; height: auto; padding: 32px var(--rand) var(--ritme); display: flex; flex-direction: column; }
   .over-kop-foto { position: relative; left: auto; top: auto; width: 72vw; height: auto; aspect-ratio: 3 / 4; align-self: center; }
-  .over-kop-foto img { height: 100%; }
+  .over-kop-foto img { height: 100%; filter: none; } /* geen tekst over de foto op mobiel: geen sluier, Carien warm in beeld */
+  .over-kop-foto::after { display: none; }
   .over-kop-tekst { padding: 32px 0 0; }
   .over-kop .kop-xl { font-size: 40px; line-height: 1; }
   .over-kop .badge { right: 4%; bottom: auto; top: calc(32px + 96vw - 52px); width: 64px; }
@@ -921,6 +919,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .hoe-foto img { width: 100%; aspect-ratio: 3 / 2; max-height: 900px; object-fit: cover; }
 .hoe-vak { max-width: var(--max); margin: 0 auto; padding: var(--ritme) var(--rand) calc(var(--ritme) / 2); display: flex; flex-direction: column; gap: 48px; }
 .hoe-tabs[hidden] { display: none; }
+.hoe:not(.tabs-aan) .hoe-stappen { display: flex; flex-direction: column; gap: 48px; } /* onder elkaar: ruimte tussen de stappen */
 .hoe-stap { display: flex; flex-direction: column; gap: 14px; }
 .hoe-stap .kop-xl { font-size: 36px; line-height: 1.05; }
 .hoe-nr { display: block; margin-bottom: 10px; font-family: var(--serif); font-size: 16px; color: var(--inkt); }
@@ -946,8 +945,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .hoe.tabs-aan .hoe-zin, .hoe.tabs-aan .hoe-copy { color: var(--wit); }
 }
 @media (min-width: 761px) and (max-width: 1024px) {
-  .hoe.tabs-aan .hoe-vak { grid-template-columns: 8% 30% 6% 48% 8%; }
-  .hoe-tab { font-size: 20px; }
+  .hoe.tabs-aan .hoe-vak { grid-template-columns: 8% 34% 4% 46% 8%; } /* tabs van 24 px passen naast de tekst */
+  .hoe-tab { font-size: 24px; } /* 24 px: telt als grote tekst, zodat de niet-actieve tabs (0,6) de 3:1 halen (ontwerpgate, punt 2) */
 }
 @media (prefers-reduced-motion: reduce) { .hoe-tab, .hoe-tab::before, .hoe.tabs-aan .hoe-stap, .hoe.tabs-aan .hoe-stap.aan { transition: none; } }
 
