@@ -27,7 +27,7 @@ for (const { pad, naam } of [...PAGINAS, { pad: '/bestaat-niet-meer', naam: '404
         return r.height < 43.5 || r.width < 24;
       }).map(el => `${naam(el)} (${Math.round(el.getBoundingClientRect().width)}×${Math.round(el.getBoundingClientRect().height)})`);
       // 2. lopende tekst minimaal 16 px (alinea's en lijstregels met echte zinnen)
-      uit.kleineTekst = [...document.querySelectorAll('main p, main li, main dd, main figcaption, main td, footer p, footer li')].filter(zichtbaar)
+      uit.kleineTekst = [...document.querySelectorAll('main p, main li, main dd, main figcaption, main td'), ...[...document.querySelectorAll('footer *')].filter(e => [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 20))].filter(zichtbaar)
         .filter(el => !el.closest('.caps, .label, main nav') && el.textContent.trim().length > 40 && parseFloat(getComputedStyle(el).fontSize) < 16)
         .map(el => `${naam(el)} (${getComputedStyle(el).fontSize})`);
       // 3. formuliervelden minimaal 16 px (anders zoomt Safari in bij aantikken)
