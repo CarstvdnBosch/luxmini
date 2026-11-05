@@ -43,6 +43,19 @@
     }
   }
   var balkBijwerken = null;
+  // Niet-dringende onderdelen starten elk in een eigen taak na de eerste weergave,
+  // zodat het laden geen lange blokkerende taak wordt (Lighthouse TBT).
+  var later = function (fn) { setTimeout(fn, 0); };
+  // Foto's van hero-set B ("Het cadeau") pas na het laden ophalen: ze zijn eerst onzichtbaar
+  var laadSetB = function () {
+    document.querySelectorAll('img.set-b[data-src]').forEach(function (img) {
+      if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src'); img.removeAttribute('data-srcset');
+    });
+  };
+  if (document.readyState === 'complete') later(laadSetB); else window.addEventListener('load', function () { later(laadSetB); });
+  ['pointerover', 'focusin', 'touchstart'].forEach(function (s) { document.addEventListener(s, function h(e) { if (e.target.closest && e.target.closest('.hero')) { laadSetB(); document.removeEventListener(s, h); } }, { passive: true }); });
 
   /* ---------------------------------------------------------------
      1. Intro-scherm en pagina-overgang
@@ -251,6 +264,7 @@
     }
   });
 
+  later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
   /* ---------------------------------------------------------------
      4. Portfolio: hover-lijst met foto's en achtergrondkleur
      --------------------------------------------------------------- */
@@ -341,6 +355,8 @@
     }
     // foto's vooraf laden, alleen als de lijst zichtbaar is (op touch staan de kaarten er)
     if (lijst.offsetParent !== null) knoppen.forEach(function (k) { [k.dataset.groot, k.dataset.klein].forEach(function (s) { var i = new Image(); i.src = s; }); });
+  });
+
   });
 
   /* ---------------------------------------------------------------
@@ -544,6 +560,7 @@
     stand();
   });
 
+  later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
   /* ---------------------------------------------------------------
      5e. Lichte parallax (alleen met een muis en zonder "minder beweging"):
          de themafoto's schuiven binnen hun kader hooguit 9% op of neer,
@@ -573,6 +590,8 @@
     window.addEventListener('resize', parallaxBijwerken);
     parallaxBijwerken();
   }
+
+  });
 
   /* ---------------------------------------------------------------
      6. Vaste balk met sectielabel; burger kleurt mee
@@ -662,6 +681,7 @@
     document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld img, main .contact-foto').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
   }
 
+  later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
   /* ---------------------------------------------------------------
      8. Lopende tekst (CSS: een halve spoorbreedte in 15 s, los van het
         scrollen) pauzeert buiten beeld; de foto in Uitgelicht schuift licht
@@ -701,6 +721,9 @@
     }, { passive: true });
   }
 
+  });
+
+  later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
   /* ---------------------------------------------------------------
      9. Eigen cursor (alleen met een muis)
      --------------------------------------------------------------- */
@@ -727,6 +750,8 @@
     };
     requestAnimationFrame(volg);
   }
+
+  });
 
   /* ---------------------------------------------------------------
      10. Vloeiend scrollen zoals stockdutchdesign.com

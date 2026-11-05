@@ -8,7 +8,7 @@ module.exports = {
       startServerCommand: 'node scripts/serveer.mjs 4174',
       startServerReadyPattern: 'test-server',
       url: PAGINAS.map(p => `http://127.0.0.1:4174${p}`),
-      numberOfRuns: 1,
+      numberOfRuns: 3, // mediaan van 3 metingen: minder toevallige uitschieters
       settings: { chromeFlags: '--no-sandbox --headless=new', skipAudits: ['is-crawlable'] }, // lokaal adres; crawlbaarheid test seo-veiligheid.spec.js
     },
     assert: {
