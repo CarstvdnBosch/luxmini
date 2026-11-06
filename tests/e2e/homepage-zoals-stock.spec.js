@@ -363,3 +363,41 @@ test('F4: de thema-knoppen schuiven één set; aan het begin staat "vorige" uit'
   await page.keyboard.press('Home');
   await expect.poll(() => rij.evaluate(r => r.scrollLeft)).toBeLessThanOrEqual(2);
 });
+
+/* ---------- Controle ronde 6: ankers landen goed na scrollen en na een pagina-overgang (zonder minder beweging) ----------
+   Uitbreiding van "vaste balk bedekt geen kop na een ankerlink" (mobiel-ontwerp.spec.js, alleen telefoons) naar alle schermen:
+   #themas en #werkwijze op Kraamcadeauboxen, via een link op de pagina en via een link vanaf de homepage (pagina-overgang). */
+for (const anker of ['themas', 'werkwijze']) {
+  for (const manier of ['link op de pagina', 'na pagina-overgang']) {
+    test(`anker #${anker} (${manier}): kop onder de balk en het juiste label`, async ({ browser }, info) => {
+      const ctx = await browser.newContext({ ...info.project.use, baseURL: info.project.use.baseURL || 'http://127.0.0.1:4173' });
+      await ctx.addInitScript(() => { try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) { /* geen opslag */ } });
+      const page = await ctx.newPage();
+      const klik = async href => page.evaluate(h => { const a = document.createElement('a'); a.href = h; a.textContent = 'x'; a.style.cssText = 'position:fixed;left:0;top:200px;';
+        document.body.appendChild(a); a.click(); a.remove(); }, href);
+      if (manier === 'link op de pagina') {
+        await page.goto('/kraamcadeauboxen');
+        await page.waitForTimeout(600);
+        await page.evaluate(() => window.scrollTo(0, 400)); // eerst een stukje scrollen, zoals een bezoeker
+        await page.waitForTimeout(400);
+        await klik(`#${anker}`);
+      } else {
+        await page.goto('/');
+        await page.waitForTimeout(600);
+        await klik(`kraamcadeauboxen.html#${anker}`);
+        await page.waitForURL(new RegExp(`kraamcadeauboxen(\\.html)?#${anker}$`));
+        await page.waitForLoadState('load');
+      }
+      await page.waitForTimeout(2200); // overgang (1 s) en zacht scrollen uitlopen
+      const m = await page.evaluate(id => { const k = document.querySelector(`#${id} .label`).getBoundingClientRect(), b = document.querySelector('.balk');
+        return { sectie: Math.round(document.getElementById(id).getBoundingClientRect().top), marge: parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0,
+          kop: Math.round(k.top), onder: Math.round(k.bottom), balk: b.classList.contains('zichtbaar') ? Math.round(b.getBoundingClientRect().bottom) : 0,
+          label: b.querySelector('.sectie-label').textContent.replace(/\s+/g, ' ').trim(), verwacht: document.getElementById(id).getAttribute('data-label').replace(/<[^>]+>/g, '').trim() }; }, anker);
+      expect(m.kop, `kop van #${anker} onder de balk (balk eindigt op ${m.balk} px)`).toBeGreaterThanOrEqual(m.balk - 1);
+      expect(Math.abs(m.sectie - m.marge), `sectie #${anker} begint op de scroll-marge (${m.marge} px), niet op ${m.sectie} px`).toBeLessThanOrEqual(2);
+      expect(m.onder, `kop van #${anker} in beeld`).toBeLessThanOrEqual(info.project.use.viewport.height);
+      expect(m.label, 'de balk toont de juiste sectie').toBe(m.verwacht);
+      await ctx.close();
+    });
+  }
+}

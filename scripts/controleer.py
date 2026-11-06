@@ -981,7 +981,7 @@ BOX_SECTIES = [["", "— Kraamcadeauboxen"], ["", "— Met naam"], ["formaten", 
                ["themas", "003 — Thema's"], ["werkwijze", "004 — Zo werkt het"], ["contact", "005 — Contact"]]
 LEES_THEMAS = """() => { const s = document.querySelector('#themas'); const kaarten = [...s.querySelectorAll('.themacarrousel li')];
   return { kaarten: kaarten.map(k => { const i = k.querySelector('img'), r = i.getBoundingClientRect();
-      return [(k.querySelector('figcaption') || {}).textContent, i.getAttribute('src'), i.getAttribute('srcset') || '', i.getAttribute('width'), r.width, r.height, Math.round(r.left), i.getAttribute('alt') || '']; }),
+      return [(k.querySelector('figcaption') || {}).textContent, i.getAttribute('src') || i.getAttribute('data-src'), i.getAttribute('srcset') || i.getAttribute('data-srcset') || '', i.getAttribute('width'), r.width, r.height, Math.round(r.left), i.getAttribute('alt') || '']; }),
     links: [...s.querySelectorAll('a.pijl')].map(a => [a.textContent.trim(), a.getAttribute('href')]),
     lopend: s.querySelectorAll('.lopend, .lopend-spoor, .thema-lopend').length + document.querySelectorAll('main section.thema').length,
     rij: (() => { const r = s.querySelector('.themacarrousel'); return r ? [r.getAttribute('role'), r.getAttribute('aria-label'), r.tabIndex, r.scrollWidth > r.clientWidth, getComputedStyle(r).scrollSnapType, r.clientWidth] : null; })(),
@@ -1300,7 +1300,7 @@ def controleer_zonder_js(browser):
         page = ctx.new_page(); page.goto(url(pagina), wait_until="load")
         st = page.evaluate("""() => { const zicht = e => { let o = 1; for (let x = e; x; x = x.parentElement) o *= parseFloat(getComputedStyle(x).opacity);
             return e.offsetHeight > 0 && getComputedStyle(e).visibility === 'visible' && o === 1; };
-          return { cat: [...document.querySelectorAll('.categorie-foto img, .categorie-tekst h2, .categorie-tekst .klein, .thema-tegel img, .thema-tegel figcaption, .inspiratie-rij img, .werk img, .werk figcaption, .maak-rij img, .maak-rij h2, .stap h2, .stap .klein, .techniek h2, .dia img, .fotorij img, .pagina-prijs, .prijs')].filter(e => !zicht(e)).length,
+          return { cat: [...document.querySelectorAll('.categorie-foto img, .categorie-tekst h2, .categorie-tekst .klein, .thema-tegel img:not([data-src]), .thema-tegel figcaption, .inspiratie-rij img, .werk img, .werk figcaption, .maak-rij img, .maak-rij h2, .stap h2, .stap .klein, .techniek h2, .dia img, .fotorij img, .pagina-prijs, .prijs')].filter(e => !zicht(e)).length,
                    stappen: [...document.querySelectorAll('.hoe-stap')].map(zicht), form: [...document.querySelectorAll('#formulier input:not([name=website]):not([type=radio]), #formulier textarea, #formulier button')].filter(e => !e.closest('.groep:not([data-groep="Kraamcadeaubox"])') && !zicht(e)).length }; }""")
         if st["cat"] or not all(st["stappen"]) or st["form"]:
             fouten.append(f"{pagina} [zonder JavaScript]: niet alles zichtbaar ({st})")

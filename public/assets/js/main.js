@@ -107,10 +107,10 @@
           el.style.transform = nu === 'none' ? '' : nu;
         });
         void intro.offsetWidth;
-        bewegers.forEach(function (el) { el.style.transition = 'transform .5s cubic-bezier(.33,1,.68,1)'; el.style.transform = 'none'; });
+        bewegers.forEach(function (el) { el.style.transition = 'transform .45s cubic-bezier(.33,1,.68,1)'; el.style.transform = 'none'; });
         intro.classList.add('snel');
         heroKlaar();
-        timers.push(setTimeout(opruimen, 520)); // de uitgang duurt 0,5 s; binnen 0,6 s klaar
+        timers.push(setTimeout(opruimen, 460)); // de uitgang duurt 0,45 s; zo ruim binnen 0,6 s klaar, ook als de browser het druk heeft (ronde 8)
       };
       var signalen = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'];
       signalen.forEach(function (s) { window.addEventListener(s, overslaan, { capture: true, passive: true }); });
@@ -123,14 +123,32 @@
     // Binnen: het vlak staat dicht (script in <head>) en schuift in 1 s verder naar beneden weg; de pagina komt
     // van -150 px naar 0. Start op DOMContentLoaded; een klik of toets maakt het direct af.
     if (vanOvergang && overgang && !stil && html.classList.contains('overgang-binnen')) {
+      // Komt de bezoeker op een anker (kraamcadeauboxen.html#themas), dan springt de browser ernaar terwijl de pagina
+      // nog 150 px verschoven staat: de sprong valt 150 px te kort (controle ronde 6). Zet de plek recht met de
+      // verschuiving meegerekend, en nog eens als de overgang klaar is; niet als de bezoeker zelf al scrolde.
+      var zelfGescrold = false;
+      var markeer = function () { zelfGescrold = true; };
+      ['wheel', 'touchstart', 'keydown'].forEach(function (s) { window.addEventListener(s, markeer, { once: true, passive: true }); });
+      var naarAnker = function () {
+        if (zelfGescrold || !location.hash) return;
+        var doel = null;
+        try { doel = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (e) { /* ongeldig anker */ }
+        var hoofd = document.querySelector('main');
+        if (!doel || !hoofd || !hoofd.contains(doel)) return;
+        var verschuiving = new DOMMatrix(getComputedStyle(hoofd).transform).m42 || 0;
+        var marge = parseFloat(getComputedStyle(html).scrollPaddingTop) || 0;
+        window.scrollTo({ top: doel.getBoundingClientRect().top - verschuiving + window.scrollY - marge, behavior: 'instant' });
+      };
       var binnenKlaar = function () {
         html.classList.remove('overgang-binnen', 'binnen-loopt');
         ['pointerdown', 'keydown'].forEach(function (s) { window.removeEventListener(s, binnenKlaar, true); });
+        naarAnker();
       };
       ['pointerdown', 'keydown'].forEach(function (s) { window.addEventListener(s, binnenKlaar, true); });
       var binnenStart = function () {
         requestAnimationFrame(function () {
           if (!html.classList.contains('overgang-binnen')) return;
+          naarAnker();
           html.classList.add('binnen-loopt');
           setTimeout(binnenKlaar, 1050);
         });
@@ -199,6 +217,10 @@
       if (focusTerug !== false && vorigeFocus && vorigeFocus.focus) vorigeFocus.focus({ preventScroll: true });
     };
     burger.addEventListener('click', function () { if (burger.getAttribute('aria-expanded') === 'true') sluitMenu(); else openMenu(); });
+    // de menufoto al ophalen bij aanwijzen of focus van de burger, zodat hij er staat als het menu opengaat
+    var menuFotoLaden = function () { var mf = menu.querySelector('img.menu-foto[data-src]'); if (mf) { mf.src = mf.dataset.src; mf.removeAttribute('data-src'); } };
+    burger.addEventListener('pointerenter', menuFotoLaden, { once: true });
+    burger.addEventListener('focus', menuFotoLaden, { once: true });
     menu.addEventListener('click', function (e) { if (e.target.closest('a')) sluitMenu(false); });
     document.addEventListener('keydown', function (e) {
       if (burger.getAttribute('aria-expanded') !== 'true') return;
@@ -995,6 +1017,24 @@
     }
     kies(form.querySelector('select[name="box_thema"]'), vraag.get('thema'));
   }
+  // Foto's die pas bij nadering laden (Kraamcadeauboxen 002 en 003, ronde 8): de hele sectie wordt in één keer gevuld
+  // zodra hij binnen 600 px van het scherm komt, ook de foto's die horizontaal in een rij buiten beeld staan.
+  var laatLaden = function (sectie) {
+    sectie.querySelectorAll('img[data-src]').forEach(function (img) {
+      if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src'); img.removeAttribute('data-srcset');
+    });
+  };
+  var lateSecties = Array.prototype.slice.call(document.querySelectorAll('main > section')).filter(function (s) { return s.querySelector('img[data-src]'); });
+  if (lateSecties.length) {
+    if ('IntersectionObserver' in window) {
+      var laatIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) { if (it.isIntersecting) { laatLaden(it.target); laatIo.unobserve(it.target); } });
+      }, { rootMargin: '600px 0px 600px 0px' });
+      lateSecties.forEach(function (s) { laatIo.observe(s); });
+    } else lateSecties.forEach(laatLaden);
+  }
   // Thema's (Kraamcadeauboxen 003): pijlknoppen schuiven één set van drie verder (scroll-snap legt hem precies neer);
   // aan het begin of eind is de knop uit. Vegen op touch en de pijltoetsen in de rij werken vanzelf.
   document.querySelectorAll('.themacarrousel').forEach(function (rij) {
@@ -1020,7 +1060,7 @@
     });
     window.addEventListener('resize', stand);
     stand();
-    // de sectie wordt pas opgemaakt als hij in de buurt komt (content-visibility, ronde 7): dan opnieuw meten
+    // opnieuw meten zodra de rij in beeld komt (de foto's laden pas bij nadering)
     if ('IntersectionObserver' in window) new IntersectionObserver(function (items) { if (items.some(function (it) { return it.isIntersecting; })) stand(); }).observe(rij);
   });
   // Veegbare rijen (Kraamcadeauboxen, producten): alleen een tabstop als de rij echt scrolt (tablet en mobiel), niet op desktop

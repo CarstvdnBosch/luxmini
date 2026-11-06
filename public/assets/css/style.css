@@ -356,7 +356,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 @keyframes intro-door { to { pointer-events: none; } }
 @keyframes intro-nood { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 /* overslaan (tik, klik, toets, scroll): de uitgang is binnen 0,6 s klaar (0,5 s) */
-.js.intro-aan .intro-scherm.snel { transform: translateY(-100%); transition: transform .5s var(--in-uit); pointer-events: none; }
+.js.intro-aan .intro-scherm.snel { transform: translateY(-100%); transition: transform .45s var(--in-uit); pointer-events: none; }
 .intro-doek { position: absolute; inset: 0; background: var(--terracotta); }
 .intro-inhoud { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; }
 .intro-logo img { width: 200px; height: auto; }
@@ -1387,6 +1387,7 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 /* Thema's (ronde 5): enkele bestanden hebben rechts een donker randje van een paar pixels (< 1%). Met CSS weggesneden:
    2% rechts en onder van de bron bijsnijden; het vak blijft even groot, de foto blijft kleiner dan het bestand. */
 .thema-tegel img { object-view-box: inset(0 2% 2% 0); } /* snijdt de bron bij zonder het vak te vergroten (browsers zonder object-view-box tonen het randje) */
-/* LCP (ronde 7): de secties 002 en 003 op Kraamcadeauboxen worden pas opgemaakt als ze in de buurt komen, zodat hun
-   (lazy) foto's niet al bij de eerste weergave worden opgehaald en de lettertypes en stijlen van de kop voorgaan. */
-#in-de-box, #themas { content-visibility: auto; contain-intrinsic-size: auto 1100px; }
+/* LCP (ronde 8): de foto's in 002 en 003 op Kraamcadeauboxen staan als data-src en worden pas opgehaald als de sectie
+   in de buurt komt (main.js); zonder JavaScript staat dezelfde foto in <noscript>. (content-visibility is weg: die liet
+   ankers verkeerd landen, controle ronde 6.) */
+html:not(.js) img[data-src] { display: none; }

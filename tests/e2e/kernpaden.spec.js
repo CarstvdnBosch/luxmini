@@ -125,10 +125,13 @@ test('kraamcadeauboxen: volgorde en thema\'s groot in sets van drie met scroll-s
   expect(labels).toEqual(['— Kraamcadeauboxen', '— Met naam', '001 — Kies je formaat', '002 — Wat er in de box kan', '003 — Thema\'s', '004 — Zo werkt het', '005 — Contact']);
   const rij = page.locator('#themas .themacarrousel');
   await expect(rij.locator('li')).toHaveCount(9);
+  // de foto's laden pas als de sectie in de buurt komt (ronde 8)
+  await page.locator('#themas').evaluate(e => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await expect(rij.locator('img[data-src]')).toHaveCount(0);
   const m = await rij.evaluate(async r => { const ts = [...r.querySelectorAll('li')].map(l => l.getBoundingClientRect());
     const label = document.querySelector('#themas .label').getBoundingClientRect();
     const foto = [];
-    for (const i of [...r.querySelectorAll('img')].slice(0, 4)) { i.loading = 'eager'; await i.decode().catch(() => {}); const b = new Image(); b.src = i.currentSrc; await b.decode().catch(() => {});
+    for (const i of [...r.querySelectorAll('img')].slice(0, 4)) { i.loading = 'eager'; await i.decode().catch(() => {}); const b = new Image(); b.src = i.currentSrc || i.src; await b.decode().catch(() => {});
       foto.push([i.getBoundingClientRect().width, i.getBoundingClientRect().height, b.naturalWidth, b.naturalHeight]); }
     return { scrollt: r.scrollWidth > r.clientWidth, snap: getComputedStyle(r).scrollSnapType, inBeeld: ts.filter(t => t.left >= -1 && t.right <= innerWidth + 1).length,
       eerste: ts[0].left, label: label.left, vierde: Math.max(0, Math.min(innerWidth, ts[3].right) - ts[3].left), foto }; });
