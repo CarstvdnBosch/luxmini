@@ -149,26 +149,72 @@
   </div>
 </section>
 
-<!-- 002 Stuur een bericht: het formulier (ongewijzigd, op terracotta zodat de velden goed zichtbaar zijn) -->
+<!-- 002 Stuur een bericht: het formulier (op terracotta zodat de velden goed zichtbaar zijn); vooraf ingevuld via ?onderwerp=…&formaat=…&thema=… -->
 <section id="formulier" class="op-kleur formulier-sectie" data-label="<span>002 —</span> Stuur een bericht">
   <div class="wrap sectie contact-sectie">
     <p class="label"><span>002 —</span> Stuur een bericht</p>
     <div class="contact-formulier">
       <!-- LET OP: wacht op akkoord Carien -->
       <p class="klein contact-inleiding">Liever schrijven? Laat hier een bericht achter, Carien reageert persoonlijk.</p>
+      <!-- Eerst het onderwerp, dan alleen de vragen die erbij horen (brief 2026-11-06). Zonder JavaScript via CSS :has;
+           zonder :has staan alle groepen er, elk met "Alleen bij …". Alle extra velden zijn optioneel. -->
       <form class="formulier" action="/api/contact" method="post">
-        <label>Naam<input type="text" name="naam" autocomplete="name" required></label>
-        <label>Telefoon (optioneel)<input type="tel" name="telefoon" autocomplete="tel"></label>
-        <label class="breed">E-mailadres<input type="email" name="email" autocomplete="email" required></label>
         <label class="breed">Waar gaat je vraag over?
           <select name="onderwerp">
-            <option>Iets op maat laten maken</option>
-            <option>Prematuurkleding</option>
-            <option>Kraamcadeaubox</option>
-            <option>Iets anders</option>
+            <option value="Kraamcadeaubox">Kraamcadeaubox</option>
+            <option value="Prematuurkleding">Prematuurkleding</option>
+            <option value="Babynest">Babynest</option>
+            <option value="Iets op maat laten maken">Iets op maat laten maken</option>
+            <option value="Iets anders">Iets anders</option>
           </select>
         </label>
+        <fieldset class="groep breed" data-groep="Kraamcadeaubox">
+          <legend><span class="groep-alleen">Alleen bij een kraamcadeaubox: </span>Je kraamcadeaubox</legend>
+          <fieldset class="keuzes">
+            <legend>Formaat</legend>
+            <div class="keuze-kaarten">
+            <label class="keuze-kaart"><input type="radio" name="box_formaat" value="35"><span class="keuze-rand" aria-hidden="true"></span><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span class="keuze-prijs">€&nbsp;35</span><span class="keuze-regel">Knuffel, swaddle en broekje</span></label>
+            <label class="keuze-kaart"><input type="radio" name="box_formaat" value="50"><span class="keuze-rand" aria-hidden="true"></span><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span class="keuze-prijs">€&nbsp;50</span><span class="keuze-regel">Met een sjaaltje erbij</span></label>
+            <label class="keuze-kaart"><input type="radio" name="box_formaat" value="65"><span class="keuze-rand" aria-hidden="true"></span><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span class="keuze-prijs">€&nbsp;65</span><span class="keuze-regel">Met shirtje en douchehandschoen</span></label>
+            <label class="keuze-kaart"><input type="radio" name="box_formaat" value="80"><span class="keuze-rand" aria-hidden="true"></span><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span class="keuze-prijs">€&nbsp;80</span><span class="keuze-regel">De complete box</span></label>
+            </div>
+          </fieldset>
+          <label class="breed">Thema
+            <select name="box_thema">
+              <option value="">Nog niet gekozen</option>
+              <option value="Giraf">Giraf</option>
+              <option value="Vos">Vos</option>
+              <option value="Tulp">Tulp</option>
+              <option value="Walvis">Walvis</option>
+              <option value="Wilde blaadjes">Wilde blaadjes</option>
+              <option value="Framboos">Framboos</option>
+              <option value="Regenboog">Regenboog</option>
+              <option value="Wilgentakjes">Wilgentakjes</option>
+              <option value="Blaadjes en bloemen">Blaadjes en bloemen</option>
+              <option value="Een eigen stof of kleur">Een eigen stof of kleur</option>
+            </select>
+          </label>
+          <label>Naam op het product<input type="text" name="box_naam" autocomplete="off"></label>
+          <label>Geboortedatum of uitgerekende datum<input type="text" name="box_datum" autocomplete="off"></label>
+          <!-- LET OP: wacht op akkoord Carien (kledingmaat: de maten zijn niet bekend, daarom een vrij tekstveld) -->
+          <label class="breed">Kledingmaat<input type="text" name="box_maat" autocomplete="off"></label>
+        </fieldset>
+        <!-- LET OP: wacht op akkoord Carien (velden voor prematuurkleding: welke vragen wil Carien stellen? Voorlopig maat of gewicht en naam, vrij en optioneel) -->
+        <fieldset class="groep breed" data-groep="Prematuurkleding">
+          <legend><span class="groep-alleen">Alleen bij prematuurkleding: </span>Je prematuurkleding</legend>
+          <label>Maat of gewicht van de baby<input type="text" name="prem_maat" autocomplete="off"></label>
+          <label>Naam op het kledingstuk<input type="text" name="prem_naam" autocomplete="off"></label>
+        </fieldset>
+        <!-- LET OP: wacht op akkoord Carien (velden voor het babynest: welke vragen wil Carien stellen? Voorlopig stof of kleur en naam, vrij en optioneel) -->
+        <fieldset class="groep breed" data-groep="Babynest">
+          <legend><span class="groep-alleen">Alleen bij een babynest: </span>Je babynest</legend>
+          <label>Stof of kleur<input type="text" name="nest_stof" autocomplete="off"></label>
+          <label>Naam<input type="text" name="nest_naam" autocomplete="off"></label>
+        </fieldset>
         <label class="breed">Je idee<textarea name="bericht" rows="5" required placeholder="Bijv. wat je zoekt, naam, stof, maat of uitgerekende datum"></textarea></label>
+        <label>Naam<input type="text" name="naam" autocomplete="name" required></label>
+        <label>E-mailadres<input type="email" name="email" autocomplete="email" required></label>
+        <label>Telefoon (optioneel)<input type="tel" name="telefoon" autocomplete="tel"></label>
         <label class="val" aria-hidden="true">Laat dit veld leeg<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
         <p class="melding">Je gegevens gebruiken we alleen om je vraag te beantwoorden. Zie de <a href="privacy.html">privacyverklaring</a>.</p>
         <button class="verstuur" type="submit"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Verstuur bericht</button>

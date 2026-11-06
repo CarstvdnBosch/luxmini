@@ -884,5 +884,26 @@
       if (document.readyState === 'complete') toonMelding(); else window.addEventListener('load', toonMelding);
     }
   }
+  // Vooraf invullen vanaf de productpagina's (contact.html?onderwerp=kraamcadeaubox&formaat=50&thema=giraf#formulier).
+  // Alleen bekende waarden tellen; er komt niets uit het adres in de pagina en er wordt niet gefocust.
+  var form = document.querySelector('form.formulier');
+  if (form && location.search && window.URLSearchParams) {
+    var vraag = new URLSearchParams(location.search);
+    var sleutel = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+    var kies = function (select, waarde) {
+      if (!select || !waarde) return false;
+      var w = sleutel(waarde);
+      var optie = Array.prototype.slice.call(select.options).filter(function (o) { return o.value && sleutel(o.value) === w; })[0];
+      if (optie) select.value = optie.value;
+      return !!optie;
+    };
+    kies(form.querySelector('select[name="onderwerp"]'), vraag.get('onderwerp'));
+    var formaat = vraag.get('formaat');
+    if (/^(35|50|65|80)$/.test(formaat || '')) {
+      var rondje = form.querySelector('input[name="box_formaat"][value="' + formaat + '"]');
+      if (rondje) rondje.checked = true;
+    }
+    kies(form.querySelector('select[name="box_thema"]'), vraag.get('thema'));
+  }
   document.querySelectorAll('[data-jaar]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 })();
