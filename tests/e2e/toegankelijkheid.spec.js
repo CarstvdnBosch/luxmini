@@ -30,3 +30,16 @@ test('toegankelijkheid menu over het hele scherm', async ({ page }) => {
   const uitslag = await new AxeBuilder({ page }).include('.menu-scherm').withTags(REGELS).analyze();
   expect(uitslag.violations, `WCAG-overtredingen in het menu:\n${samenvatting(uitslag.violations)}`).toEqual([]);
 });
+
+// Brief 2026-11-06: het formulier met elke groep open (kraamcadeaubox, prematuurkleding, babynest) heeft 0 fouten
+for (const onderwerp of ['Kraamcadeaubox', 'Prematuurkleding', 'Babynest']) {
+  test(`toegankelijkheid formulier met groep ${onderwerp}`, async ({ page }) => {
+    await page.goto('/contact#formulier');
+    await wachtOpRust(page);
+    await page.locator('select[name="onderwerp"]').selectOption(onderwerp);
+    if (onderwerp === 'Kraamcadeaubox') await page.locator('input[name="box_formaat"][value="50"]').check();
+    await page.waitForTimeout(400);
+    const uitslag = await new AxeBuilder({ page }).include('#formulier').withTags(REGELS).analyze();
+    expect(uitslag.violations, `WCAG-overtredingen in het formulier (${onderwerp}):\n${samenvatting(uitslag.violations)}`).toEqual([]);
+  });
+}

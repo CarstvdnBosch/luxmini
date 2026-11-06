@@ -52,3 +52,11 @@ test('onleesbaar formulier gaat naar /contact?verzonden=fout#formulier', async (
   assert.equal(res.status, 303);
   assert.equal(doel(res), '/contact?verzonden=fout#formulier');
 });
+
+test('extra velden van een ander onderwerp gaan niet mee naar de mail', async () => {
+  let verstuurd = null;
+  const res = await verwerkContact(post({ ...geldig, onderwerp: 'Babynest', nest_stof: 'teddy', box_formaat: '50', box_naam: 'Sem' }), async (v) => { verstuurd = v; });
+  assert.equal(doel(res), '/bedankt');
+  assert.equal(verstuurd.onderwerp, 'Babynest');
+  assert.deepEqual(verstuurd.extra, [['Stof of kleur', 'teddy']]);
+});

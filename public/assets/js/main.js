@@ -62,13 +62,15 @@
      --------------------------------------------------------------- */
   var intro = document.querySelector('.intro-scherm');
   var overgang = document.querySelector('.overgang');
-  var vanOvergang = opslag.lees('lux-overgang') === '1';
+  // lux-overgang bewaart de kleur van het vlak tussen twee pagina's ('0' = geen overgang)
+  var OVERGANG_KLEUREN = ['#DEB799', '#C89F67', '#C3CFBC', '#B5969E', '#B4B19A', '#BC8565'];
+  var vanOvergang = /^#[0-9a-f]{6}$/i.test(opslag.lees('lux-overgang') || '');
   opslag.zet('lux-overgang', '0');
 
   function heroKlaar() { if (heroEl) heroEl.classList.add('klaar'); document.dispatchEvent(new Event('lux:klaar')); }
 
   // Het script in <head> heeft al besloten of de intro komt (.intro-aan) en
-  // de tijdlijn loopt in CSS (ca. 1,5 s). Hier: hero-kop op ~1,1 s, klaar op ~1,65 s,
+  // de tijdlijn loopt in CSS (ca. 2,2 s, wens Carst 6 nov.). Hier: hero-kop op ~1,55 s, klaar op ~2,2 s,
   // overslaan met tik, klik, toets, scroll of vegen (dan klaar in 0,6 s).
   if (intro && html.classList.contains('intro-aan') && !stil) {
     (function () {
@@ -105,28 +107,55 @@
           el.style.transform = nu === 'none' ? '' : nu;
         });
         void intro.offsetWidth;
-        bewegers.forEach(function (el) { el.style.transition = 'transform .5s cubic-bezier(.33,1,.68,1)'; el.style.transform = 'none'; });
+        bewegers.forEach(function (el) { el.style.transition = 'transform .45s cubic-bezier(.33,1,.68,1)'; el.style.transform = 'none'; });
         intro.classList.add('snel');
         heroKlaar();
-        timers.push(setTimeout(opruimen, 540));
+        timers.push(setTimeout(opruimen, 460)); // de uitgang duurt 0,45 s; zo ruim binnen 0,6 s klaar, ook als de browser het druk heeft (ronde 8)
       };
       var signalen = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'];
       signalen.forEach(function (s) { window.addEventListener(s, overslaan, { capture: true, passive: true }); });
       na(300, function () { if (foto && !(foto.complete && foto.naturalWidth > 0) && figuur) figuur.classList.add('zonder-foto'); });
-      na(1100, heroKlaar);           // woorden van de hero-kop komen op
-      na(1650, opruimen);            // de intro is klaar
+      na(1550, heroKlaar);           // woorden van de hero-kop komen op
+      na(2200, opruimen);            // de intro is klaar
     })();
   } else {
     html.classList.remove('intro-aan');
-    if (vanOvergang && overgang && !stil) {
-      overgang.style.transition = 'none';
-      overgang.classList.add('dicht');
-      requestAnimationFrame(function () {
-        overgang.style.transition = '';
-        overgang.classList.remove('dicht');
-        overgang.classList.add('open-boven');
-        setTimeout(function () { overgang.style.transition = 'none'; overgang.classList.remove('open-boven'); requestAnimationFrame(function () { overgang.style.transition = ''; }); }, 700);
-      });
+    // Binnen: het vlak staat dicht (script in <head>) en schuift in 1 s verder naar beneden weg; de pagina komt
+    // van -150 px naar 0. Start op DOMContentLoaded; een klik of toets maakt het direct af.
+    if (vanOvergang && overgang && !stil && html.classList.contains('overgang-binnen')) {
+      // Komt de bezoeker op een anker (kraamcadeauboxen.html#themas), dan springt de browser ernaar terwijl de pagina
+      // nog 150 px verschoven staat: de sprong valt 150 px te kort (controle ronde 6). Zet de plek recht met de
+      // verschuiving meegerekend, en nog eens als de overgang klaar is; niet als de bezoeker zelf al scrolde.
+      var zelfGescrold = false;
+      var markeer = function () { zelfGescrold = true; };
+      ['wheel', 'touchstart', 'keydown'].forEach(function (s) { window.addEventListener(s, markeer, { once: true, passive: true }); });
+      var naarAnker = function () {
+        if (zelfGescrold || !location.hash) return;
+        var doel = null;
+        try { doel = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (e) { /* ongeldig anker */ }
+        var hoofd = document.querySelector('main');
+        if (!doel || !hoofd || !hoofd.contains(doel)) return;
+        var verschuiving = new DOMMatrix(getComputedStyle(hoofd).transform).m42 || 0;
+        var marge = parseFloat(getComputedStyle(html).scrollPaddingTop) || 0;
+        window.scrollTo({ top: doel.getBoundingClientRect().top - verschuiving + window.scrollY - marge, behavior: 'instant' });
+      };
+      var binnenKlaar = function () {
+        html.classList.remove('overgang-binnen', 'binnen-loopt');
+        ['pointerdown', 'keydown'].forEach(function (s) { window.removeEventListener(s, binnenKlaar, true); });
+        naarAnker();
+      };
+      ['pointerdown', 'keydown'].forEach(function (s) { window.addEventListener(s, binnenKlaar, true); });
+      var binnenStart = function () {
+        requestAnimationFrame(function () {
+          if (!html.classList.contains('overgang-binnen')) return;
+          naarAnker();
+          html.classList.add('binnen-loopt');
+          setTimeout(binnenKlaar, 1050);
+        });
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', binnenStart); else binnenStart();
+    } else {
+      html.classList.remove('overgang-binnen');
     }
     setTimeout(heroKlaar, vanOvergang ? 250 : 0);
   }
@@ -141,11 +170,23 @@
       if (url.origin !== location.origin && location.protocol !== 'file:') return;
       if (url.protocol !== location.protocol || zelfdePagina || /^(mailto|tel):/.test(a.getAttribute('href')) || !/(\.html|\/)$|^[^.]*$/.test(url.pathname)) return;
       e.preventDefault();
-      opslag.zet('lux-overgang', '1');
-      overgang.classList.add('dicht');
-      setTimeout(function () { location.href = url.href; }, 600);
+      // Weg: een vlak in een willekeurige paletkleur schuift in 1 s van boven naar beneden; de pagina zakt mee
+      var kleur = OVERGANG_KLEUREN[Math.floor(Math.random() * OVERGANG_KLEUREN.length)];
+      opslag.zet('lux-overgang', kleur);
+      html.style.setProperty('--overgang-kleur', kleur);
+      html.classList.remove('overgang-binnen', 'binnen-loopt');
+      void overgang.offsetWidth;
+      overgang.classList.add('weg');
+      html.classList.add('overgang-weg');
+      setTimeout(function () { location.href = url.href; }, 1000);
     });
-    window.addEventListener('pageshow', function (e) { if (e.persisted) overgang.classList.remove('dicht'); });
+    // terug-knop (bfcache): vlak open en pagina op 0
+    window.addEventListener('pageshow', function (e) {
+      if (!e.persisted) return;
+      overgang.classList.remove('weg');
+      html.classList.remove('overgang-weg', 'overgang-binnen', 'binnen-loopt');
+      opslag.zet('lux-overgang', '0');
+    });
   }
 
   /* ---------------------------------------------------------------
@@ -157,6 +198,9 @@
     var vorigeFocus = null;
     var openMenu = function () {
       vorigeFocus = document.activeElement;
+      // de foto achter het menu pas ophalen als het menu opengaat (ronde 7: scheelt 113 kB bij het laden van elke pagina)
+      var mf = menu.querySelector('img.menu-foto[data-src]');
+      if (mf) { mf.src = mf.dataset.src; mf.removeAttribute('data-src'); }
       menu.hidden = false;
       requestAnimationFrame(function () { menu.classList.add('open'); });
       burger.setAttribute('aria-expanded', 'true');
@@ -173,6 +217,10 @@
       if (focusTerug !== false && vorigeFocus && vorigeFocus.focus) vorigeFocus.focus({ preventScroll: true });
     };
     burger.addEventListener('click', function () { if (burger.getAttribute('aria-expanded') === 'true') sluitMenu(); else openMenu(); });
+    // de menufoto al ophalen bij aanwijzen of focus van de burger, zodat hij er staat als het menu opengaat
+    var menuFotoLaden = function () { var mf = menu.querySelector('img.menu-foto[data-src]'); if (mf) { mf.src = mf.dataset.src; mf.removeAttribute('data-src'); } };
+    burger.addEventListener('pointerenter', menuFotoLaden, { once: true });
+    burger.addEventListener('focus', menuFotoLaden, { once: true });
     menu.addEventListener('click', function (e) { if (e.target.closest('a')) sluitMenu(false); });
     document.addEventListener('keydown', function (e) {
       if (burger.getAttribute('aria-expanded') !== 'true') return;
@@ -184,6 +232,62 @@
         else if (!e.shiftKey && i === lijst.length - 1) { e.preventDefault(); lijst[0].focus(); }
       }
     });
+  }
+
+  /* ---------------------------------------------------------------
+     2b. Menu-rij naast de burger (brief 2026-11-06, B): met een muis verschijnen de zes links bij
+         aanwijzen van de burger of de rij (na 80 ms; weg 400 ms na het verlaten) of bij focus op de burger.
+         Esc of de focus eruit verbergt de rij; een klik op de burger opent het menu over het hele scherm.
+         Bovenaan (vanaf 1280 px) staan de links al in de header; na 100 px vervagen die.
+     --------------------------------------------------------------- */
+  var rij = document.querySelector('.menu-rij');
+  var rijOpen = false;
+  var naBoven = function () { html.classList.toggle('na-100', window.scrollY > 100); };
+  naBoven();
+  window.addEventListener('scroll', naBoven, { passive: true });
+  if (rij && burger) {
+    var rijMq = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1240px)'); // zelfde grens als in style.css (gemeten: vanaf 1240 px 24 px lucht tot het logo)
+    var openT = null, dichtT = null;
+    var magRij = function () {
+      return rijMq.matches && getComputedStyle(rij).display !== 'none' && !html.classList.contains('menu-is-open') &&
+        !(window.scrollY <= 100 && window.innerWidth >= 1280 && document.querySelector('.site-header .menu'));
+    };
+    var rijKleur = function () { // wit alleen over de donkere fotokop van Contact (de balk heeft daar geen kleur)
+      var b = document.querySelector('.balk');
+      var gekleurd = b && /\bop-(kleur|wit|grijs)\b/.test(b.className);
+      rij.classList.toggle('wit', html.classList.contains('kop-donker') && !gekleurd);
+    };
+    var toonRij = function () {
+      clearTimeout(dichtT); clearTimeout(openT);
+      if (rijOpen || !magRij()) return;
+      rijOpen = true;
+      html.classList.add('rij-open');
+      if (balkBijwerken) balkBijwerken(true);
+      rijKleur();
+      rij.classList.add('open');
+    };
+    var verbergRij = function () {
+      clearTimeout(openT); clearTimeout(dichtT);
+      if (!rijOpen) return;
+      rijOpen = false;
+      rij.classList.remove('open');
+      html.classList.remove('rij-open');
+      if (balkBijwerken) balkBijwerken(true);
+    };
+    [burger, rij].forEach(function (el) {
+      el.addEventListener('mouseenter', function () { clearTimeout(dichtT); clearTimeout(openT); openT = setTimeout(toonRij, 80); });
+      el.addEventListener('mouseleave', function () { clearTimeout(openT); clearTimeout(dichtT); dichtT = setTimeout(verbergRij, 400); });
+      el.addEventListener('focusout', function (e) {
+        var naar = e.relatedTarget;
+        if (naar && (naar === burger || rij.contains(naar))) return;
+        if (burger.matches(':hover') || rij.matches(':hover')) return;
+        verbergRij();
+      });
+    });
+    burger.addEventListener('focus', toonRij);
+    burger.addEventListener('click', verbergRij);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && rijOpen) verbergRij(); });
+    window.addEventListener('scroll', function () { if (rijOpen && !magRij()) verbergRij(); }, { passive: true });
   }
 
   /* ---------------------------------------------------------------
@@ -200,21 +304,31 @@
     var tegels = hero.querySelectorAll('.tegel');
     var cirkel = hero.querySelector('.hero-cirkel');
     if (muis && !stil) {
-      hero.addEventListener('mousemove', function (e) {
+      // Zoals Stock (feedback Carst 6 nov. 14:28, F1): verschuiving in de absolute muispositie, x = clientX / k en
+      // y = -clientY / k (links) of +clientY / k (rechts); k links 20/15/10, rechts 20/10/15 (groot, midden, klein).
+      // Kanteling rotateY = 25 x (x / breedte - 0,5), rotateX = 25 x (y / hoogte - 0,5), max. 12,5 graden, met perspectief
+      // 1500/1000/500 px (k = 20/15/10). Volgen in 1 s easeOut (CSS-overgang). Vóór de eerste beweging: de beginstand.
+      var STOCK = { t2: [20, -1], t1: [15, -1], t3: [10, -1], t4: [20, 1], t5: [10, 1], t6: [15, 1] };
+      var PERSPECTIEF = { 20: 1500, 15: 1000, 10: 500 };
+      // Op het venster (ronde 5): naar de header of het menu bewegen laat de foto's niet terugzwaaien;
+      // terug naar de beginstand alleen als de muis het venster verlaat of de hero uit beeld is.
+      var heroInBeeld = function () { var r = hero.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; };
+      var heroRust = function () { tegels.forEach(function (t) { t.style.transform = ''; }); if (cirkel) cirkel.style.translate = ''; };
+      window.addEventListener('mousemove', function (e) {
+        if (!heroInBeeld()) return;
         var r = hero.getBoundingClientRect();
         var x = ((e.clientX - r.left) / r.width) * 2 - 1;
         var y = ((e.clientY - r.top) / r.height) * 2 - 1;
+        var ry = 25 * (e.clientX / window.innerWidth - 0.5), rx = 25 * (e.clientY / window.innerHeight - 0.5);
         tegels.forEach(function (t) {
-          var d = parseFloat(t.dataset.diepte || '20');
-          // perspectief 1000 px, maximaal ±8° kantelen
-          t.style.transform = 'perspective(1000px) translate3d(' + (-x * d).toFixed(1) + 'px,' + (-y * d).toFixed(1) + 'px,0) rotateX(' + (-y * 8).toFixed(2) + 'deg) rotateY(' + (x * 8).toFixed(2) + 'deg)';
+          var naam = (t.className.match(/\bt\d\b/) || [''])[0];
+          var st = STOCK[naam] || [15, 1], k = st[0];
+          t.style.transform = 'perspective(' + PERSPECTIEF[k] + 'px) translate3d(' + (e.clientX / k).toFixed(1) + 'px,' + (st[1] * e.clientY / k).toFixed(1) + 'px,0) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
         });
         if (cirkel) cirkel.style.translate = (-x * 18).toFixed(1) + 'px ' + (-y * 18).toFixed(1) + 'px';
       });
-      hero.addEventListener('mouseleave', function () {
-        tegels.forEach(function (t) { t.style.transform = ''; });
-        if (cirkel) cirkel.style.translate = '';
-      });
+      document.documentElement.addEventListener('mouseleave', heroRust);
+      window.addEventListener('scroll', function () { if (!heroInBeeld()) heroRust(); }, { passive: true });
     }
     // De kop staat naast de foto's, niet erop: is de langste regel (afhankelijk
     // van het lettertype) breder dan de ruimte tot de foto rechts ervan, dan
@@ -273,7 +387,7 @@
   //     tussen items is een crossfade van 0,35 s. Weg, focus uit de lijst of Esc: terug.
   document.querySelectorAll('.hoverlijst.sferen').forEach(function (lijst) {
     var sectie = lijst.closest('.hoverlijst-sectie');
-    var knoppen = Array.prototype.slice.call(lijst.querySelectorAll('ul button'));
+    var knoppen = Array.prototype.slice.call(lijst.querySelectorAll('ul button, ul a')); // knoppen of links (Technieken)
     var sferen = Array.prototype.slice.call(lijst.querySelectorAll('.sfeer'));
     var traagTimer = null;
     function kies(k) {
@@ -281,7 +395,7 @@
       knoppen.forEach(function (b) { b.classList.toggle('aan', b === k); });
       sferen.forEach(function (s, n) { s.classList.toggle('aan', n === i); });
       lijst.classList.add('actief');
-      if (sectie) sectie.classList.add('lijst-actief');
+      if (sectie) { sectie.classList.add('lijst-actief'); sectie.style.setProperty('--diep', k.dataset.kleur || ''); }
       clearTimeout(traagTimer); laag.classList.add('traag'); // rustige overgang van 1 s bij aanwijzen
       zetLaag(k.dataset.kleur);
     }
@@ -298,7 +412,7 @@
     knoppen.forEach(function (k) {
       if (muis) k.addEventListener('mouseenter', function () { kies(k); });
       k.addEventListener('focus', function () { kies(k); });
-      k.addEventListener('click', function () { kies(k); });
+      if (k.tagName === 'BUTTON') k.addEventListener('click', function () { kies(k); });
     });
     lijst.addEventListener('focusout', function (e) {
       if (e.relatedTarget && lijst.contains(e.relatedTarget)) return;
@@ -474,22 +588,19 @@
   });
 
   /* ---------------------------------------------------------------
-     5b. Werkwijze: kolom aanwijzen kleurt de bovenkant en schuift een foto in
+     5b. Homepage 001 Producten (drieluik): aanwijzen en focus regelt CSS (:hover, :focus-within).
+         De foto's liggen in rust buiten hun masker; de browser laadt ze dan niet vanzelf (lazy).
+         Haal ze op zodra het drieluik in de buurt komt, zodat ze klaarstaan bij het aanwijzen.
      --------------------------------------------------------------- */
-  document.querySelectorAll('.kern-kolom').forEach(function (kolom) {
-    var p = kolom.querySelector('.kern-copy p');
-    function maat() { if (p) kolom.style.setProperty('--u', p.offsetHeight + 'px'); }
-    maat();
-    window.addEventListener('resize', maat);
-    function open() { maat(); kolom.classList.add('open'); zetHeroKleur(kolom.dataset.kleur); }
-    function dicht() { kolom.classList.remove('open'); }
-    kolom.setAttribute('tabindex', '0'); // toetsenbord: Tab opent de kolom en toont de uitleg
-    kolom.addEventListener('focus', open);
-    kolom.addEventListener('blur', dicht);
-    if (!muis) return;
-    kolom.addEventListener('mouseenter', open);
-    kolom.addEventListener('mouseleave', dicht);
-  });
+  var drieluik = document.querySelector('.drieluik');
+  if (drieluik && muis && 'IntersectionObserver' in window) {
+    var drieIo = new IntersectionObserver(function (items) {
+      if (!items.some(function (it) { return it.isIntersecting; })) return;
+      drieluik.querySelectorAll('img[loading="lazy"]').forEach(function (i) { i.loading = 'eager'; });
+      drieIo.disconnect();
+    }, { rootMargin: '0px 0px 50% 0px' });
+    drieIo.observe(drieluik);
+  }
   // Binnen de bovenkant blijft de kleur staan zoals bij Stock; wie de bovenkant
   // verlaat, krijgt weer set A en terracotta. Bij focus alleen als de focus
   // echt naar iets buiten de bovenkant gaat (een tik op een lege plek of op
@@ -511,7 +622,8 @@
          vloeit naar de kleur van de sectie waarvan het midden in beeld is
      --------------------------------------------------------------- */
   var lagen = Array.prototype.slice.call(document.querySelectorAll('main > section')).filter(function (sec) {
-    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement') && !sec.matches('.contact-kop, .pagina-kop, .over-kop'); // koppen houden hun eigen kleur, zoals de bovenkant van de homepage
+    // koppen en het drieluik (eigen perzik vlak, kolommen met eigen kleur: geen gebroken strook bij de laagovergang) houden hun eigen kleur
+    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement') && !sec.matches('.contact-kop, .pagina-kop, .over-kop, .drieluik');
   });
   lagen.forEach(function (sec) {
     if (!sec.hasAttribute('data-achtergrond')) sec.setAttribute('data-achtergrond', getComputedStyle(sec).backgroundColor);
@@ -634,7 +746,7 @@
     var kleuren = ['op-kleur', 'op-wit', 'op-grijs'];
     var laatste = null;
     var bijwerken = function () {
-      var voorbij = kopEl.getBoundingClientRect().bottom < 40;
+      var voorbij = kopEl.getBoundingClientRect().bottom < 40 || html.classList.contains('rij-open'); // de balk schuift mee in met de menu-rij
       balk.classList.toggle('zichtbaar', voorbij);
       var huidig = null;
       secties.forEach(function (sec) { if (sec.getBoundingClientRect().top <= 90) huidig = sec; });
@@ -883,6 +995,88 @@
       };
       if (document.readyState === 'complete') toonMelding(); else window.addEventListener('load', toonMelding);
     }
+  }
+  // Vooraf invullen vanaf de productpagina's (contact.html?onderwerp=kraamcadeaubox&formaat=50&thema=giraf#formulier).
+  // Alleen bekende waarden tellen; er komt niets uit het adres in de pagina en er wordt niet gefocust.
+  var form = document.querySelector('form.formulier');
+  if (form && location.search && window.URLSearchParams) {
+    var vraag = new URLSearchParams(location.search);
+    var sleutel = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+    var kies = function (select, waarde) {
+      if (!select || !waarde) return false;
+      var w = sleutel(waarde);
+      var optie = Array.prototype.slice.call(select.options).filter(function (o) { return o.value && sleutel(o.value) === w; })[0];
+      if (optie) select.value = optie.value;
+      return !!optie;
+    };
+    kies(form.querySelector('select[name="onderwerp"]'), vraag.get('onderwerp'));
+    var formaat = vraag.get('formaat');
+    if (/^(35|50|65|80)$/.test(formaat || '')) {
+      var rondje = form.querySelector('input[name="box_formaat"][value="' + formaat + '"]');
+      if (rondje) rondje.checked = true;
+    }
+    kies(form.querySelector('select[name="box_thema"]'), vraag.get('thema'));
+  }
+  // Foto's die pas bij nadering laden (Kraamcadeauboxen 002 en 003, ronde 8): de hele sectie wordt in één keer gevuld
+  // zodra hij binnen 1200 px van het scherm komt, ook de foto's die horizontaal in een rij buiten beeld staan.
+  var laatLaden = function (sectie) {
+    sectie.querySelectorAll('img[data-src]').forEach(function (img) {
+      if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src'); img.removeAttribute('data-srcset');
+    });
+  };
+  var lateSecties = Array.prototype.slice.call(document.querySelectorAll('main > section')).filter(function (s) { return s.querySelector('img[data-src]'); });
+  if (lateSecties.length) {
+    if ('IntersectionObserver' in window) {
+      var laatIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) { if (it.isIntersecting) { laatLaden(it.target); laatIo.unobserve(it.target); } });
+      }, { rootMargin: '1200px 0px 1200px 0px' });
+      lateSecties.forEach(function (s) { laatIo.observe(s); });
+    } else lateSecties.forEach(laatLaden);
+    var allesLaden = function () { lateSecties.forEach(laatLaden); };
+    // afdrukken zonder eerst te scrollen: alles direct laden (controle ronde 7)
+    window.addEventListener('beforeprint', allesLaden);
+    var printMq = window.matchMedia && window.matchMedia('print');
+    if (printMq) { var bijPrint = function (m) { if (m.matches) allesLaden(); }; if (printMq.addEventListener) printMq.addEventListener('change', bijPrint); else if (printMq.addListener) printMq.addListener(bijPrint); }
+    // en kort na het laden, als de browser niets te doen heeft (ná de LCP), zodat ze er ook zonder scrollen vroeg genoeg zijn
+    var stilLaden = function () { if (window.requestIdleCallback) window.requestIdleCallback(allesLaden, { timeout: 3000 }); else setTimeout(allesLaden, 1500); };
+    if (document.readyState === 'complete') setTimeout(stilLaden, 1000); else window.addEventListener('load', function () { setTimeout(stilLaden, 1000); });
+  }
+  // Thema's (Kraamcadeauboxen 003): pijlknoppen schuiven één set van drie verder (scroll-snap legt hem precies neer);
+  // aan het begin of eind is de knop uit. Vegen op touch en de pijltoetsen in de rij werken vanzelf.
+  document.querySelectorAll('.themacarrousel').forEach(function (rij) {
+    var knoppen = Array.prototype.slice.call(document.querySelectorAll('.carrousel-knop[aria-controls="' + rij.id + '"]'));
+    var stand = function () {
+      var max = rij.scrollWidth - rij.clientWidth - 2;
+      // aria-disabled in plaats van disabled: de focus blijft op de knop staan (ontwerpgate ronde 3)
+      knoppen.forEach(function (k) { k.setAttribute('aria-disabled', (k.dataset.richting === '-1' ? rij.scrollLeft <= 2 : rij.scrollLeft >= max) ? 'true' : 'false'); });
+    };
+    knoppen.forEach(function (k) {
+      k.addEventListener('click', function () {
+        if (k.getAttribute('aria-disabled') === 'true') return;
+        var gat = parseFloat(getComputedStyle(rij.querySelector('ul')).columnGap) || 0;
+        rij.scrollBy({ left: Number(k.dataset.richting) * (rij.clientWidth + gat), behavior: stil ? 'auto' : 'smooth' });
+      });
+    });
+    rij.addEventListener('scroll', function () { window.requestAnimationFrame(stand); }, { passive: true });
+    // Home en End in de rij: naar de eerste of de laatste set (niet de hele pagina)
+    rij.addEventListener('keydown', function (e) {
+      if (e.key !== 'Home' && e.key !== 'End') return;
+      e.preventDefault();
+      rij.scrollTo({ left: e.key === 'Home' ? 0 : rij.scrollWidth, behavior: stil ? 'auto' : 'smooth' });
+    });
+    window.addEventListener('resize', stand);
+    stand();
+    // opnieuw meten zodra de rij in beeld komt (de foto's laden pas bij nadering)
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (items) { if (items.some(function (it) { return it.isIntersecting; })) stand(); }).observe(rij);
+  });
+  // Veegbare rijen (Kraamcadeauboxen, producten): alleen een tabstop als de rij echt scrolt (tablet en mobiel), niet op desktop
+  var scrollRijen = Array.prototype.slice.call(document.querySelectorAll('[data-scrollrij]'));
+  var zetTabstop = function () { scrollRijen.forEach(function (r) { if (r.scrollWidth > r.clientWidth + 1) r.setAttribute('tabindex', '0'); else r.removeAttribute('tabindex'); }); };
+  if (scrollRijen.length) {
+    zetTabstop(); window.addEventListener('resize', zetTabstop);
+    if ('IntersectionObserver' in window) { var rijIo = new IntersectionObserver(function (items) { if (items.some(function (it) { return it.isIntersecting; })) zetTabstop(); }); scrollRijen.forEach(function (r) { rijIo.observe(r); }); }
   }
   document.querySelectorAll('[data-jaar]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 })();

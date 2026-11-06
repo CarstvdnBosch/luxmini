@@ -66,7 +66,9 @@ test('kraamcadeauboxen: vier prijzen van € 35 tot € 80', async ({ page }) =>
 });
 
 // Oude adressen (301): het anker gaat mee en de kop van die sectie staat in beeld.
-for (const [oud, nieuw, anker] of [['/producten#siliconen', '/', 'siliconen'], ['/producten#prematuur', '/', 'prematuur'], ['/over#hoe-ik-werk', '/werkwijze', 'hoe-ik-werk'], ['/portfolio#siliconen', '/inspiratie', 'siliconen']]) {
+// Brief 2026-11-06: alle vijf oude productankers landen op de homepage (drieluik of Technieken).
+for (const [oud, nieuw, anker] of [['/producten#siliconen', '/', 'siliconen'], ['/producten#prematuur', '/', 'prematuur'], ['/producten#babynest', '/', 'babynest'],
+  ['/producten#kraamcadeaubox', '/', 'kraamcadeaubox'], ['/producten#babykleding', '/', 'babykleding'], ['/over#hoe-ik-werk', '/werkwijze', 'hoe-ik-werk'], ['/portfolio#siliconen', '/inspiratie', 'siliconen']]) {
   test(`oud adres ${oud} landt op ${nieuw}#${anker} met de kop in beeld`, async ({ page }) => {
     await page.goto(oud);
     await expect(page).toHaveURL(new RegExp(`${nieuw}#${anker}$`));
@@ -85,38 +87,116 @@ for (const { pad, naam } of PAGINAS.filter(p => p.naam !== 'contact')) {
     const direct = await page.locator('main a.pijl[href^="https://wa.me"], main a.pijl[href^="tel:"], main a.pijl[href^="mailto:"], main .contact-lijst a[href^="https://wa.me"], main .contact-lijst a[href^="tel:"], main .contact-lijst a[href^="mailto:"]').count();
     expect(direct, 'directe contactlinks in de inhoud').toBe(0);
     const doelen = await page.locator('main a[href*="contact"]').evaluateAll(as => as.map(a => a.getAttribute('href')));
-    for (const d of doelen) expect(d, 'contact-link in de inhoud').toMatch(/^(contact\.html|\/contact)#formulier$/);
+    // brief 2026-11-06: ook met onderwerp (en formaat), zodat het formulier vooraf is ingevuld; elke CTA gaat naar het formulier
+    for (const d of doelen) expect(d, 'contact-link in de inhoud').toMatch(/^(contact\.html|\/contact)(\?onderwerp=(kraamcadeaubox|prematuurkleding|babynest)(&formaat=(35|50|65|80))?)?#formulier$/);
     await expect(page.locator('#menu-scherm a[href^="https://wa.me/31643791618"]')).toHaveCount(1);
   });
 }
 
-test('homepage: vijf productblokken, Inspiratie, Instagram en contact in deze volgorde', async ({ page }, info) => {
+test('homepage: hero, 001 Producten, 002 Handwerk, 003 Inspiratie, 004 Instagram in deze volgorde (brief 2026-11-06)', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'volgorde is per scherm gelijk');
   await page.goto('/');
   const labels = await page.locator('main > section').evaluateAll(s => s.map(x => x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()));
-  expect(labels).toEqual(['— LUX mini', '001 — Babykleding', '002 — Siliconen items', '003 — Babynest', '004 — Prematuurkleding', '005 — Kraamcadeauboxen', '006 — Inspiratie', '007 — Instagram', '008 — Contact']);
-  const doelen = await page.locator('main > section.categorie').evaluateAll(s => s.map(x => [...x.querySelectorAll('a.pijl')].map(a => a.getAttribute('href'))));
-  expect(doelen).toEqual([['inspiratie.html#kleding'], ['inspiratie.html#siliconen'], ['babynest.html'], ['prematuurkleding.html'], ['kraamcadeauboxen.html']]);
+  expect(labels).toEqual(['— LUX mini', '001 — Producten', '002 — Handwerk', '003 — Inspiratie', '004 — Instagram']);
+  await expect(page.locator('main section.categorie')).toHaveCount(0);
+  // drieluik: drie kolommen, elk één link naar de productpagina
+  const kolommen = await page.locator('#producten .kern-kolom').evaluateAll(s => s.map(x => [x.id, [...x.querySelectorAll('a')].map(a => a.getAttribute('href'))]));
+  expect(kolommen).toEqual([['kraamcadeauboxen', ['kraamcadeauboxen.html']], ['prematuurkleding', ['prematuurkleding.html']], ['babynest', ['babynest.html']]]);
+  // technieken: vier namen als link, met de productregel in de toegankelijke naam
+  const technieken = page.locator('#technieken .hoverlijst ul a');
+  await expect(technieken).toHaveCount(4);
+  const doelen = await technieken.evaluateAll(as => as.map(a => a.getAttribute('href')));
+  expect(doelen).toEqual(['werkwijze.html#personaliseren', 'inspiratie.html#siliconen', 'prematuurkleding.html', 'inspiratie.html#textiel']);
+  for (const [i, naam] of [[0, /Warm en eigen\s?: Belettering/], [1, /Rustig en praktisch\s?: Siliconen items/], [2, /Klein en precies\s?: Prematuurkleding/], [3, /Speels en levendig\s?: Borduren/]]) {
+    await expect(technieken.nth(i)).toHaveAccessibleName(naam);
+  }
+  // 003 Inspiratie: naar alle inspiratie en het formulier; precies één link naar het formulier in main
+  const insp = await page.locator('#inspiratie a.pijl').evaluateAll(as => as.map(a => a.getAttribute('href')));
+  expect(insp).toEqual(['inspiratie.html', 'contact.html#formulier']);
+  await expect(page.locator('main a[href="contact.html#formulier"]')).toHaveCount(1);
+  await expect(page.locator('main a[href="werkwijze.html#atelier"]')).toHaveCount(1);
+  for (const id of ['kraamcadeaubox', 'prematuur', 'babynest', 'babykleding', 'siliconen', 'inspiratie', 'contact']) await expect(page.locator(`#${id}`)).toHaveCount(1);
 });
 
-test('kraamcadeauboxen: negen thema\'s binnen twee schermen (1440 x 900)', async ({ page }, info) => {
-  test.skip(info.project.name !== 'desktop', 'gemeten op 1440 x 900');
+// Feedback Carst 6 nov. 14:28 (F4): de negen thema's groot in sets van drie (vervangt "negen thema's binnen twee schermen")
+test('kraamcadeauboxen: volgorde en thema\'s groot in sets van drie met scroll-snap', async ({ page }, info) => {
   await page.goto('/kraamcadeauboxen');
-  await expect(page.locator('#themas .themaraster > li')).toHaveCount(9);
-  const hoogte = await page.evaluate(() => { const s = document.querySelector('#themas').getBoundingClientRect();
-    return Math.max(...[...document.querySelectorAll('#themas .themaraster > li')].map(k => k.getBoundingClientRect().bottom)) - s.top; });
-  expect(hoogte, 'hoogte van label tot het laatste thema').toBeLessThanOrEqual(2 * 900);
+  const labels = await page.locator('main > section').evaluateAll(s => s.map(x => x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()));
+  expect(labels).toEqual(['— Kraamcadeauboxen', '— Met naam', '001 — Kies je formaat', '002 — Wat er in de box kan', '003 — Thema\'s', '004 — Zo werkt het', '005 — Contact']);
+  const rij = page.locator('#themas .themacarrousel');
+  await expect(rij.locator('li')).toHaveCount(9);
+  // de foto's laden pas als de sectie in de buurt komt (ronde 8)
+  await page.locator('#themas').evaluate(e => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await expect(rij.locator('img[data-src]')).toHaveCount(0);
+  const m = await rij.evaluate(async r => { const ts = [...r.querySelectorAll('li')].map(l => l.getBoundingClientRect());
+    const label = document.querySelector('#themas .label').getBoundingClientRect();
+    const foto = [];
+    for (const i of [...r.querySelectorAll('img')].slice(0, 4)) { i.loading = 'eager'; await i.decode().catch(() => {}); const b = new Image(); b.src = i.currentSrc || i.src; await b.decode().catch(() => {});
+      foto.push([i.getBoundingClientRect().width, i.getBoundingClientRect().height, b.naturalWidth, b.naturalHeight]); }
+    return { scrollt: r.scrollWidth > r.clientWidth, snap: getComputedStyle(r).scrollSnapType, inBeeld: ts.filter(t => t.left >= -1 && t.right <= innerWidth + 1).length,
+      eerste: ts[0].left, label: label.left, vierde: Math.max(0, Math.min(innerWidth, ts[3].right) - ts[3].left), foto }; });
+  expect(m.scrollt).toBe(true);
+  expect(m.snap).toMatch(/x mandatory/);
+  const smal = ['mobiel', 'iphone'].includes(info.project.name); // beide 390 px breed: één thema per keer
+  expect(m.inBeeld, 'één set in beeld').toBe(smal ? 1 : 3);
+  // ontwerpgate ronde 3: binnen de rand (eerste thema onder het label) en een stukje van de volgende set in beeld
+  expect(Math.abs(m.eerste - m.label), 'eerste thema begint onder het label').toBeLessThanOrEqual(1);
+  expect(m.vierde, 'zichtbaar deel van het vierde thema (signaal dat er meer is)').toBeGreaterThanOrEqual(smal ? 0 : 40);
+  // de foto's worden nooit groter getoond dan het gekozen bestand (echte pixelmaat; met de bijsnede van 2% tegen het donkere randje)
+  for (const [b, h, fb, fh] of m.foto) expect(Math.max(b / fb, h / fh), 'themafoto vergroot').toBeLessThanOrEqual(1.01);
+  await expect(page.locator('#themas a.pijl')).toHaveText(['Vraag je thema aan']);
 });
 
-test('intro speelt bij het eerste bezoek en is binnen 2 s weg (besluit Carst: ca. 1,5 s)', async ({ browser }, info) => {
+test('intro speelt bij het eerste bezoek en is tussen 2,0 en 2,6 s weg (wens Carst 6 nov.: ca. 2,2 s)', async ({ browser }, info) => {
+  test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  // gemeten in de pagina zelf: van het moment dat de intro begint (klasse intro-aan) tot hij weg is,
+  // los van de laadtijd die de testrunner ziet (ronde 5)
+  await page.addInitScript(() => { window.__intro = {}; new MutationObserver(() => { const aan = !!document.documentElement && document.documentElement.classList.contains('intro-aan');
+    if (aan && !window.__intro.start) window.__intro.start = performance.now(); if (!aan && window.__intro.start && !window.__intro.eind) window.__intro.eind = performance.now(); })
+    .observe(document, { subtree: true, attributes: true, attributeFilter: ['class'] }); });
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveClass(/intro-aan/);
+  // begin van de zichtbare intro: het begin van de CSS-tijdlijn van het doek (later dan de klasse als de stylesheet traag binnenkomt)
+  const begin = await page.evaluate(() => { const a = document.querySelector('.intro-doek').getAnimations()[0];
+    return a && a.currentTime !== null ? performance.now() - a.currentTime : window.__intro.start; });
+  await expect(page.locator('html')).not.toHaveClass(/intro-aan/, { timeout: 4000 });
+  const duur = await page.evaluate(b => window.__intro.eind - b, begin);
+  expect(duur, 'duur van de intro in ms').toBeGreaterThanOrEqual(2000);
+  expect(duur, 'duur van de intro in ms').toBeLessThanOrEqual(2600);
+  await expect(page.locator('.hero h1')).toBeVisible();
+  await ctx.close();
+});
+
+test('intro: de hero-foto\'s staan onder het doek al zichtbaar, overslaan is binnen 0,6 s klaar', async ({ browser }, info) => {
   test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/intro-aan/);
-  const start = Date.now();
-  await expect(page.locator('html')).not.toHaveClass(/intro-aan/, { timeout: 4000 });
-  expect(Date.now() - start, 'duur van de intro in ms').toBeLessThan(2000);
-  await expect(page.locator('.hero h1')).toBeVisible();
+  const dekking = await page.locator('.hero .tegel').evaluateAll(ts => ts.map(t => getComputedStyle(t).opacity));
+  expect(dekking, 'doorzichtigheid van de tegels tijdens de intro').toEqual(['1', '1', '1', '1', '1', '1']);
+  await page.waitForTimeout(400);
+  // gemeten in de pagina zelf: van de toets tot de intro weg is (zonder de wachttijd van de testrunner)
+  await page.evaluate(() => { window.__weg = null; addEventListener('keydown', () => { window.__toets = performance.now(); }, { capture: true, once: true });
+    new MutationObserver((m, o) => { if (!document.documentElement.classList.contains('intro-aan')) { window.__weg = performance.now(); o.disconnect(); } }).observe(document.documentElement, { attributes: true }); });
+  await page.keyboard.press('Shift');
+  await expect(page.locator('html')).not.toHaveClass(/intro-aan/, { timeout: 2000 });
+  const duur = await page.evaluate(() => window.__weg - window.__toets);
+  expect(duur, 'overslaan duurt in ms').toBeLessThanOrEqual(600);
+  await ctx.close();
+});
+
+test('intro: zonder main.js haalt de noodrem hem vóór 3,1 s weg', async ({ browser }, info) => {
+  test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await page.route('**/assets/js/main.js', r => r.abort());
+  await page.goto('/');
+  // tijd vanaf het begin van de navigatie (performance.now) tot de intro onzichtbaar of weg is
+  const weg = await page.waitForFunction(() => { const i = document.querySelector('.intro-scherm'), c = getComputedStyle(i);
+    return (c.display === 'none' || c.visibility === 'hidden' || c.opacity === '0') ? performance.now() : false; }, null, { timeout: 4000, polling: 20 });
+  expect(await weg.jsonValue(), 'intro weg na ms').toBeLessThan(3100);
   await ctx.close();
 });

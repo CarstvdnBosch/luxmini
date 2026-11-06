@@ -17,7 +17,9 @@
 <link rel="icon" href="assets/img/logo-luxmini.png">
 <link rel="preload" href="assets/fonts/libre-caslon-display-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
-<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;if(s.getItem('lux-intro-gezien')!=='1'&&s.getItem('lux-overgang')!=='1'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan')},2500)})(document)</script>
+<!-- LCP (ronde 7): de statementfoto alleen op desktop met voorrang; op mobiel laadt hij lazy, zodat hij de lettertypes van de kop niet ophoudt -->
+<link rel="preload" as="image" href="assets/img/box-hero-wide.jpg" imagesrcset="assets/img/box-hero-wide-800.jpg 800w, assets/img/box-hero-wide.jpg 1800w" imagesizes="100vw" media="(min-width: 1025px)" fetchpriority="high">
+<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;var o=s.getItem('lux-overgang'),r=matchMedia('(prefers-reduced-motion: reduce)').matches;if(/^#[0-9a-f]{6}$/i.test(o||'')&&!r){h.classList.add('overgang-binnen');h.style.setProperty('--overgang-kleur',o)}else if(s.getItem('lux-intro-gezien')!=='1'&&!r){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan','overgang-binnen')},Math.max(0,3000-(window.performance&&performance.now?performance.now():0)))})(document)</script>
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -37,8 +39,10 @@
 <div class="overgang" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"><span class="cursor-label"></span></div>
 <button class="burger" type="button" aria-expanded="false" aria-controls="menu-scherm" aria-label="Menu openen"><span></span><span></span><span></span></button>
+<!-- Met een muis: de zes links naast de burger bij aanwijzen of focus (brief 2026-11-06, B); een klik op de burger opent het menu over het hele scherm -->
+<nav class="menu-rij" aria-label="Snelmenu"><a href="werkwijze.html">Werkwijze</a><a href="kraamcadeauboxen.html" aria-current="page">Kraamcadeauboxen</a><a href="prematuurkleding.html">Prematuurkleding</a><a href="babynest.html">Babynest</a><a href="inspiratie.html">Inspiratie</a><a href="contact.html">Contact</a></nav>
 <div id="menu-scherm" class="menu-scherm" role="dialog" aria-label="Menu" hidden>
-  <img class="menu-foto" src="assets/img/home-atelier-wide.jpg" alt="" loading="lazy">
+  <img class="menu-foto" data-src="assets/img/home-atelier-wide.jpg" alt="">
   <div class="wrap menu-binnen">
     <nav class="menu-nav" aria-label="Menu">
       <ul>
@@ -119,7 +123,7 @@
 
 <!-- Statement -->
 <section class="statement donker op-kleur" data-label="<span>—</span> Met naam">
-  <img src="assets/img/box-hero-wide.jpg" srcset="assets/img/box-hero-wide-800.jpg 800w, assets/img/box-hero-wide.jpg 1800w" sizes="100vw" width="1800" height="1013" fetchpriority="high" alt="Geopende kraamcadeaubox met naam Sem, mintgroen vloeipapier en een knuffel" style="object-position: 85% 50%">
+  <img src="assets/img/box-hero-wide.jpg" srcset="assets/img/box-hero-wide-800.jpg 800w, assets/img/box-hero-wide.jpg 1800w" sizes="(max-width: 1024px) 1100px, 100vw" width="1800" height="1013" loading="lazy" decoding="async" alt="Geopende kraamcadeaubox met naam Sem, mintgroen vloeipapier en een knuffel" style="object-position: 85% 50%">
   <div class="wrap">
     <div class="inhoud">
       <p class="quote">Met naam en geboortedatum, op de producten en zelfs op de doos.</p>
@@ -128,10 +132,8 @@
   </div>
 </section>
 
-
-
-<!-- 002 Formaten -->
-<section id="formaten" class="op-wit" data-label="<span>001 —</span> Kies je formaat">
+<!-- 001 Formaten: vier prijskaarten op salie (feedback Carst 6 nov. 14:28, F4: andere lichte achtergrond, nooit terracotta) -->
+<section id="formaten" class="op-wit" data-achtergrond="#C3CFBC" data-label="<span>001 —</span> Kies je formaat">
   <div class="wrap sectie">
     <p class="label"><span>001 —</span> Kies je formaat</p>
     <!-- LET OP: wacht op akkoord Carien (korte regels onder de prijs: "Met een sjaaltje erbij", "De complete box") -->
@@ -143,7 +145,7 @@
           <h3 class="formaat-prijs">€&nbsp;35</h3>
           <p class="formaat-aantal">3 producten</p>
           <p class="formaat-regel">Knuffel, swaddle en broekje</p>
-          <a class="pijl" href="contact.html#formulier" aria-label="Stel deze box samen (€ 35)"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stel deze box samen</a>
+          <a class="pijl" href="contact.html?onderwerp=kraamcadeaubox&amp;formaat=35#formulier" aria-label="Stel deze box samen (€ 35)"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stel deze box samen</a>
           <p class="formaat-kop">In deze box:</p>
           <ul class="formaat-lijst" role="list"><li><svg class="vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>Knuffel</li><li><svg class="vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>Swaddle</li><li><svg class="vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>Broekje</li></ul>
         </li>
@@ -152,7 +154,7 @@
           <h3 class="formaat-prijs">€&nbsp;50</h3>
           <p class="formaat-aantal">4 producten</p>
           <p class="formaat-regel">Met een sjaaltje erbij</p>
-          <a class="pijl" href="contact.html#formulier" aria-label="Stel deze box samen (€ 50)"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stel deze box samen</a>
+          <a class="pijl" href="contact.html?onderwerp=kraamcadeaubox&amp;formaat=50#formulier" aria-label="Stel deze box samen (€ 50)"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stel deze box samen</a>
           <p class="formaat-kop">Alles uit de box van €&nbsp;35, plus:</p>
           <ul class="formaat-lijst" role="list"><li><svg class="vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>Sjaaltje</li></ul>
         </li>
@@ -161,7 +163,7 @@
           <h3 class="formaat-prijs">€&nbsp;65</h3>
           <p class="formaat-aantal">6 producten</p>
           <p class="formaat-regel">Met shirtje en douchehandschoen</p>
-          <a class="pijl" href="contact.html#formulier" aria-label="Stel deze box samen (€ 65)"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stel deze box samen</a>
+          <a class="pijl" href="contact.html?onderwerp=kraamcadeaubox&amp;formaat=65#formulier" aria-label="Stel deze box samen (€ 65)"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stel deze box samen</a>
           <p class="formaat-kop">Alles uit de box van €&nbsp;50, plus:</p>
           <ul class="formaat-lijst" role="list"><li><svg class="vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>Shirtje</li><li><svg class="vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>Douchehandschoen</li></ul>
         </li>
@@ -170,7 +172,7 @@
           <h3 class="formaat-prijs">€&nbsp;80</h3>
           <p class="formaat-aantal">7 producten</p>
           <p class="formaat-regel">De complete box</p>
-          <a class="pijl" href="contact.html#formulier" aria-label="Stel deze box samen (€ 80)"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stel deze box samen</a>
+          <a class="pijl" href="contact.html?onderwerp=kraamcadeaubox&amp;formaat=80#formulier" aria-label="Stel deze box samen (€ 80)"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stel deze box samen</a>
           <p class="formaat-kop">Alles uit de box van €&nbsp;65, plus:</p>
           <ul class="formaat-lijst" role="list"><li><svg class="vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>Bijtring</li></ul>
         </li>
@@ -180,32 +182,75 @@
   </div>
 </section>
 
-<!-- 002 Thema's: compact raster (wens Carst 5 nov.: minder scrollen) -->
-<section id="themas" class="op-wit themas" data-label="<span>002 —</span> Thema's">
+<!-- 002 Wat er in de box kan: de zeven producten en daaronder de stoffen (F4: samengevoegd in één sectie) -->
+<section id="in-de-box" class="op-wit" data-label="<span>002 —</span> Wat er in de box kan">
   <div class="wrap sectie">
-    <p class="label"><span>002 —</span> Thema's</p>
-    <ul class="themaraster" role="list">
-      <li class="themakaart"><figure><img src="assets/img/box-giraf.jpg" srcset="assets/img/box-giraf-600.jpg 600w, assets/img/box-giraf.jpg 1100w" sizes="(max-width: 1024px) 46vw, 380px" width="1100" height="825" alt="Kraamcadeaubox thema Giraf" loading="lazy" decoding="async"><figcaption>Giraf</figcaption></figure></li>
-      <li class="themakaart"><figure><img src="assets/img/box-vos.jpg" srcset="assets/img/box-vos-600.jpg 600w, assets/img/box-vos.jpg 1100w" sizes="(max-width: 1024px) 46vw, 380px" width="1100" height="825" alt="Kraamcadeaubox thema Vos" loading="lazy" decoding="async"><figcaption>Vos</figcaption></figure></li>
-      <li class="themakaart"><figure><img src="assets/img/box-tulp.jpg" srcset="assets/img/box-tulp-600.jpg 600w, assets/img/box-tulp.jpg 1100w" sizes="(max-width: 1024px) 46vw, 380px" width="1100" height="825" alt="Kraamcadeaubox thema Tulp" loading="lazy" decoding="async"><figcaption>Tulp</figcaption></figure></li>
-      <li class="themakaart"><figure><img src="assets/img/box-walvis.jpg" srcset="assets/img/box-walvis-600.jpg 600w, assets/img/box-walvis.jpg 1100w" sizes="(max-width: 1024px) 46vw, 380px" width="1100" height="825" alt="Kraamcadeaubox thema Walvis" loading="lazy" decoding="async"><figcaption>Walvis</figcaption></figure></li>
-      <li class="themakaart"><figure><img src="assets/img/box-wilde-blaadjes.jpg" srcset="assets/img/box-wilde-blaadjes-600.jpg 600w, assets/img/box-wilde-blaadjes.jpg 1100w" sizes="(max-width: 1024px) 46vw, 380px" width="1100" height="825" alt="Kraamcadeaubox thema Wilde blaadjes" loading="lazy" decoding="async"><figcaption>Wilde blaadjes</figcaption></figure></li>
-      <li class="themakaart"><figure><img src="assets/img/box-framboos.jpg" srcset="assets/img/box-framboos-600.jpg 600w, assets/img/box-framboos.jpg 1100w" sizes="(max-width: 1024px) 46vw, 380px" width="1100" height="825" alt="Kraamcadeaubox thema Framboos" loading="lazy" decoding="async"><figcaption>Framboos</figcaption></figure></li>
-      <li class="themakaart"><figure><img src="assets/img/box-regenboog.jpg" srcset="assets/img/box-regenboog-600.jpg 600w, assets/img/box-regenboog.jpg 1100w" sizes="(max-width: 1024px) 46vw, 380px" width="1100" height="825" alt="Kraamcadeaubox thema Regenboog" loading="lazy" decoding="async"><figcaption>Regenboog</figcaption></figure></li>
-      <li class="themakaart"><figure><img src="assets/img/box-wilgentakjes.jpg" srcset="assets/img/box-wilgentakjes-600.jpg 600w, assets/img/box-wilgentakjes.jpg 1100w" sizes="(max-width: 1024px) 46vw, 380px" width="1100" height="825" alt="Kraamcadeaubox thema Wilgentakjes" loading="lazy" decoding="async"><figcaption>Wilgentakjes</figcaption></figure></li>
-      <li class="themakaart"><figure><img src="assets/img/box-blaadjes-en-bloemen.jpg" srcset="assets/img/box-blaadjes-en-bloemen-600.jpg 600w, assets/img/box-blaadjes-en-bloemen.jpg 1100w" sizes="(max-width: 1024px) 46vw, 380px" width="1100" height="825" alt="Kraamcadeaubox thema Blaadjes en bloemen" loading="lazy" decoding="async"><figcaption>Blaadjes en bloemen</figcaption></figure></li>
-    </ul>
-    <div class="themas-onder">
-      <p class="klein">Een eigen stof of kleur is altijd bespreekbaar.</p>
-      <a class="pijl" href="contact.html#formulier"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Vraag je thema aan</a>
+    <p class="label"><span>002 —</span> Wat er in de box kan</p>
+    <h2 class="sr-only">Wat er in de box kan</h2>
+    <div class="in-de-box">
+      <ul class="producten" role="list" aria-label="Wat er in de box kan" data-scrollrij>
+        <li class="product"><img fetchpriority="low" data-src="assets/img/p-knuffel-naam-600.jpg" data-srcset="assets/img/p-knuffel-naam-600.jpg 600w, assets/img/p-knuffel-naam.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Crème knuffeldoekje in de vorm van een konijn, met de naam Sem geborduurd" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/p-knuffel-naam-600.jpg" srcset="assets/img/p-knuffel-naam-600.jpg 600w, assets/img/p-knuffel-naam.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Crème knuffeldoekje in de vorm van een konijn, met de naam Sem geborduurd" loading="lazy" decoding="async"></noscript><p class="product-naam">Knuffel</p><p class="product-regel">vanaf €&nbsp;35</p></li>
+        <li class="product"><img fetchpriority="low" data-src="assets/img/p-swaddle-open-kleur-600.jpg" data-srcset="assets/img/p-swaddle-open-kleur-600.jpg 600w, assets/img/p-swaddle-open-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Opgerolde swaddle met een print van vosjes en egeltjes en een crème lint" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/p-swaddle-open-kleur-600.jpg" srcset="assets/img/p-swaddle-open-kleur-600.jpg 600w, assets/img/p-swaddle-open-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Opgerolde swaddle met een print van vosjes en egeltjes en een crème lint" loading="lazy" decoding="async"></noscript><p class="product-naam">Swaddle</p><p class="product-regel">vanaf €&nbsp;35</p></li>
+        <li class="product"><img fetchpriority="low" data-src="assets/img/p-broekje-kleur-600.jpg" data-srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Wit broekje met brede boord en een print van kleine bruine regenbogen" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/p-broekje-kleur-600.jpg" srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Wit broekje met brede boord en een print van kleine bruine regenbogen" loading="lazy" decoding="async"></noscript><p class="product-naam">Broekje</p><p class="product-regel">vanaf €&nbsp;35</p></li>
+        <li class="product"><img fetchpriority="low" data-src="assets/img/p-sjaaltje-kleur-600.jpg" data-srcset="assets/img/p-sjaaltje-kleur-600.jpg 600w, assets/img/p-sjaaltje-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Sjaaltje met de geborduurde naam Sem" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/p-sjaaltje-kleur-600.jpg" srcset="assets/img/p-sjaaltje-kleur-600.jpg 600w, assets/img/p-sjaaltje-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Sjaaltje met de geborduurde naam Sem" loading="lazy" decoding="async"></noscript><p class="product-naam">Sjaaltje</p><p class="product-regel">vanaf €&nbsp;50</p></li>
+        <li class="product"><img fetchpriority="low" data-src="assets/img/p-shirtje-kleur-600.jpg" data-srcset="assets/img/p-shirtje-kleur-600.jpg 600w, assets/img/p-shirtje-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Roestbruin overslagshirtje met lange mouwen" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/p-shirtje-kleur-600.jpg" srcset="assets/img/p-shirtje-kleur-600.jpg 600w, assets/img/p-shirtje-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Roestbruin overslagshirtje met lange mouwen" loading="lazy" decoding="async"></noscript><p class="product-naam">Shirtje</p><p class="product-regel">vanaf €&nbsp;65</p></li>
+        <!-- LET OP: wacht op akkoord Carien (er is nog geen foto van de douchehandschoen; tot die er is een lijntekening, docs/fotolijst.md opname 20) -->
+        <li class="product"><div class="product-tekening"><svg aria-hidden="true" viewBox="0 0 120 160" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M32 134V56c0-11 8-19 19-19h18c11 0 19 8 19 19v78z"/><path d="M32 116h56"/><path d="M40 125h40" stroke-dasharray="3 4"/><path d="M42 48h36" stroke-dasharray="3 4"/><path d="M74 37c-1-9 3-15 9-15s9 6 7 11c-2 4-6 5-9 4"/></svg></div><p class="product-naam">Douche&shy;handschoen</p><p class="product-regel">vanaf €&nbsp;65</p></li>
+        <li class="product"><img fetchpriority="low" data-src="assets/img/p-bijtring-kleur-600.jpg" data-srcset="assets/img/p-bijtring-kleur-600.jpg 600w, assets/img/p-bijtring-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Bijtring met een linnen zakje met de naam Tobi" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/p-bijtring-kleur-600.jpg" srcset="assets/img/p-bijtring-kleur-600.jpg 600w, assets/img/p-bijtring-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Bijtring met een linnen zakje met de naam Tobi" loading="lazy" decoding="async"></noscript><p class="product-naam">Bijtring</p><p class="product-regel">in de box van €&nbsp;80</p></li>
+      </ul>
+    <h3 class="producten-kop">De stoffen</h3>
+    <div class="stoffen" role="region" aria-label="Stoffen" tabindex="0">
+      <ul role="list">
+        <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-giraf.jpg" width="240" height="240" alt="Stof van het thema Giraf" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-giraf.jpg" width="240" height="240" alt="Stof van het thema Giraf" loading="lazy" decoding="async"></noscript><p class="stof-naam">Giraf</p></li>
+        <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-vos.jpg" width="240" height="240" alt="Stof van het thema Vos" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-vos.jpg" width="240" height="240" alt="Stof van het thema Vos" loading="lazy" decoding="async"></noscript><p class="stof-naam">Vos</p></li>
+        <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-tulp.jpg" width="240" height="240" alt="Stof van het thema Tulp" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-tulp.jpg" width="240" height="240" alt="Stof van het thema Tulp" loading="lazy" decoding="async"></noscript><p class="stof-naam">Tulp</p></li>
+        <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-walvis.jpg" width="240" height="240" alt="Stof van het thema Walvis" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-walvis.jpg" width="240" height="240" alt="Stof van het thema Walvis" loading="lazy" decoding="async"></noscript><p class="stof-naam">Walvis</p></li>
+        <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-wilde-blaadjes.jpg" width="240" height="240" alt="Stof van het thema Wilde blaadjes" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-wilde-blaadjes.jpg" width="240" height="240" alt="Stof van het thema Wilde blaadjes" loading="lazy" decoding="async"></noscript><p class="stof-naam">Wilde blaadjes</p></li>
+        <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-framboos.jpg" width="240" height="240" alt="Stof van het thema Framboos" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-framboos.jpg" width="240" height="240" alt="Stof van het thema Framboos" loading="lazy" decoding="async"></noscript><p class="stof-naam">Framboos</p></li>
+        <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-regenboog.jpg" width="240" height="240" alt="Stof van het thema Regenboog" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-regenboog.jpg" width="240" height="240" alt="Stof van het thema Regenboog" loading="lazy" decoding="async"></noscript><p class="stof-naam">Regenboog</p></li>
+        <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-wilgentakjes.jpg" width="240" height="240" alt="Stof van het thema Wilgentakjes" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-wilgentakjes.jpg" width="240" height="240" alt="Stof van het thema Wilgentakjes" loading="lazy" decoding="async"></noscript><p class="stof-naam">Wilgentakjes</p></li>
+        <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-blaadjes-en-bloemen.jpg" width="240" height="240" alt="Stof van het thema Blaadjes en bloemen" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-blaadjes-en-bloemen.jpg" width="240" height="240" alt="Stof van het thema Blaadjes en bloemen" loading="lazy" decoding="async"></noscript><p class="stof-naam">Blaadjes en bloemen</p></li>
+      </ul>
+    </div>
     </div>
   </div>
 </section>
 
-<!-- 003 Zo werkt het -->
-<section id="werkwijze" class="op-grijs" data-label="<span>003 —</span> Zo werkt het">
+<!-- 003 Thema's: de negen thema's groot, in sets van drie over de breedte van het ontwerpvak; scroll-snap per set,
+     pijlknoppen met een muis, vegen op touch, mobiel één thema per keer (F4). Nooit op terracotta. -->
+<section id="themas" class="op-wit themas" data-achtergrond="#DEB799" data-label="<span>003 —</span> Thema's">
   <div class="wrap sectie">
-    <p class="label"><span>003 —</span> Zo werkt het</p>
+    <p class="label"><span>003 —</span> Thema's</p>
+    <h2 class="sr-only">Thema's</h2>
+    <div id="themacarrousel" class="themacarrousel" role="region" aria-label="Thema's" tabindex="0">
+      <ul role="list">
+        <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-giraf-600.jpg" data-srcset="assets/img/box-giraf-600.jpg 600w, assets/img/box-giraf.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Giraf" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-giraf-600.jpg" srcset="assets/img/box-giraf-600.jpg 600w, assets/img/box-giraf.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Giraf" loading="lazy" decoding="async"></noscript><figcaption>Giraf</figcaption></figure></li>
+        <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-vos-600.jpg" data-srcset="assets/img/box-vos-600.jpg 600w, assets/img/box-vos.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Vos" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-vos-600.jpg" srcset="assets/img/box-vos-600.jpg 600w, assets/img/box-vos.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Vos" loading="lazy" decoding="async"></noscript><figcaption>Vos</figcaption></figure></li>
+        <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-tulp-600.jpg" data-srcset="assets/img/box-tulp-600.jpg 600w, assets/img/box-tulp.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Tulp" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-tulp-600.jpg" srcset="assets/img/box-tulp-600.jpg 600w, assets/img/box-tulp.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Tulp" loading="lazy" decoding="async"></noscript><figcaption>Tulp</figcaption></figure></li>
+        <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-walvis-600.jpg" data-srcset="assets/img/box-walvis-600.jpg 600w, assets/img/box-walvis.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Walvis" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-walvis-600.jpg" srcset="assets/img/box-walvis-600.jpg 600w, assets/img/box-walvis.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Walvis" loading="lazy" decoding="async"></noscript><figcaption>Walvis</figcaption></figure></li>
+        <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-wilde-blaadjes-600.jpg" data-srcset="assets/img/box-wilde-blaadjes-600.jpg 600w, assets/img/box-wilde-blaadjes.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Wilde blaadjes" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-wilde-blaadjes-600.jpg" srcset="assets/img/box-wilde-blaadjes-600.jpg 600w, assets/img/box-wilde-blaadjes.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Wilde blaadjes" loading="lazy" decoding="async"></noscript><figcaption>Wilde blaadjes</figcaption></figure></li>
+        <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-framboos-600.jpg" data-srcset="assets/img/box-framboos-600.jpg 600w, assets/img/box-framboos.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Framboos" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-framboos-600.jpg" srcset="assets/img/box-framboos-600.jpg 600w, assets/img/box-framboos.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Framboos" loading="lazy" decoding="async"></noscript><figcaption>Framboos</figcaption></figure></li>
+        <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-regenboog-600.jpg" data-srcset="assets/img/box-regenboog-600.jpg 600w, assets/img/box-regenboog.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Regenboog" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-regenboog-600.jpg" srcset="assets/img/box-regenboog-600.jpg 600w, assets/img/box-regenboog.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Regenboog" loading="lazy" decoding="async"></noscript><figcaption>Regenboog</figcaption></figure></li>
+        <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-wilgentakjes-600.jpg" data-srcset="assets/img/box-wilgentakjes-600.jpg 600w, assets/img/box-wilgentakjes.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Wilgentakjes" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-wilgentakjes-600.jpg" srcset="assets/img/box-wilgentakjes-600.jpg 600w, assets/img/box-wilgentakjes.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Wilgentakjes" loading="lazy" decoding="async"></noscript><figcaption>Wilgentakjes</figcaption></figure></li>
+        <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-blaadjes-en-bloemen-600.jpg" data-srcset="assets/img/box-blaadjes-en-bloemen-600.jpg 600w, assets/img/box-blaadjes-en-bloemen.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Blaadjes en bloemen" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-blaadjes-en-bloemen-600.jpg" srcset="assets/img/box-blaadjes-en-bloemen-600.jpg 600w, assets/img/box-blaadjes-en-bloemen.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Blaadjes en bloemen" loading="lazy" decoding="async"></noscript><figcaption>Blaadjes en bloemen</figcaption></figure></li>
+      </ul>
+    </div>
+    <div class="themas-onder">
+      <div class="carrousel-knoppen">
+        <button type="button" class="carrousel-knop" data-richting="-1" aria-label="Vorige thema's" aria-controls="themacarrousel"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M28 5H2M6 1L2 5l4 4"/></svg></button>
+        <button type="button" class="carrousel-knop" data-richting="1" aria-label="Volgende thema's" aria-controls="themacarrousel"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg></button>
+      </div>
+      <p class="klein">Een eigen stof of kleur is altijd bespreekbaar.</p>
+      <a class="pijl" href="contact.html?onderwerp=kraamcadeaubox#formulier"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Vraag je thema aan</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- 004 Zo werkt het -->
+<section id="werkwijze" class="op-grijs" data-label="<span>004 —</span> Zo werkt het">
+  <div class="wrap sectie">
+    <p class="label"><span>004 —</span> Zo werkt het</p>
     <ol class="stappen" role="list">
       <li class="stap">
         <span class="stap-nr" aria-hidden="true">01</span>
@@ -226,16 +271,16 @@
   </div>
 </section>
 
-<!-- 004 Contact: gedeeld contactblok; het formulier staat op contact.html -->
-<section id="contact" class="op-kleur" data-label="<span>004 —</span> Contact">
+<!-- 005 Contact: gedeeld contactblok; het formulier staat op contact.html -->
+<section id="contact" class="op-kleur" data-label="<span>005 —</span> Contact">
   <div class="wrap sectie contact-sectie">
-    <p class="label"><span>004 —</span> Contact</p>
+    <p class="label"><span>005 —</span> Contact</p>
     <div class="contact-rij">
       <div class="contact-tekst">
         <h2 class="kop-l">Een box<br>samenstellen?</h2>
         <div class="contact-lijst">
           <!-- alle contactmomenten leiden naar het formulier op de contactpagina (wens Carst 5 nov.) -->
-          <a class="pijl" href="contact.html#formulier"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stuur Carien een bericht</a>
+          <a class="pijl" href="contact.html?onderwerp=kraamcadeaubox#formulier"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stuur Carien een bericht</a>
         </div>
       </div>
       <img class="contact-foto" src="assets/img/maatwerk-handwerk.jpg" alt="De handen van Carien bij de naaimachine, met het LUX-label in de stof" style="object-position: 60% 50%" loading="lazy">

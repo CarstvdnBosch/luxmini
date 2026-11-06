@@ -29,6 +29,7 @@ for poging in 1 2 3; do  # even geduld na het uitrollen
 done
 
 check "Homepage"              200 "$BASIS/"                  "Samen"
+check "Homepage drieluik"     200 "$BASIS/"                  'id="producten"'
 check "Werkwijze"             200 "$BASIS/werkwijze"         "Werkwijze</h1>"
 check "Kraamcadeauboxen"      200 "$BASIS/kraamcadeauboxen"  "Kies je formaat"
 check "Prematuurkleding"      200 "$BASIS/prematuurkleding"  "Prematuurkleding</h1>"

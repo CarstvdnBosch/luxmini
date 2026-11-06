@@ -36,6 +36,7 @@ De huidige productfoto's zijn bruikbaar, maar het zijn vooral studiofoto's op ee
 14. De dichte box met naam op linnen, en dezelfde box half open
 15. Per thema een **staande** foto van de open box (de huidige zijn liggend en grijs)
 16. Stofstalen van alle thema's naast elkaar, van bovenaf
+20. **Douchehandschoen** — los, staand (3 : 4), op een lichte achtergrond zoals de andere productfoto's (`p-*-kleur.jpg`); liefst met naam. Op Kraamcadeauboxen ("Wat er in de box kan") staat tot dan een lijntekening (brief 2026-11-06).
 
 ### Over Carien
 17. Portret van Carien aan het werk, met daglicht op het gezicht
@@ -60,3 +61,4 @@ Het logo is nu een PNG van 248 px breed. Daardoor kan het in de intro niet grote
 
 ## Tijdelijke foto's
 - **Belettering** in Personaliseren toont tijdelijk `hero-box-dicht.jpg` (de doos met naam), tot er een foto van belettering op kleding is (opname 8).
+- **Douchehandschoen** op Kraamcadeauboxen: een lijntekening op grijsblauw, tot er een foto is (opname 20). Geen nepfoto.

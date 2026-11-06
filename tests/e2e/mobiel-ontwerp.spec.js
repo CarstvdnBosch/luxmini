@@ -46,7 +46,8 @@ for (const { pad, naam } of [...PAGINAS, { pad: '/bestaat-niet-meer', naam: '404
       uit.vergroot = [...document.querySelectorAll('main img')].filter(zichtbaar).filter(i => i.complete && i.naturalWidth && i.getBoundingClientRect().width > i.naturalWidth + 1)
         .map(i => `${i.getAttribute('src')} (${Math.round(i.getBoundingClientRect().width)} > ${i.naturalWidth})`);
       // 7. contact binnen één tik: een link naar het formulier (of je staat op de contactpagina)
-      uit.contact = !!document.querySelector('main a[href$="contact.html#formulier"], main a[href$="/contact#formulier"], main form[action="/api/contact"]');
+      // (brief 2026-11-06: ook met ?onderwerp=…, zodat het formulier vooraf is ingevuld)
+      uit.contact = [...document.querySelectorAll('main a[href]')].some(a => /^(contact\.html|\/contact)(\?[^#]*)?#formulier$/.test(a.getAttribute('href'))) || !!document.querySelector('main form[action="/api/contact"]');
       // 8. regellengte: op 390 px van nature kort; vangnet tegen te brede tekstblokken (ontwerpgate beoordeelt regel 8)
       uit.langeRegels = [...document.querySelectorAll('main p')].filter(zichtbaar).filter(p => { const fs = parseFloat(getComputedStyle(p).fontSize); return p.textContent.trim().length > 80 && p.getBoundingClientRect().width / (fs * 0.5) > 80; }).map(naam);
       return uit;
@@ -58,6 +59,18 @@ for (const { pad, naam } of [...PAGINAS, { pad: '/bestaat-niet-meer', naam: '404
     expect(m.zoomGeblokkeerd, 'inzoomen is geblokkeerd in de viewport-meta').toBe(false);
     expect(m.buitenScherm, 'elementen die buiten het scherm steken').toEqual([]);
     expect(m.vergroot, 'foto’s groter getoond dan het bestand').toEqual([]);
+    // 6b. foto's als achtergrond over de volle breedte (object-fit: cover, statement en 003 Inspiratie): de uitsnede is niet
+    //     groter dan het gekozen bestand (srcset/sizes), gemeten met de echte pixelmaat van het bestand (ontwerpgate ronde 1)
+    const cover = await page.evaluate(async () => {
+      const uit = [];
+      for (const i of document.querySelectorAll('main .statement > img')) {
+        if (!i.complete || !i.currentSrc) { i.loading = 'eager'; await i.decode().catch(() => {}); }
+        const bron = new Image(); bron.src = i.currentSrc || i.src; await bron.decode().catch(() => {});
+        const r = i.getBoundingClientRect(), schaal = Math.max(r.width / bron.naturalWidth, r.height / bron.naturalHeight);
+        if (bron.naturalWidth && schaal > 1.01) uit.push(`${(i.currentSrc || '').split('/').pop()} ${schaal.toFixed(2)}×`);
+      }
+      return uit; });
+    expect(cover, 'achtergrondfoto’s (cover) groter getoond dan het bestand').toEqual([]);
     // uitzondering (principes.md, regel 7): de bedankpagina, die je pas ziet nádat je het formulier verstuurde
     if (naam !== 'bedankt') expect(m.contact, 'geen link naar het contactformulier op deze pagina').toBe(true);
     expect(m.langeRegels, 'regels langer dan ca. 75 tekens').toEqual([]);

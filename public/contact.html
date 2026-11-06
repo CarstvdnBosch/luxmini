@@ -17,7 +17,7 @@
 <link rel="icon" href="assets/img/logo-luxmini.png">
 <link rel="preload" href="assets/fonts/libre-caslon-display-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
-<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;if(s.getItem('lux-intro-gezien')!=='1'&&s.getItem('lux-overgang')!=='1'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan')},2500)})(document)</script>
+<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;var o=s.getItem('lux-overgang'),r=matchMedia('(prefers-reduced-motion: reduce)').matches;if(/^#[0-9a-f]{6}$/i.test(o||'')&&!r){h.classList.add('overgang-binnen');h.style.setProperty('--overgang-kleur',o)}else if(s.getItem('lux-intro-gezien')!=='1'&&!r){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan','overgang-binnen')},Math.max(0,3000-(window.performance&&performance.now?performance.now():0)))})(document)</script>
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -37,8 +37,10 @@
 <div class="overgang" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"><span class="cursor-label"></span></div>
 <button class="burger" type="button" aria-expanded="false" aria-controls="menu-scherm" aria-label="Menu openen"><span></span><span></span><span></span></button>
+<!-- Met een muis: de zes links naast de burger bij aanwijzen of focus (brief 2026-11-06, B); een klik op de burger opent het menu over het hele scherm -->
+<nav class="menu-rij" aria-label="Snelmenu"><a href="werkwijze.html">Werkwijze</a><a href="kraamcadeauboxen.html">Kraamcadeauboxen</a><a href="prematuurkleding.html">Prematuurkleding</a><a href="babynest.html">Babynest</a><a href="inspiratie.html">Inspiratie</a><a href="contact.html" aria-current="page">Contact</a></nav>
 <div id="menu-scherm" class="menu-scherm" role="dialog" aria-label="Menu" hidden>
-  <img class="menu-foto" src="assets/img/home-atelier-wide.jpg" alt="" loading="lazy">
+  <img class="menu-foto" data-src="assets/img/home-atelier-wide.jpg" alt="">
   <div class="wrap menu-binnen">
     <nav class="menu-nav" aria-label="Menu">
       <ul>
@@ -149,26 +151,73 @@
   </div>
 </section>
 
-<!-- 002 Stuur een bericht: het formulier (ongewijzigd, op terracotta zodat de velden goed zichtbaar zijn) -->
+<!-- 002 Stuur een bericht: het formulier (op terracotta zodat de velden goed zichtbaar zijn); vooraf ingevuld via ?onderwerp=…&formaat=…&thema=… -->
 <section id="formulier" class="op-kleur formulier-sectie" data-label="<span>002 —</span> Stuur een bericht">
   <div class="wrap sectie contact-sectie">
     <p class="label"><span>002 —</span> Stuur een bericht</p>
     <div class="contact-formulier">
       <!-- LET OP: wacht op akkoord Carien -->
       <p class="klein contact-inleiding">Liever schrijven? Laat hier een bericht achter, Carien reageert persoonlijk.</p>
+      <!-- Eerst het onderwerp, dan alleen de vragen die erbij horen (brief 2026-11-06). Zonder JavaScript via CSS :has;
+           zonder :has staan alle groepen er, elk met "Alleen bij …". Alle extra velden zijn optioneel. -->
       <form class="formulier" action="/api/contact" method="post">
-        <label>Naam<input type="text" name="naam" autocomplete="name" required></label>
-        <label>Telefoon (optioneel)<input type="tel" name="telefoon" autocomplete="tel"></label>
-        <label class="breed">E-mailadres<input type="email" name="email" autocomplete="email" required></label>
         <label class="breed">Waar gaat je vraag over?
           <select name="onderwerp">
-            <option>Iets op maat laten maken</option>
-            <option>Prematuurkleding</option>
-            <option>Kraamcadeaubox</option>
-            <option>Iets anders</option>
+            <option value="Kraamcadeaubox">Kraamcadeaubox</option>
+            <option value="Prematuurkleding">Prematuurkleding</option>
+            <option value="Babynest">Babynest</option>
+            <option value="Iets op maat laten maken">Iets op maat laten maken</option>
+            <option value="Iets anders">Iets anders</option>
           </select>
         </label>
-        <label class="breed">Je idee<textarea name="bericht" rows="5" required placeholder="Bijv. wat je zoekt, naam, stof, maat of uitgerekende datum"></textarea></label>
+        <fieldset class="groep breed" data-groep="Kraamcadeaubox">
+          <legend><span class="groep-alleen">Alleen bij een kraamcadeaubox: </span>Je kraamcadeaubox <span class="groep-optioneel">(optioneel)</span></legend>
+          <fieldset class="keuzes">
+            <legend>Formaat</legend>
+            <div class="keuze-kaarten">
+            <label class="keuze-kaart"><input type="radio" name="box_formaat" value="35"><span class="keuze-rand" aria-hidden="true"></span><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span class="keuze-prijs">€&nbsp;35</span><span class="keuze-regel">Knuffel, swaddle en broekje</span></label>
+            <label class="keuze-kaart"><input type="radio" name="box_formaat" value="50"><span class="keuze-rand" aria-hidden="true"></span><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span class="keuze-prijs">€&nbsp;50</span><span class="keuze-regel">Met een sjaaltje erbij</span></label>
+            <label class="keuze-kaart"><input type="radio" name="box_formaat" value="65"><span class="keuze-rand" aria-hidden="true"></span><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span class="keuze-prijs">€&nbsp;65</span><span class="keuze-regel">Met shirtje en douchehandschoen</span></label>
+            <label class="keuze-kaart"><input type="radio" name="box_formaat" value="80"><span class="keuze-rand" aria-hidden="true"></span><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span class="keuze-prijs">€&nbsp;80</span><span class="keuze-regel">De complete box</span></label>
+            </div>
+          </fieldset>
+          <label class="breed">Thema
+            <select name="box_thema">
+              <option value="">Nog niet gekozen</option>
+              <option value="Giraf">Giraf</option>
+              <option value="Vos">Vos</option>
+              <option value="Tulp">Tulp</option>
+              <option value="Walvis">Walvis</option>
+              <option value="Wilde blaadjes">Wilde blaadjes</option>
+              <option value="Framboos">Framboos</option>
+              <option value="Regenboog">Regenboog</option>
+              <option value="Wilgentakjes">Wilgentakjes</option>
+              <option value="Blaadjes en bloemen">Blaadjes en bloemen</option>
+              <option value="Een eigen stof of kleur">Een eigen stof of kleur</option>
+            </select>
+          </label>
+          <label>Naam op het product<input type="text" name="box_naam" autocomplete="off"></label>
+          <label>Geboortedatum of uitgerekende datum<input type="text" name="box_datum" autocomplete="off"></label>
+          <!-- LET OP: wacht op akkoord Carien (kledingmaat: de maten zijn niet bekend, daarom een vrij tekstveld) -->
+          <label class="breed">Kledingmaat<input type="text" name="box_maat" autocomplete="off"></label>
+        </fieldset>
+        <!-- LET OP: wacht op akkoord Carien (velden voor prematuurkleding: welke vragen wil Carien stellen? Voorlopig maat of gewicht en naam, vrij en optioneel) -->
+        <fieldset class="groep breed" data-groep="Prematuurkleding">
+          <legend><span class="groep-alleen">Alleen bij prematuurkleding: </span>Je prematuurkleding <span class="groep-optioneel">(optioneel)</span></legend>
+          <label>Maat of gewicht van de baby<input type="text" name="prem_maat" autocomplete="off"></label>
+          <label>Naam op het kledingstuk<input type="text" name="prem_naam" autocomplete="off"></label>
+        </fieldset>
+        <!-- LET OP: wacht op akkoord Carien (velden voor het babynest: welke vragen wil Carien stellen? Voorlopig stof of kleur en naam, vrij en optioneel) -->
+        <fieldset class="groep breed" data-groep="Babynest">
+          <legend><span class="groep-alleen">Alleen bij een babynest: </span>Je babynest <span class="groep-optioneel">(optioneel)</span></legend>
+          <label>Stof of kleur<input type="text" name="nest_stof" autocomplete="off"></label>
+          <label>Naam op het babynest<input type="text" name="nest_naam" autocomplete="off"></label>
+        </fieldset>
+        <!-- LET OP: wacht op akkoord Carien (nieuwe voorbeeldtekst in het veld "Je idee") -->
+        <label class="breed">Je idee<textarea name="bericht" rows="5" required placeholder="Vertel kort wat je zoekt en voor wanneer"></textarea></label>
+        <label>Naam<input type="text" name="naam" autocomplete="name" required></label>
+        <label>E-mailadres<input type="email" name="email" autocomplete="email" required></label>
+        <label>Telefoon (optioneel)<input type="tel" name="telefoon" autocomplete="tel"></label>
         <label class="val" aria-hidden="true">Laat dit veld leeg<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
         <p class="melding">Je gegevens gebruiken we alleen om je vraag te beantwoorden. Zie de <a href="privacy.html">privacyverklaring</a>.</p>
         <button class="verstuur" type="submit"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Verstuur bericht</button>

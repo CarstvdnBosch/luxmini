@@ -34,7 +34,7 @@ De meeste bezoekers komen op hun telefoon, vaak met Safari op een iPhone. Daarom
 7. **Contact binnen één tik.** Elke pagina heeft een pijl-link naar het contactformulier. De enige uitzondering is de bedankpagina, die je pas ziet nadat je het formulier hebt verstuurd. In het menu staan WhatsApp, telefoon en mail zonder scrollen in beeld.
 8. **Regels hooguit ca. 75 tekens.**
 9. **De vaste balk bedekt nooit een kop.** Na een ankerlink staat de kop onder de balk.
-10. **Foto boven, tekst eronder.** Elk productblok heeft één duidelijke volgende stap. Een scherm is nooit leeg.
+10. **Foto boven, tekst eronder.** Elk productblok of elke productkolom heeft één duidelijke volgende stap. Een scherm is nooit leeg.
 
 ## Schermen waarop we toetsen
 Desktop 1440 × 900, tablet 768 × 1024, mobiel 390 × 844, en iPhone met Safari (WebKit, 390 × 664, met de balken van Safari). Maak de afdrukken met `python3 scripts/schermafdrukken.py`.
