@@ -16,7 +16,7 @@
 <link rel="icon" href="assets/img/logo-luxmini.png">
 <link rel="preload" href="assets/fonts/libre-caslon-display-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
-<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;if(s.getItem('lux-intro-gezien')!=='1'&&s.getItem('lux-overgang')!=='1'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan')},2500)})(document)</script>
+<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;if(s.getItem('lux-intro-gezien')!=='1'&&s.getItem('lux-overgang')!=='1'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan')},3000)})(document)</script>
 <link rel="stylesheet" href="assets/css/style.css">
 <script type="application/ld+json">
 {
@@ -166,96 +166,107 @@
 
 </section>
 
-<!-- 001-005: de vijf producten om en om (wens Carst 5 nov.: de indeling van het vroegere "Wat ik maak").
-     Oude adressen /producten#… landen hier (ook #prematuur en #kraamcadeaubox via een anker in het blok); lichte paletkleuren met inkt, buren nooit dezelfde kleur, nooit terracotta. -->
-<section id="babykleding" class="op-wit categorie compact" data-achtergrond="#C3CFBC" data-label="<span>001 —</span> Babykleding">
-  <div class="categorie-rij">
-    <p class="label categorie-label"><span>001 —</span> Babykleding</p>
-    <div class="categorie-foto"><img src="assets/img/p-sjaaltje-kleur.jpg" srcset="assets/img/p-sjaaltje-kleur-600.jpg 600w, assets/img/p-sjaaltje-kleur.jpg 900w" sizes="(max-width: 760px) 90vw, 480px" width="900" height="1200" alt="Sjaaltje met de geborduurde naam Sem" decoding="async"></div>
-    <div class="categorie-tekst">
-      <h2 class="kop-cat">Babykleding met naam</h2>
-      <!-- LET OP: wacht op akkoord Carien (producttekst; de linktekst is nieuw) -->
-      <p class="klein">Een naam, geboortedatum of klein figuurtje, geborduurd of als belettering op kleding.</p>
-      <a class="pijl" href="inspiratie.html#kleding"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk babykleding</a>
-    </div>
+<!-- 001 Producten (label goedgekeurd door Carst, 6 nov.): drieluik zoals de kernwaarden van Stock (brief 2026-11-06). In rust drie lichte paletkleuren met inkt;
+     met een muis schuift bij aanwijzen of focus een foto in en wordt de tekst wit. Op touch staat de foto boven de tekst.
+     Oude adressen /producten#kraamcadeaubox, #prematuur en #babynest landen op de kolommen. -->
+<section id="producten" class="op-wit kernwaarden drieluik" data-achtergrond="#DEB799" data-label="<span>001 —</span> Producten">
+  <p class="label kern-label"><span>001 —</span> Producten</p>
+  <div class="kern-kolommen">
+    <section id="kraamcadeauboxen" class="kern-kolom kolom-box">
+      <span id="kraamcadeaubox" class="anker" aria-hidden="true"></span>
+      <div class="kern-beeld"><div class="kern-masker"><img src="assets/img/hero-box-open.jpg" srcset="assets/img/hero-box-open-600.jpg 600w, assets/img/hero-box-open.jpg 1400w" sizes="(max-width: 760px) 90vw, (max-width: 1024px) 34vw, 900px" width="1400" height="1400" alt="Geopende kraamcadeaubox met een zakje met de naam Sem en geboortedatum" loading="lazy" decoding="async"></div></div>
+      <div class="kern-tekst">
+        <span class="nr">01</span>
+        <h2 class="kop-m">Kraam&shy;cadeau&shy;boxen</h2>
+        <!-- LET OP: wacht op akkoord Carien (producttekst; de linktekst is nieuw) -->
+        <p class="klein">Handgemaakte babyproducten in één thema, met naam en geboortedatum. Vanaf € 35.</p>
+        <a class="pijl kolom-link" href="kraamcadeauboxen.html"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk de kraamcadeauboxen</a>
+      </div>
+    </section>
+    <section id="prematuurkleding" class="kern-kolom kolom-prem">
+      <span id="prematuur" class="anker" aria-hidden="true"></span>
+      <!-- LET OP: tijdelijke foto (het broekje) tot er een foto van prematuurkleding is (docs/fotolijst.md, opname 13) -->
+      <div class="kern-beeld"><div class="kern-masker"><img src="assets/img/p-broekje-kleur.jpg" srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="(max-width: 760px) 90vw, (max-width: 1024px) 34vw, 680px" width="900" height="1200" alt="Wit broekje met brede boord en een print van kleine bruine regenbogen" loading="lazy" decoding="async"></div></div>
+      <div class="kern-tekst">
+        <span class="nr">02</span>
+        <h2 class="kop-m">Prematuur&shy;kleding</h2>
+        <!-- LET OP: wacht op akkoord Carien (producttekst; de linktekst is nieuw) -->
+        <p class="klein">Maatwerk in (prematuur)babykleding. Ook prematuurmaten.</p>
+        <a class="pijl kolom-link" href="prematuurkleding.html"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk prematuurkleding</a>
+      </div>
+    </section>
+    <section id="babynest" class="kern-kolom kolom-nest">
+      <div class="kern-tekst">
+        <!-- LET OP: alleen de kleine Instagram-foto (324 px) bestaat; daarom een ingelijste foto boven de tekst in plaats van over de hele kolom (docs/fotolijst.md, opname 11) -->
+        <div class="nest-lijst"><img src="assets/img/ig-babynest.jpg" width="324" height="436" alt="Babynest van bruine teddystof met een lichte binnenkant" loading="lazy" decoding="async"></div>
+        <span class="nr">03</span>
+        <h2 class="kop-m">Babynest</h2>
+        <!-- LET OP: wacht op akkoord Carien (producttekst; de linktekst is nieuw) -->
+        <p class="klein">Een babynest in de stof en kleur die jij kiest.</p>
+        <a class="pijl kolom-link" href="babynest.html"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk het babynest</a>
+      </div>
+    </section>
   </div>
 </section>
 
-<section id="siliconen" class="op-wit categorie compact gespiegeld" data-achtergrond="#B5969E" data-label="<span>002 —</span> Siliconen items">
-  <div class="categorie-rij">
-    <p class="label categorie-label"><span>002 —</span> Siliconen items</p>
-    <div class="categorie-foto"><img src="assets/img/p-bijtring-kleur.jpg" srcset="assets/img/p-bijtring-kleur-600.jpg 600w, assets/img/p-bijtring-kleur.jpg 900w" sizes="(max-width: 760px) 90vw, 480px" width="900" height="1200" alt="Bijtring met een linnen zakje met de naam Tobi" loading="lazy" decoding="async"></div>
-    <div class="categorie-tekst">
-      <h2 class="kop-cat">Siliconen items</h2>
-      <!-- LET OP: wacht op akkoord Carien (producttekst; de linktekst is nieuw) -->
-      <p class="klein">Bijtring, speenkoord, sleutelhanger, Maxi-Cosi-hanger en mobiel, in jouw kleuren en met naam.</p>
-      <a class="pijl" href="inspiratie.html#siliconen"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk siliconen items</a>
-    </div>
-  </div>
-</section>
-
-<section id="babynest" class="op-wit categorie compact" data-achtergrond="#B4B19A" data-label="<span>003 —</span> Babynest">
-  <div class="categorie-rij">
-    <p class="label categorie-label"><span>003 —</span> Babynest</p>
-    <div class="categorie-foto klein-bestand"><img src="assets/img/ig-babynest.jpg" width="324" height="436" alt="Babynest van bruine teddystof met een lichte binnenkant" loading="lazy" decoding="async"></div>
-    <div class="categorie-tekst">
-      <h2 class="kop-cat">Babynest</h2>
-      <!-- LET OP: wacht op akkoord Carien (producttekst; de linktekst is nieuw) -->
-      <p class="klein">Een babynest in de stof en kleur die jij kiest.</p>
-      <a class="pijl" href="babynest.html"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk het babynest</a>
-    </div>
-  </div>
-</section>
-
-<section id="prematuurkleding" class="op-wit categorie compact gespiegeld" data-achtergrond="#DEB799" data-label="<span>004 —</span> Prematuurkleding">
-  <span id="prematuur" class="anker" aria-hidden="true"></span>
-  <div class="categorie-rij">
-    <p class="label categorie-label"><span>004 —</span> Prematuurkleding</p>
-    <!-- LET OP: tijdelijke foto (het broekje) tot er een foto van prematuurkleding is (docs/fotolijst.md, opname 13) -->
-    <div class="categorie-foto"><img src="assets/img/p-broekje-kleur.jpg" srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="(max-width: 760px) 90vw, 480px" width="900" height="1200" alt="Wit broekje met brede boord en een print van kleine bruine regenbogen" loading="lazy" decoding="async"></div>
-    <div class="categorie-tekst">
-      <h2 class="kop-cat">Prematuurkleding</h2>
-      <!-- LET OP: wacht op akkoord Carien (producttekst; de linktekst is nieuw) -->
-      <p class="klein">Maatwerk in (prematuur)babykleding. Ook prematuurmaten.</p>
-      <a class="pijl" href="prematuurkleding.html"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk prematuurkleding</a>
-    </div>
-  </div>
-</section>
-
-<section id="kraamcadeauboxen" class="op-wit categorie compact" data-achtergrond="#C89F67" data-label="<span>005 —</span> Kraamcadeauboxen">
-  <span id="kraamcadeaubox" class="anker" aria-hidden="true"></span>
-  <div class="categorie-rij">
-    <p class="label categorie-label"><span>005 —</span> Kraamcadeauboxen</p>
-    <div class="categorie-foto"><img src="assets/img/hero-box-open.jpg" srcset="assets/img/hero-box-open-600.jpg 600w, assets/img/hero-box-open.jpg 1400w" sizes="(max-width: 760px) 90vw, 480px" width="1400" height="1400" alt="Geopende kraamcadeaubox met een zakje met de naam Sem en geboortedatum" loading="lazy" decoding="async"></div>
-    <div class="categorie-tekst">
-      <h2 class="kop-cat">Kraamcadeaubox</h2>
-      <!-- LET OP: wacht op akkoord Carien (producttekst; de linktekst is nieuw) -->
-      <p class="klein">Handgemaakte babyproducten in één thema, met naam en geboortedatum. Vanaf € 35.</p>
-      <a class="pijl" href="kraamcadeauboxen.html"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk de kraamcadeauboxen</a>
-    </div>
-  </div>
-</section>
-
-<!-- 006 Inspiratie: vier foto's uit Inspiratie (bijschriften van die pagina) en een pijl-link naar de hele pagina -->
-<section id="inspiratie" class="op-wit" data-label="<span>006 —</span> Inspiratie">
+<!-- 002 Technieken: grote namen zoals de projectenlijst van Stock. Met een muis kleurt de laag bij aanwijzen of focus
+     naar de diepe tint (wit haalt daar 3:1, alleen grote tekst), met twee foto's en een productregel.
+     Op touch en zonder JavaScript: veegbare kaarten. Oude adressen /producten#babykleding en #siliconen landen hier. -->
+<section id="technieken" class="op-wit hoverlijst-sectie" data-label="<span>002 —</span> Technieken">
+  <span id="babykleding" class="anker" aria-hidden="true"></span>
+  <span id="siliconen" class="anker" aria-hidden="true"></span>
   <div class="wrap sectie">
-    <p class="label"><span>006 —</span> Inspiratie</p>
-    <h2 class="sr-only">Inspiratie</h2>
-    <ul class="inspiratie-rij" role="list">
-      <li><figure><img src="assets/img/p-knuffel-naam.jpg" srcset="assets/img/p-knuffel-naam-600.jpg 600w, assets/img/p-knuffel-naam.jpg 675w" sizes="(max-width: 760px) 44vw, 300px" width="675" height="900" alt="Crème knuffeldoekje in de vorm van een konijn, met de naam Sem en een datum geborduurd op de oren" loading="lazy" decoding="async"><figcaption>Knuffel met naam</figcaption></figure></li>
-      <li><figure><img src="assets/img/p-shirtje-kleur.jpg" srcset="assets/img/p-shirtje-kleur-600.jpg 600w, assets/img/p-shirtje-kleur.jpg 900w" sizes="(max-width: 760px) 44vw, 300px" width="900" height="1200" alt="Roestbruin overslagshirtje met lange mouwen" loading="lazy" decoding="async"><figcaption>Shirtje roestbruin</figcaption></figure></li>
-      <li><figure><img src="assets/img/p-bijtring-giraf-kleur.jpg" srcset="assets/img/p-bijtring-giraf-kleur-600.jpg 600w, assets/img/p-bijtring-giraf-kleur.jpg 900w" sizes="(max-width: 760px) 44vw, 300px" width="900" height="1200" alt="Bijtring van siliconen kralen in groen, crème en koper, met twee kralen met girafprint en een bruin bijtfiguurtje" loading="lazy" decoding="async"><figcaption>Bijtring giraf</figcaption></figure></li>
-      <li><figure><img src="assets/img/p-swaddle-open-kleur.jpg" srcset="assets/img/p-swaddle-open-kleur-600.jpg 600w, assets/img/p-swaddle-open-kleur.jpg 900w" sizes="(max-width: 760px) 44vw, 300px" width="900" height="1200" alt="Opgerolde swaddle met een print van vosjes en egeltjes en een crème lint" loading="lazy" decoding="async"><figcaption>Swaddle</figcaption></figure></li>
-    </ul>
+    <p class="label"><span>002 —</span> Technieken</p>
+    <h2 class="sr-only">Technieken</h2>
+    <!-- LET OP: wacht op akkoord Carien (namen en productregels; bij "Levendig en persoonlijk" is de techniek Borduren niet bevestigd;
+         de beletteringsfoto's (doos en zakje TOBI) laten geen belettering op kleding zien; Prematuurkleding gebruikt een tijdelijke foto) -->
+    <div class="hoverlijst sferen">
+      <div class="sfeer-beelden" aria-hidden="true">
+        <div class="sfeer" data-i="0"><span class="groot"><img src="assets/img/pers-naam.jpg" sizes="440px" alt="" loading="lazy" decoding="async"></span><span class="klein-beeld"><img src="assets/img/p-bijtring-kleur-600.jpg" srcset="assets/img/p-bijtring-kleur-600.jpg 600w, assets/img/p-bijtring-kleur.jpg 900w" sizes="220px" alt="" loading="lazy" decoding="async"></span><p class="productregel">Belettering</p></div>
+        <div class="sfeer" data-i="1"><span class="groot"><img src="assets/img/p-bijtring-naam-600.jpg" srcset="assets/img/p-bijtring-naam-600.jpg 600w, assets/img/p-bijtring-naam.jpg 675w" sizes="440px" alt="" loading="lazy" decoding="async"></span><span class="klein-beeld"><img src="assets/img/p-bijtring-giraf-kleur-600.jpg" srcset="assets/img/p-bijtring-giraf-kleur-600.jpg 600w, assets/img/p-bijtring-giraf-kleur.jpg 900w" sizes="220px" alt="" loading="lazy" decoding="async"></span><p class="productregel">Siliconen items</p></div>
+        <div class="sfeer" data-i="2"><span class="groot"><img src="assets/img/p-broekje-kleur-600.jpg" srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="440px" alt="" loading="lazy" decoding="async"></span><span class="klein-beeld"><img src="assets/img/p-shirtje-kleur-600.jpg" srcset="assets/img/p-shirtje-kleur-600.jpg 600w, assets/img/p-shirtje-kleur.jpg 900w" sizes="220px" alt="" loading="lazy" decoding="async"></span><p class="productregel">Prematuurkleding</p></div>
+        <div class="sfeer" data-i="3"><span class="groot"><img src="assets/img/p-knuffel-naam-600.jpg" srcset="assets/img/p-knuffel-naam-600.jpg 600w, assets/img/p-knuffel-naam.jpg 675w" sizes="440px" alt="" loading="lazy" decoding="async"></span><span class="klein-beeld"><img src="assets/img/pers-sjaaltje-naam.jpg" sizes="220px" alt="" loading="lazy" decoding="async"></span><p class="productregel">Borduren</p></div>
+      </div>
+      <ul>
+        <li><a href="werkwijze.html#personaliseren" data-kleur="#C88654">Warm en persoonlijk<span class="sr-only">: Belettering</span></a></li>
+        <li><a href="inspiratie.html#siliconen" data-kleur="#839C75">Rustig en functioneel<span class="sr-only">: Siliconen items</span></a></li>
+        <li><a href="prematuurkleding.html" data-kleur="#999575">Specifiek en oog voor detail<span class="sr-only">: Prematuurkleding</span></a></li>
+        <li><a href="inspiratie.html#textiel" data-kleur="#AE8C94">Levendig en persoonlijk<span class="sr-only">: Borduren</span></a></li>
+      </ul>
+    </div>
+    <div class="kaarten sfeer-kaarten" role="region" aria-label="Technieken">
+      <a class="kaart" href="werkwijze.html#personaliseren" style="--kaart-kleur: #C88654"><img src="assets/img/pers-naam.jpg" sizes="320px" alt="" loading="lazy" decoding="async"><span class="kaart-naam">Warm en persoonlijk</span><span class="kaart-regel">Belettering</span></a>
+      <a class="kaart" href="inspiratie.html#siliconen" style="--kaart-kleur: #839C75"><img src="assets/img/p-bijtring-naam-600.jpg" srcset="assets/img/p-bijtring-naam-600.jpg 600w, assets/img/p-bijtring-naam.jpg 675w" sizes="320px" alt="" loading="lazy" decoding="async"><span class="kaart-naam">Rustig en functioneel</span><span class="kaart-regel">Siliconen items</span></a>
+      <a class="kaart" href="prematuurkleding.html" style="--kaart-kleur: #999575"><img src="assets/img/p-broekje-kleur-600.jpg" srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="320px" alt="" loading="lazy" decoding="async"><span class="kaart-naam">Specifiek en oog voor detail</span><span class="kaart-regel">Prematuurkleding</span></a>
+      <a class="kaart" href="inspiratie.html#textiel" style="--kaart-kleur: #AE8C94"><img src="assets/img/p-knuffel-naam-600.jpg" srcset="assets/img/p-knuffel-naam-600.jpg 600w, assets/img/p-knuffel-naam.jpg 675w" sizes="320px" alt="" loading="lazy" decoding="async"><span class="kaart-naam">Levendig en persoonlijk</span><span class="kaart-regel">Borduren</span></a>
+    </div>
     <!-- LET OP: nieuwe linktekst -->
-    <a class="pijl" href="inspiratie.html"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk alle inspiratie</a>
+    <a class="pijl midden" href="werkwijze.html#personaliseren"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Zo personaliseert Carien</a>
   </div>
 </section>
 
-<!-- 007 Instagram: één foto met tekst ernaast (mobiel eronder) -->
-<section class="op-grijs" data-label="<span>007 —</span> Instagram">
+<!-- 003 Inspiratie: één foto over de volle breedte met donkere sluier en een witte kop (de slogan van de oude site, geen quote).
+     #contact (oude links) landt hier, bij de link naar het formulier. -->
+<section id="inspiratie" class="statement donker inspiratie-blok op-kleur" data-label="<span>003 —</span> Inspiratie">
+  <span id="contact" class="anker" aria-hidden="true"></span>
+  <img src="assets/img/box-hero-wide.jpg" srcset="assets/img/box-hero-wide-800.jpg 800w, assets/img/box-hero-wide.jpg 1800w" sizes="100vw" width="1800" height="1013" alt="Geopende kraamcadeaubox met naam Sem, mintgroen vloeipapier en een knuffel" loading="lazy" decoding="async" style="object-position: 85% 50%">
+  <div class="inspiratie-vak">
+    <p class="label"><span>003 —</span> Inspiratie</p>
+    <div class="inhoud">
+      <h2 class="inspiratie-kop">Ieder nieuw leven is bijzonder</h2>
+      <!-- LET OP: nieuwe linkteksten -->
+      <div class="pijl-rij">
+        <a class="pijl" href="inspiratie.html"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk alle inspiratie</a>
+        <a class="pijl" href="contact.html#formulier"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stuur Carien een bericht</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 004 Instagram: één foto met tekst ernaast (mobiel eronder); de homepage eindigt hiermee -->
+<section class="op-grijs" data-label="<span>004 —</span> Instagram">
   <div class="wrap sectie">
-    <p class="label"><span>007 —</span> Instagram</p>
+    <p class="label"><span>004 —</span> Instagram</p>
     <div class="insta-blok">
       <a class="insta-foto" href="https://www.instagram.com/Luxmini2020/"><img src="assets/img/ig-outfit-ladder.jpg" alt="Mauve overslagshirtje met ruches en een flared broekje aan een houten ladder, op Instagram" width="480" height="640" loading="lazy"></a>
       <div class="insta-tekst">
@@ -264,23 +275,6 @@
         <p class="klein">Nieuwe stukjes uit het atelier, zo van de naaimachine.</p>
         <a class="pijl" href="https://www.instagram.com/Luxmini2020/"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>@luxmini2020</a>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- 008 Contact: gedeeld contactblok (tekst en links met een vierkante foto); het formulier staat op contact.html -->
-<section id="contact" class="op-kleur" data-label="<span>008 —</span> Contact">
-  <div class="wrap sectie contact-sectie">
-    <p class="label"><span>008 —</span> Contact</p>
-    <div class="contact-rij">
-      <div class="contact-tekst">
-        <h2 class="kop-l">Zin om samen<br>iets moois<br>te maken?</h2>
-        <div class="contact-lijst">
-          <!-- alle contactmomenten leiden naar het formulier op de contactpagina (wens Carst 5 nov.) -->
-          <a class="pijl" href="contact.html#formulier"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Stuur Carien een bericht</a>
-        </div>
-      </div>
-      <img class="contact-foto" src="assets/img/maatwerk-handwerk.jpg" alt="De handen van Carien bij de naaimachine, met het LUX-label in de stof" style="object-position: 60% 50%" loading="lazy">
     </div>
   </div>
 </section>

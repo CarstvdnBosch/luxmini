@@ -68,7 +68,7 @@
   function heroKlaar() { if (heroEl) heroEl.classList.add('klaar'); document.dispatchEvent(new Event('lux:klaar')); }
 
   // Het script in <head> heeft al besloten of de intro komt (.intro-aan) en
-  // de tijdlijn loopt in CSS (ca. 1,5 s). Hier: hero-kop op ~1,1 s, klaar op ~1,65 s,
+  // de tijdlijn loopt in CSS (ca. 2,2 s, wens Carst 6 nov.). Hier: hero-kop op ~1,55 s, klaar op ~2,2 s,
   // overslaan met tik, klik, toets, scroll of vegen (dan klaar in 0,6 s).
   if (intro && html.classList.contains('intro-aan') && !stil) {
     (function () {
@@ -113,8 +113,8 @@
       var signalen = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'];
       signalen.forEach(function (s) { window.addEventListener(s, overslaan, { capture: true, passive: true }); });
       na(300, function () { if (foto && !(foto.complete && foto.naturalWidth > 0) && figuur) figuur.classList.add('zonder-foto'); });
-      na(1100, heroKlaar);           // woorden van de hero-kop komen op
-      na(1650, opruimen);            // de intro is klaar
+      na(1550, heroKlaar);           // woorden van de hero-kop komen op
+      na(2200, opruimen);            // de intro is klaar
     })();
   } else {
     html.classList.remove('intro-aan');
@@ -200,14 +200,21 @@
     var tegels = hero.querySelectorAll('.tegel');
     var cirkel = hero.querySelector('.hero-cirkel');
     if (muis && !stil) {
+      // Zoals Stock (brief 2026-11-06, A2): links (t1-t3) beweegt tegen de muis in, rechts (t4-t6) met de muis mee.
+      // Factoren 1/20, 1/15 en 1/10 per kant (groot, midden, klein); de kleinste tegel schuift op 1440 x 900
+      // hooguit ca. 37 x 51 px. Kantelen hooguit 4°. In rust (muis weg) staan de foto's recht, zonder transform.
+      var FACTOR = { t2: 1 / 20, t1: 1 / 15, t3: 1 / 10, t4: 1 / 20, t5: 1 / 15, t6: 1 / 10 };
       hero.addEventListener('mousemove', function (e) {
         var r = hero.getBoundingClientRect();
         var x = ((e.clientX - r.left) / r.width) * 2 - 1;
         var y = ((e.clientY - r.top) / r.height) * 2 - 1;
+        var schaal = Math.min(r.width, 1440) / 1440;
         tegels.forEach(function (t) {
-          var d = parseFloat(t.dataset.diepte || '20');
-          // perspectief 1000 px, maximaal ±8° kantelen
-          t.style.transform = 'perspective(1000px) translate3d(' + (-x * d).toFixed(1) + 'px,' + (-y * d).toFixed(1) + 'px,0) rotateX(' + (-y * 8).toFixed(2) + 'deg) rotateY(' + (x * 8).toFixed(2) + 'deg)';
+          var naam = (t.className.match(/\bt\d\b/) || [''])[0];
+          var f = (FACTOR[naam] || 1 / 15) * 10; // 1 voor de kleinste tegel
+          var kant = /t[123]/.test(naam) ? -1 : 1;
+          var dx = kant * x * 37 * f * schaal, dy = kant * y * 51 * f * schaal;
+          t.style.transform = 'perspective(1000px) translate3d(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px,0) rotateX(' + (-y * 4 * kant).toFixed(2) + 'deg) rotateY(' + (x * 4 * kant).toFixed(2) + 'deg)';
         });
         if (cirkel) cirkel.style.translate = (-x * 18).toFixed(1) + 'px ' + (-y * 18).toFixed(1) + 'px';
       });
@@ -273,7 +280,7 @@
   //     tussen items is een crossfade van 0,35 s. Weg, focus uit de lijst of Esc: terug.
   document.querySelectorAll('.hoverlijst.sferen').forEach(function (lijst) {
     var sectie = lijst.closest('.hoverlijst-sectie');
-    var knoppen = Array.prototype.slice.call(lijst.querySelectorAll('ul button'));
+    var knoppen = Array.prototype.slice.call(lijst.querySelectorAll('ul button, ul a')); // knoppen of links (Technieken)
     var sferen = Array.prototype.slice.call(lijst.querySelectorAll('.sfeer'));
     var traagTimer = null;
     function kies(k) {
@@ -298,7 +305,7 @@
     knoppen.forEach(function (k) {
       if (muis) k.addEventListener('mouseenter', function () { kies(k); });
       k.addEventListener('focus', function () { kies(k); });
-      k.addEventListener('click', function () { kies(k); });
+      if (k.tagName === 'BUTTON') k.addEventListener('click', function () { kies(k); });
     });
     lijst.addEventListener('focusout', function (e) {
       if (e.relatedTarget && lijst.contains(e.relatedTarget)) return;
@@ -474,22 +481,19 @@
   });
 
   /* ---------------------------------------------------------------
-     5b. Werkwijze: kolom aanwijzen kleurt de bovenkant en schuift een foto in
+     5b. Homepage 001 Producten (drieluik): aanwijzen en focus regelt CSS (:hover, :focus-within).
+         De foto's liggen in rust buiten hun masker; de browser laadt ze dan niet vanzelf (lazy).
+         Haal ze op zodra het drieluik in de buurt komt, zodat ze klaarstaan bij het aanwijzen.
      --------------------------------------------------------------- */
-  document.querySelectorAll('.kern-kolom').forEach(function (kolom) {
-    var p = kolom.querySelector('.kern-copy p');
-    function maat() { if (p) kolom.style.setProperty('--u', p.offsetHeight + 'px'); }
-    maat();
-    window.addEventListener('resize', maat);
-    function open() { maat(); kolom.classList.add('open'); zetHeroKleur(kolom.dataset.kleur); }
-    function dicht() { kolom.classList.remove('open'); }
-    kolom.setAttribute('tabindex', '0'); // toetsenbord: Tab opent de kolom en toont de uitleg
-    kolom.addEventListener('focus', open);
-    kolom.addEventListener('blur', dicht);
-    if (!muis) return;
-    kolom.addEventListener('mouseenter', open);
-    kolom.addEventListener('mouseleave', dicht);
-  });
+  var drieluik = document.querySelector('.drieluik');
+  if (drieluik && muis && 'IntersectionObserver' in window) {
+    var drieIo = new IntersectionObserver(function (items) {
+      if (!items.some(function (it) { return it.isIntersecting; })) return;
+      drieluik.querySelectorAll('img[loading="lazy"]').forEach(function (i) { i.loading = 'eager'; });
+      drieIo.disconnect();
+    }, { rootMargin: '0px 0px 50% 0px' });
+    drieIo.observe(drieluik);
+  }
   // Binnen de bovenkant blijft de kleur staan zoals bij Stock; wie de bovenkant
   // verlaat, krijgt weer set A en terracotta. Bij focus alleen als de focus
   // echt naar iets buiten de bovenkant gaat (een tik op een lege plek of op

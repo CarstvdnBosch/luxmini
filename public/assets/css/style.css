@@ -342,18 +342,17 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
    Interacties naar het voorbeeld van stockdutchdesign.com
    ===================================================================== */
 
-/* ---------- Intro-scherm (eerste bezoek per sessie, ca. 3,05 s) ----------
+/* ---------- Intro-scherm (eerste bezoek per sessie, ca. 2,2 s) ----------
    Het script in <head> zet .intro-aan alleen bij het eerste bezoek per sessie,
    niet na een pagina-overgang en niet bij "minder beweging". De hele tijdlijn
    staat hieronder in CSS en begint dus direct, zonder op "load" te wachten.
-   0,10 logo · 0,35 perzik vlak · 0,65 masker + foto · 0,75/0,87 tekstregels ·
-   1,90 uitgang (logo, regels, 2,00 figuur, 2,05 doek en pagina) · 3,05 klaar */
+   De tijdlijn staat hieronder bij "de tijdlijn". */
 :root { --p3-uit: cubic-bezier(.33,1,.68,1); --in-uit: cubic-bezier(.76,0,.24,1); --intro-y: 80px;
   --rustig: cubic-bezier(.45,0,.55,1); /* rustige in-uit voor kleurwissels (wens Carst: zachter dan 0,75 s) */ }
 .intro-scherm { display: none; }
 .js.intro-aan .intro-scherm { display: block; position: fixed; inset: 0; z-index: 100; overflow: hidden; color: var(--wit);
-  /* klikken gaan na 2,3 s door naar de pagina; noodrem: altijd weg vóór 4,0 s, ook als main.js niet draait */
-  animation: intro-door 0s 1.15s forwards, intro-nood .3s 2.2s forwards; } /* intro ca. 1,5 s (besluit Carst 5 nov.: snellere homepage) */
+  /* klikken gaan na 1,6 s door naar de pagina; noodrem: altijd weg vóór 3,1 s, ook als main.js niet draait */
+  animation: intro-door 0s 1.6s forwards, intro-nood .15s 2.9s forwards; } /* intro ca. 2,2 s (wens Carst 6 nov.: iets rustiger; was 1,5 s) */
 @keyframes intro-door { to { pointer-events: none; } }
 @keyframes intro-nood { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 /* overslaan (tik, klik, toets, scroll): de uitgang is binnen 0,6 s klaar (0,5 s) */
@@ -389,18 +388,20 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .intro-regel { font-size: 40px; }
 }
 /* de tijdlijn */
-.js.intro-aan .intro-logo { animation: intro-zichtbaar .3s .05s var(--p3-uit) both, intro-vervaag .2s .95s linear forwards; }
-.js.intro-aan .intro-vlak { animation: intro-van-onder .5s .15s var(--p3-uit) both; }
-.js.intro-aan .intro-masker { animation: intro-masker .5s .3s var(--p3-uit) both; }
-.js.intro-aan .intro-foto { animation: intro-foto .5s .3s var(--p3-uit) both; }
-.js.intro-aan .intro-regel span { animation: intro-van-onder .45s .35s var(--p3-uit) both; }
-.js.intro-aan .intro-regel.r2 span { animation-delay: .42s; }
-.js.intro-aan .intro-regel { animation: intro-schermhoog .6s .95s var(--in-uit) forwards; }
-.js.intro-aan .intro-regel.r2 { animation-delay: 1s; }
-.js.intro-aan .intro-figuur { animation: intro-figuur-weg .6s 1s var(--in-uit) forwards; }
-.js.intro-aan .intro-doek { animation: intro-doek-weg .6s 1.05s var(--p3-uit) forwards; }
+/* 0,10 logo (0,4 s) · 0,20 perzik vlak (0,7 s) · 0,45 masker en foto (0,7 s) · 0,55/0,65 tekstregels ·
+   1,45 uitgang logo en regels · 1,50 figuur · 1,55 doek en pagina (0,65 s) · 2,20 klaar */
+.js.intro-aan .intro-logo { animation: intro-zichtbaar .4s .1s var(--p3-uit) both, intro-vervaag .25s 1.45s linear forwards; }
+.js.intro-aan .intro-vlak { animation: intro-van-onder .7s .2s var(--p3-uit) both; }
+.js.intro-aan .intro-masker { animation: intro-masker .7s .45s var(--p3-uit) both; }
+.js.intro-aan .intro-foto { animation: intro-foto .7s .45s var(--p3-uit) both; }
+.js.intro-aan .intro-regel span { animation: intro-van-onder .6s .55s var(--p3-uit) both; }
+.js.intro-aan .intro-regel.r2 span { animation-delay: .65s; }
+.js.intro-aan .intro-regel { animation: intro-schermhoog .65s 1.45s var(--in-uit) forwards; }
+.js.intro-aan .intro-regel.r2 { animation-delay: 1.45s; }
+.js.intro-aan .intro-figuur { animation: intro-figuur-weg .65s 1.5s var(--in-uit) forwards; }
+.js.intro-aan .intro-doek { animation: intro-doek-weg .65s 1.55s var(--p3-uit) forwards; }
 /* de pagina komt van 80 px (mobiel 48 px) omhoog terwijl het doek optrekt */
-.js.intro-aan .site-header, .js.intro-aan main { animation: intro-pagina .6s 1.05s var(--p3-uit) both; }
+.js.intro-aan .site-header, .js.intro-aan main { animation: intro-pagina .65s 1.55s var(--p3-uit) both; }
 @keyframes intro-zichtbaar { from { opacity: 0; } }
 @keyframes intro-vervaag { to { opacity: 0; } }
 @keyframes intro-van-onder { from { transform: translateY(100%); } }
@@ -504,10 +505,12 @@ html.menu-is-open { overflow: hidden; }
 .js img.zoom.in-beeld { transform: none; opacity: 1; }
 
 /* ---------- Hero komt op na de intro ---------- */
-.js .hero .tegel { opacity: 0; translate: 0 40px; transition: transform .6s cubic-bezier(.2,.7,.2,1), opacity .9s ease, translate 1.1s cubic-bezier(.2,.7,.2,1); }
-.js .hero.klaar .tegel { opacity: 1; translate: 0 0; }
-.js .hero .t2, .js .hero .t5 { transition-delay: 0s, .1s, .1s; }
-.js .hero .t3, .js .hero .t6 { transition-delay: 0s, .2s, .2s; }
+.js .hero .tegel { translate: 0 40px; transition: transform .6s cubic-bezier(.2,.7,.2,1), translate 1.1s cubic-bezier(.2,.7,.2,1); }
+/* de tegels staan al tijdens de intro zichtbaar (doorzichtigheid 1) onder het doek: zo hangt de LCP niet af van de intro;
+   alleen de verschuiving van 40 px speelt na de intro (brief 2026-11-06, A1) */
+.js .hero.klaar .tegel { translate: 0 0; }
+.js .hero .t2, .js .hero .t5 { transition-delay: 0s, .1s; }
+.js .hero .t3, .js .hero .t6 { transition-delay: 0s, .2s; }
 .js .hero .hero-cirkel { transform: scale(.6); opacity: 0; transition: transform 1.4s cubic-bezier(.2,.7,.2,1), opacity 1s ease, border-color 1.2s var(--rustig), translate .6s cubic-bezier(.2,.7,.2,1); }
 .js .hero.klaar .hero-cirkel { transform: none; opacity: .45; }
 .badge { will-change: transform; }
@@ -551,55 +554,75 @@ html.zacht-scrollen { scroll-behavior: auto; }
 /* portfolio: de laag wisselt bij aanwijzen in 1 s (rustig), bij scrollen blijft het 0,75 s */
 .achtergrond.traag { transition: background-color 1s var(--rustig); }
 
-/* ---------- 001 Werkwijze: kolommen over de volle hoogte ---------- */
+/* ---------- Homepage 001 Producten: drieluik zoals de kernwaarden van Stock (brief 2026-11-06) ----------
+   Desktop: één scherm hoog, drie gelijke kolommen (perzik, oker, mauve), alle tekst in inkt. Met een muis
+   schuift bij aanwijzen of focus een foto van boven in (masker -101% -> 0, zoom 1,3 -> 1) en wordt de tekst wit.
+   De pijl-link maakt met ::after de hele kolom klikbaar (één tabstop per kolom). Op touch staat de foto boven de tekst. */
 .kernwaarden { position: relative; }
 .kern-label { position: absolute; left: var(--rand); top: var(--ritme); z-index: 3; }
-.kern-kolommen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); min-height: clamp(560px, 48vw, 720px); max-height: 1100px; }
-/* boven ruimte voor het label, zodat de tekst er nooit onder valt; de foto vult de hele kolom */
-.kern-kolom { position: relative; overflow: hidden; display: flex; align-items: center; padding: calc(var(--ritme) + 48px) clamp(24px, 8.33vw, 120px) calc(var(--ritme) / 2); }
-.kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { content: ""; position: absolute; top: 50%; width: 1px; height: 18vw; background: var(--op-kleur); opacity: .15; transform: translateY(-50%); z-index: 2; }
+.kern-kolommen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.kern-kolom { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: calc(var(--ritme) + 48px) 24px calc(var(--ritme) / 2) clamp(24px, calc(var(--u) * 8.333), 120px); }
+.kolom-prem { background: var(--oker); }
+.kolom-nest { background: var(--mauve); }
+/* witte lijnen van 1 px, alleen tussen de kolommen, verticaal in het midden */
+.kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { content: ""; position: absolute; top: 50%; width: 1px; height: calc(var(--u) * 18); background: var(--wit); transform: translateY(-50%); z-index: 2; pointer-events: none; }
 .kern-kolom:nth-child(2)::before { left: 0; } .kern-kolom:nth-child(2)::after { right: 0; }
-/* op touch staat alle tekst er: kolommen bovenaan uitlijnen, zodat de nummers op één lijn staan */
-@media (hover: none), (pointer: coarse) { .kern-kolom { align-items: flex-start; } }
-.kern-tekst { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 28px; }
-.kern-kop { display: flex; flex-direction: column; gap: 28px; }
-.kern-kop .kop-m { min-height: 2.3em; margin: 0; }
-.kern-copy p { margin: 0; }
-.kern-zin { margin: 0; font-size: 16px; line-height: 1.6; max-width: 420px; }
-@media (min-width: 761px) { .kern-zin { min-height: 3.2em; } } /* twee regels: koppen blijven op één lijn */
+.kern-tekst { width: min(280px, 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 20px; color: var(--inkt); }
+.kern-tekst .nr { font-family: var(--serif); font-size: 16px; line-height: 1; }
+.kern-tekst .kop-m { color: inherit; hyphens: manual; }
+.kern-tekst .klein { max-width: none; }
+.kern-tekst .pijl { margin-top: 4px; }
+.kolom-link::after { content: ""; position: absolute; inset: 0; z-index: 3; }
+.kolom-link:hover { opacity: 1; }
 .kern-beeld { display: none; }
+.kern-masker img, .nest-lijst img { width: 100%; height: 100%; object-fit: cover; }
+.nest-lijst { display: none; }
 
-/* Met een muis: tekst eerst verborgen, foto en tekst schuiven in bij aanwijzen */
+/* Met een muis (vanaf 761 px): één scherm hoog, foto schuift in bij aanwijzen of focus */
 @media (hover: hover) and (pointer: fine) and (min-width: 761px) {
-  .js .kern-beeld { display: block; position: absolute; inset: 0; overflow: hidden; transform: translateY(-101%); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
-  .js .kern-masker { position: absolute; inset: 0; overflow: hidden; background: #000; transform: translateY(101%); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
-  .js .kern-masker img { width: 100%; height: 100%; object-fit: cover; opacity: .6; transform: scale(1.3); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
-  .js .kern-kolom.open .kern-beeld, .js .kern-kolom.open .kern-masker { transform: none; }
-  .js .kern-kolom.open .kern-masker img { transform: none; transition-duration: 2s; }
-  .js .kern-tekst { display: block; }
-  .js .kern-kop, .js .kern-copy { transition: transform 1s cubic-bezier(.215,.61,.355,1); }
-  /* de foto in de kolom is donker: daarop wit, net als voorheen */
-  .js .kern-tekst { transition: color .5s ease; }
-  .js .kern-kolom.open .kern-tekst, .js .kern-kolom.open .kop-m { color: var(--wit); }
-  .js .kern-label { transition: color .5s ease; }
-  .js .kernwaarden:has(.kern-kolom:first-child.open) .kern-label { color: var(--wit); }
-  .js .kern-copy { position: absolute; left: 0; right: 0; top: 100%; padding-top: 28px; }
-  .js .kern-copy-masker { overflow: hidden; transform: translateY(calc(-1 * var(--u, 120px))); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
-  .js .kern-copy-masker p { transform: translateY(var(--u, 120px)); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
-  .js .kern-kolom.open .kern-kop, .js .kern-kolom.open .kern-copy { transform: translateY(calc(-.5 * var(--u, 120px))); }
-  .js .kern-kolom.open .kern-copy-masker, .js .kern-kolom.open .kern-copy-masker p { transform: none; }
-  .js .kern-kolom:focus-within .kern-copy-masker, .js .kern-kolom:focus-within .kern-copy-masker p { transform: none; }
+  .kern-kolommen { height: clamp(600px, 100svh, 900px); }
+  /* gelijke hoogte van het tekstblok: nummers en koppen staan in de drie kolommen op één lijn */
+  .kern-tekst { min-height: calc(16px + 3 * 20px + 2.16 * clamp(34px, 3.4vw, 50px) + 5.1em + 48px); }
+  .kern-beeld { display: block; position: absolute; inset: 0; z-index: -1; overflow: hidden; transform: translateY(-101%); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
+  .kern-masker { position: absolute; inset: 0; overflow: hidden; background: #000; transform: translateY(101%); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
+  .kern-masker img { opacity: .6; transform: scale(1.3); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
+  /* extra sluier onder de tekst: de foto's zijn licht; zo haalt de witte tekst ook op de lichtste plek 4,5:1 */
+  .kern-masker::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.42) 0, rgba(0,0,0,.42) 75%, rgba(0,0,0,.2) 100%); }
+  .kern-kolom:hover .kern-beeld, .kern-kolom:hover .kern-masker, .kern-kolom:focus-within .kern-beeld, .kern-kolom:focus-within .kern-masker { transform: none; }
+  .kern-kolom:hover .kern-masker img, .kern-kolom:focus-within .kern-masker img { transform: none; }
+  .kern-tekst, .kern-tekst .kop-m { transition: color .6s var(--rustig); }
+  .kolom-box:hover .kern-tekst, .kolom-box:focus-within .kern-tekst, .kolom-prem:hover .kern-tekst, .kolom-prem:focus-within .kern-tekst { color: var(--wit); }
+  /* babynest: alleen het kleine bestand (324 x 436); een ingelijste foto boven de tekst op diep mauve, de tekst blijft inkt.
+     De lijst neemt in rust geen ruimte in (negatieve marge); bij aanwijzen zakt de kolominhoud de halve lijsthoogte. */
+  .kolom-nest { --nest-h: min(436px, calc(clamp(600px, 100svh, 900px) - 400px)); transition: background-color .6s var(--rustig), padding-top 1s cubic-bezier(.215,.61,.355,1); }
+  .nest-lijst { display: block; position: relative; height: var(--nest-h); aspect-ratio: 324 / 436; max-width: 100%; margin: calc(-1 * var(--nest-h) - 4px) 0 4px; overflow: hidden; clip-path: inset(0 0 100% 0); transition: clip-path 1s cubic-bezier(.215,.61,.355,1); }
+  .nest-lijst img { transform: scale(1.3); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
+  .kolom-nest:hover, .kolom-nest:focus-within { background-color: #AE8C94; padding-top: calc(var(--ritme) + 48px + var(--nest-h) + 24px); }
+  .kolom-nest:hover .nest-lijst, .kolom-nest:focus-within .nest-lijst { clip-path: inset(0); }
+  .kolom-nest:hover .nest-lijst img, .kolom-nest:focus-within .nest-lijst img { transform: none; }
+}
+/* Touch (tablet en mobiel) en smalle schermen: foto boven de tekst, alles altijd zichtbaar */
+@media (hover: none), (pointer: coarse), (max-width: 760px) {
+  .kern-kolom { justify-content: flex-start; padding: calc(var(--ritme) + 48px) 24px var(--ritme); }
+  .kern-beeld { display: block; position: relative; overflow: hidden; margin-bottom: 28px; aspect-ratio: 4 / 5; }
+  .kern-masker { position: absolute; inset: 0; }
+  .nest-lijst { display: block; width: min(100%, 324px); aspect-ratio: 324 / 436; margin-bottom: 8px; }
+  .kern-tekst .kop-m { font-size: 34px; }
 }
 @media (max-width: 760px) {
   .kern-label { position: static; padding: var(--ritme) var(--rand) 0; }
-  .kern-kolommen { grid-template-columns: minmax(0, 1fr); min-height: 0; max-height: none; gap: 56px; padding: 56px 0 calc(var(--ritme) / 2); }
-  .kern-kolom { padding: 0 var(--rand); }
+  .drieluik { background-color: transparent; }
+  .kern-kolommen { grid-template-columns: minmax(0, 1fr); }
+  .kern-kolom { padding: 40px var(--rand) 48px; }
+  .kolom-box { padding-top: 32px; }
   .kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { display: none; }
-  .kern-kop .kop-m { min-height: 0; }
+  .kern-beeld { aspect-ratio: 4 / 3; margin-bottom: 24px; }
+  .nest-lijst { align-self: center; margin-bottom: 16px; }
+  .kern-tekst { width: 100%; }
+  .kern-tekst .kop-m { font-size: 40px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .achtergrond, .achtergrond.traag, .js .hero-kleur, .js .balk { transition: none; }
-  .js .kern-beeld, .js .kern-masker, .js .kern-masker img, .js .kern-kop, .js .kern-copy, .js .kern-copy-masker, .js .kern-copy-masker p, .js .kern-tekst { transition: none; }
+  .kern-beeld, .kern-masker, .kern-masker img, .kern-tekst, .kern-tekst .kop-m, .kolom-nest, .nest-lijst, .nest-lijst img { transition: none !important; }
 }
 
 /* =====================================================================
@@ -792,8 +815,6 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 @media (prefers-reduced-motion: reduce) { .menu-sub { transition: none; } }
 
-/* ---------- Homepage: "Bekijk alle producten" onder de drie kolommen (altijd zichtbaar) ---------- */
-.kern-meer { position: relative; z-index: 3; display: flex; justify-content: center; padding: 0 var(--rand) 48px; }
 
 /* ---------- Paginakop (Producten, Kraamcadeaubox): terracotta, links op 8,33%, max. 50% breed ---------- */
 .pagina-kop { padding: clamp(140px, calc(var(--u) * 12), 180px) 0 calc(var(--u) * 6); } /* lager: de voorbeeldfoto komt op desktop sneller in beeld (wens Carst) */
@@ -1193,4 +1214,52 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .product-naam { font-size: 20px; }
   .stoffen { --stof: 128px; }
   .stoffen ul { gap: 12px; }
+}
+
+/* ---------- Homepage 002 Technieken: de namen zijn links (zelfde opmaak als de knoppen in de hoverlijst) ---------- */
+.hoverlijst-sectie { position: relative; }
+.hoverlijst.sferen ul a { display: inline-block; font-family: var(--display); font-size: clamp(30px, 5.2vw, 76px); line-height: 1.18; letter-spacing: -.015em; text-decoration: none; white-space: nowrap; padding: 0 8px; color: var(--inkt); opacity: 1; transition: opacity 1s var(--rustig), color 1s var(--rustig); }
+.hoverlijst.sferen ul a:hover { opacity: 1; }
+.hoverlijst.sferen.actief ul a { color: var(--wit); opacity: .35; }
+.hoverlijst.sferen.actief ul a.aan { opacity: 1; }
+.sfeer-kaarten a.kaart { display: block; text-decoration: none; }
+.sfeer-kaarten a.kaart:hover { opacity: 1; }
+.js #technieken.lijst-actief .sectie > .label, .js #technieken.lijst-actief .sectie > .pijl { color: var(--inkt); opacity: .2; }
+@media (prefers-reduced-motion: reduce) { .hoverlijst.sferen ul a { transition: none; } }
+
+/* ---------- Homepage 003 Inspiratie: één foto over de volle breedte met een donkere sluier en een witte kop ---------- */
+.inspiratie-blok { min-height: clamp(560px, 100svh, 900px); overflow: hidden; }
+/* 52% inkt, links een verloop naar 60% onder de tekst (wit haalt daar 4,5:1, ook op de lichte doos) */
+.inspiratie-blok.statement::before { background: linear-gradient(90deg, rgba(32,32,32,.66) 0, rgba(32,32,32,.66) 55%, rgba(32,32,32,.52) 80%); }
+.inspiratie-vak { position: relative; z-index: 2; width: var(--B); margin: 0 auto; align-self: stretch; display: flex; align-items: center; padding: var(--ritme) 0 calc(var(--ritme) / 2) 16.667%; }
+.inspiratie-vak > .label { position: absolute; left: var(--rand); top: var(--ritme); color: var(--wit); }
+.inspiratie-blok .inhoud { max-width: 50%; display: flex; flex-direction: column; gap: 32px; }
+.inspiratie-kop { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(36px, 4.5vw, 65px); line-height: 1.15; color: var(--wit); }
+.inspiratie-blok .pijl-rij { justify-content: flex-start; }
+.inspiratie-blok .pijl { font-size: 17px; color: var(--wit); }
+@media (max-width: 1024px) { .inspiratie-blok .inhoud { max-width: 70%; } }
+@media (max-width: 760px) {
+  .inspiratie-blok { align-items: stretch; }
+  .inspiratie-blok.statement::before { background: linear-gradient(180deg, rgba(32,32,32,.52) 0, rgba(32,32,32,.52) 35%, rgba(32,32,32,.68) 60%); }
+  .inspiratie-vak { width: auto; align-items: flex-end; padding: 0 var(--rand) 48px; }
+  .inspiratie-blok .inhoud { max-width: none; gap: 24px; }
+  .inspiratie-kop { font-size: 36px; }
+  .inspiratie-vak > .label { top: var(--ritme); }
+}
+
+/* ---------- Hero vanaf 1025 px: posities van Stock (brief 2026-11-06, A2) ----------
+   top in % van de hero-hoogte (bovenrand, geen translateY), links/rechts in % van het hero-vak,
+   breedte en hoogte in --u (1% van het ontwerpvak). In rust recht; tablet en mobiel houden hun eigen indeling. */
+@media (min-width: 1025px) {
+  .hero .tegel { aspect-ratio: auto; }
+  .hero .t2 { top: 31%; left: 11%; right: auto; width: calc(var(--u) * 23.5); height: calc(var(--u) * 33); z-index: 1; }
+  .hero .t1 { top: 50%; left: 2%;  right: auto; width: calc(var(--u) * 14.5); height: calc(var(--u) * 22); z-index: 2; }
+  .hero .t3 { top: 70%; left: 10%; right: auto; width: calc(var(--u) * 12);   height: calc(var(--u) * 16); z-index: 3; }
+  .hero .t4 { top: 13%; left: auto; right: 24%; width: calc(var(--u) * 16.66); height: calc(var(--u) * 26); z-index: 1; }
+  .hero .t5 { top: 31%; left: auto; right: 18%; width: calc(var(--u) * 14.5); height: calc(var(--u) * 22); z-index: 2; }
+  .hero .t6 { top: 55%; left: auto; right: 23%; width: calc(var(--u) * 12);   height: calc(var(--u) * 16); z-index: 3; }
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 761px) {
+  .kern-label { transition: color .6s var(--rustig); }
+  .kernwaarden:has(.kolom-box:hover, .kolom-box:focus-within) .kern-label { color: var(--wit); }
 }
