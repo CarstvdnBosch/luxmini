@@ -1387,3 +1387,6 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 /* Thema's (ronde 5): enkele bestanden hebben rechts een donker randje van een paar pixels (< 1%). Met CSS weggesneden:
    2% rechts en onder van de bron bijsnijden; het vak blijft even groot, de foto blijft kleiner dan het bestand. */
 .thema-tegel img { object-view-box: inset(0 2% 2% 0); } /* snijdt de bron bij zonder het vak te vergroten (browsers zonder object-view-box tonen het randje) */
+/* LCP (ronde 7): de secties 002 en 003 op Kraamcadeauboxen worden pas opgemaakt als ze in de buurt komen, zodat hun
+   (lazy) foto's niet al bij de eerste weergave worden opgehaald en de lettertypes en stijlen van de kop voorgaan. */
+#in-de-box, #themas { content-visibility: auto; contain-intrinsic-size: auto 1100px; }

@@ -180,6 +180,9 @@
     var vorigeFocus = null;
     var openMenu = function () {
       vorigeFocus = document.activeElement;
+      // de foto achter het menu pas ophalen als het menu opengaat (ronde 7: scheelt 113 kB bij het laden van elke pagina)
+      var mf = menu.querySelector('img.menu-foto[data-src]');
+      if (mf) { mf.src = mf.dataset.src; mf.removeAttribute('data-src'); }
       menu.hidden = false;
       requestAnimationFrame(function () { menu.classList.add('open'); });
       burger.setAttribute('aria-expanded', 'true');
@@ -1017,10 +1020,15 @@
     });
     window.addEventListener('resize', stand);
     stand();
+    // de sectie wordt pas opgemaakt als hij in de buurt komt (content-visibility, ronde 7): dan opnieuw meten
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (items) { if (items.some(function (it) { return it.isIntersecting; })) stand(); }).observe(rij);
   });
   // Veegbare rijen (Kraamcadeauboxen, producten): alleen een tabstop als de rij echt scrolt (tablet en mobiel), niet op desktop
   var scrollRijen = Array.prototype.slice.call(document.querySelectorAll('[data-scrollrij]'));
   var zetTabstop = function () { scrollRijen.forEach(function (r) { if (r.scrollWidth > r.clientWidth + 1) r.setAttribute('tabindex', '0'); else r.removeAttribute('tabindex'); }); };
-  if (scrollRijen.length) { zetTabstop(); window.addEventListener('resize', zetTabstop); }
+  if (scrollRijen.length) {
+    zetTabstop(); window.addEventListener('resize', zetTabstop);
+    if ('IntersectionObserver' in window) { var rijIo = new IntersectionObserver(function (items) { if (items.some(function (it) { return it.isIntersecting; })) zetTabstop(); }); scrollRijen.forEach(function (r) { rijIo.observe(r); }); }
+  }
   document.querySelectorAll('[data-jaar]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 })();
