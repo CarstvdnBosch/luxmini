@@ -582,3 +582,38 @@ Niets blokkeert het bouwen. De punten hieronder worden gebouwd met `<!-- LET OP:
 | Ontwerpgate ronde 2 | website-ontwerper (ingevuld door hoofdsessie) | ONTWERP AKKOORD (6 nov., 094e779). De drie punten uit ronde 1 zijn opgelost en nagemeten: (1) 003 en statement laden op 375@2x, 390@3x en 768 het bestand van 1800 px (niet vergroot); (2) "Naam op het babynest"; (3) minder beweging: laag, bovenkant en balk direct. Kan-beter-punten verwerkt. Mobiel ✔ (Chromium). Alleen in CI: WebKit/iPhone, axe, Gate 5. Vervolg (P1): sluier grote foto in Technieken naar 55% (witte actieve naam 2,4–2,7:1 op witte fotoachtergrond); P2 kopfoto Contact vergroot op mobiel (bestond al); P3 brede foto vanaf 1800 px; P3 kleurovergang label 001. |
 | Preview bekeken | Carst | |
 | Live gezet (merge) | Carst | |
+
+---
+
+## Aanvulling na preview — feedback Carst (6 nov. 14:28)
+
+Carst bekeek de preview van PR #14 en vraagt de volgende aanpassingen op dezelfde branch (geen GO voor de huidige stand):
+
+**F1 · Hero: meebewegen zoals Stock (groter).** Gemeten in hun script (`s-collage`, mousemove):
+- Verschuiving in **absolute muispositie**, niet ten opzichte van het midden: `x = clientX / k`, `y = ± clientY / k`. Linkerfoto's y negatief (−), rechterfoto's y positief (+), x voor alle foto's positief.
+- k per foto: links 1 = 20, links 2 = 15, links 3 = 10; rechts 1 = 20, rechts 2 = 10, rechts 3 = 15. Op 1440 × 900 is de grootste uitslag dus ca. 144 × 90 px.
+- Kanteling: `rotationY = 25 × (clientX / breedte − 0,5)`, `rotationX = 25 × (clientY / hoogte − 0,5)`, dus max. ± 12,5°; perspectief per foto 1500 / 1000 / 500 (k = 20 / 15 / 10).
+- Volgen met 1 s Power1.easeOut (ongeveer `cubic-bezier(.25,.46,.45,.94)`, of een lerp in rAF).
+- Op de beginstand (vóór de eerste muisbeweging) staan ze zoals nu. Vervangt de grens "max. ca. 37 × 51 px, kanteling hooguit 4°" in CLAUDE.md (Hero). Bij "minder beweging" en op touch: niets.
+- Let op: de kop mag door de grotere uitslag niet onleesbaar worden; foto's mogen de kop raken zoals bij Stock, maar de kop blijft boven de foto's (z-index).
+
+**F2 · 001 — Producten: er staat een kleine witte lijn op de pagina** die er niet hoort (los van de bedoelde scheidingslijnen tussen de kolommen). Zoek en verwijder (vermoedelijk een naad of 1 px tussen het perzik vlak van het drieluik en een buursectie, of een scheidingslijn die buiten de kolommen uitsteekt). Test: geen witte pixelrij of -kolom langs de randen van `#producten` op 1440 × 900, 1280 × 720 en 390.
+
+**F3 · Technieken anders benoemen + donkerdere foto's.**
+- Het label "Technieken" vindt Carst het verkeerde woord en "persoonlijk" komt twee keer voor. Nieuwe teksten (besluit hoofdsessie, Carst vroeg "ben creatief"): label **`002 — Handwerk`**; de vier namen:
+  - **Warm en eigen** · Belettering
+  - **Rustig en praktisch** · Siliconen items
+  - **Klein en precies** · Prematuurkleding
+  - **Speels en levendig** · Borduren
+- Elk woord komt één keer voor. Toegankelijke namen en tests mee aanpassen. LET OP-opmerking blijft (Carien leest mee).
+- **Foto's donkerder zoals Stock**, zodat de witte tekst beter zichtbaar is: sluier op de grote foto 55% en op de kleine foto 40% (warm donker, `rgba(60,40,30,…)`); hetzelfde principe in het drieluik bij aanwijzen. De witte actieve naam haalt op elke foto minstens 3:1 (meting in de sitecontrole). Dit vervangt "groot 28%, klein 20%" voor de homepage; Inspiratie-pagina blijft zoals hij is.
+
+**F4 · Kraamcadeauboxen anders ordenen, thema's groter.** Nieuwe volgorde:
+1. Paginakop en statementfoto (zoals nu).
+2. `001 — Kies je formaat`: de vier prijskaarten, op een **andere achtergrondkleur dan nu** (lichte paletkleur, nooit terracotta; inkt; buren nooit dezelfde kleur — ontwerper kiest).
+3. `002 — Wat er in de box kan`: de zeven producten en **daaronder de stoffen**, samengevoegd in één sectie.
+4. `003 — Thema's`: de negen thema's **groot**: drie mooie voorbeelden naast elkaar, met horizontaal scrollen/vegen naar de volgende set van drie (drie sets). Elke set vult de breedte van het ontwerpvak; foto ca. 4:5 of 4:3, zo groot als het bestand toelaat (nooit vergroot), naam eronder. Scroll-snap per set; pijl-knoppen (vorige/volgende, 44 px, `aria-label`) op desktop, vegen op touch; toetsenbord bereikbaar; op mobiel één thema per keer (snap per tegel), met een stukje van de volgende in beeld. Eén pijl-link "Vraag je thema aan" eronder.
+5. `004 — Zo werkt het`, `005 — Contact`.
+- Het 3 × 3-raster (`.themaraster`) en de grens "negen thema's binnen twee schermen" vervallen; CLAUDE.md (Kraamcadeauboxenpagina en Mappen) en de tests aanpassen.
+
+**Testaanpassingen ter beoordeling door Carst (aanvulling):** hero-meebewegen (uitslag en kanteling volgen Stock i.p.v. max. 40 × 55 px / 4°), technieken-namen, kraamcadeauboxen-volgorde en thema-carrousel i.p.v. raster. Geen andere grens wordt versoepeld.
