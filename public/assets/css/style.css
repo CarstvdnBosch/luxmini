@@ -1175,7 +1175,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .formulier .groep { display: none; }
   .formulier:has(select[name="onderwerp"] option[value="Kraamcadeaubox"]:checked) .groep[data-groep="Kraamcadeaubox"],
   .formulier:has(select[name="onderwerp"] option[value="Prematuurkleding"]:checked) .groep[data-groep="Prematuurkleding"],
-  .formulier:has(select[name="onderwerp"] option[value="Babynest"]:checked) .groep[data-groep="Babynest"] { display: grid; animation: groep-in .3s ease both; }
+  .formulier:has(select[name="onderwerp"] option[value="Babynest"]:checked) .groep[data-groep="Babynest"] { display: grid; }
+  .js .formulier .groep { animation: groep-in .3s ease both; } /* vervaagt in bij het tonen; zonder JavaScript direct */
 }
 @keyframes groep-in { from { opacity: 0; } }
 @media (max-width: 760px) {
@@ -1231,7 +1232,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .inspiratie-blok.statement::before { background: linear-gradient(90deg, rgba(32,32,32,.66) 0, rgba(32,32,32,.66) 55%, rgba(32,32,32,.52) 80%); }
 .inspiratie-vak { position: relative; z-index: 2; width: var(--B); margin: 0 auto; align-self: stretch; display: flex; align-items: center; padding: var(--ritme) 0 calc(var(--ritme) / 2) 16.667%; }
 .inspiratie-vak > .label { position: absolute; left: var(--rand); top: var(--ritme); color: var(--wit); }
-.inspiratie-blok .inhoud { max-width: 50%; display: flex; flex-direction: column; gap: 32px; }
+.inspiratie-blok .inhoud { position: relative; max-width: 50%; display: flex; flex-direction: column; gap: 32px; }
 .inspiratie-kop { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(36px, 4.5vw, 65px); line-height: 1.15; color: var(--wit); }
 .inspiratie-blok .pijl-rij { justify-content: flex-start; }
 .inspiratie-blok .pijl { font-size: 17px; color: var(--wit); }
@@ -1318,3 +1319,5 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
   .overgang { display: none; }
   html.overgang-weg .site-header, html.overgang-weg main, html.overgang-binnen .site-header, html.overgang-binnen main { transform: none; transition: none; }
 }
+/* mobiel: het zakje met de naam in beeld, de tekst onderaan valt op vloeipapier en doos (niet over de knuffel) */
+@media (max-width: 760px) { .inspiratie-blok > img { object-position: 36% 50% !important; } }
