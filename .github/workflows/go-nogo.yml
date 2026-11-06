@@ -28,6 +28,7 @@ jobs:
     # Zet in de ruleset die status als verplichte controle.
     name: "GO-besluit bijwerken"
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Besluit controleren en als status zetten
         env:
