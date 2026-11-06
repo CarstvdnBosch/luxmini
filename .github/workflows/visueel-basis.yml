@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 22
       - run: npm ci || npm install
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: VISUEEL=1 npx playwright test --update-snapshots
       - name: Basis committen
         run: |

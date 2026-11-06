@@ -138,9 +138,9 @@ md.push('|---|---|---|---|');
 for (const g of gates) md.push(`| ${g.naam} | ${ICOON[g.status] || '❔'} ${STATUS[g.status] || g.status} | ${g.blokkerend ? 'ja' : 'nee'} | ${g.toelichting} |`);
 md.push('');
 if (e2e) {
-  md.push('**Kwaliteit per onderwerp** (Playwright, desktop 1440 · tablet 768 · mobiel 390):');
+  md.push('**Kwaliteit per onderwerp** (Playwright, desktop 1440 · tablet 768 · mobiel 390 · iPhone/Safari 390):');
   md.push('');
-  const NAMEN = { 'toegankelijkheid.spec.js': 'Toegankelijkheid (WCAG 2.1 AA, axe)', 'seo-veiligheid.spec.js': 'SEO, beveiligingsheaders, links, sitemap', 'kernpaden.spec.js': 'Kernpaden (navigatie, contact, prijzen, geen fouten, mobiel)' };
+  const NAMEN = { 'toegankelijkheid.spec.js': 'Toegankelijkheid (WCAG 2.1 AA, axe)', 'seo-veiligheid.spec.js': 'SEO, beveiligingsheaders, links, sitemap', 'kernpaden.spec.js': 'Kernpaden (navigatie, contact, prijzen, geen fouten, mobiel)', 'mobiel-ontwerp.spec.js': 'Mobiel ontwerp (Chromium en iPhone/Safari): tikdoelen, tekstgrootte, zoom, buiten beeld, contact' };
   for (const [f, b] of Object.entries(e2e.perBestand)) md.push(`- ${b.fout ? '❌' : '✅'} ${NAMEN[f] || f}: ${b.goed} groen${b.fout ? `, **${b.fout} fout**` : ''}`);
   if (e2e.fouten.length) { md.push(''); md.push('<details><summary>Gevonden fouten</summary>'); md.push(''); for (const f of e2e.fouten.slice(0, 30)) md.push(`- ${f}`); md.push(''); md.push('</details>'); }
   md.push('');

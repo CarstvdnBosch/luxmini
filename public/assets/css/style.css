@@ -249,10 +249,10 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .formulier .val { position: absolute; left: -5000px; }
 .formulier .verstuur { justify-self: center; grid-column: 1 / -1; font-family: var(--serif); font-size: 17px; color: var(--inkt); background: var(--wit); border: 0; padding: 16px 34px; cursor: pointer; display: inline-flex; align-items: center; gap: 14px; }
 .formulier .verstuur svg { width: 28px; height: 10px; }
-.formulier .melding { grid-column: 1 / -1; text-align: center; font-size: 13px; margin: 0; }
+.formulier .melding { grid-column: 1 / -1; text-align: center; font-size: 16px; margin: 0; } /* lopende tekst min. 16 px (mobiele principes) */
 
 /* ---------- Footer ---------- */
-.site-footer { background: var(--inkt); color: #E0E0E0; font-size: 13px; line-height: 1.8; }
+.site-footer { background: var(--inkt); color: #E0E0E0; font-size: 16px; line-height: 1.7; } /* min. 16 px (mobiele regel 2) */
 .site-footer .wrap { padding-top: 48px; padding-bottom: 48px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; }
 .site-footer .naam { font-family: var(--serif); font-size: 22px; color: var(--wit); }
 .site-footer nav { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
@@ -260,7 +260,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 
 /* ---------- Eenvoudige tekstpagina's ---------- */
 .pagina { min-height: 70vh; padding-top: 180px; padding-bottom: 120px; }
-.pagina .tekstblok { max-width: 680px; display: flex; flex-direction: column; gap: 20px; font-size: 15px; line-height: 1.8; }
+.pagina .tekstblok { max-width: 680px; display: flex; flex-direction: column; gap: 20px; font-size: 16px; line-height: 1.7; }
 .pagina h2 { font-family: var(--serif); font-weight: 400; font-size: 24px; margin: 16px 0 0; }
 
 /* ---------- Tablet ---------- */
@@ -1128,3 +1128,6 @@ html.zacht-scrollen { scroll-behavior: auto; }
 /* ---------- Prematuurkleding en Babynest: prijsrichtlijn als eigen, compact blok ---------- */
 .prijs-sectie .sectie { gap: 24px; }
 .prijs-sectie .prijs { margin: 0; }
+/* anker voor oude adressen (/producten#prematuur, #kraamcadeaubox): bovenaan het blok, neemt geen ruimte in */
+.anker { position: absolute; top: 0; left: 0; width: 1px; height: 1px; }
+.categorie { position: relative; }

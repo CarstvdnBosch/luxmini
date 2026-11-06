@@ -66,12 +66,13 @@ test('kraamcadeauboxen: vier prijzen van € 35 tot € 80', async ({ page }) =>
 });
 
 // Oude adressen (301): het anker gaat mee en de kop van die sectie staat in beeld.
-for (const [oud, nieuw, anker] of [['/producten#siliconen', '/werkwijze', 'siliconen'], ['/over#hoe-ik-werk', '/werkwijze', 'hoe-ik-werk'], ['/portfolio#siliconen', '/inspiratie', 'siliconen']]) {
+for (const [oud, nieuw, anker] of [['/producten#siliconen', '/', 'siliconen'], ['/producten#prematuur', '/', 'prematuur'], ['/over#hoe-ik-werk', '/werkwijze', 'hoe-ik-werk'], ['/portfolio#siliconen', '/inspiratie', 'siliconen']]) {
   test(`oud adres ${oud} landt op ${nieuw}#${anker} met de kop in beeld`, async ({ page }) => {
     await page.goto(oud);
     await expect(page).toHaveURL(new RegExp(`${nieuw}#${anker}$`));
     await page.waitForTimeout(300);
-    const kop = page.locator(`[id="${anker}"]`).locator('h1, h2, .label').first();
+    // de sectie met dit anker (het anker zelf, of een anker bovenaan de sectie voor oude adressen)
+    const kop = page.locator(`xpath=//*[@id="${anker}"]/ancestor-or-self::section[1]`).locator('h1, h2, .label').first();
     await expect(kop).toBeInViewport();
   });
 }
