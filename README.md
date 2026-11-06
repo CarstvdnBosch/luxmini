@@ -72,6 +72,5 @@ De registratie blijft bij GoDaddy; alleen de nameservers gaan naar Cloudflare.
 Meer uitleg: `docs/ai-pdlc.md`. Gewenste nieuwe foto's: `docs/fotolijst.md`.
 
 ## Nog in te vullen
-- KvK-nummer: zoek op `[nummer]` in `public/`.
 - Quote bij de atelierfoto in `public/index.html` (gemarkeerd met `LET OP`): Carien keurt goed of geeft eigen woorden.
 - `public/privacy.html` laten nakijken door Carien.

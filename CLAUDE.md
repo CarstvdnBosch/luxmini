@@ -72,7 +72,8 @@ Agents mergen nooit zonder GO van Carst, zetten nooit zelf het label `GO` en zet
 - Prijzen kraamcadeaubox (leidend, van de originele site): € 35 (knuffel, swaddle, broekje), € 50 (+ sjaaltje), € 65 (+ shirtje, douchehandschoen), € 80 (+ bijtring).
 - Contact: 06 – 43 79 16 18, info.LUXmini@gmail.com, WhatsApp via `https://wa.me/31643791618`, Sperwerstraat 10, 6035 GH Ospel.
 - Overgenomen van de oude site (luxmini.nl), dus geen verzonnen tekst: "Ieder nieuw leven is bijzonder", Cariens verhaal (twee dochters, vier kleinkinderen, "Hoe bijzonder is het om één van de eerste pakjes voor iemand te mogen maken") en "binnen 7 werkdagen verzonden".
-- Nog open: KvK-nummer (`[nummer]`), goedkeuring quote bij de atelierfoto, foto van belettering op kleding, teksten bij de technieken, originele (grotere) bestanden van de Instagram-foto's.
+- KvK-nummer: 78234654 (Lux-mini, hoofdvestiging Sperwerstraat 10, 6035 GH Ospel; uittreksel via Carst, 6 nov. 2026).
+- Nog open: goedkeuring quote bij de atelierfoto, foto van belettering op kleding, teksten bij de technieken, originele (grotere) bestanden van de Instagram-foto's.
 - Foto's van Instagram @luxmini2020 mogen gebruikt worden (toestemming van Carst). Ze staan als `ig-*.jpg` in `public/assets/img/`. Snijd tekstbalken en overlays altijd weg.
 
 ## Nieuwe foto's toevoegen

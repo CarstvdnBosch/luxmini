@@ -1,6 +1,7 @@
 # LUX mini — Gate 3 · rooktest op de live site
 # Draait na elke merge naar main (Cloudflare zet dan live) en elke ochtend.
-# Stel eenmalig in: GitHub → Settings → Secrets and variables → Actions → Variables → SITE_URL
+# Adres van de live site: variabele SITE_URL (GitHub → Settings → Secrets and variables → Actions → Variables);
+# zonder variabele gebruikt de rooktest https://luxmini.carstvdbosch.workers.dev.
 #   (eerst https://luxmini.<jouw-subdomein>.workers.dev, na de overstap https://www.luxmini.nl)
 name: Rooktest live
 
@@ -20,14 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: SITE_URL aanwezig?
-        run: 'test -n "${{ vars.SITE_URL }}" || { echo "::error::Variabele SITE_URL ontbreekt (Settings → Secrets and variables → Actions → Variables)."; exit 1; }'
       - name: Wachten tot Cloudflare deze versie live heeft gezet
         if: github.event_name == 'push'
         run: |
           # Workers Builds schrijft de commit in /versie.txt (build command in de README).
           for i in $(seq 1 40); do
-            live=$(curl -s "${{ vars.SITE_URL }}/versie.txt" | tr -d '[:space:]')
+            live=$(curl -s "${{ vars.SITE_URL || 'https://luxmini.carstvdbosch.workers.dev' }}/versie.txt" | tr -d '[:space:]')
             if [ "$live" = "${{ github.sha }}" ]; then echo "Versie ${{ github.sha }} staat live."; exit 0; fi
             sleep 15
           done
@@ -37,4 +36,4 @@ jobs:
           fi
           echo "::error::Na 10 minuten staat versie ${{ github.sha }} nog niet live (live: $live). Kijk in Cloudflare → Workers & Pages → luxmini → Deployments of de build gelukt is."
           exit 1
-      - run: bash scripts/rooktest.sh "${{ vars.SITE_URL }}"
+      - run: bash scripts/rooktest.sh "${{ vars.SITE_URL || 'https://luxmini.carstvdbosch.workers.dev' }}"

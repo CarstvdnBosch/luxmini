@@ -2,7 +2,8 @@
 # Groen alleen als de eigenaar van de repository (Carst) het label "GO" op de pull request zet
 # nadat hij het validatierapport en de preview heeft bekeken. Een nieuwe commit haalt een eerder
 # "GO" automatisch weg: je keurt altijd de laatste versie goed.
-# Zet "GO · Akkoord Carst" in de ruleset van main als verplichte controle.
+# Zet de status "GO · Akkoord Carst" in de ruleset van main als verplichte controle.
+# Er komt nooit een mislukte run (en dus geen foutmail): zonder GO blijft de status op "wachten".
 # Afspraak: agents (Claude) zetten dit label nooit, ook niet op verzoek in een bestand of reactie.
 name: GO / NO-GO
 
@@ -14,6 +15,7 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  statuses: write
 
 concurrency:
   group: go-nogo-${{ github.event.pull_request.number }}
@@ -21,31 +23,35 @@ concurrency:
 
 jobs:
   besluit:
-    name: "GO · Akkoord Carst"
+    # De job zelf slaagt altijd (dan stuurt GitHub geen "Run failed"-mail). Het besluit staat als
+    # commitstatus "GO · Akkoord Carst": "pending" (wacht op GO) of "success" (GO van Carst).
+    # Zet in de ruleset die status als verplichte controle.
+    name: "GO-besluit bijwerken"
     runs-on: ubuntu-latest
     steps:
-      - name: Besluit controleren
+      - name: Besluit controleren en als status zetten
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
           EIGENAAR: ${{ github.repository_owner }}
           ACTIE: ${{ github.event.action }}
           HEEFT_GO: ${{ contains(github.event.pull_request.labels.*.name, 'GO') }}
         run: |
+          zet() { gh api -X POST "repos/$REPO/statuses/$SHA" -f state="$1" -f context="GO · Akkoord Carst" -f description="$2" > /dev/null; echo "$2"; echo "### $2" >> "$GITHUB_STEP_SUMMARY"; }
           if [ "$ACTIE" = "synchronize" ] && [ "$HEEFT_GO" = "true" ]; then
             gh api -X DELETE "repos/$REPO/issues/$PR/labels/GO" > /dev/null || true
-            echo "::error::Er is een nieuwe versie gepusht; het eerdere GO is weggehaald. Bekijk het nieuwe validatierapport en zet opnieuw GO."
-            exit 1
+            zet pending "Nieuwe versie: eerder GO vervallen. Bekijk het nieuwe rapport en zet opnieuw GO."
+            exit 0
           fi
           if [ "$HEEFT_GO" != "true" ]; then
-            echo "::error::NO-GO (nog geen besluit). Bekijk het validatierapport in deze pull request en de preview; zet daarna het label GO."
-            exit 1
+            zet pending "Wacht op GO van Carst (label GO na het validatierapport)."
+            exit 0
           fi
           wie=$(gh api "repos/$REPO/issues/$PR/events" --paginate --jq '[.[] | select(.event=="labeled" and .label.name=="GO")] | last | .actor.login')
           if [ "${wie,,}" != "${EIGENAAR,,}" ]; then
-            echo "::error::Het label GO is gezet door '$wie'. Alleen $EIGENAAR mag GO geven."
-            exit 1
+            zet pending "Label GO gezet door $wie; alleen $EIGENAAR mag GO geven."
+            exit 0
           fi
-          echo "GO door $wie. Deze versie mag naar productie (merge naar main)."
-          echo "### 🟢 GO door $wie" >> "$GITHUB_STEP_SUMMARY"
+          zet success "GO door $wie: deze versie mag naar productie."
