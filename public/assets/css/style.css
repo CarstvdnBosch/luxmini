@@ -503,7 +503,7 @@ html.menu-is-open { overflow: hidden; }
 .js img.zoom.in-beeld { transform: none; opacity: 1; }
 
 /* ---------- Hero komt op na de intro ---------- */
-.js .hero .tegel { translate: 0 40px; transition: transform .6s cubic-bezier(.2,.7,.2,1), translate 1.1s cubic-bezier(.2,.7,.2,1); }
+.js .hero .tegel { translate: 0 40px; transition: transform 1s cubic-bezier(.25,.46,.45,.94), translate 1.1s cubic-bezier(.2,.7,.2,1); } /* meebewegen: 1 s easeOut zoals Stock (F1) */
 /* de tegels staan al tijdens de intro zichtbaar (doorzichtigheid 1) onder het doek: zo hangt de LCP niet af van de intro;
    alleen de verschuiving van 40 px speelt na de intro (brief 2026-11-06, A1) */
 .js .hero.klaar .tegel { translate: 0 0; }
@@ -585,7 +585,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .kern-masker { position: absolute; inset: 0; overflow: hidden; background: #2A1C14; /* warm donker (ontwerpgate ronde 1, P2) */ transform: translateY(101%); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
   .kern-masker img { opacity: .6; transform: scale(1.3); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
   /* extra sluier onder de tekst: de foto's zijn licht; zo haalt de witte tekst ook op de lichtste plek 4,5:1 */
-  .kern-masker::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(42,28,20,.45) 0, rgba(42,28,20,.45) 75%, rgba(42,28,20,.22) 100%); }
+  .kern-masker::after { content: ""; position: absolute; inset: 0; background: rgba(60,40,30,.55); } /* zelfde warme donkere sluier als Handwerk (F3) */
   .kern-kolom:hover .kern-beeld, .kern-kolom:hover .kern-masker, .kern-kolom:focus-within .kern-beeld, .kern-kolom:focus-within .kern-masker { transform: none; }
   .kern-kolom:hover .kern-masker img, .kern-kolom:focus-within .kern-masker img { transform: none; }
   .kern-tekst, .kern-tekst .kop-m { transition: color .6s var(--rustig); }
@@ -1123,16 +1123,9 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .site-header .logo, .site-header .menu a { min-height: 44px; }
 }
 
-/* ---------- Kraamcadeauboxen 002: thema's als compact raster (wens Carst 5 nov.: minder scrollen) ---------- */
-.themaraster { list-style: none; margin: 32px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 24px; }
-.themakaart figure { margin: 0; }
-.themakaart img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
-.themakaart figcaption { margin-top: 12px; font-family: var(--display); font-size: 24px; line-height: 1.15; }
+/* ---------- Kraamcadeauboxen 003: thema's (zie "Kraamcadeauboxen (feedback Carst 6 nov. 14:28, F4)" onderaan) ---------- */
 #themas .sectie { gap: 40px; } /* compact: label dicht bij het raster */
-.themas-onder { margin-top: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 40px; }
 .themas-onder .klein { margin: 0; font-size: 16px; }
-@media (max-width: 1024px) { .themaraster { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .themaraster { gap: 20px 12px; margin-top: 20px; } .themakaart figcaption { font-size: 20px; margin-top: 8px; } }
 
 /* ---------- Homepage 006: Inspiratie in vier foto's (mobiel twee kolommen) ----------
    Foto's 3:4, nooit breder dan het bestand (kleinste bestand 675 px; kolom max. ca. 300 px). */
@@ -1333,5 +1326,55 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 @media (hover: hover) and (pointer: fine) {
   .js #technieken > .sectie { padding-bottom: max(calc(var(--ritme) / 2), calc(var(--B) * .46 + 8px - 4 * 1.18 * clamp(30px, 5.2vw, 76px) - clamp(56px, 8vw, 110px) - 44px)); }
   /* sterkere warme sluier onder de actieve witte naam (P1) */
-  #technieken .hoverlijst.sferen .groot::after { background: rgba(60,40,30,.4); }
+  /* foto's donkerder zoals Stock (F3): groot 55%, klein 40%, warm donker; de witte actieve naam haalt minstens 3:1 */
+  #technieken .hoverlijst.sferen .groot::after { background: rgba(60,40,30,.55); }
+  #technieken .hoverlijst.sferen .klein-beeld::after { background: rgba(60,40,30,.4); }
 }
+
+/* ---------- Feedback Carst 6 nov. 14:28 (F2): geen losse witte lijn in 001 — Producten ----------
+   De scheidingslijnen horen alleen tussen de kolommen, verticaal in het midden van de kolommen in rust (desktop met muis).
+   Op touch staan de kolommen bovenaan uitgelijnd en liep de lijn los door foto en tekst: daar geen lijn.
+   Ligt er bij aanwijzen een foto in een kolom, dan vervagen de lijnen (geen witte streep langs de foto). */
+@media (hover: none), (pointer: coarse), (max-width: 760px) {
+  .kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { display: none; }
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 761px) {
+  .kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { transition: opacity .6s var(--rustig); }
+  .kern-kolommen:has(.kolom-box:hover, .kolom-box:focus-within, .kolom-prem:hover, .kolom-prem:focus-within) .kern-kolom:nth-child(2)::before,
+  .kern-kolommen:has(.kolom-box:hover, .kolom-box:focus-within, .kolom-prem:hover, .kolom-prem:focus-within) .kern-kolom:nth-child(2)::after { opacity: 0; }
+  /* het label 001 kleurt even rustig mee als de kop (de opkom-overgang overschreef de kleurovergang) */
+  .js .kern-label.opkomen, .js .kern-tekst .pijl.opkomen { transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1), color .6s var(--rustig); transition-delay: 0s !important; }
+}
+/* Handwerk (002): de pijl-link "Zo personaliseert Carien" ligt boven de foto's die bij aanwijzen verschijnen */
+#technieken .sectie > .pijl { position: relative; z-index: 2; }
+@media (prefers-reduced-motion: reduce) { .kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { transition: none; } }
+
+/* ---------- Kraamcadeauboxen (feedback Carst 6 nov. 14:28, F4) ----------
+   001 formaten op salie, 002 producten en stoffen samen, 003 de thema's groot in sets van drie (scroll-snap per set,
+   pijlknoppen met een muis, vegen op touch; mobiel één thema per keer met een stukje van de volgende). */
+.in-de-box { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
+.in-de-box .producten-kop { margin-top: 24px; }
+.in-de-box .stoffen { align-self: stretch; }
+.themacarrousel { --gat: 16px; width: var(--B); margin-left: calc(50% - var(--B) / 2); overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; scroll-behavior: smooth; }
+.themacarrousel::-webkit-scrollbar { display: none; }
+.themacarrousel:focus-visible { outline-offset: -3px; }
+.themacarrousel ul { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: calc((var(--B) - 2 * var(--gat)) / 3); gap: var(--gat); }
+.thema-tegel { margin: 0; min-width: 0; }
+.thema-tegel:nth-child(3n + 1) { scroll-snap-align: start; scroll-snap-stop: always; }
+.thema-tegel figure { margin: 0; }
+.thema-tegel img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.thema-tegel figcaption { margin: 14px 0 0; font-family: var(--display); font-size: clamp(24px, 2vw, 30px); line-height: 1.15; }
+.themas-onder { margin-top: 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 40px; }
+.carrousel-knoppen { display: none; gap: 8px; }
+.carrousel-knop { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid currentColor; border-radius: 50%; background: none; color: var(--inkt); cursor: pointer; transition: opacity .3s ease; }
+.carrousel-knop svg { width: 20px; height: 10px; }
+.carrousel-knop[disabled] { opacity: .3; cursor: default; }
+@media (hover: hover) and (pointer: fine) { .js .carrousel-knoppen { display: inline-flex; } }
+@media (max-width: 1024px) { .thema-tegel figcaption { font-size: 22px; } }
+@media (max-width: 760px) {
+  .themacarrousel { width: auto; margin-left: calc(-1 * var(--rand)); margin-right: calc(-1 * var(--rand)); padding: 0 var(--rand); scroll-padding-inline: var(--rand); }
+  .themacarrousel ul { grid-auto-columns: 80vw; gap: 12px; }
+  .thema-tegel { scroll-snap-align: start; scroll-snap-stop: normal; }
+  .thema-tegel figcaption { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { .themacarrousel { scroll-behavior: auto; } }

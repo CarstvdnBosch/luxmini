@@ -84,11 +84,11 @@ test.describe('zonder JavaScript', () => {
 /* ---------- Kraamcadeauboxen: zeven producten en de stoffenrij ---------- */
 test('kraamcadeauboxen: zeven producten met de juiste prijsregels', async ({ page }, info) => {
   await page.goto('/kraamcadeauboxen');
-  const p = await page.locator('#formaten .producten > li').evaluateAll(ls => ls.map(l => [l.querySelector('.product-naam').textContent.replace(/­/g, ''), l.querySelector('.product-regel').textContent.replace(/\s+/g, ' '), !!l.querySelector('img'), !!l.querySelector('svg')]));
+  const p = await page.locator('#in-de-box .producten > li').evaluateAll(ls => ls.map(l => [l.querySelector('.product-naam').textContent.replace(/­/g, ''), l.querySelector('.product-regel').textContent.replace(/\s+/g, ' '), !!l.querySelector('img'), !!l.querySelector('svg')]));
   expect(p).toEqual([['Knuffel', 'vanaf € 35', true, false], ['Swaddle', 'vanaf € 35', true, false], ['Broekje', 'vanaf € 35', true, false], ['Sjaaltje', 'vanaf € 50', true, false],
     ['Shirtje', 'vanaf € 65', true, false], ['Douchehandschoen', 'vanaf € 65', false, true], ['Bijtring', 'in de box van € 80', true, false]]);
   if (info.project.name === 'desktop') { // desktop: alle zeven naast elkaar, zonder scrollen
-    const rij = await page.locator('#formaten .producten').evaluate(u => [u.scrollWidth - u.clientWidth, new Set([...u.children].map(l => Math.round(l.getBoundingClientRect().top))).size]);
+    const rij = await page.locator('#in-de-box .producten').evaluate(u => [u.scrollWidth - u.clientWidth, new Set([...u.children].map(l => Math.round(l.getBoundingClientRect().top))).size]);
     expect(rij).toEqual([0, 1]);
   }
   // de prijskaarten linken met onderwerp en formaat naar het formulier
@@ -98,11 +98,11 @@ test('kraamcadeauboxen: zeven producten met de juiste prijsregels', async ({ pag
 
 test('kraamcadeauboxen: stoffenrij met de negen namen van het raster, scrollbaar en met het toetsenbord bereikbaar', async ({ page }, info) => {
   await page.goto('/kraamcadeauboxen');
-  const rij = page.locator('#themas .stoffen');
+  const rij = page.locator('#in-de-box .stoffen');
   await expect(rij).toHaveAttribute('role', 'region');
   await expect(rij).toHaveAttribute('aria-label', 'Stoffen');
   await expect(rij).toHaveAttribute('tabindex', '0');
-  const raster = await page.locator('#themas .themaraster figcaption').allTextContents();
+  const raster = await page.locator('#themas .themacarrousel figcaption').allTextContents();
   const stoffen = await rij.locator('.stof-naam').allTextContents();
   expect(stoffen).toEqual(raster);
   expect(stoffen).toHaveLength(9);
@@ -281,4 +281,64 @@ test('minder beweging: de kleurlaag, de bovenkant en de balk wisselen direct van
   await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
   const na = await page.evaluate(() => getComputedStyle(document.querySelector('.achtergrond')).backgroundColor);
   expect(na, 'de laag is direct wit (zonder overgang)').toBe('rgb(255, 255, 255)');
+});
+
+/* ---------- Feedback Carst 6 nov. 14:28 ---------- */
+test('F1 hero: meebewegen zoals Stock (absolute muispositie /20 /15 /10, kanteling tot 12,5 graden)', async ({ browser }, info) => {
+  test.skip(info.project.name !== 'desktop', 'alleen met een muis');
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  await ctx.addInitScript(() => { try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) { /* geen opslag */ } });
+  const page = await ctx.newPage();
+  await page.goto('/');
+  await page.waitForTimeout(1500);
+  const rust = await page.locator('.hero .tegel').evaluateAll(ts => ts.map(t => getComputedStyle(t).transform));
+  expect(rust, 'beginstand zonder transform').toEqual(Array(6).fill('none'));
+  await page.mouse.move(1430, 890, { steps: 4 });
+  await page.waitForTimeout(1500); // 1 s easeOut
+  const m = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.hero .tegel')].map(t => {
+    const n = [...t.classList].find(k => /^t\d$/.test(k)); const s = t.style.transform;
+    const tr = s.match(/translate3d\(([-\d.]+)px,\s*([-\d.]+)px/); const ry = s.match(/rotateY\(([-\d.]+)deg/), rx = s.match(/rotateX\(([-\d.]+)deg/);
+    return [n, [+tr[1], +tr[2], +rx[1], +ry[1]]]; })));
+  const verwacht = { t2: [20, -1], t1: [15, -1], t3: [10, -1], t4: [20, 1], t5: [10, 1], t6: [15, 1] };
+  for (const [n, [k, teken]] of Object.entries(verwacht)) {
+    expect(m[n][0], `${n} x`).toBeCloseTo(1430 / k, 0);
+    expect(m[n][1], `${n} y`).toBeCloseTo(teken * 890 / k, 0);
+    expect(Math.abs(m[n][2]), `${n} rotateX`).toBeLessThanOrEqual(12.5);
+    expect(Math.abs(m[n][3]), `${n} rotateY`).toBeLessThanOrEqual(12.5);
+    expect(Math.abs(m[n][3]), `${n} rotateY bijna max`).toBeGreaterThan(12);
+  }
+  // de kop blijft boven de foto's
+  const z = await page.evaluate(() => [getComputedStyle(document.querySelector('.hero-tekst')).zIndex, ...[...document.querySelectorAll('.hero .tegel')].map(t => getComputedStyle(t).zIndex)].map(Number));
+  expect(z[0]).toBeGreaterThan(Math.max(...z.slice(1)));
+  await ctx.close();
+});
+
+test('F2: geen losse scheidingslijn in 001 — Producten op touch; met een muis alleen tussen de kolommen', async ({ page }, info) => {
+  await page.goto('/');
+  const lijnen = await page.evaluate(() => { const k = document.querySelector('#producten .kern-kolom:nth-child(2)');
+    return ['::before', '::after'].map(p => getComputedStyle(k, p).display); });
+  if (info.project.name === 'desktop') expect(lijnen).toEqual(['block', 'block']);
+  else expect(lijnen, 'op touch geen lijnen die los door foto en tekst lopen').toEqual(['none', 'none']);
+});
+
+test('F3: label 002 — Handwerk en vier namen waarin elk woord één keer voorkomt', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#technieken .label')).toHaveText(/002\s—\sHandwerk/);
+  const namen = await page.locator('#technieken .hoverlijst ul a').evaluateAll(as => as.map(a => a.childNodes[0].textContent.trim()));
+  expect(namen).toEqual(['Warm en eigen', 'Rustig en praktisch', 'Klein en precies', 'Speels en levendig']);
+  const woorden = namen.join(' ').split(' ').filter(w => w !== 'en');
+  expect(new Set(woorden).size, 'elk woord één keer').toBe(woorden.length);
+});
+
+test('F4: de thema-knoppen schuiven één set; aan het begin staat "vorige" uit', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'knoppen alleen met een muis');
+  await page.goto('/kraamcadeauboxen#themas');
+  const vorige = page.locator('.carrousel-knop[data-richting="-1"]'), volgende = page.locator('.carrousel-knop[data-richting="1"]');
+  await expect(vorige).toBeDisabled();
+  await volgende.click();
+  await expect.poll(() => page.locator('.themacarrousel li').nth(3).evaluate(l => Math.round(l.getBoundingClientRect().left))).toBeLessThanOrEqual(1);
+  await volgende.click();
+  await expect(volgende).toBeDisabled();
+  await vorige.click();
+  await expect.poll(() => page.locator('.themacarrousel li').nth(3).evaluate(l => Math.round(l.getBoundingClientRect().left))).toBeLessThanOrEqual(1);
 });

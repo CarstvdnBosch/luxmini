@@ -279,21 +279,21 @@
     var tegels = hero.querySelectorAll('.tegel');
     var cirkel = hero.querySelector('.hero-cirkel');
     if (muis && !stil) {
-      // Zoals Stock (brief 2026-11-06, A2): links (t1-t3) beweegt tegen de muis in, rechts (t4-t6) met de muis mee.
-      // Factoren 1/20, 1/15 en 1/10 per kant (groot, midden, klein); de kleinste tegel schuift op 1440 x 900
-      // hooguit ca. 37 x 51 px. Kantelen hooguit 4°. In rust (muis weg) staan de foto's recht, zonder transform.
-      var FACTOR = { t2: 1 / 20, t1: 1 / 15, t3: 1 / 10, t4: 1 / 20, t5: 1 / 15, t6: 1 / 10 };
+      // Zoals Stock (feedback Carst 6 nov. 14:28, F1): verschuiving in de absolute muispositie, x = clientX / k en
+      // y = -clientY / k (links) of +clientY / k (rechts); k links 20/15/10, rechts 20/10/15 (groot, midden, klein).
+      // Kanteling rotateY = 25 x (x / breedte - 0,5), rotateX = 25 x (y / hoogte - 0,5), max. 12,5 graden, met perspectief
+      // 1500/1000/500 px (k = 20/15/10). Volgen in 1 s easeOut (CSS-overgang). Vóór de eerste beweging: de beginstand.
+      var STOCK = { t2: [20, -1], t1: [15, -1], t3: [10, -1], t4: [20, 1], t5: [10, 1], t6: [15, 1] };
+      var PERSPECTIEF = { 20: 1500, 15: 1000, 10: 500 };
       hero.addEventListener('mousemove', function (e) {
         var r = hero.getBoundingClientRect();
         var x = ((e.clientX - r.left) / r.width) * 2 - 1;
         var y = ((e.clientY - r.top) / r.height) * 2 - 1;
-        var schaal = Math.min(r.width, 1440) / 1440;
+        var ry = 25 * (e.clientX / window.innerWidth - 0.5), rx = 25 * (e.clientY / window.innerHeight - 0.5);
         tegels.forEach(function (t) {
           var naam = (t.className.match(/\bt\d\b/) || [''])[0];
-          var f = (FACTOR[naam] || 1 / 15) * 10; // 1 voor de kleinste tegel
-          var kant = /t[123]/.test(naam) ? -1 : 1;
-          var dx = kant * x * 37 * f * schaal, dy = kant * y * 51 * f * schaal;
-          t.style.transform = 'perspective(1000px) translate3d(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px,0) rotateX(' + (-y * 4 * kant).toFixed(2) + 'deg) rotateY(' + (x * 4 * kant).toFixed(2) + 'deg)';
+          var st = STOCK[naam] || [15, 1], k = st[0];
+          t.style.transform = 'perspective(' + PERSPECTIEF[k] + 'px) translate3d(' + (e.clientX / k).toFixed(1) + 'px,' + (st[1] * e.clientY / k).toFixed(1) + 'px,0) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
         });
         if (cirkel) cirkel.style.translate = (-x * 18).toFixed(1) + 'px ' + (-y * 18).toFixed(1) + 'px';
       });
@@ -989,6 +989,24 @@
     }
     kies(form.querySelector('select[name="box_thema"]'), vraag.get('thema'));
   }
+  // Thema's (Kraamcadeauboxen 003): pijlknoppen schuiven één set van drie verder (scroll-snap legt hem precies neer);
+  // aan het begin of eind is de knop uit. Vegen op touch en de pijltoetsen in de rij werken vanzelf.
+  document.querySelectorAll('.themacarrousel').forEach(function (rij) {
+    var knoppen = Array.prototype.slice.call(document.querySelectorAll('.carrousel-knop[aria-controls="' + rij.id + '"]'));
+    var stand = function () {
+      var max = rij.scrollWidth - rij.clientWidth - 2;
+      knoppen.forEach(function (k) { k.disabled = k.dataset.richting === '-1' ? rij.scrollLeft <= 2 : rij.scrollLeft >= max; });
+    };
+    knoppen.forEach(function (k) {
+      k.addEventListener('click', function () {
+        var gat = parseFloat(getComputedStyle(rij.querySelector('ul')).columnGap) || 0;
+        rij.scrollBy({ left: Number(k.dataset.richting) * (rij.clientWidth + gat), behavior: stil ? 'auto' : 'smooth' });
+      });
+    });
+    rij.addEventListener('scroll', function () { window.requestAnimationFrame(stand); }, { passive: true });
+    window.addEventListener('resize', stand);
+    stand();
+  });
   // Veegbare rijen (Kraamcadeauboxen, producten): alleen een tabstop als de rij echt scrolt (tablet en mobiel), niet op desktop
   var scrollRijen = Array.prototype.slice.call(document.querySelectorAll('[data-scrollrij]'));
   var zetTabstop = function () { scrollRijen.forEach(function (r) { if (r.scrollWidth > r.clientWidth + 1) r.setAttribute('tabindex', '0'); else r.removeAttribute('tabindex'); }); };

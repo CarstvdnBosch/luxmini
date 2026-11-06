@@ -206,7 +206,7 @@ STAPPEN_SCHERMEN = {"desktop": (1440, 900, False), "tablet": (768, 1024, True), 
 
 LEES_STAPPEN = """() => {
   const schoon = s => s.replace(/\\u00a0/g, ' ').replace(/\\s+/g, ' ').trim();
-  const sectie = [...document.querySelectorAll('main section[data-label]')].find(s => s.getAttribute('data-label').includes('003'));
+  const sectie = [...document.querySelectorAll('main section[data-label]')].find(s => s.getAttribute('data-label').includes('Zo werkt het'));
   if (!sectie) return null;
   const lijsten = sectie.querySelectorAll('ol');
   const items = lijsten.length === 1 ? [...lijsten[0].querySelectorAll(':scope > li')] : [];
@@ -245,10 +245,11 @@ def controleer_stappen(browser):
 DRIELUIK = [("kraamcadeauboxen", "kraamcadeaubox", "Kraamcadeauboxen", "kraamcadeauboxen.html", "#DEB799"),
             ("prematuurkleding", "prematuur", "Prematuurkleding", "prematuurkleding.html", "#C89F67"),
             ("babynest", "babynest", "Babynest", "babynest.html", "#B5969E")]
-TECHNIEKEN = [("Warm en persoonlijk", "Belettering", "werkwijze.html#personaliseren", "#C88654"),
-              ("Rustig en functioneel", "Siliconen items", "inspiratie.html#siliconen", "#839C75"),
-              ("Specifiek en oog voor detail", "Prematuurkleding", "prematuurkleding.html", "#999575"),
-              ("Levendig en persoonlijk", "Borduren", "inspiratie.html#textiel", "#AE8C94")]
+# 002 Handwerk (label en namen: feedback Carst 6 nov. 14:28, F3; elk woord één keer)
+TECHNIEKEN = [("Warm en eigen", "Belettering", "werkwijze.html#personaliseren", "#C88654"),
+              ("Rustig en praktisch", "Siliconen items", "inspiratie.html#siliconen", "#839C75"),
+              ("Klein en precies", "Prematuurkleding", "prematuurkleding.html", "#999575"),
+              ("Speels en levendig", "Borduren", "inspiratie.html#textiel", "#AE8C94")]
 LICHTE_KLEUREN = {"#DEB799", "#C89F67", "#C3CFBC", "#B5969E", "#B4B19A", "#E0E6E7"}
 
 # Producttekst per blok (letterlijk; was "Wat ik maak" op Werkwijze, sinds 5 nov. alleen op de homepage)
@@ -327,7 +328,7 @@ def controleer_home(page, tag, naam):
     if not t:
         fouten.append(f"{tag}: sectie #technieken ontbreekt")
     else:
-        if t[0] != "002 — Technieken" or [x[:2] for x in t[1]] != [[n, h] for n, _, h, _ in TECHNIEKEN] or [x[2] for x in t[1]] != [k for *_, k in TECHNIEKEN]:
+        if t[0] != "002 — Handwerk" or [x[:2] for x in t[1]] != [[n, h] for n, _, h, _ in TECHNIEKEN] or [x[2] for x in t[1]] != [k for *_, k in TECHNIEKEN]:
             fouten.append(f"{tag}: Technieken klopt niet ({t[:2]})")
         if [x[:3] for x in t[2]] != [[n, r, h] for n, r, h, _ in TECHNIEKEN] or t[3] != [r for _, r, _, _ in TECHNIEKEN]:
             fouten.append(f"{tag}: kaarten of productregels van Technieken kloppen niet ({t[2]}, {t[3]})")
@@ -360,6 +361,41 @@ def controleer_home(page, tag, naam):
     n = page.evaluate("() => document.querySelectorAll('main a[href=\"contact.html#formulier\"]').length")
     if n != 1:
         fouten.append(f"{tag}: {n} links naar contact.html#formulier in main, verwacht precies 1")
+
+def controleer_witte_lijn(browser):
+    """F2 (feedback Carst 6 nov. 14:28): geen losse witte lijn in of langs 001 — Producten. Op desktop (muis) alleen de twee
+    bedoelde lijnen tussen de kolommen; op touch geen enkele dunne witte lijn; langs de randen van #producten geen witte rij of kolom."""
+    from PIL import Image
+    import io
+    wit = lambda c: c[0] > 240 and c[1] > 240 and c[2] > 240
+    for b, h, touch in [(1440, 900, False), (1280, 720, False), (768, 1024, True), (390, 844, True)]:
+        ctx, page = nieuwe_pagina(browser, "index.html", b, h, touch, reduced_motion="reduce")
+        r = page.evaluate("() => { const e = document.querySelector('#producten'); window.scrollTo(0, e.getBoundingClientRect().top + scrollY - 70); }")
+        page.wait_for_timeout(500)
+        vak = page.evaluate("""() => { const r = document.querySelector('#producten').getBoundingClientRect();
+          const k = [...document.querySelectorAll('#producten .kern-kolom')].map(c => Math.round(c.getBoundingClientRect().left));
+          return [Math.max(0, r.top - 3), Math.min(innerHeight, r.bottom + 3), k]; }""")
+        im = Image.open(io.BytesIO(page.screenshot())).convert("RGB"); px = im.load(); W, H = im.size
+        y0, y1, kol = int(vak[0]), int(vak[1]), vak[2]
+        lijnen = []
+        for x in range(1, W - 1):
+            run = best = 0
+            for y in range(max(y0, 64), y1):  # onder de balk
+                if wit(px[x, y]) and not wit(px[x - 1, y]) and not wit(px[x + 1, y]): run += 1; best = max(best, run)
+                else: run = 0
+            if best > 12: lijnen.append(x)
+        hor = []
+        for y in range(max(y0, 64) + 1, y1 - 1):
+            run = best = 0
+            for x in range(W):
+                if wit(px[x, y]) and not wit(px[x, y - 1]) and not wit(px[x, y + 1]): run += 1; best = max(best, run)
+                else: run = 0
+            if best > 12: hor.append(y)
+        bedoeld = [] if touch else [kol[1], kol[2] - 1]
+        los = [x for x in lijnen if not any(abs(x - k) <= 1 for k in bedoeld)]
+        if los or hor or (not touch and sorted(set(round(x) for x in lijnen)) != sorted(bedoeld)):
+            fouten.append(f"index.html [{b} x {h}, 001 — Producten]: losse witte lijn(en): verticaal {los or lijnen}, horizontaal {hor[:6]} (bedoeld: {bedoeld})")
+        ctx.close()
 
 def controleer_home_interactie(browser):
     """Desktop (muis): drieluik bij aanwijzen (foto in, witte tekst min. 4,5:1 op de lichtste plek; babynest max. 324 px en inkt),
@@ -397,6 +433,9 @@ def controleer_home_interactie(browser):
         st = page.evaluate("""i => { const as = [...document.querySelectorAll('#technieken .hoverlijst ul a')];
           return [as.map(a => [getComputedStyle(a).color, getComputedStyle(a).opacity]), getComputedStyle(document.querySelector('#technieken .sfeer.aan .productregel')).fontSize,
                   document.querySelectorAll('#technieken .sfeer.aan img').length]; }""", i)
+        c = contrast_wit_over_foto(page, f"#technieken .hoverlijst li:nth-child({i}) a", "#technieken .sfeer.aan .groot")
+        if c is not None and c < 3:
+            fouten.append(f"index.html [desktop, Handwerk {naam_t}]: de witte naam haalt op de foto {c:.2f}:1 (min. 3:1)")
         if lees_laag(page) != norm_kleur(page, diep) or st[0][i - 1] != [WIT, "1"] or any(x != [WIT, "0.35"] for n, x in enumerate(st[0]) if n != i - 1) or st[1] != "19px" or st[2] != 2:
             fouten.append(f"index.html [desktop, Technieken {naam_t}]: laag {lees_laag(page)} (verwacht {diep}), namen {st[0]}, productregel {st[1]}, foto's {st[2]}")
     page.mouse.move(720, 3, steps=4); page.wait_for_timeout(1200)  # omhoog de lijst uit (de lijst is zo breed als het ontwerpvak)
@@ -619,8 +658,8 @@ def controleer_bestanden():
         blok = re.search(r'<section id="' + id_ + r'".*?</section>', home, re.S)
         if not blok or "LET OP" not in blok.group(0):
             fouten.append(f"index.html: sectie #{id_} zonder LET OP-opmerking")
-    if not re.search(r"<!--\s*LET OP:[^>]*Levendig en persoonlijk[^>]*Borduren", home, re.S):
-        fouten.append("index.html: bij Technieken ontbreekt de LET OP over 'Levendig en persoonlijk' (Borduren)")
+    if not re.search(r"<!--\s*LET OP:[^>]*Speels en levendig[^>]*Borduren", home, re.S):
+        fouten.append("index.html: bij Handwerk ontbreekt de LET OP over 'Speels en levendig' (Borduren)")
     drie = re.search(r'<section id="producten".*?\n</section>', home, re.S)
     if not drie or re.search(r'<img(?![^>]*loading="lazy")[^>]*>', drie.group(0)):
         fouten.append("index.html: niet alle foto's in het drieluik hebben loading=\"lazy\"")
@@ -773,7 +812,7 @@ def pijl_meer(page, tag):
         if href != doel or hoogte < 43.5 or zicht != "visible" or float(dekking) < 1 or breedte == 0 or not inbeeld:
             fouten.append(f"{tag}: pijl-link in {sectie} niet goed zichtbaar, te laag of verkeerd doel ({st})")
 
-HOME_LABELS = ["001 — Producten", "002 — Technieken", "003 — Inspiratie", "004 — Instagram"]
+HOME_LABELS = ["001 — Producten", "002 — Handwerk", "003 — Inspiratie", "004 — Instagram"]
 
 def controleer_algemeen(page, tag, pagina, naam):
     """Per pagina en scherm: data-labels, pijl-links 44 px, lopende tekst 16 px, homepage-opbouw."""
@@ -935,19 +974,23 @@ def controleer_werkwijze(browser):
 
 THEMA_KLEUREN_VERBODEN = {"rgb(188, 133, 101)"}  # terracotta
 THEMAS = ["Giraf", "Vos", "Tulp", "Walvis", "Wilde blaadjes", "Framboos", "Regenboog", "Wilgentakjes", "Blaadjes en bloemen"]
-# volgorde van de pagina (brief homepage per product, criterium 1): kop, statementfoto, 001 formaten, 002 thema's, 003 zo werkt het, 004 contact
-BOX_SECTIES = [["", "— Kraamcadeauboxen"], ["", "— Met naam"], ["formaten", "001 — Kies je formaat"], ["themas", "002 — Thema's"], ["werkwijze", "003 — Zo werkt het"], ["contact", "004 — Contact"]]
-LEES_THEMAS = """() => { const s = document.querySelector('#themas'); const kaarten = [...s.querySelectorAll('.themaraster > li')];
+# volgorde van de pagina (feedback Carst 6 nov. 14:28, F4): kop, statementfoto, 001 formaten (salie), 002 wat er in de box kan
+# (producten en stoffen), 003 thema's (groot, sets van drie), 004 zo werkt het, 005 contact
+BOX_SECTIES = [["", "— Kraamcadeauboxen"], ["", "— Met naam"], ["formaten", "001 — Kies je formaat"], ["in-de-box", "002 — Wat er in de box kan"],
+               ["themas", "003 — Thema's"], ["werkwijze", "004 — Zo werkt het"], ["contact", "005 — Contact"]]
+LEES_THEMAS = """() => { const s = document.querySelector('#themas'); const kaarten = [...s.querySelectorAll('.themacarrousel li')];
   return { kaarten: kaarten.map(k => { const i = k.querySelector('img'), r = i.getBoundingClientRect();
       return [(k.querySelector('figcaption') || {}).textContent, i.getAttribute('src'), i.getAttribute('srcset') || '', i.getAttribute('width'), r.width, r.height, Math.round(r.left), i.getAttribute('alt') || '']; }),
     links: [...s.querySelectorAll('a.pijl')].map(a => [a.textContent.trim(), a.getAttribute('href')]),
     lopend: s.querySelectorAll('.lopend, .lopend-spoor, .thema-lopend').length + document.querySelectorAll('main section.thema').length,
-    boven: s.getBoundingClientRect().top + scrollY, onder: Math.max(...kaarten.map(k => k.getBoundingClientRect().bottom)) + scrollY,
+    rij: (() => { const r = s.querySelector('.themacarrousel'); return r ? [r.getAttribute('role'), r.getAttribute('aria-label'), r.tabIndex, r.scrollWidth > r.clientWidth, getComputedStyle(r).scrollSnapType, r.clientWidth] : null; })(),
+    knoppen: [...s.querySelectorAll('.carrousel-knop')].map(k => [k.getAttribute('aria-label'), Math.round(k.getBoundingClientRect().width), Math.round(k.getBoundingClientRect().height), k.offsetParent !== null]),
     laag: s.getAttribute('data-achtergrond') || getComputedStyle(s).backgroundColor }; }"""
 
 def controleer_themas(browser):
-    """Criterium 1 (vervangt de controle van het projectenritme): volgorde kop, statementfoto, formaten, thema's als raster,
-    zo werkt het, contact; negen thema's zonder lopende regels; op 1440 x 900 binnen twee schermen; 3/2/2 kolommen."""
+    """F4 (feedback Carst 6 nov. 14:28): volgorde kop, statementfoto, formaten (lichte kleur, geen terracotta, buren verschillend),
+    wat er in de box kan, thema's groot in sets van drie (scroll-snap, knoppen met een muis, mobiel één per keer), zo werkt het, contact.
+    Vervangt de controle van het 3 x 3-raster en "negen thema's binnen twee schermen" (vervallen, testaanpassing ter beoordeling door Carst)."""
     ctx, page = nieuwe_pagina(browser, "kraamcadeauboxen.html", 390, 844, True)
     zicht = page.evaluate("""() => { const p = [...document.querySelectorAll('.pagina-kop p')].find(p => p.textContent.trim() === 'Vier formaten, van € 35 tot € 80.');
       if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom <= innerHeight; }""")
@@ -964,7 +1007,7 @@ def controleer_themas(browser):
     if not st or abs(st[0]) > 1 or st[1] > 844 * 1.5 or not st[2] or not st[3]:
         fouten.append(f"kraamcadeauboxen.html [mobiel]: de statementfoto staat niet direct na de intro (verschil, top, geladen, tekst: {st})")
     ctx.close()
-    for naam, (b, h, touch, kolommen) in {"desktop": (1440, 900, False, 3), "tablet": (768, 1024, True, 2), "mobiel": (390, 844, True, 2)}.items():
+    for naam, (b, h, touch, kolommen) in {"desktop": (1440, 900, False, 3), "tablet": (768, 1024, True, 3), "mobiel": (390, 844, True, 1)}.items():
         ctx, page = nieuwe_pagina(browser, "kraamcadeauboxen.html", b, h, touch, reduced_motion="reduce")
         tag = f"kraamcadeauboxen.html [{naam}]"
         secties = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()])")
@@ -973,8 +1016,16 @@ def controleer_themas(browser):
         th = page.evaluate(LEES_THEMAS)
         if [k[0] for k in th["kaarten"]] != THEMAS:
             fouten.append(f"{tag}: thema's zijn {[k[0] for k in th['kaarten']]}, verwacht {THEMAS}")
-        if len({k[6] for k in th["kaarten"]}) != kolommen:
-            fouten.append(f"{tag}: thema's staan in {len({k[6] for k in th['kaarten']})} kolommen, verwacht {kolommen}")
+        zicht = [k for k in th["kaarten"] if k[6] >= -1 and k[6] + k[4] <= b + 1]  # helemaal in beeld
+        if len(zicht) != kolommen:
+            fouten.append(f"{tag}: {len(zicht)} thema's helemaal in beeld, verwacht {kolommen} (een set)")
+        rij = th["rij"]
+        if not rij or rij[:3] != ["region", "Thema's", 0] or not rij[3] or "x" not in rij[4] or "mandatory" not in rij[4]:
+            fouten.append(f"{tag}: de themarij is geen horizontaal scrollbare region met scroll-snap en tabindex ({rij})")
+        if naam == "desktop" and (len(th["knoppen"]) != 2 or any(k[1] < 44 or k[2] < 44 or not k[3] or not k[0] for k in th["knoppen"])):
+            fouten.append(f"{tag}: pijlknoppen vorige/volgende (44 px, aria-label) ontbreken ({th['knoppen']})")
+        if naam != "desktop" and any(k[3] for k in th["knoppen"]):
+            fouten.append(f"{tag}: op touch horen geen pijlknoppen te staan (vegen)")
         for naam_t, src, srcset, w, kb, kh, _, alt in th["kaarten"]:
             breedte = bestandsbreedte(src)
             if str(breedte) != str(w) or kb > breedte + 0.5 or "-600.jpg 600w" not in srcset or abs(kb / kh - 4 / 3) > .02 or naam_t not in alt:
@@ -985,8 +1036,15 @@ def controleer_themas(browser):
             fouten.append(f"{tag}: er staan nog lopende regels of losse themasecties ({th['lopend']})")
         if norm_kleur(page, th["laag"]) in THEMA_KLEUREN_VERBODEN:
             fouten.append(f"{tag}: de thema's staan op terracotta")
-        if naam == "desktop" and th["onder"] - th["boven"] > 2 * h:
-            fouten.append(f"{tag}: de negen thema's passen niet binnen twee schermen ({th['onder'] - th['boven']:.0f} px > {2 * h} px)")
+        kleuren = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => s.getAttribute('data-achtergrond') || '')")
+        if not kleuren[2] or kleuren[2].upper() == "#FFFFFF" or norm_kleur(page, kleuren[2]) in THEMA_KLEUREN_VERBODEN:
+            fouten.append(f"{tag}: 001 formaten staat niet op een lichte paletkleur ({kleuren[2]})")
+        if naam == "desktop":
+            # knop "volgende" schuift precies één set (de vierde tegel komt links in beeld)
+            page.click(".carrousel-knop[data-richting='1']"); page.wait_for_timeout(600)
+            vier = page.evaluate("() => Math.round(document.querySelectorAll('.themacarrousel li')[3].getBoundingClientRect().left)")
+            if abs(vier) > 2:
+                fouten.append(f"{tag}: na 'Volgende thema's' staat het vierde thema niet links ({vier} px)")
         ctx.close()
 
 # Geen scherm zonder inhoud: elk venster langs de pagina toont tekst of een foto
@@ -1237,7 +1295,7 @@ def controleer_zonder_js(browser):
         page = ctx.new_page(); page.goto(url(pagina), wait_until="load")
         st = page.evaluate("""() => { const zicht = e => { let o = 1; for (let x = e; x; x = x.parentElement) o *= parseFloat(getComputedStyle(x).opacity);
             return e.offsetHeight > 0 && getComputedStyle(e).visibility === 'visible' && o === 1; };
-          return { cat: [...document.querySelectorAll('.categorie-foto img, .categorie-tekst h2, .categorie-tekst .klein, .themakaart img, .themakaart figcaption, .inspiratie-rij img, .werk img, .werk figcaption, .maak-rij img, .maak-rij h2, .stap h2, .stap .klein, .techniek h2, .dia img, .fotorij img, .pagina-prijs, .prijs')].filter(e => !zicht(e)).length,
+          return { cat: [...document.querySelectorAll('.categorie-foto img, .categorie-tekst h2, .categorie-tekst .klein, .thema-tegel img, .thema-tegel figcaption, .inspiratie-rij img, .werk img, .werk figcaption, .maak-rij img, .maak-rij h2, .stap h2, .stap .klein, .techniek h2, .dia img, .fotorij img, .pagina-prijs, .prijs')].filter(e => !zicht(e)).length,
                    stappen: [...document.querySelectorAll('.hoe-stap')].map(zicht), form: [...document.querySelectorAll('#formulier input:not([name=website]):not([type=radio]), #formulier textarea, #formulier button')].filter(e => !e.closest('.groep:not([data-groep="Kraamcadeaubox"])') && !zicht(e)).length }; }""")
         if st["cat"] or not all(st["stappen"]) or st["form"]:
             fouten.append(f"{pagina} [zonder JavaScript]: niet alles zichtbaar ({st})")
@@ -1257,7 +1315,7 @@ def controleer_zonder_js(browser):
     ctx.add_init_script(INTRO_WEG)
     for pagina in ["index.html", "werkwijze.html", "prematuurkleding.html", "babynest.html", "inspiratie.html", "kraamcadeauboxen.html"]:
         page = ctx.new_page(); page.goto(url(pagina), wait_until="load"); page.wait_for_timeout(300)
-        weg = page.evaluate("""() => [...document.querySelectorAll('main h1, main h2, main p, main .pijl, main .werk img, main .maak-rij img, main .categorie-foto img, main .themakaart img, main .inspiratie-rij img')].filter(e => {
+        weg = page.evaluate("""() => [...document.querySelectorAll('main h1, main h2, main p, main .pijl, main .werk img, main .maak-rij img, main .categorie-foto img, main .thema-tegel img, main .inspiratie-rij img')].filter(e => {
           if (e.closest('.hoe-stappen, .slider-teksten, .slider-beelden, .hero, .sfeer-beelden, .sfeer-kaarten')) return false; /* tabbladen: één tegelijk zichtbaar; hero: set B ligt eronder; Technieken: foto's alleen bij aanwijzen, kaarten alleen op touch */
           if (e.matches('.sr-only')) return false;
           let o = 1; for (let x = e; x; x = x.parentElement) o *= parseFloat(getComputedStyle(x).opacity);
@@ -1275,6 +1333,7 @@ def main():
         browser = pw.chromium.launch()
         controleer_navigatie(browser)
         controleer_home_interactie(browser)
+        controleer_witte_lijn(browser)
         controleer_werkwijze(browser)
         controleer_themas(browser)
         controleer_prematuur(browser)

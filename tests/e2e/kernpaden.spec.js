@@ -93,11 +93,11 @@ for (const { pad, naam } of PAGINAS.filter(p => p.naam !== 'contact')) {
   });
 }
 
-test('homepage: hero, 001 Producten, 002 Technieken, 003 Inspiratie, 004 Instagram in deze volgorde (brief 2026-11-06)', async ({ page }, info) => {
+test('homepage: hero, 001 Producten, 002 Handwerk, 003 Inspiratie, 004 Instagram in deze volgorde (brief 2026-11-06)', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'volgorde is per scherm gelijk');
   await page.goto('/');
   const labels = await page.locator('main > section').evaluateAll(s => s.map(x => x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()));
-  expect(labels).toEqual(['— LUX mini', '001 — Producten', '002 — Technieken', '003 — Inspiratie', '004 — Instagram']);
+  expect(labels).toEqual(['— LUX mini', '001 — Producten', '002 — Handwerk', '003 — Inspiratie', '004 — Instagram']);
   await expect(page.locator('main section.categorie')).toHaveCount(0);
   // drieluik: drie kolommen, elk één link naar de productpagina
   const kolommen = await page.locator('#producten .kern-kolom').evaluateAll(s => s.map(x => [x.id, [...x.querySelectorAll('a')].map(a => a.getAttribute('href'))]));
@@ -107,7 +107,7 @@ test('homepage: hero, 001 Producten, 002 Technieken, 003 Inspiratie, 004 Instagr
   await expect(technieken).toHaveCount(4);
   const doelen = await technieken.evaluateAll(as => as.map(a => a.getAttribute('href')));
   expect(doelen).toEqual(['werkwijze.html#personaliseren', 'inspiratie.html#siliconen', 'prematuurkleding.html', 'inspiratie.html#textiel']);
-  for (const [i, naam] of [[0, /Warm en persoonlijk\s?: Belettering/], [1, /Rustig en functioneel\s?: Siliconen items/], [2, /Specifiek en oog voor detail\s?: Prematuurkleding/], [3, /Levendig en persoonlijk\s?: Borduren/]]) {
+  for (const [i, naam] of [[0, /Warm en eigen\s?: Belettering/], [1, /Rustig en praktisch\s?: Siliconen items/], [2, /Klein en precies\s?: Prematuurkleding/], [3, /Speels en levendig\s?: Borduren/]]) {
     await expect(technieken.nth(i)).toHaveAccessibleName(naam);
   }
   // 003 Inspiratie: naar alle inspiratie en het formulier; precies één link naar het formulier in main
@@ -118,13 +118,21 @@ test('homepage: hero, 001 Producten, 002 Technieken, 003 Inspiratie, 004 Instagr
   for (const id of ['kraamcadeaubox', 'prematuur', 'babynest', 'babykleding', 'siliconen', 'inspiratie', 'contact']) await expect(page.locator(`#${id}`)).toHaveCount(1);
 });
 
-test('kraamcadeauboxen: negen thema\'s binnen twee schermen (1440 x 900)', async ({ page }, info) => {
-  test.skip(info.project.name !== 'desktop', 'gemeten op 1440 x 900');
+// Feedback Carst 6 nov. 14:28 (F4): de negen thema's groot in sets van drie (vervangt "negen thema's binnen twee schermen")
+test('kraamcadeauboxen: volgorde en thema\'s groot in sets van drie met scroll-snap', async ({ page }, info) => {
   await page.goto('/kraamcadeauboxen');
-  await expect(page.locator('#themas .themaraster > li')).toHaveCount(9);
-  const hoogte = await page.evaluate(() => { const s = document.querySelector('#themas').getBoundingClientRect();
-    return Math.max(...[...document.querySelectorAll('#themas .themaraster > li')].map(k => k.getBoundingClientRect().bottom)) - s.top; });
-  expect(hoogte, 'hoogte van label tot het laatste thema').toBeLessThanOrEqual(2 * 900);
+  const labels = await page.locator('main > section').evaluateAll(s => s.map(x => x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()));
+  expect(labels).toEqual(['— Kraamcadeauboxen', '— Met naam', '001 — Kies je formaat', '002 — Wat er in de box kan', '003 — Thema\'s', '004 — Zo werkt het', '005 — Contact']);
+  const rij = page.locator('#themas .themacarrousel');
+  await expect(rij.locator('li')).toHaveCount(9);
+  const m = await rij.evaluate(r => { const ts = [...r.querySelectorAll('li')].map(l => l.getBoundingClientRect());
+    return { breed: r.clientWidth, scrollt: r.scrollWidth > r.clientWidth, snap: getComputedStyle(r).scrollSnapType, inBeeld: ts.filter(t => t.left >= -1 && t.right <= innerWidth + 1).length,
+      tegel: ts[0].width, foto: [...r.querySelectorAll('img')].map(i => [i.getBoundingClientRect().width, i.naturalWidth]) }; });
+  expect(m.scrollt).toBe(true);
+  expect(m.snap).toMatch(/x mandatory/);
+  expect(m.inBeeld, 'één set in beeld').toBe(info.project.name === 'mobiel' ? 1 : 3);
+  if (info.project.name === 'desktop') expect(m.tegel, 'tegels groter dan in het oude raster (385 px)').toBeGreaterThan(440);
+  await expect(page.locator('#themas a.pijl')).toHaveText(['Vraag je thema aan']);
 });
 
 test('intro speelt bij het eerste bezoek en is tussen 2,0 en 2,6 s weg (wens Carst 6 nov.: ca. 2,2 s)', async ({ browser }, info) => {
