@@ -171,7 +171,7 @@
           </select>
         </label>
         <fieldset class="groep breed" data-groep="Kraamcadeaubox">
-          <legend><span class="groep-alleen">Alleen bij een kraamcadeaubox: </span>Je kraamcadeaubox</legend>
+          <legend><span class="groep-alleen">Alleen bij een kraamcadeaubox: </span>Je kraamcadeaubox <span class="groep-optioneel">(optioneel)</span></legend>
           <fieldset class="keuzes">
             <legend>Formaat</legend>
             <div class="keuze-kaarten">
@@ -203,17 +203,18 @@
         </fieldset>
         <!-- LET OP: wacht op akkoord Carien (velden voor prematuurkleding: welke vragen wil Carien stellen? Voorlopig maat of gewicht en naam, vrij en optioneel) -->
         <fieldset class="groep breed" data-groep="Prematuurkleding">
-          <legend><span class="groep-alleen">Alleen bij prematuurkleding: </span>Je prematuurkleding</legend>
+          <legend><span class="groep-alleen">Alleen bij prematuurkleding: </span>Je prematuurkleding <span class="groep-optioneel">(optioneel)</span></legend>
           <label>Maat of gewicht van de baby<input type="text" name="prem_maat" autocomplete="off"></label>
           <label>Naam op het kledingstuk<input type="text" name="prem_naam" autocomplete="off"></label>
         </fieldset>
         <!-- LET OP: wacht op akkoord Carien (velden voor het babynest: welke vragen wil Carien stellen? Voorlopig stof of kleur en naam, vrij en optioneel) -->
         <fieldset class="groep breed" data-groep="Babynest">
-          <legend><span class="groep-alleen">Alleen bij een babynest: </span>Je babynest</legend>
+          <legend><span class="groep-alleen">Alleen bij een babynest: </span>Je babynest <span class="groep-optioneel">(optioneel)</span></legend>
           <label>Stof of kleur<input type="text" name="nest_stof" autocomplete="off"></label>
-          <label>Naam<input type="text" name="nest_naam" autocomplete="off"></label>
+          <label>Naam op het babynest<input type="text" name="nest_naam" autocomplete="off"></label>
         </fieldset>
-        <label class="breed">Je idee<textarea name="bericht" rows="5" required placeholder="Bijv. wat je zoekt, naam, stof, maat of uitgerekende datum"></textarea></label>
+        <!-- LET OP: wacht op akkoord Carien (nieuwe voorbeeldtekst in het veld "Je idee") -->
+        <label class="breed">Je idee<textarea name="bericht" rows="5" required placeholder="Vertel kort wat je zoekt en voor wanneer"></textarea></label>
         <label>Naam<input type="text" name="naam" autocomplete="name" required></label>
         <label>E-mailadres<input type="email" name="email" autocomplete="email" required></label>
         <label>Telefoon (optioneel)<input type="tel" name="telefoon" autocomplete="tel"></label>

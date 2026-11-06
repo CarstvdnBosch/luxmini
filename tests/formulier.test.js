@@ -66,7 +66,7 @@ test('extra velden komen alleen in de mail bij het gekozen onderwerp', () => {
   assert.match(tekst, /Formaat: € 50/);
   assert.doesNotMatch(tekst, /1800 gram|teddy|Lot/);
   const nest = controleer({ ...alles, onderwerp: 'Babynest' }).velden;
-  assert.deepEqual(nest.extra, [['Stof of kleur', 'teddy'], ['Naam', 'Lot']]);
+  assert.deepEqual(nest.extra, [['Stof of kleur', 'teddy'], ['Naam op het babynest', 'Lot']]);
   assert.doesNotMatch(leesTekst(mail(nest)), /Thema:|Naam op het product|1800 gram/);
   const prem = controleer({ ...alles, onderwerp: 'Prematuurkleding' }).velden;
   assert.deepEqual(prem.extra, [['Maat of gewicht van de baby', '1800 gram'], ['Naam op het kledingstuk', 'Noor']]);

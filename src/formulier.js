@@ -25,7 +25,7 @@ export const EXTRA_VELDEN = {
   ],
   Babynest: [
     ['nest_stof', 'Stof of kleur', 120],
-    ['nest_naam', 'Naam', 120],
+    ['nest_naam', 'Naam op het babynest', 120],
   ],
 };
 export const FORMATEN = ['35', '50', '65', '80'];

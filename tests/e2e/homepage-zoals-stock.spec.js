@@ -252,3 +252,33 @@ test('Technieken: bij aanwijzen vallen productregel en foto\'s binnen de sectie'
     }
   }
 });
+
+/* ---------- Ontwerpgate ronde 1 ---------- */
+test('foto\'s over de volle breedte (003 Inspiratie, statement) worden op tablet en mobiel niet vergroot', async ({ page }, info) => {
+  test.skip(info.project.name === 'desktop', 'desktop toetst de sitecontrole');
+  for (const pad of ['/', '/kraamcadeauboxen']) {
+    await page.goto(pad);
+    const uit = await page.evaluate(async () => {
+      const r = [];
+      for (const i of document.querySelectorAll('main .statement > img')) {
+        i.loading = 'eager'; i.scrollIntoView({ block: 'center', behavior: 'instant' }); await i.decode().catch(() => {});
+        const bron = new Image(); bron.src = i.currentSrc; await bron.decode().catch(() => {});
+        const b = i.getBoundingClientRect();
+        r.push([i.currentSrc.split('/').pop(), Math.max(b.width / bron.naturalWidth, b.height / bron.naturalHeight)]);
+      }
+      return r; });
+    expect(uit.length, `${pad}: er staat een foto over de volle breedte`).toBeGreaterThan(0);
+    for (const [bestand, schaal] of uit) expect(schaal, `${pad}: ${bestand} vergroot`).toBeLessThanOrEqual(1.01);
+  }
+});
+
+test('minder beweging: de kleurlaag, de bovenkant en de balk wisselen direct van kleur', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
+  await page.goto('/'); // hulp.js zet minder beweging aan
+  const duur = await page.evaluate(() => ['.achtergrond', '.balk', '.hero-kleur'].map(s => getComputedStyle(document.querySelector(s)).transitionDuration));
+  expect(duur).toEqual(['0s', '0s', '0s']);
+  await page.locator('#technieken').evaluate(e => window.scrollTo(0, e.getBoundingClientRect().top + scrollY - 100));
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+  const na = await page.evaluate(() => getComputedStyle(document.querySelector('.achtergrond')).backgroundColor);
+  expect(na, 'de laag is direct wit (zonder overgang)').toBe('rgb(255, 255, 255)');
+});
