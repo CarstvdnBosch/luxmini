@@ -23,7 +23,7 @@ Dit is het vaste kwaliteitsnet onder elke wijziging aan luxmini.nl. Het is gemaa
 | 4 · Kwaliteit | Playwright Test, `mobiel-ontwerp.spec.js` | **Mobiel ontwerp** op Chromium (390 × 844) en **iPhone/Safari** (WebKit, 390 × 664): tikdoelen 44 px, tekst en velden 16 px, zoom niet geblokkeerd, niets buiten beeld, foto's niet vergroot, contact binnen één tik, regellengte, de balk bedekt geen kop. Alle andere tests draaien ook op de iPhone. | ja |
 | 5 · Visueel | Playwright `toHaveScreenshot` | Elke pagina op 3 schermen vergeleken met de goedgekeurde basis (`tests/e2e/basis/`) | nee, waarschuwing |
 | Validatierapport | `scripts/validatierapport.mjs` | Bundelt alles + oordelen controleur/ontwerper + open punten (LET OP) + checklist | — |
-| GO · Akkoord Carst | label `GO` | Alleen de eigenaar van de repository; vervalt bij elke nieuwe commit | ja |
+| GO · Akkoord Carst | label `GO` → commitstatus | Alleen de eigenaar van de repository; vervalt bij elke nieuwe commit. Zonder GO staat de status op "wachten" (geen mislukte run, dus geen foutmail) | ja |
 | 3 · Rooktest | `scripts/rooktest.sh` | Na live zetten en dagelijks | (live) |
 
 ## Lokaal draaien (mensen en agents)
