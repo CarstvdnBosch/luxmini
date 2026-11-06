@@ -110,7 +110,7 @@
         bewegers.forEach(function (el) { el.style.transition = 'transform .5s cubic-bezier(.33,1,.68,1)'; el.style.transform = 'none'; });
         intro.classList.add('snel');
         heroKlaar();
-        timers.push(setTimeout(opruimen, 540));
+        timers.push(setTimeout(opruimen, 520)); // de uitgang duurt 0,5 s; binnen 0,6 s klaar
       };
       var signalen = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'];
       signalen.forEach(function (s) { window.addEventListener(s, overslaan, { capture: true, passive: true }); });
@@ -594,7 +594,8 @@
          vloeit naar de kleur van de sectie waarvan het midden in beeld is
      --------------------------------------------------------------- */
   var lagen = Array.prototype.slice.call(document.querySelectorAll('main > section')).filter(function (sec) {
-    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement') && !sec.matches('.contact-kop, .pagina-kop, .over-kop'); // koppen houden hun eigen kleur, zoals de bovenkant van de homepage
+    // koppen en het drieluik (eigen perzik vlak, kolommen met eigen kleur: geen gebroken strook bij de laagovergang) houden hun eigen kleur
+    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement') && !sec.matches('.contact-kop, .pagina-kop, .over-kop, .drieluik');
   });
   lagen.forEach(function (sec) {
     if (!sec.hasAttribute('data-achtergrond')) sec.setAttribute('data-achtergrond', getComputedStyle(sec).backgroundColor);
@@ -988,5 +989,9 @@
     }
     kies(form.querySelector('select[name="box_thema"]'), vraag.get('thema'));
   }
+  // Veegbare rijen (Kraamcadeauboxen, producten): alleen een tabstop als de rij echt scrolt (tablet en mobiel), niet op desktop
+  var scrollRijen = Array.prototype.slice.call(document.querySelectorAll('[data-scrollrij]'));
+  var zetTabstop = function () { scrollRijen.forEach(function (r) { if (r.scrollWidth > r.clientWidth + 1) r.setAttribute('tabindex', '0'); else r.removeAttribute('tabindex'); }); };
+  if (scrollRijen.length) { zetTabstop(); window.addEventListener('resize', zetTabstop); }
   document.querySelectorAll('[data-jaar]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 })();

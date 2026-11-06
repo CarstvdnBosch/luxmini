@@ -83,13 +83,20 @@ test('een ongeldig formaat valt weg', () => {
 });
 
 test('geen regeleinden en een maximumlengte in extra velden (geen kopinjectie)', () => {
-  const r = controleer({ ...geldig, box_naam: 'Sem\r\nBcc: x@y.nl', box_thema: 'a'.repeat(500), onderwerp: 'Kraamcadeaubox' });
+  const r = controleer({ ...geldig, box_naam: 'Sem\r\nBcc: x@y.nl', box_maat: 'a'.repeat(500), onderwerp: 'Kraamcadeaubox' });
   for (const [, w] of r.velden.extra) assert.ok(!/[\r\n]/.test(w));
-  assert.equal(r.velden.extra.find(([k]) => k === 'Thema')[1].length, 80);
+  assert.equal(r.velden.extra.find(([k]) => k === 'Kledingmaat')[1].length, 60);
   const raw = mail(r.velden);
   assert.match(raw, /\r\nSubject: =\?UTF-8\?B\?.+\?=\r\n/);
   assert.ok(!/^Bcc:/mi.test(raw.split('\r\n\r\n')[0]), 'geen Bcc-kop in de mail');
   // de onderwerpregel heeft dezelfde vorm
   const onderwerp = raw.match(/\r\nSubject: =\?UTF-8\?B\?(.+)\?=\r\n/)[1];
   assert.equal(new TextDecoder().decode(Uint8Array.from(atob(onderwerp), (c) => c.charCodeAt(0))), 'Website: Kraamcadeaubox – Zoë de Vries');
+});
+
+test('thema geldt alleen als het een van de negen thema\'s of "Een eigen stof of kleur" is', () => {
+  const thema = (t) => (controleer({ ...geldig, box_thema: t }).velden.extra.find(([k]) => k === 'Thema') || [])[1];
+  assert.equal(thema('Wilde blaadjes'), 'Wilde blaadjes');
+  assert.equal(thema('Een eigen stof of kleur'), 'Een eigen stof of kleur');
+  for (const t of ['giraf', 'Olifant', '<script>', 'Giraf\r\nBcc: x@y.nl', '']) assert.equal(thema(t), undefined, `thema ${JSON.stringify(t)}`);
 });

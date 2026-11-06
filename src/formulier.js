@@ -29,6 +29,8 @@ export const EXTRA_VELDEN = {
   ],
 };
 export const FORMATEN = ['35', '50', '65', '80'];
+// Thema's zoals op de site (Kraamcadeauboxen en de keuzelijst in het formulier); andere waarden vallen weg.
+export const THEMAS = ['Giraf', 'Vos', 'Tulp', 'Walvis', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur'];
 
 const schoon = (waarde, max = 200) =>
   String(waarde ?? '').replace(/[\r\n]+/g, ' ').trim().slice(0, max);
@@ -54,6 +56,7 @@ export function controleer(form) {
   for (const [naam, kop, max] of EXTRA_VELDEN[velden.onderwerp] || []) {
     let waarde = schoon(get(naam), max);
     if (naam === 'box_formaat') waarde = FORMATEN.includes(waarde) ? `€ ${waarde}` : '';
+    if (naam === 'box_thema' && !THEMAS.includes(waarde)) waarde = '';
     if (waarde) velden.extra.push([kop, waarde]);
   }
 

@@ -559,7 +559,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .kernwaarden { position: relative; }
 .kern-label { position: absolute; left: var(--rand); top: var(--ritme); z-index: 3; }
 .kern-kolommen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.kern-kolom { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: calc(var(--ritme) + 48px) 24px calc(var(--ritme) / 2) clamp(24px, calc(var(--u) * 8.333), 120px); }
+.kern-kolom { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: calc(var(--ritme) + 48px) 24px calc(var(--ritme) / 2) clamp(24px, calc(var(--u) * 8.333), 120px); }
 .kolom-prem { background: var(--oker); }
 .kolom-nest { background: var(--mauve); }
 /* witte lijnen van 1 px, alleen tussen de kolommen, verticaal in het midden */
@@ -570,7 +570,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .kern-tekst .kop-m { color: inherit; hyphens: manual; }
 .kern-tekst .klein { max-width: none; }
 .kern-tekst .pijl { margin-top: 4px; }
-.kolom-link::after { content: ""; position: absolute; inset: 0; z-index: 3; }
+.kolom-link::after { content: ""; position: absolute; inset: -200vh -200vw; z-index: 3; } /* groter dan de kolom en afgesneden door de kolom (overflow): ook als het tekstblok verschuift is de hele kolom klikbaar */
 .kolom-link:hover { opacity: 1; }
 .kern-beeld { display: none; }
 .kern-masker img, .nest-lijst img { width: 100%; height: 100%; object-fit: cover; }
@@ -591,11 +591,14 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .kern-tekst, .kern-tekst .kop-m { transition: color .6s var(--rustig); }
   .kolom-box:hover .kern-tekst, .kolom-box:focus-within .kern-tekst, .kolom-prem:hover .kern-tekst, .kolom-prem:focus-within .kern-tekst { color: var(--wit); }
   /* babynest: alleen het kleine bestand (324 x 436); een ingelijste foto boven de tekst op diep mauve, de tekst blijft inkt.
-     De lijst neemt in rust geen ruimte in (negatieve marge); bij aanwijzen zakt de kolominhoud de halve lijsthoogte. */
-  .kolom-nest { --nest-h: min(436px, calc(clamp(600px, 100svh, 900px) - 400px)); transition: background-color .6s var(--rustig), padding-top 1s cubic-bezier(.215,.61,.355,1); }
-  .nest-lijst { display: block; position: relative; height: var(--nest-h); aspect-ratio: 324 / 436; max-width: 100%; margin: calc(-1 * var(--nest-h) - 4px) 0 4px; overflow: hidden; clip-path: inset(0 0 100% 0); transition: clip-path 1s cubic-bezier(.215,.61,.355,1); }
+     De lijst staat absoluut boven het tekstblok en neemt geen ruimte in; bij aanwijzen schuift het tekstblok (transform,
+     dus zonder dat een kolom hoger wordt) de halve lijsthoogte omlaag. Kolom 1 en 2 blijven exact staan (controle ronde 1). */
+  .kolom-nest { --nest-h: min(436px, calc(clamp(600px, 100svh, 900px) - 400px)); transition: background-color .6s var(--rustig); }
+  .kolom-nest .kern-tekst { position: relative; transition: color .6s var(--rustig), transform 1s cubic-bezier(.215,.61,.355,1); }
+  .nest-lijst { display: block; position: absolute; left: 0; bottom: calc(100% + 24px); height: var(--nest-h); aspect-ratio: 324 / 436; max-width: 100%; overflow: hidden; clip-path: inset(0 0 100% 0); transition: clip-path 1s cubic-bezier(.215,.61,.355,1); }
   .nest-lijst img { transform: scale(1.3); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
-  .kolom-nest:hover, .kolom-nest:focus-within { background-color: #AE8C94; padding-top: calc(var(--ritme) + 48px + var(--nest-h) + 24px); }
+  .kolom-nest:hover, .kolom-nest:focus-within { background-color: #AE8C94; }
+  .kolom-nest:hover .kern-tekst, .kolom-nest:focus-within .kern-tekst { transform: translateY(calc((var(--nest-h) + 24px) / 2)); }
   .kolom-nest:hover .nest-lijst, .kolom-nest:focus-within .nest-lijst { clip-path: inset(0); }
   .kolom-nest:hover .nest-lijst img, .kolom-nest:focus-within .nest-lijst img { transform: none; }
 }
@@ -609,7 +612,6 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 @media (max-width: 760px) {
   .kern-label { position: static; padding: var(--ritme) var(--rand) 0; }
-  .drieluik { background-color: transparent; }
   .kern-kolommen { grid-template-columns: minmax(0, 1fr); }
   .kern-kolom { padding: 40px var(--rand) 48px; }
   .kolom-box { padding-top: 32px; }
@@ -1321,3 +1323,6 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 }
 /* mobiel: het zakje met de naam in beeld, de tekst onderaan valt op vloeipapier en doos (niet over de knuffel) */
 @media (max-width: 760px) { .inspiratie-blok > img { object-position: 36% 50% !important; } }
+/* Technieken (controle ronde 1): de lijst is zo hoog dat de grote foto (incl. 40 px meebewegen), de kleine foto en de
+   productregel bij aanwijzen binnen de sectie blijven (gemeten op 1025, 1280 x 720 en 1440 x 900: tot ca. 0,45 x het ontwerpvak) */
+@media (hover: hover) and (pointer: fine) { .js #technieken .hoverlijst.sferen { min-height: calc(var(--B) * .46 + 8px); } }

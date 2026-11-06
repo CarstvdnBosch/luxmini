@@ -136,7 +136,7 @@ test('intro speelt bij het eerste bezoek en is tussen 2,0 en 2,6 s weg (wens Car
   const start = Date.now();
   await expect(page.locator('html')).not.toHaveClass(/intro-aan/, { timeout: 4000 });
   const duur = Date.now() - start;
-  expect(duur, 'duur van de intro in ms').toBeGreaterThanOrEqual(1900);
+  expect(duur, 'duur van de intro in ms').toBeGreaterThanOrEqual(2000);
   expect(duur, 'duur van de intro in ms').toBeLessThanOrEqual(2600);
   await expect(page.locator('.hero h1')).toBeVisible();
   await ctx.close();
@@ -151,10 +151,13 @@ test('intro: de hero-foto\'s staan onder het doek al zichtbaar, overslaan is bin
   const dekking = await page.locator('.hero .tegel').evaluateAll(ts => ts.map(t => getComputedStyle(t).opacity));
   expect(dekking, 'doorzichtigheid van de tegels tijdens de intro').toEqual(['1', '1', '1', '1', '1', '1']);
   await page.waitForTimeout(400);
-  const start = Date.now();
+  // gemeten in de pagina zelf: van de toets tot de intro weg is (zonder de wachttijd van de testrunner)
+  await page.evaluate(() => { window.__weg = null; addEventListener('keydown', () => { window.__toets = performance.now(); }, { capture: true, once: true });
+    new MutationObserver((m, o) => { if (!document.documentElement.classList.contains('intro-aan')) { window.__weg = performance.now(); o.disconnect(); } }).observe(document.documentElement, { attributes: true }); });
   await page.keyboard.press('Shift');
   await expect(page.locator('html')).not.toHaveClass(/intro-aan/, { timeout: 2000 });
-  expect(Date.now() - start, 'overslaan duurt in ms').toBeLessThanOrEqual(600);
+  const duur = await page.evaluate(() => window.__weg - window.__toets);
+  expect(duur, 'overslaan duurt in ms').toBeLessThanOrEqual(600);
   await ctx.close();
 });
 

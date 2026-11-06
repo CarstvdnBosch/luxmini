@@ -206,3 +206,49 @@ test('overgang: geen vlak en geen verschuiving bij minder beweging', async ({ pa
   expect(await page.evaluate(() => getComputedStyle(document.querySelector('.overgang')).display)).toBe('none');
   expect(await page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector('main')).transform).m42)).toBe(0);
 });
+
+/* ---------- Controle ronde 1: drieluik en Technieken blijven binnen hun vak ---------- */
+const SCHERMEN_MUIS = [[1025, 800], [1280, 720], [1440, 900]];
+
+test('drieluik: aanwijzen van Babynest laat kolom 1 en 2 exact staan (±1 px)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'alleen met een muis');
+  for (const [b, h] of SCHERMEN_MUIS) {
+    await page.setViewportSize({ width: b, height: h });
+    await page.goto('/');
+    await page.locator('#producten').evaluate(e => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    await page.mouse.move(5, h - 5);
+    await page.waitForTimeout(300);
+    const plek = () => page.evaluate(() => ['#kraamcadeauboxen h2', '#prematuurkleding h2', '#producten'].map(s => { const r = document.querySelector(s).getBoundingClientRect(); return [r.top, r.left, r.height]; }));
+    const voor = await plek();
+    const k = await page.locator('#babynest').boundingBox();
+    await page.mouse.move(k.x + k.width / 2, k.y + k.height / 2, { steps: 3 });
+    await page.waitForTimeout(400);
+    const tijdens = await plek();
+    voor.forEach((v, i) => v.forEach((x, n) => expect(Math.abs(tijdens[i][n] - x), `${b} px: ${['kop kolom 1', 'kop kolom 2', 'drieluik'][i]} verschuift`).toBeLessThanOrEqual(1)));
+    // de ingelijste babynestfoto valt binnen de kolom en is hooguit 324 px breed
+    await page.waitForTimeout(800);
+    const nest = await page.evaluate(() => { const f = document.querySelector('#babynest .nest-lijst').getBoundingClientRect(), k = document.querySelector('#babynest').getBoundingClientRect(), t = document.querySelector('#babynest .pijl').getBoundingClientRect();
+      return { binnen: f.top >= k.top - 1 && t.bottom <= k.bottom + 1, breed: f.width }; });
+    expect(nest.binnen, `${b} px: babynestfoto en tekst binnen de kolom`).toBe(true);
+    expect(nest.breed).toBeLessThanOrEqual(324.5);
+  }
+});
+
+test('Technieken: bij aanwijzen vallen productregel en foto\'s binnen de sectie', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'alleen met een muis');
+  for (const [b, h] of SCHERMEN_MUIS) {
+    await page.setViewportSize({ width: b, height: h });
+    await page.goto('/');
+    await page.locator('#technieken .hoverlijst').evaluate(e => e.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    for (let i = 1; i <= 4; i++) {
+      const a = page.locator(`#technieken .hoverlijst li:nth-child(${i}) a`);
+      const r = await a.boundingBox();
+      await page.mouse.move(r.x + r.width / 2, r.y + r.height - 2, { steps: 2 }); // onderaan de naam: foto's het verst omlaag
+      await page.waitForTimeout(1100);
+      const m = await page.evaluate(() => { const s = document.querySelector('#technieken').getBoundingClientRect();
+        const delen = ['.sfeer.aan .productregel', '.sfeer.aan .groot', '.sfeer.aan .klein-beeld'].map(q => document.querySelector('#technieken ' + q).getBoundingClientRect().bottom);
+        return { onder: s.bottom, delen }; });
+      m.delen.forEach((y, n) => expect(y, `${b} px, item ${i}: ${['productregel', 'grote foto', 'kleine foto'][n]} valt onder de sectie`).toBeLessThanOrEqual(m.onder));
+    }
+  }
+});
