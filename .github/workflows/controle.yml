@@ -28,6 +28,7 @@ jobs:
   tests:
     name: "Gate 1 · Tests"
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,6 +42,7 @@ jobs:
   sitecontrole:
     name: "Gate 2 · Sitecontrole"
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     container: mcr.microsoft.com/playwright/python:v1.47.0-jammy
     steps:
       - uses: actions/checkout@v4
@@ -58,6 +60,7 @@ jobs:
   kwaliteit:
     name: "Gate 4 · Kwaliteit"
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -87,13 +90,18 @@ jobs:
   visueel:
     name: "Gate 5 · Visueel (waarschuwing)"
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm ci || npm install
-      - run: npx playwright install --with-deps chromium webkit
+      - name: Browsers installeren
+        # niet blokkerend: hangt de installatie (gezien bij WebKit), dan stopt hij na 10 minuten zonder de run te laten mislukken
+        continue-on-error: true
+        timeout-minutes: 10
+        run: npx playwright install --with-deps chromium webkit
       - name: Schermen vergelijken met de goedgekeurde basis
         id: vergelijk
         continue-on-error: true   # niet blokkerend: verschillen gaan naar het validatierapport
@@ -117,6 +125,7 @@ jobs:
     needs: [tests, sitecontrole, kwaliteit, visueel]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write

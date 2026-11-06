@@ -19,6 +19,7 @@ jobs:
   rooktest:
     name: "Gate 3 · Rooktest live"
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Wachten tot Cloudflare deze versie live heeft gezet
