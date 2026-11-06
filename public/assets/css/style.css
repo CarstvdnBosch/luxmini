@@ -1391,3 +1391,6 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
    in de buurt komt (main.js); zonder JavaScript staat dezelfde foto in <noscript>. (content-visibility is weg: die liet
    ankers verkeerd landen, controle ronde 6.) */
 html:not(.js) img[data-src] { display: none; }
+/* lege fotovakken (nog niet geladen) krijgen een lichte tint die bij de sectie past (ronde 9) */
+#in-de-box .product img, #in-de-box .stof img { background-color: rgba(224,230,231,.6); }
+#themas .thema-tegel img { background-color: rgba(255,255,255,.35); }

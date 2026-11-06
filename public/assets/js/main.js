@@ -1018,7 +1018,7 @@
     kies(form.querySelector('select[name="box_thema"]'), vraag.get('thema'));
   }
   // Foto's die pas bij nadering laden (Kraamcadeauboxen 002 en 003, ronde 8): de hele sectie wordt in één keer gevuld
-  // zodra hij binnen 600 px van het scherm komt, ook de foto's die horizontaal in een rij buiten beeld staan.
+  // zodra hij binnen 1200 px van het scherm komt, ook de foto's die horizontaal in een rij buiten beeld staan.
   var laatLaden = function (sectie) {
     sectie.querySelectorAll('img[data-src]').forEach(function (img) {
       if (img.dataset.srcset) img.srcset = img.dataset.srcset;
@@ -1031,9 +1031,17 @@
     if ('IntersectionObserver' in window) {
       var laatIo = new IntersectionObserver(function (items) {
         items.forEach(function (it) { if (it.isIntersecting) { laatLaden(it.target); laatIo.unobserve(it.target); } });
-      }, { rootMargin: '600px 0px 600px 0px' });
+      }, { rootMargin: '1200px 0px 1200px 0px' });
       lateSecties.forEach(function (s) { laatIo.observe(s); });
     } else lateSecties.forEach(laatLaden);
+    var allesLaden = function () { lateSecties.forEach(laatLaden); };
+    // afdrukken zonder eerst te scrollen: alles direct laden (controle ronde 7)
+    window.addEventListener('beforeprint', allesLaden);
+    var printMq = window.matchMedia && window.matchMedia('print');
+    if (printMq) { var bijPrint = function (m) { if (m.matches) allesLaden(); }; if (printMq.addEventListener) printMq.addEventListener('change', bijPrint); else if (printMq.addListener) printMq.addListener(bijPrint); }
+    // en kort na het laden, als de browser niets te doen heeft (ná de LCP), zodat ze er ook zonder scrollen vroeg genoeg zijn
+    var stilLaden = function () { if (window.requestIdleCallback) window.requestIdleCallback(allesLaden, { timeout: 3000 }); else setTimeout(allesLaden, 1500); };
+    if (document.readyState === 'complete') setTimeout(stilLaden, 1000); else window.addEventListener('load', function () { setTimeout(stilLaden, 1000); });
   }
   // Thema's (Kraamcadeauboxen 003): pijlknoppen schuiven één set van drie verder (scroll-snap legt hem precies neer);
   // aan het begin of eind is de knop uit. Vegen op touch en de pijltoetsen in de rij werken vanzelf.

@@ -401,3 +401,14 @@ for (const anker of ['themas', 'werkwijze']) {
     });
   }
 }
+
+/* ---------- Controle ronde 7: afdrukken zonder eerst te scrollen toont alle foto's ---------- */
+test('afdrukken: na beforeprint staan alle foto\'s in 002 en 003 klaar (geen data-src zonder src)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
+  await page.goto('/kraamcadeauboxen');
+  await page.emulateMedia({ media: 'print' });
+  await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+  const open = await page.locator('#in-de-box img, #themas img').evaluateAll(is => is.filter(i => i.hasAttribute('data-src') || !i.getAttribute('src')).length);
+  expect(open, 'foto\'s zonder src bij afdrukken').toBe(0);
+  await expect(page.locator('#in-de-box img, #themas img')).toHaveCount(24);
+});
