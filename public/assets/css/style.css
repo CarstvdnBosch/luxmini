@@ -352,7 +352,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .intro-scherm { display: none; }
 .js.intro-aan .intro-scherm { display: block; position: fixed; inset: 0; z-index: 100; overflow: hidden; color: var(--wit);
   /* klikken gaan na 1,6 s door naar de pagina; noodrem: altijd weg vóór 3,1 s, ook als main.js niet draait */
-  animation: intro-door 0s 1.6s forwards, intro-nood .15s 2.9s forwards; } /* intro ca. 2,2 s (wens Carst 6 nov.: iets rustiger; was 1,5 s) */
+  animation: intro-door 0s 1.6s forwards, intro-nood 0s 2.9s forwards; } /* noodrem in één keer op 2,9 s (ronde 5: geen vervaging die over 3,1 s heen loopt) */ /* intro ca. 2,2 s (wens Carst 6 nov.: iets rustiger; was 1,5 s) */
 @keyframes intro-door { to { pointer-events: none; } }
 @keyframes intro-nood { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 /* overslaan (tik, klik, toets, scroll): de uitgang is binnen 0,6 s klaar (0,5 s) */
@@ -1328,7 +1328,7 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
   /* sterkere warme sluier onder de actieve witte naam (P1) */
   /* foto's donkerder zoals Stock (F3): groot 55%, klein 40%, warm donker; de witte actieve naam haalt minstens 3:1 */
   #technieken .hoverlijst.sferen .groot::after { background: rgba(60,40,30,.55); }
-  #technieken .hoverlijst.sferen .klein-beeld::after { background: rgba(60,40,30,.4); }
+  #technieken .hoverlijst.sferen .klein-beeld::after { background: rgba(60,40,30,.55); } /* ronde 5: ook de kleine foto 55%, zodat de witte naam erop minstens 3:1 haalt */
 }
 
 /* ---------- Feedback Carst 6 nov. 14:28 (F2): geen losse witte lijn in 001 — Producten ----------
@@ -1355,10 +1355,11 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 .in-de-box { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
 .in-de-box .producten-kop { margin-top: 24px; }
 .in-de-box .stoffen { align-self: stretch; }
-.themacarrousel { --gat: 16px; width: var(--B); margin-left: calc(50% - var(--B) / 2); overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; scroll-behavior: smooth; }
+.themacarrousel { --gat: 16px; --rand-px: calc(var(--B) * .082); width: var(--B); margin-left: calc(50% - var(--B) / 2); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--rand-px); overscroll-behavior-x: contain; scrollbar-width: none; scroll-behavior: smooth; }
 .themacarrousel::-webkit-scrollbar { display: none; }
 .themacarrousel:focus-visible { outline-offset: -3px; }
-.themacarrousel ul { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: calc((var(--B) - 2 * var(--gat)) / 3); gap: var(--gat); }
+.themacarrousel ul { list-style: none; margin: 0; padding: 0 var(--rand-px); width: max-content; display: grid; grid-auto-flow: column; grid-auto-columns: calc((var(--B) - 2 * var(--rand-px) - 2 * var(--gat)) / 3); gap: var(--gat); }
+/* ontwerpgate ronde 3: binnen de rand (eerste naam onder het label), rechts een stukje van de volgende set in beeld */
 .thema-tegel { margin: 0; min-width: 0; }
 .thema-tegel:nth-child(3n + 1) { scroll-snap-align: start; scroll-snap-stop: always; }
 .thema-tegel figure { margin: 0; }
@@ -1368,13 +1369,21 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 .carrousel-knoppen { display: none; gap: 8px; }
 .carrousel-knop { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid currentColor; border-radius: 50%; background: none; color: var(--inkt); cursor: pointer; transition: opacity .3s ease; }
 .carrousel-knop svg { width: 20px; height: 10px; }
-.carrousel-knop[disabled] { opacity: .3; cursor: default; }
+.carrousel-knop[aria-disabled="true"] { opacity: .3; cursor: default; }
 @media (hover: hover) and (pointer: fine) { .js .carrousel-knoppen { display: inline-flex; } }
 @media (max-width: 1024px) { .thema-tegel figcaption { font-size: 22px; } }
 @media (max-width: 760px) {
-  .themacarrousel { width: auto; margin-left: calc(-1 * var(--rand)); margin-right: calc(-1 * var(--rand)); padding: 0 var(--rand); scroll-padding-inline: var(--rand); }
+  .themacarrousel { --rand-px: var(--rand); width: auto; margin-left: calc(-1 * var(--rand)); margin-right: calc(-1 * var(--rand)); }
   .themacarrousel ul { grid-auto-columns: 80vw; gap: 12px; }
   .thema-tegel { scroll-snap-align: start; scroll-snap-stop: normal; }
   .thema-tegel figcaption { font-size: 22px; }
 }
 @media (prefers-reduced-motion: reduce) { .themacarrousel { scroll-behavior: auto; } }
+
+/* Handwerk (ronde 5): de pijl-link "Zo personaliseert Carien" blijft bij aanwijzen volledig zichtbaar, in inkt op een vlak
+   in de diepe tint van het item (inkt haalt daarop ruim 4,5:1), boven de foto's */
+#technieken .sectie > .pijl { padding-inline: 12px; margin-inline: -12px; transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1), background-color 1s var(--rustig); }
+.js #technieken.lijst-actief .sectie > .pijl { opacity: 1; color: var(--inkt); background-color: var(--diep, transparent); }
+/* Thema's (ronde 5): enkele bestanden hebben rechts een donker randje van een paar pixels (< 1%). Met CSS weggesneden:
+   2% rechts en onder van de bron bijsnijden; het vak blijft even groot, de foto blijft kleiner dan het bestand. */
+.thema-tegel img { object-view-box: inset(0 2% 2% 0); } /* snijdt de bron bij zonder het vak te vergroten (browsers zonder object-view-box tonen het randje) */

@@ -176,9 +176,12 @@ test('overgang: vlak van boven naar beneden, op de nieuwe pagina verder weg; ter
   await page.goto('/');
   // geen overgang bij een anker op dezelfde pagina, mailto of een nieuwe tab
   for (const [href, extra] of [['#technieken', ''], ['mailto:info.luxmini@gmail.com', ''], ['werkwijze.html', '_blank']]) {
-    await page.evaluate(([h, t]) => { const a = document.createElement('a'); a.href = h; if (t) a.target = t; a.textContent = 'x'; document.body.appendChild(a); a.click(); a.remove(); }, [href, extra]);
-    await page.waitForTimeout(150);
-    expect(await page.evaluate(() => document.querySelector('.overgang').classList.contains('weg')), `geen overgang bij ${href} ${extra}`).toBe(false);
+    // main.js beslist in zijn klikafhandeling (op document); daarna houdt een luisteraar op window de echte navigatie tegen,
+    // zodat de test niet van pagina wisselt. De klasse 'weg' wordt meteen in de klik gezet, dus direct na de klik lezen.
+    const weg = await page.evaluate(([h, t]) => { const a = document.createElement('a'); a.href = h; if (t) a.target = t; a.textContent = 'x'; document.body.appendChild(a);
+      const stop = e => e.preventDefault(); window.addEventListener('click', stop); a.click(); window.removeEventListener('click', stop); a.remove();
+      return document.querySelector('.overgang').classList.contains('weg'); }, [href, extra]);
+    expect(weg, `geen overgang bij ${href} ${extra}`).toBe(false);
   }
   await page.locator('.site-header .menu a[href="werkwijze.html"]').click();
   await page.waitForTimeout(450);
@@ -186,12 +189,14 @@ test('overgang: vlak van boven naar beneden, op de nieuwe pagina verder weg; ter
   expect(zichtWeg).toBe('visible');
   expect(yWeg, 'vlak komt van boven').toBeLessThan(0);
   await page.waitForURL(/\/werkwijze/);
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(400);
   const [yBinnen] = await lees();
   expect(yBinnen, 'vlak schuift naar beneden weg').toBeGreaterThan(0);
   await page.waitForTimeout(1200);
   expect((await lees())[1], 'vlak weg na de overgang').toBe('hidden');
   await page.goBack();
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(500);
   expect((await lees())[1], 'terug-knop: geen vlak').toBe('hidden');
   await ctx.close();
@@ -249,6 +254,8 @@ test('Technieken: bij aanwijzen vallen productregel en foto\'s binnen de sectie'
         const delen = ['.sfeer.aan .productregel', '.sfeer.aan .groot', '.sfeer.aan .klein-beeld'].map(q => document.querySelector('#technieken ' + q).getBoundingClientRect().bottom);
         return { onder: s.bottom, delen }; });
       m.delen.forEach((y, n) => expect(y, `${b} px, item ${i}: ${['productregel', 'grote foto', 'kleine foto'][n]} valt onder de sectie`).toBeLessThanOrEqual(m.onder));
+      // ronde 5: de pijl-link "Zo personaliseert Carien" vervaagt niet bij aanwijzen
+      expect(await page.locator('#technieken .sectie > .pijl').evaluate(a => getComputedStyle(a).opacity), `${b} px, item ${i}: pijl-link vervaagt`).toBe('1');
     }
   }
 });
@@ -307,6 +314,10 @@ test('F1 hero: meebewegen zoals Stock (absolute muispositie /20 /15 /10, kanteli
     expect(Math.abs(m[n][3]), `${n} rotateY`).toBeLessThanOrEqual(12.5);
     expect(Math.abs(m[n][3]), `${n} rotateY bijna max`).toBeGreaterThan(12);
   }
+  // naar de header of het menu bewegen: de foto's blijven staan (geen terugzwaai)
+  await page.mouse.move(1300, 40, { steps: 4 });
+  await page.waitForTimeout(300);
+  expect(await page.locator('.hero .tegel').first().evaluate(t => t.style.transform), 'tegel blijft verschoven boven de header').not.toBe('');
   // de kop blijft boven de foto's
   const z = await page.evaluate(() => [getComputedStyle(document.querySelector('.hero-tekst')).zIndex, ...[...document.querySelectorAll('.hero .tegel')].map(t => getComputedStyle(t).zIndex)].map(Number));
   expect(z[0]).toBeGreaterThan(Math.max(...z.slice(1)));
@@ -334,11 +345,21 @@ test('F4: de thema-knoppen schuiven één set; aan het begin staat "vorige" uit'
   test.skip(info.project.name !== 'desktop', 'knoppen alleen met een muis');
   await page.goto('/kraamcadeauboxen#themas');
   const vorige = page.locator('.carrousel-knop[data-richting="-1"]'), volgende = page.locator('.carrousel-knop[data-richting="1"]');
-  await expect(vorige).toBeDisabled();
+  const links = () => page.locator('.themacarrousel li').nth(3).evaluate(l => Math.abs(Math.round(l.getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left)));
+  await expect(vorige).toHaveAttribute('aria-disabled', 'true'); // aria-disabled: de focus blijft op de knop
   await volgende.click();
-  await expect.poll(() => page.locator('.themacarrousel li').nth(3).evaluate(l => Math.round(l.getBoundingClientRect().left))).toBeLessThanOrEqual(1);
+  await expect.poll(links).toBeLessThanOrEqual(1);
+  await volgende.focus();
   await volgende.click();
-  await expect(volgende).toBeDisabled();
+  await expect(volgende).toHaveAttribute('aria-disabled', 'true');
+  await expect(volgende, 'focus blijft op de knop').toBeFocused();
   await vorige.click();
-  await expect.poll(() => page.locator('.themacarrousel li').nth(3).evaluate(l => Math.round(l.getBoundingClientRect().left))).toBeLessThanOrEqual(1);
+  await expect.poll(links).toBeLessThanOrEqual(1);
+  // Home en End in de rij: eerste en laatste set
+  const rij = page.locator('.themacarrousel');
+  await rij.focus();
+  await page.keyboard.press('End');
+  await expect.poll(() => rij.evaluate(r => r.scrollWidth - r.clientWidth - r.scrollLeft)).toBeLessThanOrEqual(2);
+  await page.keyboard.press('Home');
+  await expect.poll(() => rij.evaluate(r => r.scrollLeft)).toBeLessThanOrEqual(2);
 });

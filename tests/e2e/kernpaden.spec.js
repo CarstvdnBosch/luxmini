@@ -125,13 +125,21 @@ test('kraamcadeauboxen: volgorde en thema\'s groot in sets van drie met scroll-s
   expect(labels).toEqual(['— Kraamcadeauboxen', '— Met naam', '001 — Kies je formaat', '002 — Wat er in de box kan', '003 — Thema\'s', '004 — Zo werkt het', '005 — Contact']);
   const rij = page.locator('#themas .themacarrousel');
   await expect(rij.locator('li')).toHaveCount(9);
-  const m = await rij.evaluate(r => { const ts = [...r.querySelectorAll('li')].map(l => l.getBoundingClientRect());
-    return { breed: r.clientWidth, scrollt: r.scrollWidth > r.clientWidth, snap: getComputedStyle(r).scrollSnapType, inBeeld: ts.filter(t => t.left >= -1 && t.right <= innerWidth + 1).length,
-      tegel: ts[0].width, foto: [...r.querySelectorAll('img')].map(i => [i.getBoundingClientRect().width, i.naturalWidth]) }; });
+  const m = await rij.evaluate(async r => { const ts = [...r.querySelectorAll('li')].map(l => l.getBoundingClientRect());
+    const label = document.querySelector('#themas .label').getBoundingClientRect();
+    const foto = [];
+    for (const i of [...r.querySelectorAll('img')].slice(0, 4)) { i.loading = 'eager'; await i.decode().catch(() => {}); const b = new Image(); b.src = i.currentSrc; await b.decode().catch(() => {});
+      foto.push([i.getBoundingClientRect().width, i.getBoundingClientRect().height, b.naturalWidth, b.naturalHeight]); }
+    return { scrollt: r.scrollWidth > r.clientWidth, snap: getComputedStyle(r).scrollSnapType, inBeeld: ts.filter(t => t.left >= -1 && t.right <= innerWidth + 1).length,
+      eerste: ts[0].left, label: label.left, vierde: Math.max(0, Math.min(innerWidth, ts[3].right) - ts[3].left), foto }; });
   expect(m.scrollt).toBe(true);
   expect(m.snap).toMatch(/x mandatory/);
   expect(m.inBeeld, 'één set in beeld').toBe(info.project.name === 'mobiel' ? 1 : 3);
-  if (info.project.name === 'desktop') expect(m.tegel, 'tegels groter dan in het oude raster (385 px)').toBeGreaterThan(440);
+  // ontwerpgate ronde 3: binnen de rand (eerste thema onder het label) en een stukje van de volgende set in beeld
+  expect(Math.abs(m.eerste - m.label), 'eerste thema begint onder het label').toBeLessThanOrEqual(1);
+  expect(m.vierde, 'zichtbaar deel van het vierde thema (signaal dat er meer is)').toBeGreaterThanOrEqual(info.project.name === 'mobiel' ? 0 : 40);
+  // de foto's worden nooit groter getoond dan het gekozen bestand (echte pixelmaat; met de bijsnede van 2% tegen het donkere randje)
+  for (const [b, h, fb, fh] of m.foto) expect(Math.max(b / fb, h / fh), 'themafoto vergroot').toBeLessThanOrEqual(1.01);
   await expect(page.locator('#themas a.pijl')).toHaveText(['Vraag je thema aan']);
 });
 
@@ -139,11 +147,18 @@ test('intro speelt bij het eerste bezoek en is tussen 2,0 en 2,6 s weg (wens Car
   test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
+  // gemeten in de pagina zelf: van het moment dat de intro begint (klasse intro-aan) tot hij weg is,
+  // los van de laadtijd die de testrunner ziet (ronde 5)
+  await page.addInitScript(() => { window.__intro = {}; new MutationObserver(() => { const aan = !!document.documentElement && document.documentElement.classList.contains('intro-aan');
+    if (aan && !window.__intro.start) window.__intro.start = performance.now(); if (!aan && window.__intro.start && !window.__intro.eind) window.__intro.eind = performance.now(); })
+    .observe(document, { subtree: true, attributes: true, attributeFilter: ['class'] }); });
   await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/intro-aan/);
-  const start = Date.now();
+  // begin van de zichtbare intro: het begin van de CSS-tijdlijn van het doek (later dan de klasse als de stylesheet traag binnenkomt)
+  const begin = await page.evaluate(() => { const a = document.querySelector('.intro-doek').getAnimations()[0];
+    return a && a.currentTime !== null ? performance.now() - a.currentTime : window.__intro.start; });
   await expect(page.locator('html')).not.toHaveClass(/intro-aan/, { timeout: 4000 });
-  const duur = Date.now() - start;
+  const duur = await page.evaluate(b => window.__intro.eind - b, begin);
   expect(duur, 'duur van de intro in ms').toBeGreaterThanOrEqual(2000);
   expect(duur, 'duur van de intro in ms').toBeLessThanOrEqual(2600);
   await expect(page.locator('.hero h1')).toBeVisible();

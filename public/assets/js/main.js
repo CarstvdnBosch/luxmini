@@ -285,7 +285,12 @@
       // 1500/1000/500 px (k = 20/15/10). Volgen in 1 s easeOut (CSS-overgang). Vóór de eerste beweging: de beginstand.
       var STOCK = { t2: [20, -1], t1: [15, -1], t3: [10, -1], t4: [20, 1], t5: [10, 1], t6: [15, 1] };
       var PERSPECTIEF = { 20: 1500, 15: 1000, 10: 500 };
-      hero.addEventListener('mousemove', function (e) {
+      // Op het venster (ronde 5): naar de header of het menu bewegen laat de foto's niet terugzwaaien;
+      // terug naar de beginstand alleen als de muis het venster verlaat of de hero uit beeld is.
+      var heroInBeeld = function () { var r = hero.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; };
+      var heroRust = function () { tegels.forEach(function (t) { t.style.transform = ''; }); if (cirkel) cirkel.style.translate = ''; };
+      window.addEventListener('mousemove', function (e) {
+        if (!heroInBeeld()) return;
         var r = hero.getBoundingClientRect();
         var x = ((e.clientX - r.left) / r.width) * 2 - 1;
         var y = ((e.clientY - r.top) / r.height) * 2 - 1;
@@ -297,10 +302,8 @@
         });
         if (cirkel) cirkel.style.translate = (-x * 18).toFixed(1) + 'px ' + (-y * 18).toFixed(1) + 'px';
       });
-      hero.addEventListener('mouseleave', function () {
-        tegels.forEach(function (t) { t.style.transform = ''; });
-        if (cirkel) cirkel.style.translate = '';
-      });
+      document.documentElement.addEventListener('mouseleave', heroRust);
+      window.addEventListener('scroll', function () { if (!heroInBeeld()) heroRust(); }, { passive: true });
     }
     // De kop staat naast de foto's, niet erop: is de langste regel (afhankelijk
     // van het lettertype) breder dan de ruimte tot de foto rechts ervan, dan
@@ -367,7 +370,7 @@
       knoppen.forEach(function (b) { b.classList.toggle('aan', b === k); });
       sferen.forEach(function (s, n) { s.classList.toggle('aan', n === i); });
       lijst.classList.add('actief');
-      if (sectie) sectie.classList.add('lijst-actief');
+      if (sectie) { sectie.classList.add('lijst-actief'); sectie.style.setProperty('--diep', k.dataset.kleur || ''); }
       clearTimeout(traagTimer); laag.classList.add('traag'); // rustige overgang van 1 s bij aanwijzen
       zetLaag(k.dataset.kleur);
     }
@@ -995,15 +998,23 @@
     var knoppen = Array.prototype.slice.call(document.querySelectorAll('.carrousel-knop[aria-controls="' + rij.id + '"]'));
     var stand = function () {
       var max = rij.scrollWidth - rij.clientWidth - 2;
-      knoppen.forEach(function (k) { k.disabled = k.dataset.richting === '-1' ? rij.scrollLeft <= 2 : rij.scrollLeft >= max; });
+      // aria-disabled in plaats van disabled: de focus blijft op de knop staan (ontwerpgate ronde 3)
+      knoppen.forEach(function (k) { k.setAttribute('aria-disabled', (k.dataset.richting === '-1' ? rij.scrollLeft <= 2 : rij.scrollLeft >= max) ? 'true' : 'false'); });
     };
     knoppen.forEach(function (k) {
       k.addEventListener('click', function () {
+        if (k.getAttribute('aria-disabled') === 'true') return;
         var gat = parseFloat(getComputedStyle(rij.querySelector('ul')).columnGap) || 0;
         rij.scrollBy({ left: Number(k.dataset.richting) * (rij.clientWidth + gat), behavior: stil ? 'auto' : 'smooth' });
       });
     });
     rij.addEventListener('scroll', function () { window.requestAnimationFrame(stand); }, { passive: true });
+    // Home en End in de rij: naar de eerste of de laatste set (niet de hele pagina)
+    rij.addEventListener('keydown', function (e) {
+      if (e.key !== 'Home' && e.key !== 'End') return;
+      e.preventDefault();
+      rij.scrollTo({ left: e.key === 'Home' ? 0 : rij.scrollWidth, behavior: stil ? 'auto' : 'smooth' });
+    });
     window.addEventListener('resize', stand);
     stand();
   });

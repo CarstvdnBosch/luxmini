@@ -8,7 +8,7 @@
 <link rel="icon" href="/assets/img/logo-luxmini.png">
 <link rel="preload" href="/assets/fonts/libre-caslon-display-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
-<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var o=sessionStorage.getItem('lux-overgang');if(/^#[0-9a-f]{6}$/i.test(o||'')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('overgang-binnen');h.style.setProperty('--overgang-kleur',o)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','overgang-binnen')},3000)})(document)</script>
+<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var o=sessionStorage.getItem('lux-overgang');if(/^#[0-9a-f]{6}$/i.test(o||'')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('overgang-binnen');h.style.setProperty('--overgang-kleur',o)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','overgang-binnen')},Math.max(0,3000-(window.performance&&performance.now?performance.now():0)))})(document)</script>
 <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>

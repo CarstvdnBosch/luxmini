@@ -433,9 +433,10 @@ def controleer_home_interactie(browser):
         st = page.evaluate("""i => { const as = [...document.querySelectorAll('#technieken .hoverlijst ul a')];
           return [as.map(a => [getComputedStyle(a).color, getComputedStyle(a).opacity]), getComputedStyle(document.querySelector('#technieken .sfeer.aan .productregel')).fontSize,
                   document.querySelectorAll('#technieken .sfeer.aan img').length]; }""", i)
-        c = contrast_wit_over_foto(page, f"#technieken .hoverlijst li:nth-child({i}) a", "#technieken .sfeer.aan .groot")
-        if c is not None and c < 3:
-            fouten.append(f"index.html [desktop, Handwerk {naam_t}]: de witte naam haalt op de foto {c:.2f}:1 (min. 3:1)")
+        for foto in [".groot", ".klein-beeld"]:  # ronde 5: op beide foto's (de naam kan over de kleine foto lopen)
+            c = contrast_wit_over_foto(page, f"#technieken .hoverlijst li:nth-child({i}) a", f"#technieken .sfeer.aan {foto}")
+            if c is not None and c < 3:
+                fouten.append(f"index.html [desktop, Handwerk {naam_t}]: de witte naam haalt op de foto {foto} {c:.2f}:1 (min. 3:1)")
         if lees_laag(page) != norm_kleur(page, diep) or st[0][i - 1] != [WIT, "1"] or any(x != [WIT, "0.35"] for n, x in enumerate(st[0]) if n != i - 1) or st[1] != "19px" or st[2] != 2:
             fouten.append(f"index.html [desktop, Technieken {naam_t}]: laag {lees_laag(page)} (verwacht {diep}), namen {st[0]}, productregel {st[1]}, foto's {st[2]}")
     page.mouse.move(720, 3, steps=4); page.wait_for_timeout(1200)  # omhoog de lijst uit (de lijst is zo breed als het ontwerpvak)
@@ -1039,12 +1040,16 @@ def controleer_themas(browser):
         kleuren = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => s.getAttribute('data-achtergrond') || '')")
         if not kleuren[2] or kleuren[2].upper() == "#FFFFFF" or norm_kleur(page, kleuren[2]) in THEMA_KLEUREN_VERBODEN:
             fouten.append(f"{tag}: 001 formaten staat niet op een lichte paletkleur ({kleuren[2]})")
+        # ontwerpgate ronde 3: binnen de rand (eerste thema onder het label); op desktop en tablet minstens 40 px van het vierde thema in beeld
+        st = page.evaluate("() => { const ts = [...document.querySelectorAll('.themacarrousel li')].map(l => l.getBoundingClientRect()); const l = document.querySelector('#themas .label').getBoundingClientRect(); return [Math.round(ts[0].left - l.left), Math.round(Math.max(0, Math.min(innerWidth, ts[3].right) - ts[3].left))]; }")
+        if abs(st[0]) > 1 or (naam != "mobiel" and st[1] < 40):
+            fouten.append(f"{tag}: themarij niet binnen de rand of geen stukje van de volgende set in beeld (eerste t.o.v. label, zichtbaar deel vierde: {st})")
         if naam == "desktop":
             # knop "volgende" schuift precies één set (de vierde tegel komt links in beeld)
             page.click(".carrousel-knop[data-richting='1']"); page.wait_for_timeout(600)
-            vier = page.evaluate("() => Math.round(document.querySelectorAll('.themacarrousel li')[3].getBoundingClientRect().left)")
+            vier = page.evaluate("() => Math.round(document.querySelectorAll('.themacarrousel li')[3].getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left)")
             if abs(vier) > 2:
-                fouten.append(f"{tag}: na 'Volgende thema's' staat het vierde thema niet links ({vier} px)")
+                fouten.append(f"{tag}: na 'Volgende thema's' staat het vierde thema niet onder het label ({vier} px)")
         ctx.close()
 
 # Geen scherm zonder inhoud: elk venster langs de pagina toont tekst of een foto
