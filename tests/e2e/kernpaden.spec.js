@@ -134,10 +134,11 @@ test('kraamcadeauboxen: volgorde en thema\'s groot in sets van drie met scroll-s
       eerste: ts[0].left, label: label.left, vierde: Math.max(0, Math.min(innerWidth, ts[3].right) - ts[3].left), foto }; });
   expect(m.scrollt).toBe(true);
   expect(m.snap).toMatch(/x mandatory/);
-  expect(m.inBeeld, 'één set in beeld').toBe(info.project.name === 'mobiel' ? 1 : 3);
+  const smal = ['mobiel', 'iphone'].includes(info.project.name); // beide 390 px breed: één thema per keer
+  expect(m.inBeeld, 'één set in beeld').toBe(smal ? 1 : 3);
   // ontwerpgate ronde 3: binnen de rand (eerste thema onder het label) en een stukje van de volgende set in beeld
   expect(Math.abs(m.eerste - m.label), 'eerste thema begint onder het label').toBeLessThanOrEqual(1);
-  expect(m.vierde, 'zichtbaar deel van het vierde thema (signaal dat er meer is)').toBeGreaterThanOrEqual(info.project.name === 'mobiel' ? 0 : 40);
+  expect(m.vierde, 'zichtbaar deel van het vierde thema (signaal dat er meer is)').toBeGreaterThanOrEqual(smal ? 0 : 40);
   // de foto's worden nooit groter getoond dan het gekozen bestand (echte pixelmaat; met de bijsnede van 2% tegen het donkere randje)
   for (const [b, h, fb, fh] of m.foto) expect(Math.max(b / fb, h / fh), 'themafoto vergroot').toBeLessThanOrEqual(1.01);
   await expect(page.locator('#themas a.pijl')).toHaveText(['Vraag je thema aan']);
