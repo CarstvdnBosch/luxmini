@@ -18,10 +18,15 @@ Wat het doet:
     binnen 1,5 s, aanwijzen niet)
   - controleert in public/_headers dat CSS en JS niet lang gecachet worden
     zonder hercontrole
-  - brief homepage per product (2026-11-05): homepage hero, 001-005 de vijf
-    producten (teksten letterlijk uit Wat ik maak, één pijl-link, lichte
-    kleuren, foto nooit vergroot, lazy behalve het eerste blok), 006
-    Inspiratie, 007 Instagram, 008 Contact; Kraamcadeauboxen (volgorde,
+  - brief homepage zoals Stock (2026-11-06): homepage hero, 001 Producten
+    (drieluik: drie kolommen, producttekst, één pijl-link en één tabstop per
+    kolom, foto boven de tekst op touch, bij aanwijzen witte tekst met 4,5:1 op
+    de foto, babynest max. 324 px, koppen binnen de kolom op 1025/1280/1440),
+    002 Technieken (vier links, diepe tint bij aanwijzen, kaarten op touch),
+    003 Inspiratie (grote foto, witte tekst 4,5:1 op de sluier, #contact),
+    004 Instagram; LET OP's (Borduren, babynestfoto, douchehandschoen,
+    formuliervelden); prijskaarten en contactlinks met ?onderwerp=;
+    formulier met groepen per onderwerp; Kraamcadeauboxen (volgorde,
     negen thema's als raster 3/2/2, binnen twee schermen, statementfoto direct
     na de intro); Prematuurkleding en Babynest (kop, foto, prijsrichtlijn met
     LET OP, Zo werkt het, contact; foto na hooguit één keer scrollen);
@@ -124,13 +129,27 @@ def controleer_contact(browser):
                 else:
                     page.keyboard.press("End")
                 page.wait_for_timeout(1200)
-                if manier == "link" and naam == "mobiel":
+                if manier == "link" and naam == "mobiel" and pagina != "index.html":
                     # kop van het contactblok en de link naar het formulier zonder verder scrollen in beeld
                     # (was: WhatsApp; alle contactmomenten leiden nu naar het formulier, wens Carst 5 nov.)
-                    zicht = page.evaluate("""() => ['#contact h2', '#contact a.pijl[href="contact.html#formulier"]'].map(s => {
+                    zicht = page.evaluate("""() => ['#contact h2', '#contact a.pijl[href^="contact.html"][href$="#formulier"]'].map(s => {
                       const e = document.querySelector(s); if (!e) return false; const r = e.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; })""")
                     if not all(zicht):
                         fouten.append(f"{tag}: na de link naar #contact staan kop en 'Stuur Carien een bericht' niet samen in beeld ({zicht})")
+                if pagina == "index.html":
+                    # brief 2026-11-06: geen contactblok meer; #contact is een anker in 003 Inspiratie (bij "Stuur Carien een bericht"),
+                    # End toont het laatste blok (004 Instagram)
+                    label = page.evaluate("() => (document.querySelector('.balk .sectie-label') || {}).textContent || ''")
+                    verwacht_label = "003 — Inspiratie" if manier == "link" else "004 — Instagram"
+                    if verwacht_label not in " ".join(label.split()):
+                        fouten.append(f"{tag}: balk toont '{label.strip()}' in plaats van {verwacht_label}")
+                    if manier == "link":
+                        zicht = page.evaluate("""() => { const a = document.querySelector('#inspiratie a.pijl[href="contact.html#formulier"]'); if (!a) return false;
+                          const r = a.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }""")
+                        if not zicht:
+                            fouten.append(f"{tag}: na de link naar #contact staat 'Stuur Carien een bericht' niet in beeld")
+                    page.close()
+                    continue
                 laag, verwacht, label = page.evaluate(STAND_CONTACT)
                 if laag is None or verwacht is None:
                     fouten.append(f"{tag}: .achtergrond of #contact ontbreekt")
@@ -153,7 +172,7 @@ LEES_PRIJSTABEL = """() => {
   return kaarten.map(k => [schoon((k.querySelector('.formaat-prijs') || {}).textContent || ''),
     schoon((k.querySelector('.formaat-aantal') || {}).textContent || ''),
     [...k.querySelectorAll('.formaat-lijst > li')].map(li => schoon(li.textContent)),
-    !!k.querySelector('a.pijl[href="contact.html#formulier"]')]);
+    (k.querySelector('a.pijl') || {}).getAttribute ? k.querySelector('a.pijl').getAttribute('href') : '']);
 }"""
 
 def controleer_prijstabel(browser):
@@ -177,8 +196,9 @@ def controleer_prijstabel(browser):
             fouten.append(f"{tag}: box {i} bevat {inhoud}, verwacht {verwacht}")
         if len(inhoud) != int(AANTALLEN[i - 1]):
             fouten.append(f"{tag}: box {i} telt {len(inhoud)} producten, kaart zegt {AANTALLEN[i - 1]}")
-        if not k[3]:
-            fouten.append(f"{tag}: kaart {i} heeft geen pijl-link naar contact.html#formulier")
+        verwacht_link = f"contact.html?onderwerp=kraamcadeaubox&formaat={PRIJZEN[i - 1].split(' ')[1]}#formulier"
+        if k[3] != verwacht_link:
+            fouten.append(f"{tag}: kaart {i} linkt naar {k[3]!r}, verwacht {verwacht_link} (brief 2026-11-06: formulier vooraf ingevuld)")
 
 # 003 Zo werkt het: één genummerde reeks met deze koppen (brief processtappen, criterium 4)
 STAP_KOPPEN = ["Neem contact op", "Kies samen thema en maat", "Carien gaat aan de slag"]
@@ -219,22 +239,23 @@ def controleer_stappen(browser):
         if breedte > b:
             fouten.append(f"{tag}: pagina scrollt horizontaal (scrollWidth {breedte} > {b})")
 
-# Homepage per product (brief 2026-11-05-homepage-producten, criterium 3): vervangt de controle van de vijf
-# portfoliosferen; de sferen zijn van de homepage verdwenen (Inspiratie toont dezelfde foto's al).
-HOME_BLOKKEN = [("babykleding", "001 — Babykleding", "babykleding", "inspiratie.html#kleding"),
-                ("siliconen", "002 — Siliconen items", "siliconen", "inspiratie.html#siliconen"),
-                ("babynest", "003 — Babynest", "babynest", "babynest.html"),
-                ("prematuurkleding", "004 — Prematuurkleding", "prematuur", "prematuurkleding.html"),
-                ("kraamcadeauboxen", "005 — Kraamcadeauboxen", "kraamcadeaubox", "kraamcadeauboxen.html")]
+# Homepage zoals Stock (brief 2026-11-06): hero, 001 Producten (drieluik), 002 Technieken, 003 Inspiratie, 004 Instagram.
+# Vervangt de controle van de vijf productblokken (brief 2026-11-05); de teksten van Babykleding en Siliconen staan
+# niet meer letterlijk op de homepage (testaanpassing ter beoordeling door Carst).
+DRIELUIK = [("kraamcadeauboxen", "kraamcadeaubox", "Kraamcadeauboxen", "kraamcadeauboxen.html", "#DEB799"),
+            ("prematuurkleding", "prematuur", "Prematuurkleding", "prematuurkleding.html", "#C89F67"),
+            ("babynest", "babynest", "Babynest", "babynest.html", "#B5969E")]
+TECHNIEKEN = [("Warm en persoonlijk", "Belettering", "werkwijze.html#personaliseren", "#C88654"),
+              ("Rustig en functioneel", "Siliconen items", "inspiratie.html#siliconen", "#839C75"),
+              ("Specifiek en oog voor detail", "Prematuurkleding", "prematuurkleding.html", "#999575"),
+              ("Levendig en persoonlijk", "Borduren", "inspiratie.html#textiel", "#AE8C94")]
 LICHTE_KLEUREN = {"#DEB799", "#C89F67", "#C3CFBC", "#B5969E", "#B4B19A", "#E0E6E7"}
 
 # Producttekst per blok (letterlijk; was "Wat ik maak" op Werkwijze, sinds 5 nov. alleen op de homepage)
 PRODUCTTEKSTEN = {
-    'babykleding': ('Babykleding met naam', 'Een naam, geboortedatum of klein figuurtje, geborduurd of als belettering op kleding.'),
-    'siliconen': ('Siliconen items', 'Bijtring, speenkoord, sleutelhanger, Maxi-Cosi-hanger en mobiel, in jouw kleuren en met naam.'),
     'babynest': ('Babynest', 'Een babynest in de stof en kleur die jij kiest.'),
     'prematuur': ('Prematuurkleding', 'Maatwerk in (prematuur)babykleding. Ook prematuurmaten.'),
-    'kraamcadeaubox': ('Kraamcadeaubox', 'Handgemaakte babyproducten in één thema, met naam en geboortedatum. Vanaf € 35.'),
+    'kraamcadeaubox': ('Kraamcadeauboxen', 'Handgemaakte babyproducten in één thema, met naam en geboortedatum. Vanaf € 35.'),
 }
 
 def wat_ik_maak():
@@ -246,70 +267,148 @@ def bestandsbreedte(src):
     pad = ROOT / src.lstrip("/")
     return Image.open(pad).size[0] if pad.exists() else 0
 
-LEES_HOME = """() => [...document.querySelectorAll('main > section.categorie')].map(s => {
-  const i = s.querySelector('.categorie-foto img'), r = i.getBoundingClientRect(), t = s.querySelector('.categorie-tekst').getBoundingClientRect();
-  return { id: s.id, label: s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim(), zicht: (s.querySelector('.label') || {}).textContent, kleur: s.getAttribute('data-achtergrond'),
-    kop: s.querySelector('h2').textContent.trim(), tekst: [...s.querySelectorAll('.categorie-tekst p.klein')].map(p => p.textContent.trim()),
-    pijlen: [...s.querySelectorAll('a.pijl')].map(a => [a.getAttribute('href'), a.getBoundingClientRect().height, getComputedStyle(a).visibility]),
-    src: i.getAttribute('src'), w: i.getAttribute('width'), b: r.width, lazy: i.getAttribute('loading'), srcset: i.getAttribute('srcset') || '',
-    boven: r.bottom <= t.top + 1, laadt: i.complete }; })"""
+LEES_DRIELUIK = r"""() => { const s = document.querySelector('#producten'); if (!s) return null;
+  const schoon = t => t.replace(/\u00ad/g, '').replace(/\s+/g, ' ').trim();
+  return { label: s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim(), kleur: s.getAttribute('data-achtergrond'), hoogte: s.getBoundingClientRect().height,
+    kolommen: [...s.querySelectorAll('.kern-kolom')].map(k => { const r = k.getBoundingClientRect(), h = k.querySelector('h2'), hr = h.getBoundingClientRect();
+      const img = k.querySelector('.kern-beeld img, .nest-lijst img'), ir = img ? img.getBoundingClientRect() : null;
+      const woorden = (() => { const rg = document.createRange(); rg.selectNodeContents(h); return [...rg.getClientRects()].some(x => x.width && (x.right > r.right + 1 || x.left < r.left - 1)); })();
+      return { id: k.id, kop: schoon(h.textContent), tekst: [...k.querySelectorAll('p.klein')].map(p => schoon(p.textContent)),
+        pijlen: [...k.querySelectorAll('a')].map(a => [a.getAttribute('href'), a.getBoundingClientRect().height, getComputedStyle(a).visibility, parseFloat(getComputedStyle(a).opacity)]),
+        breedte: r.width, kleur: getComputedStyle(k).backgroundColor, buiten: woorden,
+        img: img ? [img.getAttribute('src'), img.getAttribute('loading'), ir.width, ir.height, ir.bottom <= hr.top + 1, img.naturalWidth || 0, getComputedStyle(img.closest('.kern-beeld, .nest-lijst')).display] : null,
+        tabstops: [...k.querySelectorAll('a, button, [tabindex]')].filter(e => e.tabIndex >= 0).length + (k.tabIndex >= 0 ? 1 : 0) }; }) }; }"""
 
 def controleer_home(page, tag, naam):
-    """Criterium 3: vijf productblokken met de teksten uit Wat ik maak en één pijl-link, daarna Inspiratie, Instagram en contact."""
+    """Brief 2026-11-06, criteria 2, 3 en 9 en ontwerpcriteria 1, 6, 8, 12 en 13."""
+    d = page.evaluate(LEES_DRIELUIK)
+    if not d:
+        fouten.append(f"{tag}: sectie #producten (001 — Producten) ontbreekt"); return
+    if d["label"] != "001 — Producten" or (d["kleur"] or "").upper() != "#DEB799":
+        fouten.append(f"{tag}: drieluik heeft label {d['label']!r} of kleur {d['kleur']} (verwacht 001 — Producten op perzik)")
     bron = wat_ik_maak()
-    blokken = page.evaluate(LEES_HOME)
-    if [(b["id"], b["label"]) for b in blokken] != [(i, l) for i, l, _, _ in HOME_BLOKKEN]:
-        fouten.append(f"{tag}: productblokken kloppen niet ({[(b['id'], b['label']) for b in blokken]})")
-        return
-    vorige = None
-    for n, (b, (id_, label, maak, doel)) in enumerate(zip(blokken, HOME_BLOKKEN)):
-        btag = f"{tag} [{label}]"
-        if (b["kop"], b["tekst"]) != (bron[maak][0], [bron[maak][1]]):
-            fouten.append(f"{btag}: kop of tekst is niet letterlijk die van Wat ik maak ({b['kop']!r}, {b['tekst']!r})")
-        if " ".join(b["zicht"].split()) != label:
-            fouten.append(f"{btag}: zichtbaar label is {b['zicht']!r}")
-        if [p[0] for p in b["pijlen"]] != [doel] or any(p[1] < 43.5 or p[2] != "visible" for p in b["pijlen"]):
-            fouten.append(f"{btag}: verwacht precies één zichtbare pijl-link (min. 44 px) naar {doel} ({b['pijlen']})")
-        if (b["kleur"] or "").upper() not in LICHTE_KLEUREN:
-            fouten.append(f"{btag}: kleur {b['kleur']} is geen lichte paletkleur (nooit terracotta)")
-        if vorige and (b["kleur"] or "").upper() == vorige:
-            fouten.append(f"{btag}: zelfde kleur als het blok ervoor")
-        vorige = (b["kleur"] or "").upper()
-        breedte = bestandsbreedte(b["src"])
-        if str(breedte) != str(b["w"]) or b["b"] > breedte + 0.5:
-            fouten.append(f"{btag}: foto {b['src']} {b['b']:.0f} px breed, bestand {breedte} px (width={b['w']}): groter dan het bestand of verkeerde width")
-        if breedte > 600 and "-600.jpg 600w" not in b["srcset"]:
-            fouten.append(f"{btag}: foto {b['src']} heeft geen srcset met een 600w-versie")
-        if (n == 0) == (b["lazy"] == "lazy"):
-            fouten.append(f"{btag}: loading={b['lazy']} (lazy, behalve het eerste blok)")
-        if naam == "mobiel" and not b["boven"]:
-            fouten.append(f"{btag}: op mobiel staat de foto niet boven de tekst")
-    # 006 Inspiratie: 3 tot 4 foto's die op inspiratie.html staan, met hetzelfde bijschrift, en "Bekijk alle inspiratie"
-    insp = (ROOT / "inspiratie.html").read_text(encoding="utf-8")
-    st = page.evaluate("""() => { const s = document.querySelector('#inspiratie'); if (!s) return null;
-      return [[...s.querySelectorAll('figure')].map(f => { const i = f.querySelector('img'); return [i.getAttribute('src'), (f.querySelector('figcaption') || {}).textContent, i.getAttribute('width'), i.getBoundingClientRect().width, i.getAttribute('loading'), i.getAttribute('alt') || '']; }),
-              [...s.querySelectorAll('a.pijl')].map(a => [a.textContent.trim(), a.getAttribute('href'), a.getBoundingClientRect().height])]; }""")
+    if [k["id"] for k in d["kolommen"]] != [x[0] for x in DRIELUIK]:
+        fouten.append(f"{tag}: kolommen van het drieluik kloppen niet ({[k['id'] for k in d['kolommen']]})"); return
+    for k, (id_, anker, kop, doel, kleur) in zip(d["kolommen"], DRIELUIK):
+        ktag = f"{tag} [drieluik {kop}]"
+        if (k["kop"], k["tekst"]) != (bron[anker][0], [bron[anker][1]]):
+            fouten.append(f"{ktag}: kop of tekst klopt niet ({k['kop']!r}, {k['tekst']!r})")
+        # (dekking en "in beeld na scrollen" toetst pijl_meer; hier staat de pagina nog bovenaan en zijn de links nog niet opgekomen)
+        if [x[0] for x in k["pijlen"]] != [doel] or any(x[1] < 43.5 or x[2] != "visible" for x in k["pijlen"]):
+            fouten.append(f"{ktag}: verwacht precies één zichtbare pijl-link (min. 44 px) naar {doel} ({k['pijlen']})")
+        if k["tabstops"] != 1:
+            fouten.append(f"{ktag}: {k['tabstops']} tabstops in de kolom, verwacht 1")
+        if k["buiten"]:
+            fouten.append(f"{ktag}: een woord van de kop steekt buiten de kolom")
+        # loading=lazy staat in de HTML (controleer_bestanden); met een muis zet main.js de foto's bij het naderen op eager
+        if not k["img"]:
+            fouten.append(f"{ktag}: foto ontbreekt")
+        elif naam != "desktop":
+            src, _, b, h, boven, nat, disp = k["img"]
+            if disp == "none" or not boven:
+                fouten.append(f"{ktag}: op touch staat de foto niet boven de tekst ({k['img']})")
+            if nat and b > nat + 0.5:
+                fouten.append(f"{ktag}: foto {src} groter getoond ({b:.0f} px) dan het bestand ({nat} px)")
+            if id_ == "babynest" and b > 324.5:
+                fouten.append(f"{ktag}: babynestfoto breder dan 324 px ({b:.0f})")
+    if naam == "desktop":
+        breedtes = [round(k["breedte"]) for k in d["kolommen"]]
+        if max(breedtes) - min(breedtes) > 1 or d["hoogte"] > 900.5:
+            fouten.append(f"{tag}: drieluik niet in drie gelijke kolommen binnen één scherm ({breedtes}, hoogte {d['hoogte']:.0f})")
+        kleuren = [norm_kleur(page, x[4]) for x in DRIELUIK[1:]]
+        if [k["kleur"] for k in d["kolommen"][1:]] != kleuren:
+            fouten.append(f"{tag}: kolom 2 en 3 zijn niet oker en mauve ({[k['kleur'] for k in d['kolommen']]})")
+    # 002 Technieken: vier namen als link; op touch vier kaarten met dezelfde doelen
+    t = page.evaluate("""() => { const s = document.querySelector('#technieken'); if (!s) return null;
+      return [s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim(), [...s.querySelectorAll('.hoverlijst ul a')].map(a => [a.childNodes[0].textContent.trim(), a.getAttribute('href'), a.dataset.kleur]),
+        [...s.querySelectorAll('.sfeer-kaarten a.kaart')].map(a => [a.querySelector('.kaart-naam').textContent.trim(), a.querySelector('.kaart-regel').textContent.trim(), a.getAttribute('href'), a.offsetHeight > 0]),
+        [...s.querySelectorAll('.sfeer .productregel')].map(p => p.textContent.trim()), !!s.querySelector('#babykleding'), !!s.querySelector('#siliconen'),
+        [...s.querySelectorAll(':scope > .wrap > a.pijl')].map(a => a.getAttribute('href'))]; }""")
+    if not t:
+        fouten.append(f"{tag}: sectie #technieken ontbreekt")
+    else:
+        if t[0] != "002 — Technieken" or [x[:2] for x in t[1]] != [[n, h] for n, _, h, _ in TECHNIEKEN] or [x[2] for x in t[1]] != [k for *_, k in TECHNIEKEN]:
+            fouten.append(f"{tag}: Technieken klopt niet ({t[:2]})")
+        if [x[:3] for x in t[2]] != [[n, r, h] for n, r, h, _ in TECHNIEKEN] or t[3] != [r for _, r, _, _ in TECHNIEKEN]:
+            fouten.append(f"{tag}: kaarten of productregels van Technieken kloppen niet ({t[2]}, {t[3]})")
+        if naam != "desktop" and not all(x[3] for x in t[2]):
+            fouten.append(f"{tag}: op touch staan de kaarten van Technieken niet in beeld")
+        if not (t[4] and t[5]):
+            fouten.append(f"{tag}: ankers #babykleding en #siliconen horen bovenaan Technieken")
+        if t[6] != ["werkwijze.html#personaliseren"]:
+            fouten.append(f"{tag}: onder Technieken hoort één pijl-link 'Zo personaliseert Carien' ({t[6]})")
+    # 003 Inspiratie: grote foto (lazy), witte kop, links naar Inspiratie en het formulier; #contact als anker
+    st = page.evaluate("""() => { const s = document.querySelector('#inspiratie'); if (!s) return null; const i = s.querySelector(':scope > img'), r = i.getBoundingClientRect();
+      return [s.matches('.statement'), [...s.querySelectorAll('a.pijl')].map(a => [a.textContent.trim(), a.getAttribute('href'), a.getBoundingClientRect().height]), i.getAttribute('loading'),
+              r.width, r.height, i.naturalWidth, i.naturalHeight, !!s.querySelector('#contact'), s.getBoundingClientRect().height, (s.querySelector('h2') || {}).textContent, i.getAttribute('src')]; }""")
     if not st:
         fouten.append(f"{tag}: sectie #inspiratie ontbreekt")
     else:
-        fotos, pijlen = st
-        if not 3 <= len(fotos) <= 4:
-            fouten.append(f"{tag}: Inspiratie toont {len(fotos)} foto's, verwacht 3 tot 4")
-        for src, bijschrift, w, b, lazy, alt in fotos:
-            if not re.search(r'<img src="' + re.escape(src) + r'"[^>]*>.*?<figcaption>' + re.escape(bijschrift or "") + '</figcaption>', insp):
-                fouten.append(f"{tag}: Inspiratie-foto {src} ({bijschrift}) staat niet zo op inspiratie.html")
-            breedte = bestandsbreedte(src)
-            if str(breedte) != str(w) or b > breedte + 0.5 or lazy != "lazy" or len(alt) < 15:
-                fouten.append(f"{tag}: Inspiratie-foto {src}: {b:.0f} px (bestand {breedte}, width={w}), loading={lazy} of alt te kort")
-        if [p[:2] for p in pijlen] != [["Bekijk alle inspiratie", "inspiratie.html"]] or any(p[2] < 43.5 for p in pijlen):
-            fouten.append(f"{tag}: in Inspiratie hoort alleen 'Bekijk alle inspiratie' naar inspiratie.html (min. 44 px) ({pijlen})")
-    # wat verhuisd is, staat niet meer op de homepage
-    weg = page.evaluate("() => ['.uitgelicht', '.kernwaarden', '.sferen', '.slider', '.statement', '#over', '.hoverlijst', 'form'].filter(s => document.querySelector('main ' + s))")
+        if [x[:2] for x in st[1]] != [["Bekijk alle inspiratie", "inspiratie.html"], ["Stuur Carien een bericht", "contact.html#formulier"]] or any(x[2] < 43.5 for x in st[1]):
+            fouten.append(f"{tag}: Inspiratie hoort 'Bekijk alle inspiratie' en 'Stuur Carien een bericht' te hebben (min. 44 px) ({st[1]})")
+        if not st[0] or st[2] != "lazy" or not st[7] or st[9] != "Ieder nieuw leven is bijzonder":
+            fouten.append(f"{tag}: Inspiratie is geen grote foto (lazy) met de kop en het anker #contact ({st})")
+        bw = bestandsbreedte(st[10]); bh = bw * 1013 / 1800 if bw else 0  # bestand box-hero-wide.jpg: 1800 x 1013 (naturalWidth is bij srcset dichtheidsgecorrigeerd)
+        if naam == "desktop" and bw and max(st[3] / bw, st[4] / bh) > 1.001:
+            fouten.append(f"{tag}: de Inspiratie-foto wordt vergroot")
+        if naam == "mobiel" and st[8] < 560:
+            fouten.append(f"{tag}: Inspiratie is op 390 px lager dan 560 px ({st[8]:.0f})")
+    # wat verdwenen is, staat niet meer op de homepage; precies één link naar het formulier
+    weg = page.evaluate("() => ['.categorie', '.uitgelicht', '.slider', '#over', '.inspiratie-rij', 'form', '.contact-rij'].filter(s => document.querySelector('main ' + s))")
     if weg:
         fouten.append(f"{tag}: deze onderdelen horen niet meer op de homepage: {weg}")
-    contact = page.evaluate("() => [...document.querySelectorAll('#contact a')].map(a => [a.textContent.trim(), a.getAttribute('href')])")
-    if contact != [["Stuur Carien een bericht", "contact.html#formulier"]]:
-        fouten.append(f"{tag}: het contactblok heeft niet alleen 'Stuur Carien een bericht' ({contact})")
+    n = page.evaluate("() => document.querySelectorAll('main a[href=\"contact.html#formulier\"]').length")
+    if n != 1:
+        fouten.append(f"{tag}: {n} links naar contact.html#formulier in main, verwacht precies 1")
+
+def controleer_home_interactie(browser):
+    """Desktop (muis): drieluik bij aanwijzen (foto in, witte tekst min. 4,5:1 op de lichtste plek; babynest max. 324 px en inkt),
+    Technieken bij aanwijzen (diepe tint, namen wit, terug na het verlaten), koppen binnen de kolommen op 1025/1280/1440,
+    Inspiratie met witte tekst op de sluier (min. 4,5:1)."""
+    for b, h in [(1025, 800), (1280, 720), (1440, 900)]:
+        ctx, page = nieuwe_pagina(browser, "index.html", b, h)
+        d = page.evaluate(LEES_DRIELUIK)
+        if any(k["buiten"] for k in d["kolommen"]):
+            fouten.append(f"index.html [{b} px]: een woord van een kop in het drieluik steekt buiten de kolom")
+        ctx.close()
+    ctx, page = nieuwe_pagina(browser, "index.html")
+    tag = "index.html [desktop, drieluik aanwijzen]"
+    for i, (id_, *_rest) in enumerate(DRIELUIK, 1):
+        page.eval_on_selector("#producten", "e => e.scrollIntoView({ block: 'start', behavior: 'instant' })"); page.wait_for_timeout(400)
+        r = page.evaluate("id => { const r = document.getElementById(id).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }", id_)
+        page.mouse.move(r[0], r[1], steps=3); page.wait_for_timeout(1500)
+        kleur = page.evaluate("id => [...document.querySelectorAll('#' + id + ' .kern-tekst h2, #' + id + ' .kern-tekst p, #' + id + ' .kern-tekst a')].map(e => getComputedStyle(e).color)", id_)
+        if id_ == "babynest":
+            w = page.evaluate("() => document.querySelector('#babynest .nest-lijst img').getBoundingClientRect().width")
+            if w > 324.5 or any(k != INKT for k in kleur):
+                fouten.append(f"{tag}: babynest: foto {w:.0f} px (max. 324) of tekst niet inkt ({kleur})")
+            continue
+        if any(k != WIT for k in kleur):
+            fouten.append(f"{tag}: kolom {i}: tekst niet wit bij aanwijzen ({kleur})")
+        for sel in ["h2", "p.klein", "a.pijl"]:
+            c = contrast_wit_over_foto(page, f"#{id_} .kern-tekst {sel}", f"#{id_} .kern-beeld")
+            if c is None or c < 4.5:
+                fouten.append(f"{tag}: kolom {i}: wit {sel} haalt op de foto {c and round(c, 2)}:1 (min. 4,5:1)")
+        page.mouse.move(5, 5); page.wait_for_timeout(300)
+    # Technieken: aanwijzen kleurt de laag naar de diepe tint; weg met de muis: binnen 1 s terug naar wit
+    page.eval_on_selector("#technieken .hoverlijst", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })"); page.wait_for_timeout(1200)
+    for i, (naam_t, regel, doel, diep) in enumerate(TECHNIEKEN, 1):
+        page.hover(f"#technieken .hoverlijst li:nth-child({i}) a"); page.wait_for_timeout(1300)
+        st = page.evaluate("""i => { const as = [...document.querySelectorAll('#technieken .hoverlijst ul a')];
+          return [as.map(a => [getComputedStyle(a).color, getComputedStyle(a).opacity]), getComputedStyle(document.querySelector('#technieken .sfeer.aan .productregel')).fontSize,
+                  document.querySelectorAll('#technieken .sfeer.aan img').length]; }""", i)
+        if lees_laag(page) != norm_kleur(page, diep) or st[0][i - 1] != [WIT, "1"] or any(x != [WIT, "0.35"] for n, x in enumerate(st[0]) if n != i - 1) or st[1] != "19px" or st[2] != 2:
+            fouten.append(f"index.html [desktop, Technieken {naam_t}]: laag {lees_laag(page)} (verwacht {diep}), namen {st[0]}, productregel {st[1]}, foto's {st[2]}")
+    page.mouse.move(720, 3, steps=4); page.wait_for_timeout(1200)  # omhoog de lijst uit (de lijst is zo breed als het ontwerpvak)
+    if lees_laag(page) != WIT:
+        fouten.append(f"index.html [desktop, Technieken]: na het verlaten is de laag {lees_laag(page)}, niet wit")
+    # Inspiratie: witte kop en pijl-links op de sluier minstens 4,5:1
+    page.eval_on_selector("#inspiratie", "e => e.scrollIntoView({ block: 'start', behavior: 'instant' })"); page.wait_for_timeout(900)
+    for sel in ["#inspiratie h2", "#inspiratie a.pijl[href='inspiratie.html']", "#inspiratie a.pijl[href='contact.html#formulier']"]:
+        c = contrast_wit_over_foto(page, sel, "#inspiratie")
+        if c is None or c < 4.5:
+            fouten.append(f"index.html [desktop, Inspiratie]: {sel} haalt op de sluier {c and round(c, 2)}:1 (min. 4,5:1)")
+    ctx.close()
 
 # Personaliseren: tabbladen als media-slider (brief stock-pariteit, criterium 14 en 15)
 LEES_TABBLAD = """() => {
@@ -512,12 +611,30 @@ def controleer_bestanden():
     if not re.search(r"<!--\s*LET OP:[^>]*-->\s*<p class=\"quote pagina-quote\">Een babynest in de stof en kleur die jij kiest\.</p>", nest):
         fouten.append("babynest.html: de kop 'Een babynest in de stof en kleur die jij kiest.' heeft geen LET OP-opmerking")
     home = (ROOT / "index.html").read_text(encoding="utf-8")
-    if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"categorie-foto\"><img src=\"assets/img/p-broekje-kleur", home):
+    if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"kern-beeld\"><div class=\"kern-masker\"><img src=\"assets/img/p-broekje-kleur", home):
         fouten.append("index.html: de tijdelijke foto p-broekje-kleur bij Prematuurkleding heeft geen LET OP-opmerking")
-    # criterium 10: elke nieuwe linktekst op de homepage staat onder een LET OP
-    for blok in re.findall(r'<section id="(?:babykleding|siliconen|babynest|prematuurkleding|kraamcadeauboxen|inspiratie)".*?</section>', home, re.S):
-        if "LET OP" not in blok:
-            fouten.append(f"index.html: productblok of Inspiratie zonder LET OP-opmerking ({blok[:60]})")
+    # brief 2026-11-06, criterium 14: LET OP bij nieuwe teksten (drieluik, Technieken met Borduren, Inspiratie), de babynestfoto,
+    # de douchehandschoen en de nieuwe formuliervelden; het label "001 — Producten" is goedgekeurd (Carst, 6 nov.)
+    for id_ in ["kraamcadeauboxen", "prematuurkleding", "babynest", "technieken", "inspiratie"]:
+        blok = re.search(r'<section id="' + id_ + r'".*?</section>', home, re.S)
+        if not blok or "LET OP" not in blok.group(0):
+            fouten.append(f"index.html: sectie #{id_} zonder LET OP-opmerking")
+    if not re.search(r"<!--\s*LET OP:[^>]*Levendig en persoonlijk[^>]*Borduren", home, re.S):
+        fouten.append("index.html: bij Technieken ontbreekt de LET OP over 'Levendig en persoonlijk' (Borduren)")
+    drie = re.search(r'<section id="producten".*?\n</section>', home, re.S)
+    if not drie or re.search(r'<img(?![^>]*loading="lazy")[^>]*>', drie.group(0)):
+        fouten.append("index.html: niet alle foto's in het drieluik hebben loading=\"lazy\"")
+    if not re.search(r"<!--\s*LET OP:[^>]*-->\s*<div class=\"nest-lijst\">", home):
+        fouten.append("index.html: de babynestfoto in het drieluik heeft geen LET OP-opmerking")
+    box = (ROOT / "kraamcadeauboxen.html").read_text(encoding="utf-8")
+    if not re.search(r"<!--\s*LET OP:[^>]*douchehandschoen[^>]*-->\s*<li class=\"product\"><div class=\"product-tekening\">", box):
+        fouten.append("kraamcadeauboxen.html: de douchehandschoen (lijntekening) heeft geen LET OP-opmerking")
+    if "Douchehandschoen" not in (PROJECT / "docs" / "fotolijst.md").read_text(encoding="utf-8"):
+        fouten.append("docs/fotolijst.md: de opname 'Douchehandschoen' ontbreekt")
+    contact = (ROOT / "contact.html").read_text(encoding="utf-8")
+    for stuk in ["prematuurkleding", "babynest", "kledingmaat"]:
+        if not re.search(r"<!--\s*LET OP:[^>]*" + stuk, contact, re.I):
+            fouten.append(f"contact.html: de formuliervelden voor {stuk} hebben geen LET OP-opmerking")
 
 LEES_HEADER = """() => { const l = document.querySelector('.site-header .logo').getBoundingClientRect();
   return [[...document.querySelectorAll('.site-header .menu a')].map(a => { const r = a.getBoundingClientRect();
@@ -541,7 +658,7 @@ def controleer_navigatie(browser):
         verwacht = [pagina.replace(".html", "")] if pagina.replace(".html", "") in dict((s, 1) for _, s in HOOFDMENU) else []
         if huidig != verwacht:
             fouten.append(f"{tag}: aria-current staat op {huidig}, verwacht {verwacht}")
-        alle_current = page.evaluate("() => [...document.querySelectorAll('[aria-current]')].map(a => a.closest('.site-header') ? 'header' : 'elders')")
+        alle_current = page.evaluate("() => [...document.querySelectorAll('[aria-current]')].map(a => a.closest('.site-header, .menu-rij') ? 'header' : 'elders')")  # brief 2026-11-06: ook de menu-rij naast de burger
         if any(c != "header" for c in alle_current):
             fouten.append(f"{tag}: aria-current staat ook buiten de hoofdnavigatie (bijv. op een subitem met dezelfde naam)")
         if huidig:
@@ -637,7 +754,8 @@ def page_tekst_menu_koppen():
     return re.findall(r'<p class="menu-kop">([^<]+)</p>', (ROOT / "index.html").read_text(encoding="utf-8"))
 
 # pijl-links op de homepage die zonder aanwijzen zichtbaar moeten zijn (min. 44 px, dekking 1, in beeld na scrollen)
-HOME_PIJLEN = [("#" + i, None, d) for i, _, _, d in HOME_BLOKKEN] + [("#inspiratie", "Bekijk alle inspiratie", "inspiratie.html"), ("#contact", "Stuur Carien een bericht", "contact.html#formulier")]
+HOME_PIJLEN = [("#" + i, None, d) for i, _, _, d, _ in DRIELUIK] + [("#technieken", "Zo personaliseert Carien", "werkwijze.html#personaliseren"),
+              ("#inspiratie", "Bekijk alle inspiratie", "inspiratie.html"), ("#inspiratie", "Stuur Carien een bericht", "contact.html#formulier")]
 
 def pijl_meer(page, tag):
     """Elke pijl-link in de productblokken, Inspiratie en contact is zichtbaar zonder aanwijzen, min. 44 px en gaat naar het juiste doel."""
@@ -655,7 +773,7 @@ def pijl_meer(page, tag):
         if href != doel or hoogte < 43.5 or zicht != "visible" or float(dekking) < 1 or breedte == 0 or not inbeeld:
             fouten.append(f"{tag}: pijl-link in {sectie} niet goed zichtbaar, te laag of verkeerd doel ({st})")
 
-HOME_LABELS = [l for _, l, _, _ in HOME_BLOKKEN] + ["006 — Inspiratie", "007 — Instagram", "008 — Contact"]
+HOME_LABELS = ["001 — Producten", "002 — Technieken", "003 — Inspiratie", "004 — Instagram"]
 
 def controleer_algemeen(page, tag, pagina, naam):
     """Per pagina en scherm: data-labels, pijl-links 44 px, lopende tekst 16 px, homepage-opbouw."""
@@ -672,7 +790,7 @@ def controleer_algemeen(page, tag, pagina, naam):
     if klein:
         fouten.append(f"{tag}: lopende tekst kleiner dan 16 px: {klein[:3]}")
     if pagina == "index.html":
-        # criterium 3: hero, 001-005 producten, 006 Inspiratie, 007 Instagram, 008 Contact
+        # brief 2026-11-06: hero, 001 Producten, 002 Technieken, 003 Inspiratie, 004 Instagram
         labels = page.evaluate("() => [...document.querySelectorAll('main [data-label]')].map(e => e.getAttribute('data-label').replace(/<[^>]+>/g, '').trim())")
         zicht = page.evaluate("() => [...document.querySelectorAll('main .label')].map(e => e.textContent.replace(/\\s+/g, ' ').trim())")
         if labels != ["— LUX mini"] + HOME_LABELS or not page.query_selector("main > section:first-child .hero[data-wissel]"):
@@ -684,8 +802,9 @@ def controleer_algemeen(page, tag, pagina, naam):
             gevonden = [h for t, h in hrefs if t == tekst]
             if len(gevonden) != 1 or gevonden[0] != doel:
                 fouten.append(f"{tag}: '{tekst}' gaat naar {gevonden}, verwacht één keer {doel}")
-        if not page.query_selector("section#contact"):
-            fouten.append(f"{tag}: id='contact' ontbreekt op de homepage (oude links)")
+        for anker in ["contact", "inspiratie", "kraamcadeaubox", "prematuur", "babynest", "babykleding", "siliconen"]:
+            if not page.query_selector(f"#{anker}"):
+                fouten.append(f"{tag}: id='{anker}' ontbreekt op de homepage (oude links)")
         controleer_home(page, tag, naam)
         pijl_meer(page, tag)
         page.evaluate("window.scrollTo(0, 0)")
@@ -762,7 +881,7 @@ def controleer_werkwijze(browser):
             fouten.append(f"werkwijze.html: anker #{oud} ontbreekt (oude adressen /over#)")
     # oude adressen /producten#… landen op de homepage (besluit Carst 5 nov.: Wat ik maak weg)
     home = (ROOT / "index.html").read_text(encoding="utf-8")
-    for oud in ["babykleding", "siliconen", "babynest", "prematuur", "kraamcadeaubox"]:
+    for oud in ["babykleding", "siliconen", "babynest", "prematuur", "kraamcadeaubox", "contact", "inspiratie"]:
         if f'id="{oud}"' not in home:
             fouten.append(f"index.html: anker #{oud} ontbreekt (oude adressen /producten#)")
     # Hoe ik werk: aanwijzen wisselt niet, klik, Enter en Spatie wel
@@ -860,7 +979,7 @@ def controleer_themas(browser):
             breedte = bestandsbreedte(src)
             if str(breedte) != str(w) or kb > breedte + 0.5 or "-600.jpg 600w" not in srcset or abs(kb / kh - 4 / 3) > .02 or naam_t not in alt:
                 fouten.append(f"{tag}: thema {naam_t}: foto {kb:.0f} x {kh:.0f} (bestand {breedte}, width={w}), geen 4:3, geen 600w-versie of alt zonder naam")
-        if th["links"] != [["Vraag je thema aan", "contact.html#formulier"]]:
+        if th["links"] != [["Vraag je thema aan", "contact.html?onderwerp=kraamcadeaubox#formulier"]]:
             fouten.append(f"{tag}: onder de thema's hoort één pijl-link 'Vraag je thema aan' naar het formulier ({th['links']})")
         if th["lopend"]:
             fouten.append(f"{tag}: er staan nog lopende regels of losse themasecties ({th['lopend']})")
@@ -879,9 +998,9 @@ LEEG_SCHERM = """() => { const els = [...document.querySelectorAll('main h1, mai
 
 # Prematuurkleding en Babynest (criterium 2): kop -> voorbeeldfoto -> prijsrichtlijn -> Zo werkt het -> contact
 PRODUCTPAGINAS = {
-    "prematuurkleding.html": {"h1": "Prematuurkleding", "foto_id": "maatwerk", "kleur": "#C3CFBC", "foto": "p-broekje-kleur.jpg", "max_b": 480,
+    "prematuurkleding.html": {"formulier": "contact.html?onderwerp=prematuurkleding#formulier", "h1": "Prematuurkleding", "foto_id": "maatwerk", "kleur": "#C3CFBC", "foto": "p-broekje-kleur.jpg", "max_b": 480,
                               "secties": [["", "— Prematuurkleding"], ["maatwerk", "001 — Maatwerk"], ["prijs", "002 — Prijsrichtlijn"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
-    "babynest.html": {"h1": "Babynest", "foto_id": "babynest", "kleur": "#B5969E", "foto": "ig-babynest.jpg", "max_b": 324,
+    "babynest.html": {"formulier": "contact.html?onderwerp=babynest#formulier", "h1": "Babynest", "foto_id": "babynest", "kleur": "#B5969E", "foto": "ig-babynest.jpg", "max_b": 324,
                       "secties": [["", "— Babynest"], ["babynest", "001 — Babynest"], ["prijs", "002 — Prijsrichtlijn"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
 }
 
@@ -894,7 +1013,7 @@ def controleer_productpagina(browser, pagina):
       const a = [...document.querySelectorAll('.pagina-kop a.pijl')].map(a => [a.textContent.trim(), a.getAttribute('href'), z(a)]);
       const q = document.querySelector('.pagina-kop .quote');
       return [document.querySelector('h1').textContent.trim(), z(q), a, getComputedStyle(q).color, parseFloat(getComputedStyle(q).fontSize)]; }""", v["foto_id"])
-    if st[0] != v["h1"] or not st[1] or st[2] != [["Stuur Carien een bericht", "contact.html#formulier", True]]:
+    if st[0] != v["h1"] or not st[1] or st[2] != [["Stuur Carien een bericht", v["formulier"], True]]:
         fouten.append(f"{pagina} [mobiel]: h1, intro of 'Stuur Carien een bericht' (naar het formulier) staan niet in het eerste scherm ({st[:3]})")
     if st[3] != WIT or st[4] < 24:
         fouten.append(f"{pagina} [mobiel]: de intro in de kop hoort wit vanaf 24 px ({st[3:]})")
@@ -921,7 +1040,7 @@ def controleer_productpagina(browser, pagina):
             [...document.querySelectorAll('main a.pijl')].filter(a => a.textContent.trim() === 'Meer over de werkwijze').map(a => a.getAttribute('href')),
             i.getAttribute('src'), /prematuur/i.test(i.alt), r.width, i.getAttribute('width'), i.getAttribute('fetchpriority'), i.getAttribute('loading'),
             p ? [p.textContent.trim(), getComputedStyle(p).color, parseFloat(getComputedStyle(p).fontSize)] : null]; }""", v["foto_id"])
-        if st[0] != [["Bespreek je idee", "contact.html#formulier"]] or st[1] != ["Samen kiezen", "Persoonlijk maken", "Met zorg gemaakt"] or st[2] != ["werkwijze.html#hoe-ik-werk"]:
+        if st[0] != [["Bespreek je idee", v["formulier"]]] or st[1] != ["Samen kiezen", "Persoonlijk maken", "Met zorg gemaakt"] or st[2] != ["werkwijze.html#hoe-ik-werk"]:
             fouten.append(f"{tag}: fotosectie of Zo werkt het klopt niet ({st[:3]})")
         if v["foto"] not in st[3] or st[4]:
             fouten.append(f"{tag}: voorbeeldfoto {v['foto']} ontbreekt of de alt-tekst noemt het prematuurkleding")
@@ -1046,7 +1165,10 @@ def controleer_balk_labels(browser):
                     break
             ctx.close()
 
-FORMULIER_VELDEN = [["input", "naam", "text"], ["input", "telefoon", "tel"], ["input", "email", "email"], ["select", "onderwerp", ""], ["textarea", "bericht", ""], ["input", "website", "text"]]
+# brief 2026-11-06: eerst het onderwerp, dan de groepen (alle velden optioneel), bericht, naam, e-mail, telefoon
+FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["select", "box_thema", ""], ["input", "box_naam", "text"], ["input", "box_datum", "text"], ["input", "box_maat", "text"],
+                    ["input", "prem_maat", "text"], ["input", "prem_naam", "text"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"],
+                    ["textarea", "bericht", ""], ["input", "naam", "text"], ["input", "email", "email"], ["input", "telefoon", "tel"], ["input", "website", "text"]]
 
 def controleer_contactpagina(browser):
     """Criteria 20-23 en 30."""
@@ -1062,8 +1184,8 @@ def controleer_contactpagina(browser):
             fouten.append(f"{tag}: kop of navigatie is niet wit ({st[2]}, {st[3]})")
         f = page.evaluate("""() => { const f = document.querySelector('#formulier form');
           return f ? [f.getAttribute('action'), f.getAttribute('method'), [...f.querySelectorAll('input, select, textarea')].map(e => [e.tagName.toLowerCase(), e.name, e.getAttribute('type') || '']),
-            [...f.querySelectorAll('input:not([name=website]), select, textarea')].map(e => Math.round(e.getBoundingClientRect().height)),
-            new Set([...f.querySelectorAll('label:not(.val)')].map(l => Math.round(l.getBoundingClientRect().left))).size] : null; }""")
+            [...f.querySelectorAll('input:not([name=website]), select, textarea')].filter(e => e.offsetParent !== null).map(e => Math.round(e.getBoundingClientRect().height)),
+            new Set([...f.querySelectorAll('label:not(.val):not(.keuze-kaart)')].filter(l => l.offsetParent !== null).map(l => Math.round(l.getBoundingClientRect().left))).size] : null; }""")
         if not f or f[0] != "/api/contact" or f[1] != "post" or f[2] != FORMULIER_VELDEN:
             fouten.append(f"{tag}: formulier wijkt af van het oude (action, method, velden: {f and f[:3]})")
         elif min(f[3]) < 44:
@@ -1116,7 +1238,7 @@ def controleer_zonder_js(browser):
         st = page.evaluate("""() => { const zicht = e => { let o = 1; for (let x = e; x; x = x.parentElement) o *= parseFloat(getComputedStyle(x).opacity);
             return e.offsetHeight > 0 && getComputedStyle(e).visibility === 'visible' && o === 1; };
           return { cat: [...document.querySelectorAll('.categorie-foto img, .categorie-tekst h2, .categorie-tekst .klein, .themakaart img, .themakaart figcaption, .inspiratie-rij img, .werk img, .werk figcaption, .maak-rij img, .maak-rij h2, .stap h2, .stap .klein, .techniek h2, .dia img, .fotorij img, .pagina-prijs, .prijs')].filter(e => !zicht(e)).length,
-                   stappen: [...document.querySelectorAll('.hoe-stap')].map(zicht), form: [...document.querySelectorAll('#formulier input:not([name=website]), #formulier textarea, #formulier button')].filter(e => !zicht(e)).length }; }""")
+                   stappen: [...document.querySelectorAll('.hoe-stap')].map(zicht), form: [...document.querySelectorAll('#formulier input:not([name=website]):not([type=radio]), #formulier textarea, #formulier button')].filter(e => !e.closest('.groep:not([data-groep="Kraamcadeaubox"])') && !zicht(e)).length }; }""")
         if st["cat"] or not all(st["stappen"]) or st["form"]:
             fouten.append(f"{pagina} [zonder JavaScript]: niet alles zichtbaar ({st})")
         page.close()
@@ -1136,7 +1258,7 @@ def controleer_zonder_js(browser):
     for pagina in ["index.html", "werkwijze.html", "prematuurkleding.html", "babynest.html", "inspiratie.html", "kraamcadeauboxen.html"]:
         page = ctx.new_page(); page.goto(url(pagina), wait_until="load"); page.wait_for_timeout(300)
         weg = page.evaluate("""() => [...document.querySelectorAll('main h1, main h2, main p, main .pijl, main .werk img, main .maak-rij img, main .categorie-foto img, main .themakaart img, main .inspiratie-rij img')].filter(e => {
-          if (e.closest('.hoe-stappen, .slider-teksten, .slider-beelden, .hero')) return false; /* tabbladen: één tegelijk zichtbaar; hero: set B ligt eronder */
+          if (e.closest('.hoe-stappen, .slider-teksten, .slider-beelden, .hero, .sfeer-beelden, .sfeer-kaarten')) return false; /* tabbladen: één tegelijk zichtbaar; hero: set B ligt eronder; Technieken: foto's alleen bij aanwijzen, kaarten alleen op touch */
           if (e.matches('.sr-only')) return false;
           let o = 1; for (let x = e; x; x = x.parentElement) o *= parseFloat(getComputedStyle(x).opacity);
           return !(e.offsetHeight > 0 && getComputedStyle(e).visibility === 'visible' && o === 1); }).map(e => e.textContent.trim().slice(0, 30) || e.getAttribute('src'))""")
@@ -1152,6 +1274,7 @@ def main():
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         controleer_navigatie(browser)
+        controleer_home_interactie(browser)
         controleer_werkwijze(browser)
         controleer_themas(browser)
         controleer_prematuur(browser)

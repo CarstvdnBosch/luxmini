@@ -46,7 +46,8 @@ for (const { pad, naam } of [...PAGINAS, { pad: '/bestaat-niet-meer', naam: '404
       uit.vergroot = [...document.querySelectorAll('main img')].filter(zichtbaar).filter(i => i.complete && i.naturalWidth && i.getBoundingClientRect().width > i.naturalWidth + 1)
         .map(i => `${i.getAttribute('src')} (${Math.round(i.getBoundingClientRect().width)} > ${i.naturalWidth})`);
       // 7. contact binnen één tik: een link naar het formulier (of je staat op de contactpagina)
-      uit.contact = !!document.querySelector('main a[href$="contact.html#formulier"], main a[href$="/contact#formulier"], main form[action="/api/contact"]');
+      // (brief 2026-11-06: ook met ?onderwerp=…, zodat het formulier vooraf is ingevuld)
+      uit.contact = [...document.querySelectorAll('main a[href]')].some(a => /^(contact\.html|\/contact)(\?[^#]*)?#formulier$/.test(a.getAttribute('href'))) || !!document.querySelector('main form[action="/api/contact"]');
       // 8. regellengte: op 390 px van nature kort; vangnet tegen te brede tekstblokken (ontwerpgate beoordeelt regel 8)
       uit.langeRegels = [...document.querySelectorAll('main p')].filter(zichtbaar).filter(p => { const fs = parseFloat(getComputedStyle(p).fontSize); return p.textContent.trim().length > 80 && p.getBoundingClientRect().width / (fs * 0.5) > 80; }).map(naam);
       return uit;

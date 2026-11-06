@@ -66,7 +66,9 @@ test('kraamcadeauboxen: vier prijzen van € 35 tot € 80', async ({ page }) =>
 });
 
 // Oude adressen (301): het anker gaat mee en de kop van die sectie staat in beeld.
-for (const [oud, nieuw, anker] of [['/producten#siliconen', '/', 'siliconen'], ['/producten#prematuur', '/', 'prematuur'], ['/over#hoe-ik-werk', '/werkwijze', 'hoe-ik-werk'], ['/portfolio#siliconen', '/inspiratie', 'siliconen']]) {
+// Brief 2026-11-06: alle vijf oude productankers landen op de homepage (drieluik of Technieken).
+for (const [oud, nieuw, anker] of [['/producten#siliconen', '/', 'siliconen'], ['/producten#prematuur', '/', 'prematuur'], ['/producten#babynest', '/', 'babynest'],
+  ['/producten#kraamcadeaubox', '/', 'kraamcadeaubox'], ['/producten#babykleding', '/', 'babykleding'], ['/over#hoe-ik-werk', '/werkwijze', 'hoe-ik-werk'], ['/portfolio#siliconen', '/inspiratie', 'siliconen']]) {
   test(`oud adres ${oud} landt op ${nieuw}#${anker} met de kop in beeld`, async ({ page }) => {
     await page.goto(oud);
     await expect(page).toHaveURL(new RegExp(`${nieuw}#${anker}$`));
@@ -85,18 +87,35 @@ for (const { pad, naam } of PAGINAS.filter(p => p.naam !== 'contact')) {
     const direct = await page.locator('main a.pijl[href^="https://wa.me"], main a.pijl[href^="tel:"], main a.pijl[href^="mailto:"], main .contact-lijst a[href^="https://wa.me"], main .contact-lijst a[href^="tel:"], main .contact-lijst a[href^="mailto:"]').count();
     expect(direct, 'directe contactlinks in de inhoud').toBe(0);
     const doelen = await page.locator('main a[href*="contact"]').evaluateAll(as => as.map(a => a.getAttribute('href')));
-    for (const d of doelen) expect(d, 'contact-link in de inhoud').toMatch(/^(contact\.html|\/contact)#formulier$/);
+    // brief 2026-11-06: ook met onderwerp (en formaat), zodat het formulier vooraf is ingevuld; elke CTA gaat naar het formulier
+    for (const d of doelen) expect(d, 'contact-link in de inhoud').toMatch(/^(contact\.html|\/contact)(\?onderwerp=(kraamcadeaubox|prematuurkleding|babynest)(&formaat=(35|50|65|80))?)?#formulier$/);
     await expect(page.locator('#menu-scherm a[href^="https://wa.me/31643791618"]')).toHaveCount(1);
   });
 }
 
-test('homepage: vijf productblokken, Inspiratie, Instagram en contact in deze volgorde', async ({ page }, info) => {
+test('homepage: hero, 001 Producten, 002 Technieken, 003 Inspiratie, 004 Instagram in deze volgorde (brief 2026-11-06)', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'volgorde is per scherm gelijk');
   await page.goto('/');
   const labels = await page.locator('main > section').evaluateAll(s => s.map(x => x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()));
-  expect(labels).toEqual(['— LUX mini', '001 — Babykleding', '002 — Siliconen items', '003 — Babynest', '004 — Prematuurkleding', '005 — Kraamcadeauboxen', '006 — Inspiratie', '007 — Instagram', '008 — Contact']);
-  const doelen = await page.locator('main > section.categorie').evaluateAll(s => s.map(x => [...x.querySelectorAll('a.pijl')].map(a => a.getAttribute('href'))));
-  expect(doelen).toEqual([['inspiratie.html#kleding'], ['inspiratie.html#siliconen'], ['babynest.html'], ['prematuurkleding.html'], ['kraamcadeauboxen.html']]);
+  expect(labels).toEqual(['— LUX mini', '001 — Producten', '002 — Technieken', '003 — Inspiratie', '004 — Instagram']);
+  await expect(page.locator('main section.categorie')).toHaveCount(0);
+  // drieluik: drie kolommen, elk één link naar de productpagina
+  const kolommen = await page.locator('#producten .kern-kolom').evaluateAll(s => s.map(x => [x.id, [...x.querySelectorAll('a')].map(a => a.getAttribute('href'))]));
+  expect(kolommen).toEqual([['kraamcadeauboxen', ['kraamcadeauboxen.html']], ['prematuurkleding', ['prematuurkleding.html']], ['babynest', ['babynest.html']]]);
+  // technieken: vier namen als link, met de productregel in de toegankelijke naam
+  const technieken = page.locator('#technieken .hoverlijst ul a');
+  await expect(technieken).toHaveCount(4);
+  const doelen = await technieken.evaluateAll(as => as.map(a => a.getAttribute('href')));
+  expect(doelen).toEqual(['werkwijze.html#personaliseren', 'inspiratie.html#siliconen', 'prematuurkleding.html', 'inspiratie.html#textiel']);
+  for (const [i, naam] of [[0, /Warm en persoonlijk\s?: Belettering/], [1, /Rustig en functioneel\s?: Siliconen items/], [2, /Specifiek en oog voor detail\s?: Prematuurkleding/], [3, /Levendig en persoonlijk\s?: Borduren/]]) {
+    await expect(technieken.nth(i)).toHaveAccessibleName(naam);
+  }
+  // 003 Inspiratie: naar alle inspiratie en het formulier; precies één link naar het formulier in main
+  const insp = await page.locator('#inspiratie a.pijl').evaluateAll(as => as.map(a => a.getAttribute('href')));
+  expect(insp).toEqual(['inspiratie.html', 'contact.html#formulier']);
+  await expect(page.locator('main a[href="contact.html#formulier"]')).toHaveCount(1);
+  await expect(page.locator('main a[href="werkwijze.html#atelier"]')).toHaveCount(1);
+  for (const id of ['kraamcadeaubox', 'prematuur', 'babynest', 'babykleding', 'siliconen', 'inspiratie', 'contact']) await expect(page.locator(`#${id}`)).toHaveCount(1);
 });
 
 test('kraamcadeauboxen: negen thema\'s binnen twee schermen (1440 x 900)', async ({ page }, info) => {
@@ -108,7 +127,7 @@ test('kraamcadeauboxen: negen thema\'s binnen twee schermen (1440 x 900)', async
   expect(hoogte, 'hoogte van label tot het laatste thema').toBeLessThanOrEqual(2 * 900);
 });
 
-test('intro speelt bij het eerste bezoek en is binnen 2 s weg (besluit Carst: ca. 1,5 s)', async ({ browser }, info) => {
+test('intro speelt bij het eerste bezoek en is tussen 2,0 en 2,6 s weg (wens Carst 6 nov.: ca. 2,2 s)', async ({ browser }, info) => {
   test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
@@ -116,7 +135,38 @@ test('intro speelt bij het eerste bezoek en is binnen 2 s weg (besluit Carst: ca
   await expect(page.locator('html')).toHaveClass(/intro-aan/);
   const start = Date.now();
   await expect(page.locator('html')).not.toHaveClass(/intro-aan/, { timeout: 4000 });
-  expect(Date.now() - start, 'duur van de intro in ms').toBeLessThan(2000);
+  const duur = Date.now() - start;
+  expect(duur, 'duur van de intro in ms').toBeGreaterThanOrEqual(1900);
+  expect(duur, 'duur van de intro in ms').toBeLessThanOrEqual(2600);
   await expect(page.locator('.hero h1')).toBeVisible();
+  await ctx.close();
+});
+
+test('intro: de hero-foto\'s staan onder het doek al zichtbaar, overslaan is binnen 0,6 s klaar', async ({ browser }, info) => {
+  test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveClass(/intro-aan/);
+  const dekking = await page.locator('.hero .tegel').evaluateAll(ts => ts.map(t => getComputedStyle(t).opacity));
+  expect(dekking, 'doorzichtigheid van de tegels tijdens de intro').toEqual(['1', '1', '1', '1', '1', '1']);
+  await page.waitForTimeout(400);
+  const start = Date.now();
+  await page.keyboard.press('Shift');
+  await expect(page.locator('html')).not.toHaveClass(/intro-aan/, { timeout: 2000 });
+  expect(Date.now() - start, 'overslaan duurt in ms').toBeLessThanOrEqual(600);
+  await ctx.close();
+});
+
+test('intro: zonder main.js haalt de noodrem hem vóór 3,1 s weg', async ({ browser }, info) => {
+  test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await page.route('**/assets/js/main.js', r => r.abort());
+  await page.goto('/');
+  // tijd vanaf het begin van de navigatie (performance.now) tot de intro onzichtbaar of weg is
+  const weg = await page.waitForFunction(() => { const i = document.querySelector('.intro-scherm'), c = getComputedStyle(i);
+    return (c.display === 'none' || c.visibility === 'hidden' || c.opacity === '0') ? performance.now() : false; }, null, { timeout: 4000, polling: 20 });
+  expect(await weg.jsonValue(), 'intro weg na ms').toBeLessThan(3100);
   await ctx.close();
 });
