@@ -62,7 +62,9 @@
      --------------------------------------------------------------- */
   var intro = document.querySelector('.intro-scherm');
   var overgang = document.querySelector('.overgang');
-  var vanOvergang = opslag.lees('lux-overgang') === '1';
+  // lux-overgang bewaart de kleur van het vlak tussen twee pagina's ('0' = geen overgang)
+  var OVERGANG_KLEUREN = ['#DEB799', '#C89F67', '#C3CFBC', '#B5969E', '#B4B19A', '#BC8565'];
+  var vanOvergang = /^#[0-9a-f]{6}$/i.test(opslag.lees('lux-overgang') || '');
   opslag.zet('lux-overgang', '0');
 
   function heroKlaar() { if (heroEl) heroEl.classList.add('klaar'); document.dispatchEvent(new Event('lux:klaar')); }
@@ -118,15 +120,24 @@
     })();
   } else {
     html.classList.remove('intro-aan');
-    if (vanOvergang && overgang && !stil) {
-      overgang.style.transition = 'none';
-      overgang.classList.add('dicht');
-      requestAnimationFrame(function () {
-        overgang.style.transition = '';
-        overgang.classList.remove('dicht');
-        overgang.classList.add('open-boven');
-        setTimeout(function () { overgang.style.transition = 'none'; overgang.classList.remove('open-boven'); requestAnimationFrame(function () { overgang.style.transition = ''; }); }, 700);
-      });
+    // Binnen: het vlak staat dicht (script in <head>) en schuift in 1 s verder naar beneden weg; de pagina komt
+    // van -150 px naar 0. Start op DOMContentLoaded; een klik of toets maakt het direct af.
+    if (vanOvergang && overgang && !stil && html.classList.contains('overgang-binnen')) {
+      var binnenKlaar = function () {
+        html.classList.remove('overgang-binnen', 'binnen-loopt');
+        ['pointerdown', 'keydown'].forEach(function (s) { window.removeEventListener(s, binnenKlaar, true); });
+      };
+      ['pointerdown', 'keydown'].forEach(function (s) { window.addEventListener(s, binnenKlaar, true); });
+      var binnenStart = function () {
+        requestAnimationFrame(function () {
+          if (!html.classList.contains('overgang-binnen')) return;
+          html.classList.add('binnen-loopt');
+          setTimeout(binnenKlaar, 1050);
+        });
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', binnenStart); else binnenStart();
+    } else {
+      html.classList.remove('overgang-binnen');
     }
     setTimeout(heroKlaar, vanOvergang ? 250 : 0);
   }
@@ -141,11 +152,23 @@
       if (url.origin !== location.origin && location.protocol !== 'file:') return;
       if (url.protocol !== location.protocol || zelfdePagina || /^(mailto|tel):/.test(a.getAttribute('href')) || !/(\.html|\/)$|^[^.]*$/.test(url.pathname)) return;
       e.preventDefault();
-      opslag.zet('lux-overgang', '1');
-      overgang.classList.add('dicht');
-      setTimeout(function () { location.href = url.href; }, 600);
+      // Weg: een vlak in een willekeurige paletkleur schuift in 1 s van boven naar beneden; de pagina zakt mee
+      var kleur = OVERGANG_KLEUREN[Math.floor(Math.random() * OVERGANG_KLEUREN.length)];
+      opslag.zet('lux-overgang', kleur);
+      html.style.setProperty('--overgang-kleur', kleur);
+      html.classList.remove('overgang-binnen', 'binnen-loopt');
+      void overgang.offsetWidth;
+      overgang.classList.add('weg');
+      html.classList.add('overgang-weg');
+      setTimeout(function () { location.href = url.href; }, 1000);
     });
-    window.addEventListener('pageshow', function (e) { if (e.persisted) overgang.classList.remove('dicht'); });
+    // terug-knop (bfcache): vlak open en pagina op 0
+    window.addEventListener('pageshow', function (e) {
+      if (!e.persisted) return;
+      overgang.classList.remove('weg');
+      html.classList.remove('overgang-weg', 'overgang-binnen', 'binnen-loopt');
+      opslag.zet('lux-overgang', '0');
+    });
   }
 
   /* ---------------------------------------------------------------
@@ -184,6 +207,62 @@
         else if (!e.shiftKey && i === lijst.length - 1) { e.preventDefault(); lijst[0].focus(); }
       }
     });
+  }
+
+  /* ---------------------------------------------------------------
+     2b. Menu-rij naast de burger (brief 2026-11-06, B): met een muis verschijnen de zes links bij
+         aanwijzen van de burger of de rij (na 80 ms; weg 400 ms na het verlaten) of bij focus op de burger.
+         Esc of de focus eruit verbergt de rij; een klik op de burger opent het menu over het hele scherm.
+         Bovenaan (vanaf 1280 px) staan de links al in de header; na 100 px vervagen die.
+     --------------------------------------------------------------- */
+  var rij = document.querySelector('.menu-rij');
+  var rijOpen = false;
+  var naBoven = function () { html.classList.toggle('na-100', window.scrollY > 100); };
+  naBoven();
+  window.addEventListener('scroll', naBoven, { passive: true });
+  if (rij && burger) {
+    var rijMq = window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1240px)'); // zelfde grens als in style.css (gemeten: vanaf 1240 px 24 px lucht tot het logo)
+    var openT = null, dichtT = null;
+    var magRij = function () {
+      return rijMq.matches && getComputedStyle(rij).display !== 'none' && !html.classList.contains('menu-is-open') &&
+        !(window.scrollY <= 100 && window.innerWidth >= 1280 && document.querySelector('.site-header .menu'));
+    };
+    var rijKleur = function () { // wit alleen over de donkere fotokop van Contact (de balk heeft daar geen kleur)
+      var b = document.querySelector('.balk');
+      var gekleurd = b && /\bop-(kleur|wit|grijs)\b/.test(b.className);
+      rij.classList.toggle('wit', html.classList.contains('kop-donker') && !gekleurd);
+    };
+    var toonRij = function () {
+      clearTimeout(dichtT); clearTimeout(openT);
+      if (rijOpen || !magRij()) return;
+      rijOpen = true;
+      html.classList.add('rij-open');
+      if (balkBijwerken) balkBijwerken(true);
+      rijKleur();
+      rij.classList.add('open');
+    };
+    var verbergRij = function () {
+      clearTimeout(openT); clearTimeout(dichtT);
+      if (!rijOpen) return;
+      rijOpen = false;
+      rij.classList.remove('open');
+      html.classList.remove('rij-open');
+      if (balkBijwerken) balkBijwerken(true);
+    };
+    [burger, rij].forEach(function (el) {
+      el.addEventListener('mouseenter', function () { clearTimeout(dichtT); clearTimeout(openT); openT = setTimeout(toonRij, 80); });
+      el.addEventListener('mouseleave', function () { clearTimeout(openT); clearTimeout(dichtT); dichtT = setTimeout(verbergRij, 400); });
+      el.addEventListener('focusout', function (e) {
+        var naar = e.relatedTarget;
+        if (naar && (naar === burger || rij.contains(naar))) return;
+        if (burger.matches(':hover') || rij.matches(':hover')) return;
+        verbergRij();
+      });
+    });
+    burger.addEventListener('focus', toonRij);
+    burger.addEventListener('click', verbergRij);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && rijOpen) verbergRij(); });
+    window.addEventListener('scroll', function () { if (rijOpen && !magRij()) verbergRij(); }, { passive: true });
   }
 
   /* ---------------------------------------------------------------
@@ -638,7 +717,7 @@
     var kleuren = ['op-kleur', 'op-wit', 'op-grijs'];
     var laatste = null;
     var bijwerken = function () {
-      var voorbij = kopEl.getBoundingClientRect().bottom < 40;
+      var voorbij = kopEl.getBoundingClientRect().bottom < 40 || html.classList.contains('rij-open'); // de balk schuift mee in met de menu-rij
       balk.classList.toggle('zichtbaar', voorbij);
       var huidig = null;
       secties.forEach(function (sec) { if (sec.getBoundingClientRect().top <= 90) huidig = sec; });

@@ -8,7 +8,7 @@
 <link rel="icon" href="assets/img/logo-luxmini.png">
 <link rel="preload" href="assets/fonts/libre-caslon-display-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
-<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;if(s.getItem('lux-intro-gezien')!=='1'&&s.getItem('lux-overgang')!=='1'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan')},3000)})(document)</script>
+<script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;var o=s.getItem('lux-overgang'),r=matchMedia('(prefers-reduced-motion: reduce)').matches;if(/^#[0-9a-f]{6}$/i.test(o||'')&&!r){h.classList.add('overgang-binnen');h.style.setProperty('--overgang-kleur',o)}else if(s.getItem('lux-intro-gezien')!=='1'&&!r){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan','overgang-binnen')},3000)})(document)</script>
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -27,6 +27,8 @@
 <div class="overgang" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"><span class="cursor-label"></span></div>
 <button class="burger" type="button" aria-expanded="false" aria-controls="menu-scherm" aria-label="Menu openen"><span></span><span></span><span></span></button>
+<!-- Met een muis: de zes links naast de burger bij aanwijzen of focus (brief 2026-11-06, B); een klik op de burger opent het menu over het hele scherm -->
+<nav class="menu-rij" aria-label="Snelmenu"><a href="werkwijze.html">Werkwijze</a><a href="kraamcadeauboxen.html">Kraamcadeauboxen</a><a href="prematuurkleding.html">Prematuurkleding</a><a href="babynest.html">Babynest</a><a href="inspiratie.html">Inspiratie</a><a href="contact.html">Contact</a></nav>
 <div id="menu-scherm" class="menu-scherm" role="dialog" aria-label="Menu" hidden>
   <img class="menu-foto" src="assets/img/home-atelier-wide.jpg" alt="" loading="lazy">
   <div class="wrap menu-binnen">
