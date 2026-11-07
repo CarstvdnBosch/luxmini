@@ -24,7 +24,9 @@ Dit is het vaste kwaliteitsnet onder elke wijziging aan luxmini.nl. Het is gemaa
 | 5 · Visueel | Playwright `toHaveScreenshot` | Elke pagina op 3 schermen vergeleken met de goedgekeurde basis (`tests/e2e/basis/`) | nee, waarschuwing |
 | Validatierapport | `scripts/validatierapport.mjs` | Bundelt alles + oordelen controleur/ontwerper + open punten (LET OP) + checklist | — |
 | GO · Akkoord Carst | label `GO` of reactie `GO` → commitstatus (`go-nogo.yml`) | Alleen de eigenaar van de repository; vervalt bij elke nieuwe commit. Zonder GO staat de status op "wachten" (geen mislukte run, dus geen foutmail) | ja |
-| 3 · Rooktest | `scripts/rooktest.sh` | Na live zetten en dagelijks | (live) |
+| 3 · Rooktest | `scripts/rooktest.sh` | Na live zetten en dagelijks; o.a. het formulier-endpoint: GET en POST naar `/api/contact`, de POST als browser-navigatie (`Sec-Fetch-Mode: navigate`) én als fetch, altijd zonder verplichte velden (nooit mail), verwacht 303 naar `/contact?verzonden=fout#formulier` | (live) |
+
+**Bekende beperking:** `scripts/serveer.mjs` (lokale testserver) bootst de Worker niet na; een POST naar `/api/contact` geeft daar geen 303. Lokaal dekken `tests/contact.test.js` en `tests/wrangler.test.js` (`assets.run_worker_first` met `/api/*`) dit af; de rooktest (Gate 3) controleert het echte gedrag live.
 
 ## Betrouwbaarheid in CI (7 nov. 2026)
 

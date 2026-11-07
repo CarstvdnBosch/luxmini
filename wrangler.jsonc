@@ -10,7 +10,11 @@
     "directory": "./public",
     "binding": "ASSETS",
     "not_found_handling": "404-page",
-    "html_handling": "auto-trailing-slash"
+    "html_handling": "auto-trailing-slash",
+    // Eerst de Worker voor /api/*: anders handelt de assets-laag een browserverzending
+    // (navigatie-POST) zelf af en geeft 405 (brief 2026-11-07-formulier-405).
+    // Geldt ook voor previews (assets wordt niet per omgeving overschreven).
+    "run_worker_first": ["/api/*"]
   },
   // Mail van het formulier gaat via Cloudflare Email Routing naar alleen dit (geverifieerde) adres.
   "send_email": [

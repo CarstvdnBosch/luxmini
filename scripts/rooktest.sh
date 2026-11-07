@@ -48,6 +48,31 @@ check "Oud adres klantenservice" 301 "$BASIS/klantenservice"
 check "Onbekende pagina"      404 "$BASIS/bestaat-niet"
 check "Formulier (GET)"       303 "$BASIS/api/contact"
 
+# Formulier (POST): zoals een echte browser het verstuurt (navigatie) en zoals fetch het doet.
+# Bewust ZONDER verplichte velden (alleen een onderwerp): de Worker weigert het en stuurt nooit een mail.
+# Verwacht 303 naar /contact?verzonden=fout#formulier; 405 betekent dat de assets-laag het verzoek
+# afhandelt en de Worker niet draait (run_worker_first in wrangler.jsonc).
+post_check() { # omschrijving, extra curl-argumenten...
+  local wat="$1"; shift
+  local uit status locatie
+  uit=$(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" -X POST \
+    -H "Content-Type: application/x-www-form-urlencoded" --data "onderwerp=rooktest" "$@" \
+    "$BASIS/api/contact")
+  status="${uit%% *}"; locatie="${uit#* }"
+  if [ "$status" != "303" ]; then
+    echo "x $wat: status $status (verwacht 303)"; fout=1; return
+  fi
+  case "$locatie" in
+    */contact\?verzonden=fout\#formulier) echo "✓ $wat" ;;
+    *) echo "x $wat: Location '$locatie' (verwacht /contact?verzonden=fout#formulier)"; fout=1 ;;
+  esac
+}
+post_check "Formulier (POST, browser-navigatie)" \
+  -H "Sec-Fetch-Mode: navigate" -H "Sec-Fetch-Dest: document" -H "Sec-Fetch-Site: same-origin" \
+  -H "Sec-Fetch-User: ?1" -H "Accept: text/html,application/xhtml+xml" -H "Origin: $BASIS" -H "Referer: $BASIS/contact"
+post_check "Formulier (POST, fetch)" \
+  -H "Sec-Fetch-Mode: cors" -H "Sec-Fetch-Dest: empty" -H "Accept: */*"
+
 # CSS en JS: geen lange cache zonder hercontrole (anders blijft na een release de oude versie staan)
 for pad in /assets/css/style.css /assets/js/main.js; do
   cc=$(curl -sI "$BASIS$pad" | tr -d '\r' | grep -i '^cache-control:' | cut -d: -f2- | tr 'A-Z' 'a-z')
