@@ -40,7 +40,9 @@ Wat het doet:
     foutmelding); de balk met het juiste label, zonder JavaScript en bij
     minder beweging; pijl-links 44 px, data-labels en geen horizontaal
     scrollen op 390, 768 en 1440 px
-  - maakt screenshots in scripts/screenshots/
+  - maakt screenshots per schermhoogte in scripts/screenshots/
+    (<pagina>-<schermmaat>-01.png, -02.png …; max. 8 per pagina en schermmaat),
+    zodat de vaste kleurlaag per scherm de kleur van de sectie in beeld heeft
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
     interacties werken (hero-sets wisselen per schermhelft of met een tik,
@@ -58,6 +60,24 @@ PAGINAS = ["index.html", "werkwijze.html", "kraamcadeauboxen.html", "prematuurkl
 HOOFDPAGINAS = ["index.html", "werkwijze.html", "kraamcadeauboxen.html", "prematuurkleding.html", "babynest.html", "inspiratie.html", "contact.html"]
 OUDE_PAGINAS = ["producten.html", "over.html", "kraamcadeaubox.html", "portfolio.html"]
 SCHERMEN = {"desktop": (1440, 900), "mobiel": (390, 844)}
+MAX_SCREENSHOTS = 8   # per pagina en schermmaat (besluit 7 nov.: artefact klein houden)
+SCREENSHOT_OVERLAP = 100  # px: hoogte van de vaste balk plus marge, zoals scripts/schermafdrukken.py
+
+def screenshots_per_scherm(page, pagina, naam):
+    """Schermvullende screenshots van boven naar beneden, één per schermhoogte (zoals
+    scripts/schermafdrukken.py). Geen opname over de hele pagina: daarop staat de vaste
+    kleurlaag (.achtergrond) maar één keer, in de kleur van de sectie bovenaan."""
+    hoogte_scherm = page.viewport_size["height"]
+    hoogte = page.evaluate("document.documentElement.scrollHeight")
+    terug = page.evaluate("window.scrollY")
+    y, nr = 0, 1
+    while y < hoogte and nr <= MAX_SCREENSHOTS:
+        page.evaluate(f"window.scrollTo({{ top: {y}, behavior: 'instant' }})")
+        page.wait_for_timeout(1300)  # kleurlaag en balk laten bijkomen (overgangen tot 1,2 s)
+        page.screenshot(path=str(SHOTS / f"{pagina.replace('.html', '')}-{naam}-{nr:02d}.png"))
+        y += hoogte_scherm - SCREENSHOT_OVERLAP
+        nr += 1
+    page.evaluate(f"window.scrollTo({{ top: {terug}, behavior: 'instant' }})")
 
 fouten, waarschuwingen = [], []
 
@@ -539,7 +559,7 @@ def controleer_tablet(browser):
         page.wait_for_timeout(400)
         if pagina == "index.html":
             controleer_home(page, f"{pagina} [tablet]", "tablet")
-        page.screenshot(path=str(SHOTS / f"{pagina.replace('.html','')}-tablet.png"), full_page=True)
+        screenshots_per_scherm(page, pagina, "tablet")
         if page.query_selector(".slider [role='tab']"):
             page.eval_on_selector(".slider", "e => e.scrollIntoView({ block: 'center', behavior: 'instant' })")
             page.tap(".slider [role='tab']:nth-of-type(3)")
@@ -1332,6 +1352,8 @@ def controleer_zonder_js(browser):
 
 def main():
     SHOTS.mkdir(parents=True, exist_ok=True)
+    for oud in SHOTS.glob("*.png"):  # geen oude screenshots (andere namen) in het artefact
+        oud.unlink()
     controleer_headers()
     controleer_bestanden()
     with sync_playwright() as pw:
@@ -1451,7 +1473,7 @@ def main():
                 # alles wat bij scrollen invaagt zichtbaar maken voor de screenshot
                 page.evaluate("document.querySelectorAll('.opkomen, .woorden-kop, img.zoom, .stappen').forEach(e => e.classList.add('in-beeld')); document.querySelectorAll('.hero').forEach(h => h.classList.add('klaar'))")
                 page.wait_for_timeout(1000)
-                page.screenshot(path=str(SHOTS / f"{pagina.replace('.html','')}-{naam}.png"), full_page=True)
+                screenshots_per_scherm(page, pagina, naam)
                 page.close()
             ctx.close()
         browser.close()
