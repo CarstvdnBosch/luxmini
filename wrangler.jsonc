@@ -1,6 +1,9 @@
 // Cloudflare Worker voor luxmini.nl
 // - Statische site uit ./public (HTML, CSS, JS, foto's)
 // - Een kleine Worker (src/worker.js) voor het contactformulier op /api/contact
+// - Beheer (luxmini.nl/beheer, brief 2026-11-07-beheer-administratie): de Worker controleert zelf
+//   elke aanvraag op /beheer en /api/beheer/* (Cloudflare Access-JWT + rol uit het secret BEHEER_ROLLEN).
+//   Zie docs/beheer.md voor de stappen van Carst.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "luxmini",
@@ -14,7 +17,8 @@
     // Eerst de Worker voor /api/*: anders handelt de assets-laag een browserverzending
     // (navigatie-POST) zelf af en geeft 405 (brief 2026-11-07-formulier-405).
     // Geldt ook voor previews (assets wordt niet per omgeving overschreven).
-    "run_worker_first": ["/api/*"]
+    // /beheer en /beheer/*: de beheerschermen gaan altijd eerst langs de inlogcontrole van de Worker.
+    "run_worker_first": ["/api/*", "/beheer", "/beheer/*"]
   },
   // Mail van het formulier gaat via Cloudflare Email Routing naar alleen dit (geverifieerde) adres.
   "send_email": [
@@ -22,14 +26,30 @@
   ],
   "vars": {
     "AFZENDER": "website@luxmini.nl",
-    "ONTVANGER": "info.luxmini@gmail.com"
+    "ONTVANGER": "info.luxmini@gmail.com",
+    // Cloudflare Access voor /beheer (geen geheimen). Zolang deze leeg zijn, geeft beheer altijd 403.
+    // Carst vult in: team-domein "<team>.cloudflareaccess.com" en de AUD-tag van de Access-applicatie.
+    "BEHEER_ACCESS_TEAM": "",
+    "BEHEER_ACCESS_AUD": ""
   },
+  // Opslag voor beheer: Cloudflare D1 (jurisdictie EU). Nog uit tot Carst de database heeft gemaakt
+  // (docs/beheer.md, stap 1). Zonder deze binding geeft beheer na het inloggen 503 "Opslag nog niet ingesteld".
+  // Aanzetten (docs/beheer.md): haal de // weg voor de drie regels van "d1_databases" hieronder en
+  // vervang [DATABASE_ID VAN CARST] door de database_id. Previews krijgen deze binding NIET (R11);
+  // controleer na de eerste preview in het dashboard dat BEHEER_DB daar ontbreekt.
+  // "d1_databases": [
+  //   { "binding": "BEHEER_DB", "database_name": "luxmini-beheer", "database_id": "[DATABASE_ID VAN CARST]", "migrations_dir": "migrations" }
+  // ],
   // Previews (elke pull request een eigen link) krijgen dezelfde instellingen.
   // Let op: een testbericht via een preview gaat dus echt naar Carien.
+  // Beheer op previews: geen D1-binding (nooit de echte database, R11) en lege Access-waarden,
+  // dus /beheer geeft op een preview altijd 403 (besluit over een preview-database: V6).
   "previews": {
     "vars": {
       "AFZENDER": "website@luxmini.nl",
-      "ONTVANGER": "info.luxmini@gmail.com"
+      "ONTVANGER": "info.luxmini@gmail.com",
+      "BEHEER_ACCESS_TEAM": "",
+      "BEHEER_ACCESS_AUD": ""
     },
     "send_email": [
       { "name": "MAIL", "destination_address": "info.luxmini@gmail.com" }

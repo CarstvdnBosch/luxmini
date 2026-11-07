@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Administratie · LUX mini</title>
+  <link rel="icon" href="/assets/img/logo-luxmini.png">
+  <link rel="stylesheet" href="/beheer/beheer.css">
+  <script src="/beheer/beheer.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#inhoud">Naar de inhoud</a>
+
+  <header class="kop">
+    <div class="kop-rij">
+      <img class="kop-logo" src="/assets/img/logo-luxmini-donker.png" alt="LUX mini" width="248" height="93">
+      <h1 class="kop-titel">Administratie</h1>
+      <p class="kop-naam" id="wie" hidden><span class="sr-only">Ingelogd als </span><span id="wie-adres"></span></p>
+      <a class="kop-uit" href="/cdn-cgi/access/logout">Uitloggen</a>
+    </div>
+  </header>
+
+  <main id="inhoud" tabindex="-1">
+    <p class="meekijken" id="meekijken" hidden>Je kijkt mee (alleen lezen)</p>
+    <p class="melding" id="melding" role="alert" hidden></p>
+    <noscript><p class="melding">Zet JavaScript aan om de administratie te gebruiken.</p></noscript>
+
+    <div class="tabs" role="tablist" aria-label="Onderdelen van de administratie">
+      <button class="tab" type="button" role="tab" id="tab-boekingen" aria-controls="paneel-boekingen" aria-selected="true">Boekingen</button>
+      <button class="tab" type="button" role="tab" id="tab-overzicht" aria-controls="paneel-overzicht" aria-selected="false" tabindex="-1">Overzicht</button>
+      <button class="tab" type="button" role="tab" id="tab-exporteren" aria-controls="paneel-exporteren" aria-selected="false" tabindex="-1">Exporteren</button>
+    </div>
+
+    <section class="paneel" role="tabpanel" id="paneel-boekingen" aria-labelledby="tab-boekingen" tabindex="0">
+      <h2 class="paneel-kop">Boekingen</h2>
+      <p>Hier komen de boekingen, per maand.</p>
+    </section>
+    <section class="paneel" role="tabpanel" id="paneel-overzicht" aria-labelledby="tab-overzicht" tabindex="0" hidden>
+      <h2 class="paneel-kop">Overzicht</h2>
+      <p>Hier komen de saldi per maand en de btw per kwartaal.</p>
+    </section>
+    <section class="paneel" role="tabpanel" id="paneel-exporteren" aria-labelledby="tab-exporteren" tabindex="0" hidden>
+      <h2 class="paneel-kop">Exporteren</h2>
+      <p>Hier download je straks de administratie als Excel, per kwartaal of per jaar.</p>
+    </section>
+  </main>
+</body>
+</html>
