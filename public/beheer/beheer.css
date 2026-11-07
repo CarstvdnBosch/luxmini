@@ -61,7 +61,7 @@ main { display: block; max-width: var(--breed); margin: 0 auto; padding: 0 var(-
 .tab:focus-visible { outline-offset: -2px; }
 
 .paneel { padding-top: 24px; }
-.paneel:focus-visible { outline-offset: 4px; }
+.paneel:focus-visible { outline-offset: -2px; } /* focusrand valt niet over de tablijn (ontwerpgate S1, P3) */
 .paneel-kop { margin: 0 0 8px; font-family: var(--display); font-weight: 400; font-size: 24px; line-height: 1.2; }
 .paneel p { margin: 0; max-width: 60ch; }
 

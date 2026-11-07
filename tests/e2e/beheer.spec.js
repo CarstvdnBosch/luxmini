@@ -40,7 +40,7 @@ for (const { rol, email } of ROLLEN) {
       for (const v of vakken) { expect(v.h, 'tab min. 44 px hoog').toBeGreaterThanOrEqual(44); expect(v.right).toBeLessThanOrEqual(breedte); }
       await expect(page.getByRole('tab', { name: 'Boekingen' })).toHaveAttribute('aria-selected', 'true');
       await expect(page.getByRole('tabpanel')).toHaveCount(1);
-      await expect(page.getByRole('tabpanel')).toContainText('Hier komen je boekingen');
+      await expect(page.getByRole('tabpanel')).toContainText('Hier komen de boekingen');
 
       // rol (criterium 1, O15): de regel alleen bij lezen; geen schrijfknoppen
       if (rol === 'lezen') await expect(page.getByText('Je kijkt mee (alleen lezen)')).toBeVisible();
