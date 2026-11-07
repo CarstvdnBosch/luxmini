@@ -10,11 +10,17 @@
 # nadat deze versie van go-nogo.yml op main staat.
 #
 # Een nieuwe commit haalt een eerder GO automatisch weg (status "wachten", label weg): je keurt altijd de
-# laatste versie goed. Een label of reactie van vóór de laatste versie telt niet. Als "laatste versie"
-# geldt het laatste van: de commitdatum van de head-commit en de eerste status "GO · Akkoord Carst" die
-# deze workflow direct na de push op die commit zet.
+# laatste versie goed.
+# Grens: de tijd van de eerste status "GO · Akkoord Carst" = pending die deze workflow
+# (github-actions[bot]) op de nieuwste commit zette. Een label of reactie telt alleen als hij nieuwer is
+# dan die grens. Staat er nog geen pending-status op de nieuwste commit (de nieuwe versie is nog niet
+# verwerkt), dan telt geen enkele GO: de workflow zet dan zelf "wachten", haalt het label weg en vraagt
+# opnieuw GO te geven. Een gewijzigde reactie (updated_at ≠ created_at) telt niet. De commitdatum wordt
+# nooit gebruikt (die zet de computer van wie commit).
+# Getest in tests/go-nogo.test.js (de scripts hieronder draaien daar met een nep-gh en voorbeeld-JSON).
 #
-# Zet de status "GO · Akkoord Carst" in de ruleset van main als verplichte controle.
+# Zet de status "GO · Akkoord Carst" in de ruleset van main als verplichte controle, met als bron
+# GitHub Actions.
 # Er komt nooit een mislukte run (en dus geen foutmail): zonder GO blijft de status op "wachten".
 #
 # Veiligheid (de job voor reacties draait met schrijfrechten, ook bij pull requests uit forks):
@@ -62,28 +68,38 @@ jobs:
           HEEFT_GO: ${{ contains(github.event.pull_request.labels.*.name, 'GO') }}
         run: |
           zet() { gh api -X POST "repos/$REPO/statuses/$SHA" -f state="$1" -f context="GO · Akkoord Carst" -f description="$2" > /dev/null; echo "$2"; echo "### $2" >> "$GITHUB_STEP_SUMMARY"; }
-          # Tijd van de laatste versie: commitdatum van de head-commit of (later) de eerste GO-status op die commit.
-          versie_tijd() {
-            c=$(gh api "repos/$REPO/pulls/$PR/commits" --paginate | jq -rs --arg sha "$SHA" '[.[][] | select(.sha == $sha) | .commit.committer.date] | first // ""')
-            s=$(gh api "repos/$REPO/commits/$SHA/statuses" --paginate | jq -rs '[.[][] | select(.context == "GO · Akkoord Carst") | .created_at] | min // ""')
-            printf '%s\n%s\n' "$c" "$s" | sort | tail -1
+          label_weg() { gh api -X DELETE "repos/$REPO/issues/$PR/labels/GO" > /dev/null 2>&1 || true; }
+          # Grens: eerste pending-status "GO · Akkoord Carst" van deze workflow op deze commit ("" = nog niet verwerkt).
+          grens() {
+            gh api "repos/$REPO/commits/$SHA/statuses" --paginate | jq -rs '[.[][] | select(.context == "GO · Akkoord Carst"
+              and .state == "pending" and .creator.login == "github-actions[bot]") | .created_at] | min // ""'
           }
-          # Aantal reacties "GO" (getrimd, kleine letters) van de eigenaar, geplaatst na tijd $1.
+          # Aantal ongewijzigde reacties "GO" (getrimd, kleine letters) van de eigenaar, geplaatst na tijd $1.
           go_reacties_na() {
             gh api "repos/$REPO/issues/$PR/comments" --paginate | jq -rs --arg eig "${EIGENAAR,,}" --arg na "$1" \
               '[.[][] | select((.user.login | ascii_downcase) == $eig and .author_association == "OWNER" and .created_at > $na
-                and ((.body // "") | gsub("^\\s+|\\s+$"; "") | ascii_downcase) == "go")] | length'
+                and .updated_at == .created_at and ((.body // "") | gsub("^\\s+|\\s+$"; "") | ascii_downcase) == "go")] | length'
           }
           if [ "$ACTIE" = "synchronize" ]; then
-            if [ "$HEEFT_GO" = "true" ]; then gh api -X DELETE "repos/$REPO/issues/$PR/labels/GO" > /dev/null || true; fi
+            if [ "$HEEFT_GO" = "true" ]; then label_weg; fi
             zet pending "Nieuwe versie: eerder GO vervallen. Bekijk het nieuwe rapport en geef opnieuw GO."
+            exit 0
+          fi
+          sinds=$(grens)
+          if [ -z "$sinds" ]; then
+            # Nieuwste commit nog zonder pending-status (synchronize-run nog niet gedraaid of vervangen): nu verwerken.
+            if [ "$HEEFT_GO" = "true" ]; then
+              label_weg
+              zet pending "Nieuwe versie wordt nog verwerkt: eerder GO vervallen. Bekijk het nieuwe rapport en geef opnieuw GO."
+            else
+              zet pending "Wacht op GO van Carst (label GO of reactie GO na het validatierapport)."
+            fi
             exit 0
           fi
           if [ "$HEEFT_GO" != "true" ]; then
             zet pending "Wacht op GO van Carst (label GO of reactie GO na het validatierapport)."
             exit 0
           fi
-          sinds=$(versie_tijd)
           laatste=$(gh api "repos/$REPO/issues/$PR/events" --paginate | jq -rs '[.[][] | select(.event == "labeled" and .label.name == "GO")] | last // {} | "\(.actor.login // "")\t\(.created_at // "")"')
           wie=${laatste%%$'\t'*}; wanneer=${laatste#*$'\t'}
           if [ "${wie,,}" = "${EIGENAAR,,}" ]; then
@@ -127,14 +143,15 @@ jobs:
           EIGENAAR: ${{ github.repository_owner }}
           REACTIE: ${{ github.event.comment.body }}
           REACTIE_TIJD: ${{ github.event.comment.created_at }}
+          REACTIE_GEWIJZIGD: ${{ github.event.comment.updated_at }}
         run: |
           # Tekst alleen uit de omgevingsvariabele: regeleinden en spaties eromheen weg, kleine letters.
           tekst="${REACTIE//$'\r'/}"
           tekst="${tekst#"${tekst%%[![:space:]]*}"}"
           tekst="${tekst%"${tekst##*[![:space:]]}"}"
           tekst="${tekst,,}"
-          if [ "$tekst" != "go" ]; then
-            echo "Geen GO-reactie; er verandert niets."
+          if [ "$tekst" != "go" ] || [ "$REACTIE_GEWIJZIGD" != "$REACTIE_TIJD" ]; then
+            echo "Geen (ongewijzigde) GO-reactie; er verandert niets."
             exit 0
           fi
           pr=$(gh api "repos/$REPO/pulls/$PR")
@@ -143,16 +160,25 @@ jobs:
             echo "Pull request is niet open; er verandert niets."
             exit 0
           fi
-          c=$(gh api "repos/$REPO/pulls/$PR/commits" --paginate | jq -rs --arg sha "$SHA" '[.[][] | select(.sha == $sha) | .commit.committer.date] | first // ""')
-          s=$(gh api "repos/$REPO/commits/$SHA/statuses" --paginate | jq -rs '[.[][] | select(.context == "GO · Akkoord Carst") | .created_at] | min // ""')
-          sinds=$(printf '%s\n%s\n' "$c" "$s" | sort | tail -1)
-          if ! [[ "$REACTIE_TIJD" > "$sinds" ]]; then
-            msg="Reactie GO is van vóór de laatste versie (${SHA:0:7}); er verandert niets. Geef opnieuw GO."
-            echo "$msg"; echo "### $msg" >> "$GITHUB_STEP_SUMMARY"
+          zet() { gh api -X POST "repos/$REPO/statuses/$SHA" -f state="$1" -f context="GO · Akkoord Carst" -f description="$2" > /dev/null; }
+          meld() {
+            echo "$1"; echo "### $1" >> "$GITHUB_STEP_SUMMARY"
+            gh api -X POST "repos/$REPO/issues/$PR/comments" -f body="$1" > /dev/null || true
+          }
+          # Grens: eerste pending-status "GO · Akkoord Carst" van deze workflow op de nieuwste commit.
+          sinds=$(gh api "repos/$REPO/commits/$SHA/statuses" --paginate | jq -rs '[.[][] | select(.context == "GO · Akkoord Carst"
+            and .state == "pending" and .creator.login == "github-actions[bot]") | .created_at] | min // ""')
+          if [ -z "$sinds" ]; then
+            gh api -X DELETE "repos/$REPO/issues/$PR/labels/GO" > /dev/null 2>&1 || true
+            zet pending "Nieuwe versie wordt nog verwerkt: eerder GO vervallen. Bekijk het nieuwe rapport en geef opnieuw GO."
+            meld "De nieuwste versie (${SHA:0:7}) wordt nog verwerkt; deze GO-reactie telt daarom niet. Bekijk het nieuwe validatierapport en geef daarna opnieuw GO."
             exit 0
           fi
-          gh api -X POST "repos/$REPO/statuses/$SHA" -f state=success -f context="GO · Akkoord Carst" \
-            -f description="GO door $EIGENAAR (reactie): deze versie mag naar productie." > /dev/null
+          if ! [[ "$REACTIE_TIJD" > "$sinds" ]]; then
+            meld "Deze GO-reactie is van vóór de nieuwste versie (${SHA:0:7}) en telt niet. Bekijk het nieuwe validatierapport en geef daarna opnieuw GO."
+            exit 0
+          fi
+          zet success "GO door $EIGENAAR (reactie): deze versie mag naar productie."
           gh api -X POST "repos/$REPO/issues/$PR/labels" -f "labels[]=GO" > /dev/null
           msg="GO door $EIGENAAR (reactie) op ${SHA:0:7}: status groen en label GO gezet."
           echo "$msg"; echo "### $msg" >> "$GITHUB_STEP_SUMMARY"

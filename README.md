@@ -38,7 +38,7 @@ In deze volgorde blijft de oude Wix-site gewoon bereikbaar tot de allerlaatste s
 2. Settings → **Rules → Rulesets → New branch ruleset** voor `main`:
    - *Restrict deletions* en *Block force pushes*;
    - *Require a pull request before merging* (0 goedkeuringen nodig: je kunt je eigen pull request niet goedkeuren);
-   - *Require status checks to pass*: `Gate 1 · Tests`, `Gate 2 · Sitecontrole` en **`GO · Akkoord Carst`** (die laatste blijft de verplichte controle voor het besluit, of je GO nu met het label of met een reactie geeft);
+   - *Require status checks to pass*: `Gate 1 · Tests`, `Gate 2 · Sitecontrole` en **`GO · Akkoord Carst`** (die laatste blijft de verplichte controle voor het besluit, of je GO nu met het label of met een reactie geeft). Kies bij `GO · Akkoord Carst` als verwachte bron (*expected source*) **GitHub Actions**, zodat alleen de workflow die status kan zetten;
    - geen uitzonderingen (bypass list leeg).
    De controles verschijnen pas in de keuzelijst nadat ze één keer gedraaid hebben: kom na de eerste pull request terug om ze aan te vinken.
 3. Vanaf nu kan niemand nog direct op `main` zetten: alles gaat via een pull request met groene controles.
