@@ -34,7 +34,7 @@ Agents mergen nooit zonder GO van Carst, zetten nooit zelf het label `GO`, plaat
   - `assets/js/main.js` — intro, collage (sets wisselen), hover-lijst, tabbladen, vaste balk, opkomen bij scrollen
   - `assets/img/` — webversies van foto's (max. ~1400 px, JPEG kwaliteit ~80)
 - `src/worker.js` + `src/contact.js` + `src/formulier.js` — contactformulier (`POST /api/contact`) → mail via Cloudflare Email Routing naar info.luxmini@gmail.com; bij een fout terug naar `/contact?verzonden=fout#formulier`
-- `wrangler.jsonc` — Cloudflare-configuratie
+- `wrangler.jsonc` — Cloudflare-configuratie; `assets.run_worker_first: ["/api/*"]` stuurt het formulier eerst naar de Worker (anders geeft een echte browserverzending 405 van de assets-laag, brief 7 nov.)
 - `.github/workflows/` — `controle.yml` (gate 1, 2, 4, 5 en het validatierapport bij elke pull request), `go-nogo.yml` (GO · Akkoord Carst: label `GO` of reactie `GO` van de eigenaar), `visueel-basis.yml` (basisschermen bijwerken), `rooktest.yml` (gate 3 na live zetten en dagelijks)
 - `tests/` — tests voor het formulier (`npm test`); `tests/e2e/` — harness met Playwright Test: toegankelijkheid, SEO/veiligheid, kernpaden, visueel (`npm run test:e2e`, `npm run test:visueel`); basisschermen in `tests/e2e/basis/`
 - `playwright.config.js`, `lighthouserc.cjs` — instellingen van de harness; `scripts/serveer.mjs` — lokale testserver zoals Cloudflare; `scripts/validatierapport.mjs` — validatierapport voor GO / NO-GO
