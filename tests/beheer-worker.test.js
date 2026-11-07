@@ -9,6 +9,7 @@ register('data:text/javascript,' + encodeURIComponent(
   "export async function resolve(s, c, n) { return s === 'cloudflare:email' ? { url: 'data:text/javascript,export class EmailMessage {}', shortCircuit: true } : n(s, c); }"));
 const { default: worker } = await import('../src/worker.js');
 const { leegSleutelCache } = await import('../src/beheer/toegang.js');
+const { isBeheerPad } = await import('../src/beheer/api.js');
 
 const sleutel = await maakSleutel('sleutel-1');
 const vreemd = await maakSleutel('sleutel-1'); // zelfde kid, andere sleutel
@@ -30,7 +31,8 @@ const vraag = (pad, { token, method = 'GET', origin, omgeving = env() } = {}) =>
   return worker.fetch(new Request(BASIS + pad, { method, headers }), omgeving);
 };
 
-const PADEN = ['/beheer', '/beheer/', '/beheer/index.html', '/beheer/beheer.js', '/beheer/beheer.css', '/api/beheer/ik', '/api/beheer/boekingen', '/BEHEER', '/Api/Beheer/ik'];
+const PADEN = ['/beheer', '/beheer/', '/beheer/index.html', '/beheer/beheer.js', '/beheer/beheer.css', '/api/beheer/ik', '/api/beheer/boekingen', '/BEHEER', '/Api/Beheer/ik',
+  '/%62eheer/', '/%62eheer', '/beheer%2Findex.html', '/%2Fbeheer', '/api/%62eheer/ik', '/api%2Fbeheer%2Fik', '/%2562eheer/', '/beheer%'];
 
 function controleerHeaders(res, wat) {
   const h = res.headers;
@@ -38,7 +40,7 @@ function controleerHeaders(res, wat) {
   assert.equal(h.get('x-robots-tag'), 'noindex, nofollow', `${wat}: X-Robots-Tag`);
   assert.equal(h.get('referrer-policy'), 'no-referrer', `${wat}: Referrer-Policy`);
   const csp = h.get('content-security-policy') || '';
-  for (const deel of ["default-src 'self'", "frame-ancestors 'none'", "form-action 'self'"]) assert.ok(csp.includes(deel), `${wat}: CSP mist ${deel}`);
+  for (const deel of ["default-src 'self'", "frame-ancestors 'none'", "form-action 'self'", "base-uri 'none'"]) assert.ok(csp.includes(deel), `${wat}: CSP mist ${deel}`);
   assert.ok(!/unsafe-inline/.test(csp), `${wat}: CSP zonder unsafe-inline`);
 }
 
@@ -53,6 +55,11 @@ test('zonder JWT: 403 op alle beheerpaden, en de bestanden worden niet opgehaald
   assetsAangeroepen = 0;
   for (const p of PADEN) await geenToegang(await vraag(p), `${p} zonder JWT`);
   assert.equal(assetsAangeroepen, 0);
+});
+
+test('isBeheerPad: gecodeerde paden tellen ook mee; publieke paden niet', () => {
+  for (const p of ['/%62eheer/', '/beheer%2Findex.html', '/api/%62eheer/ik', '/%2562eheer', '/beheer%', '/%E0%A4%A']) assert.equal(isBeheerPad(p), true, p);
+  for (const p of ['/', '/werkwijze', '/beheerder', '/api/contact', '/%62eheerder', '/api/beheerder']) assert.equal(isBeheerPad(p), false, p);
 });
 
 test('ongeldige JWT: 403', async () => {

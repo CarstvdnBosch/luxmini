@@ -118,7 +118,7 @@ test.describe('beheer: veiligheid en headers', () => {
     'cache-control': /^no-store$/,
     'x-robots-tag': /^noindex, nofollow$/,
     'referrer-policy': /^no-referrer$/,
-    'content-security-policy': /^(?=.*default-src 'self')(?=.*frame-ancestors 'none')(?=.*form-action 'self')(?!.*unsafe-inline).*$/,
+    'content-security-policy': /^(?=.*default-src 'self')(?=.*frame-ancestors 'none')(?=.*form-action 'self')(?=.*base-uri 'none')(?!.*unsafe-inline).*$/,
   };
 
   test('headers van R9 op /beheer, de beheerbestanden en /api/beheer/*', async ({ request }) => {

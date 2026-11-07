@@ -12,7 +12,7 @@ export const BEVEILIGING = {
   'Cache-Control': 'no-store',
   'X-Robots-Tag': 'noindex, nofollow',
   'Referrer-Policy': 'no-referrer',
-  'Content-Security-Policy': "default-src 'self'; frame-ancestors 'none'; form-action 'self'",
+  'Content-Security-Policy': "default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'",
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
@@ -21,9 +21,17 @@ export const BEVEILIGING = {
 
 const SCHRIJVEN = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-/** Hoort dit pad bij beheer? (/beheer, /beheer/…, /api/beheer, /api/beheer/…; hoofdletters tellen niet) */
+/**
+ * Hoort dit pad bij beheer? (/beheer, /beheer/…, /api/beheer, /api/beheer/…; hoofdletters tellen niet)
+ * Het pad wordt eerst gedecodeerd (ook dubbel) en dubbele schuine strepen tellen als één, zodat /%62eheer/ en /beheer%2Findex.html niet langs de controle glippen.
+ * Kan het pad niet gedecodeerd worden, dan geldt het als beheerpad (dus 403 zonder inlog).
+ */
 export function isBeheerPad(pad) {
-  const p = String(pad || '').toLowerCase();
+  let p = String(pad || '');
+  for (let i = 0; i < 3 && p.includes('%'); i++) {
+    try { p = decodeURIComponent(p); } catch { return true; }
+  }
+  p = p.replace(/\/{2,}/g, '/').toLowerCase(); // //beheer telt ook
   return p === '/beheer' || p.startsWith('/beheer/') || p === '/api/beheer' || p.startsWith('/api/beheer/');
 }
 

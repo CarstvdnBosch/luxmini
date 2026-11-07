@@ -94,6 +94,33 @@ test('sleutels worden bewaard (cache); een nieuwe kid haalt ze één keer opnieu
   assert.equal(f2.aantal, 1);
 });
 
+test('verlopen cache en ophalen mislukt: hooguit eens per minuut opnieuw proberen', async () => {
+  const f = nepCerts(sleutel);
+  const start = Date.now();
+  const token = await maakJwt(sleutel, { exp: nu() + 3 * 3600 });
+  assert.ok(await controleerJwt(token, { ...opties(f), nu: start }));
+  // na het uur: Access onbereikbaar
+  let pogingen = 0;
+  const kapot = async () => { pogingen++; throw new Error('netwerk'); };
+  const w = console.warn; console.warn = () => {};
+  try {
+    const na = start + 60 * 60 * 1000 + 1000;
+    await controleerJwt(token, { ...opties(kapot), nu: na });
+    assert.equal(pogingen, 1);
+    // binnen een minuut: niet opnieuw ophalen
+    await controleerJwt(token, { ...opties(kapot), nu: na + 1000 });
+    await controleerJwt(token, { ...opties(kapot), nu: na + 59_000 });
+    assert.equal(pogingen, 1);
+    // na een minuut wel weer één poging
+    await controleerJwt(token, { ...opties(kapot), nu: na + 61_000 });
+    assert.equal(pogingen, 2);
+  } finally { console.warn = w; }
+  // en zodra Access weer werkt, worden de sleutels opnieuw opgehaald
+  const f2 = nepCerts(sleutel);
+  assert.ok(await controleerJwt(token, { ...opties(f2), nu: start + 60 * 60 * 1000 + 123_000 }));
+  assert.equal(f2.aantal, 1);
+});
+
 test('certs niet bereikbaar: geen toegang (en geen gegevens in de log)', async () => {
   const log = []; const w = console.warn; console.warn = (...a) => log.push(a.join(' '));
   try {

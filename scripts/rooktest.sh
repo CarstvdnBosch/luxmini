@@ -75,18 +75,28 @@ post_check "Formulier (POST, fetch)" \
 
 # Beheer (brief 2026-11-07-beheer-administratie, R15c): zonder inlog nooit 200.
 # Verwacht 403 van de Worker, of een doorverwijzing naar de inlog van Cloudflare Access (*.cloudflareaccess.com).
+# Een 301/302 naar hetzelfde pad op https://luxmini.nl (www → hoofddomein) wordt één keer gevolgd;
+# daarna moet er alsnog 403 of de inlog van Access komen.
 beheer_check() { # omschrijving, pad
-  local wat="$1" pad="$2" uit status locatie
-  uit=$(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" "$BASIS$pad")
+  local wat="$1" pad="$2" url="$BASIS$2" uit status locatie via=""
+  uit=$(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" "$url")
   status="${uit%% *}"; locatie="${uit#* }"
-  if [ "$status" = "403" ]; then echo "✓ $wat (403)"; return; fi
+  case "$status" in
+    301|302)
+      if [ "$locatie" = "https://luxmini.nl$pad" ] && [ "$url" != "$locatie" ]; then
+        via=" via luxmini.nl"; url="$locatie"
+        uit=$(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" "$url")
+        status="${uit%% *}"; locatie="${uit#* }"
+      fi ;;
+  esac
+  if [ "$status" = "403" ]; then echo "✓ $wat (403$via)"; return; fi
   case "$status" in
     301|302|303|307|308)
       case "$locatie" in
-        https://*.cloudflareaccess.com/*) echo "✓ $wat (naar de inlog van Access)"; return ;;
+        https://*.cloudflareaccess.com/*) echo "✓ $wat (naar de inlog van Access$via)"; return ;;
       esac ;;
   esac
-  echo "x $wat: status $status ${locatie:+naar $locatie }(verwacht 403 of de inlog van Access)"; fout=1
+  echo "x $wat: status $status ${locatie:+naar $locatie }(verwacht 403 of de inlog van Access)$via"; fout=1
 }
 beheer_check "Beheer zonder inlog"        /beheer
 beheer_check "Beheer-API zonder inlog"    /api/beheer/boekingen

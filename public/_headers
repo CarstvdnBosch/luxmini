@@ -30,16 +30,16 @@
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow
   Referrer-Policy: no-referrer
-  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'
 
 /beheer/*
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow
   Referrer-Policy: no-referrer
-  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'
 
 /api/beheer/*
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow
   Referrer-Policy: no-referrer
-  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'

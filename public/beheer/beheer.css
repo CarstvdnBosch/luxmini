@@ -2,7 +2,7 @@
    (brief 2026-11-07-beheer-administratie, Ontwerprichting en O1, O2, O4, O22).
    Geen intro, overgang, kleurlaag, balk, collage of smooth scroll; style.css en main.js worden hier niet geladen.
    De kleuren hieronder zijn dezelfde waarden als de variabelen in assets/css/style.css
-   (tests/beheer-ontwerp.test.js controleert dat ze gelijk blijven). */
+   (tests/beheer-basis.test.js controleert dat ze gelijk blijven). */
 @font-face { font-family: 'Libre Caslon Display'; src: url('/assets/fonts/libre-caslon-display-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Source Sans 3'; src: url('/assets/fonts/source-sans-3-var.woff2') format('woff2'); font-weight: 400 700; font-style: normal; font-display: swap; }
 

@@ -133,7 +133,7 @@ test('R9: _headers heeft de beheerheaders als extra laag', () => {
     assert.match(blok, /Cache-Control: no-store/, pad);
     assert.match(blok, /X-Robots-Tag: noindex, nofollow/, pad);
     assert.match(blok, /Referrer-Policy: no-referrer/, pad);
-    assert.match(blok, /Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'/, pad);
+    assert.match(blok, /Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'/, pad);
   }
 });
 

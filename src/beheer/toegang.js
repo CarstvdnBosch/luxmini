@@ -9,7 +9,7 @@
 // Alleen Web Crypto, geen externe bibliotheek. Logs bevatten alleen een code, nooit het adres.
 
 const SLEUTEL_CACHE_MS = 60 * 60 * 1000;   // sleutels een uur bewaren
-const OPNIEUW_HALEN_MS = 60 * 1000;        // onbekende kid: hooguit eens per minuut opnieuw ophalen
+const OPNIEUW_HALEN_MS = 60 * 1000;        // onbekende kid of mislukt ophalen: hooguit eens per minuut opnieuw
 const sleutelCache = new Map();            // team → { sleutels: Map(kid → CryptoKey), gehaald, geprobeerd }
 
 function b64urlNaarBytes(tekst) {
@@ -44,8 +44,11 @@ async function haalSleutels(team, fetchImpl) {
 async function sleutelVoor(team, kid, fetchImpl, nu) {
   let c = sleutelCache.get(team);
   const verlopen = !c || nu - c.gehaald > SLEUTEL_CACHE_MS;
-  const onbekend = c && !c.sleutels.has(kid) && nu - c.geprobeerd > OPNIEUW_HALEN_MS;
-  if (verlopen || onbekend) {
+  const onbekend = c && !c.sleutels.has(kid);
+  // Na een poging (gelukt of mislukt) hooguit eens per minuut opnieuw ophalen: bij een onbekende kid
+  // én bij een verlopen cache waarvan het ophalen mislukte (geen storm van verzoeken naar Access).
+  const magOpnieuw = !c || nu - c.geprobeerd > OPNIEUW_HALEN_MS;
+  if ((verlopen || onbekend) && magOpnieuw) {
     const geprobeerd = nu;
     try {
       c = { sleutels: await haalSleutels(team, fetchImpl), gehaald: nu, geprobeerd };
