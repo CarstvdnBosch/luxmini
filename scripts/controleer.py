@@ -28,12 +28,14 @@ Wat het doet:
     formuliervelden); prijskaarten en contactlinks met ?onderwerp=;
     formulier met groepen per onderwerp; Kraamcadeauboxen (volgorde,
     negen thema's als raster 3/2/2, binnen twee schermen, statementfoto direct
-    na de intro); Prematuurkleding en Babynest (kop, foto, prijsrichtlijn met
+    na de intro); Prematuurkleding en Babynest (kop, foto, 002 Prijs: zin met
+    LET OP en pijl-link naar het formulier, oud prijsblok als commentaar met
     LET OP, Zo werkt het, contact; foto na hooguit één keer scrollen);
     navigatie met zes items op één regel vanaf 1280 px (daaronder de burger),
     aria-current, menu met subitems, tikdoelen 44 px op touch; _redirects
     (ook /portfolio -> /inspiratie), sitemap en canonicals; contactmomenten
-    (buiten contact.html geen WhatsApp, telefoon of mail in de inhoud);
+    (buiten contact.html geen WhatsApp, telefoon of mail in de inhoud; wel
+    in het menu en in de footer van elke pagina);
     Werkwijze (kop, Hoe ik werk-tabs, slider, Wat ik maak, geen dubbele of
     lege onderdelen); Inspiratie (vier groepen, kleuren, kolommen, geen
     vergrote of dubbele foto's, aanwijzen en touch); Contact (kop, formulier,
@@ -662,13 +664,21 @@ def controleer_bestanden():
         fouten.append("index.html: er staat nog een <form> op de homepage (hoort alleen op contact.html)")
     # criterium 9 en 24: LET OP bij de prijs en bij de tijdelijke foto op Prematuurkleding
     prem = (ROOT / "prematuurkleding.html").read_text(encoding="utf-8")
-    if not re.search(r"<!--\s*LET OP:[^>]*prijs[^>]*-->\s*<p[^>]*>Prijsrichtlijn: \[prijs\]</p>", prem):
-        fouten.append("prematuurkleding.html: 'Prijsrichtlijn: [prijs]' staat er niet met een LET OP-opmerking ervoor")
+    # brief 2026-11-07 (A2, A3): het oude prijsblok staat als commentaar met LET OP (terugzetten als Carien een prijs geeft);
+    # de neutrale zin heeft "wacht op akkoord Carien"
+    if not re.search(r"<!--\s*LET OP:[^>]*prijsrichtlijn[^>]*nog niet bekend[^>]*terugzetten[^>]*-->\s*<!--\s*<p class=\"prijs\">Prijsrichtlijn: \[prijs\]</p>\s*-->", prem):
+        fouten.append("prematuurkleding.html: het oude prijsblok staat er niet als commentaar met een LET OP-opmerking (terugzetten als Carien een prijs geeft)")
+    if not re.search(r"<!--\s*LET OP: wacht op akkoord Carien\s*-->\s*<p class=\"klein prijs-zin\">[^<\[]+</p>", prem):
+        fouten.append("prematuurkleding.html: de zin bij de prijs heeft geen LET OP 'wacht op akkoord Carien'")
     if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"categorie-foto\"><img src=\"assets/img/p-broekje-kleur", prem):
         fouten.append("prematuurkleding.html: de tijdelijke foto p-broekje-kleur heeft geen LET OP-opmerking")
     nest = (ROOT / "babynest.html").read_text(encoding="utf-8")
-    if not re.search(r"<!--\s*LET OP:[^>]*prijs[^>]*-->\s*<p[^>]*>Prijsrichtlijn: \[prijs\]</p>", nest):
-        fouten.append("babynest.html: 'Prijsrichtlijn: [prijs]' staat er niet met een LET OP-opmerking ervoor")
+    # brief 2026-11-07 (A2, A3): het oude prijsblok staat als commentaar met LET OP (terugzetten als Carien een prijs geeft);
+    # de neutrale zin heeft "wacht op akkoord Carien"
+    if not re.search(r"<!--\s*LET OP:[^>]*prijsrichtlijn[^>]*nog niet bekend[^>]*terugzetten[^>]*-->\s*<!--\s*<p class=\"prijs\">Prijsrichtlijn: \[prijs\]</p>\s*-->", nest):
+        fouten.append("babynest.html: het oude prijsblok staat er niet als commentaar met een LET OP-opmerking (terugzetten als Carien een prijs geeft)")
+    if not re.search(r"<!--\s*LET OP: wacht op akkoord Carien\s*-->\s*<p class=\"klein prijs-zin\">[^<\[]+</p>", nest):
+        fouten.append("babynest.html: de zin bij de prijs heeft geen LET OP 'wacht op akkoord Carien'")
     if not re.search(r"<!--\s*LET OP:[^>]*-->\s*<p class=\"quote pagina-quote\">Een babynest in de stof en kleur die jij kiest\.</p>", nest):
         fouten.append("babynest.html: de kop 'Een babynest in de stof en kleur die jij kiest.' heeft geen LET OP-opmerking")
     home = (ROOT / "index.html").read_text(encoding="utf-8")
@@ -1083,9 +1093,9 @@ LEEG_SCHERM = """() => { const els = [...document.querySelectorAll('main h1, mai
 # Prematuurkleding en Babynest (criterium 2): kop -> voorbeeldfoto -> prijsrichtlijn -> Zo werkt het -> contact
 PRODUCTPAGINAS = {
     "prematuurkleding.html": {"formulier": "contact.html?onderwerp=prematuurkleding#formulier", "h1": "Prematuurkleding", "foto_id": "maatwerk", "kleur": "#C3CFBC", "foto": "p-broekje-kleur.jpg", "max_b": 480,
-                              "secties": [["", "— Prematuurkleding"], ["maatwerk", "001 — Maatwerk"], ["prijs", "002 — Prijsrichtlijn"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
+                              "secties": [["", "— Prematuurkleding"], ["maatwerk", "001 — Maatwerk"], ["prijs", "002 — Prijs"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
     "babynest.html": {"formulier": "contact.html?onderwerp=babynest#formulier", "h1": "Babynest", "foto_id": "babynest", "kleur": "#B5969E", "foto": "ig-babynest.jpg", "max_b": 324,
-                      "secties": [["", "— Babynest"], ["babynest", "001 — Babynest"], ["prijs", "002 — Prijsrichtlijn"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
+                      "secties": [["", "— Babynest"], ["babynest", "001 — Babynest"], ["prijs", "002 — Prijs"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
 }
 
 def controleer_productpagina(browser, pagina):
@@ -1118,12 +1128,14 @@ def controleer_productpagina(browser, pagina):
             fouten.append(f"{tag}: volgorde van de secties is {[x[:2] for x in secties]}, verwacht {v['secties']}")
         elif secties[1][2] != v["kleur"]:
             fouten.append(f"{tag}: de fotosectie heeft kleur {secties[1][2]}, verwacht {v['kleur']}")
-        st = page.evaluate("""id => { const i = document.querySelector('#' + id + ' .categorie-foto img'), r = i.getBoundingClientRect(), p = document.querySelector('#prijs .prijs');
+        st = page.evaluate("""id => { const i = document.querySelector('#' + id + ' .categorie-foto img'), r = i.getBoundingClientRect(), p = document.querySelector('#prijs .prijs-zin'), pa = document.querySelector('#prijs a.pijl'), ps = document.querySelector('#prijs');
           return [[...document.querySelectorAll('#' + id + ' a.pijl')].map(a => [a.textContent.trim(), a.getAttribute('href')]),
             [...document.querySelectorAll('main .stappen > li h2')].map(h => { const k = h.cloneNode(true); k.querySelectorAll('br').forEach(b => b.replaceWith(' ')); return k.textContent.replace(/\\s+/g, ' ').trim(); }),
             [...document.querySelectorAll('main a.pijl')].filter(a => a.textContent.trim() === 'Meer over de werkwijze').map(a => a.getAttribute('href')),
             i.getAttribute('src'), /prematuur/i.test(i.alt), r.width, i.getAttribute('width'), i.getAttribute('fetchpriority'), i.getAttribute('loading'),
-            p ? [p.textContent.trim(), getComputedStyle(p).color, parseFloat(getComputedStyle(p).fontSize)] : null]; }""", v["foto_id"])
+            p ? [p.textContent.trim(), getComputedStyle(p).color, parseFloat(getComputedStyle(p).fontSize), getComputedStyle(p).fontFamily.split(',')[0].replace(/"/g, ''),
+                 pa ? [pa.textContent.trim(), pa.getAttribute('href')] : null, ps.querySelector('.label').textContent.trim(), ps.getBoundingClientRect().height, innerHeight,
+                 !!ps.querySelector('.prijs')] : null]; }""", v["foto_id"])
         if st[0] != [["Bespreek je idee", v["formulier"]]] or st[1] != ["Samen kiezen", "Persoonlijk maken", "Met zorg gemaakt"] or st[2] != ["werkwijze.html#hoe-ik-werk"]:
             fouten.append(f"{tag}: fotosectie of Zo werkt het klopt niet ({st[:3]})")
         if v["foto"] not in st[3] or st[4]:
@@ -1131,8 +1143,15 @@ def controleer_productpagina(browser, pagina):
         breedte = bestandsbreedte(st[3])
         if str(breedte) != str(st[6]) or st[5] > min(breedte, v["max_b"]) + 0.5 or st[7] != "high" or st[8] == "lazy":
             fouten.append(f"{tag}: voorbeeldfoto {st[5]:.0f} px breed (max. {v['max_b']}, bestand {breedte}, width={st[6]}) of niet de LCP-foto (fetchpriority={st[7]}, loading={st[8]})")
-        if not st[9] or st[9][0] != "Prijsrichtlijn: [prijs]" or st[9][1] != INKT or st[9][2] < 16:
-            fouten.append(f"{tag}: 'Prijsrichtlijn: [prijs]' staat niet als eigen blok in inkt (min. 16 px) ({st[9]})")
+        # brief 2026-11-07 (A3–A5): sectie #prijs op 002 met een zin in inkt (Source Sans 3, min. 16 px, zonder "[" en zonder bedrag),
+        # de pijl-link "Vraag naar de prijs" naar het formulier met onderwerp, label gelijk aan data-label, hooguit 0,5 schermhoogte
+        p = st[9]
+        if not p or p[1] != INKT or p[2] < 16 or p[3] != "Source Sans 3" or "[" in p[0] or re.search(r"€|\d", p[0]) or p[8]:
+            fouten.append(f"{tag}: #prijs heeft geen zin in inkt (Source Sans 3, min. 16 px) zonder plaatshouder of bedrag ({p})")
+        elif p[4] != ["Vraag naar de prijs", v["formulier"]] or p[5] != "002 — Prijs":
+            fouten.append(f"{tag}: #prijs heeft niet de pijl-link 'Vraag naar de prijs' naar {v['formulier']} of het label '002 — Prijs' ({p[4]}, {p[5]!r})")
+        elif naam == "mobiel" and p[6] > 0.5 * p[7]:
+            fouten.append(f"{tag}: #prijs is {p[6]:.0f} px hoog, meer dan een halve schermhoogte ({0.5 * p[7]:.0f} px)")
         leeg = page.evaluate(LEEG_SCHERM)
         if leeg:
             fouten.append(f"{tag}: scherm zonder inhoud vanaf y = {leeg}")
@@ -1295,7 +1314,8 @@ def controleer_contactpagina(browser):
 
 def controleer_contactmomenten(browser):
     """Criterium 6: buiten contact.html geen links naar WhatsApp, telefoon of mail in de inhoud (vervangt de controle op WhatsApp
-    in het contactblok); elke contact-link in de inhoud gaat naar contact.html#formulier. Menu en footer houden de directe kanalen.
+    in het contactblok); elke contact-link in de inhoud gaat naar contact.html#formulier. Menu en footer houden de directe kanalen
+    (brief 2026-11-07: strenger, ook de footer van elke pagina moet WhatsApp, telefoon en mail hebben).
     Uitzondering: het mailadres in de lopende tekst van de privacyverklaring (recht op inzage), geen pijl-link."""
     for pagina in PAGINAS:
         if pagina == "contact.html":
@@ -1304,14 +1324,18 @@ def controleer_contactmomenten(browser):
         st = page.evaluate("""() => { const direct = a => /^(https:\\/\\/wa\\.me|tel:|mailto:)/.test(a.getAttribute('href') || '');
           const inhoud = [...document.querySelectorAll('main a')].filter(direct).filter(a => a.matches('.pijl') || !a.closest('.tekstblok')).map(a => a.getAttribute('href'));
           const naarContact = [...document.querySelectorAll('main a')].map(a => a.getAttribute('href') || '').filter(h => /(^|\\/)contact(\\.html)?(#|$)/.test(h) && !/^(contact\\.html|\\/contact)#formulier$/.test(h));
-          const menu = ['https://wa.me/31643791618', 'tel:+31643791618', 'mailto:info.luxmini@gmail.com'].filter(h => !document.querySelector('#menu-scherm .menu-kolom a[href="' + h + '"]'));
-          return [inhoud, naarContact, menu]; }""")
+          const kanalen = ['https://wa.me/31643791618', 'tel:+31643791618', 'mailto:info.luxmini@gmail.com'];
+          const menu = kanalen.filter(h => !document.querySelector('#menu-scherm .menu-kolom a[href="' + h + '"]'));
+          const voet = kanalen.filter(h => !document.querySelector('footer.site-footer a[href="' + h + '"]'));
+          return [inhoud, naarContact, menu, voet]; }""")
         if st[0]:
             fouten.append(f"{pagina}: directe contactlinks in de inhoud (horen alleen op contact.html, in het menu en de footer): {st[0]}")
         if st[1]:
             fouten.append(f"{pagina}: contactlinks in de inhoud die niet naar contact.html#formulier gaan: {st[1]}")
         if st[2]:
             fouten.append(f"{pagina}: het menu mist de directe kanalen {st[2]}")
+        if st[3]:
+            fouten.append(f"{pagina}: de footer mist de directe kanalen {st[3]} (brief 2026-11-07, C)")
         ctx.close()
 
 def controleer_zonder_js(browser):
