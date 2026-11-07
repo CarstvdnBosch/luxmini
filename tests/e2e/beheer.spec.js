@@ -59,7 +59,7 @@ for (const { rol, email } of ROLLEN) {
       await page.goto('/beheer');
       await page.getByRole('tab', { name: 'Overzicht' }).click();
       await expect(page.getByRole('tab', { name: 'Overzicht' })).toHaveAttribute('aria-selected', 'true');
-      await expect(page.getByRole('tabpanel')).toContainText('overzicht');
+      await expect(page.getByRole('tabpanel')).toContainText('saldi per maand');
       expect(new URL(page.url()).hash).toBe('#overzicht');
       if (info.project.name !== 'desktop') return; // toetsenbord: één keer is genoeg
       await page.getByRole('tab', { name: 'Overzicht' }).focus();
