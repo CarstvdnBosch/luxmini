@@ -18,6 +18,9 @@ Wat het doet:
     binnen 1,5 s, aanwijzen niet)
   - controleert in public/_headers dat CSS en JS niet lang gecachet worden
     zonder hercontrole
+  - brief homepage mobiel zoals Stock (2026-11-07): hero op mobiel (360–430 px en
+    telefoons liggend) drie foto's met de kop eronder, quote binnen de marges;
+    tablet (768, 1024) zes foto's met minstens 12 px tussen kop en foto
   - brief homepage zoals Stock (2026-11-06): homepage hero, 001 Producten
     (drieluik: drie kolommen, producttekst, één pijl-link en één tabstop per
     kolom, foto boven de tekst op touch, bij aanwijzen witte tekst met 4,5:1 op
@@ -551,6 +554,36 @@ def controleer_setwissel(page, tag, naam):
         fouten.append(f"{tag}: terug in set A is de kop niet wit of het logo niet wit ({tekst[0]}, {logo})")
     if [sets.get(t) for t in WISSELEND] != ["A"] * 4:
         fouten.append(f"{tag}: terug naar set A lukt niet, tegels staan op {sets}")
+
+# Hero op mobiel en tablet (brief 2026-11-07-homepage-mobiel-stock): mobiel (≤ 760 px en telefoons liggend) drie foto's
+# (t2, t4, t5) met alles eronder, de kop nooit over een foto; tablet zes foto's met minstens 12 px tussen kop en foto.
+LEES_HERO = """() => { const h = document.querySelector('.hero'), kop = h.querySelector('.kop-xl'), k = kop.getBoundingClientRect();
+  const zicht = [...h.querySelectorAll('.tegel')].filter(t => getComputedStyle(t).display !== 'none');
+  const gat = Math.min(...zicht.map(t => { const r = t.getBoundingClientRect(); return Math.max(r.left - k.right, k.left - r.right, r.top - k.bottom, k.top - r.bottom); }));
+  const vak = h.querySelector('.hero-fotos').getBoundingClientRect(), q = document.querySelector('.hero-kleur .quote').getBoundingClientRect();
+  return [zicht.map(t => [...t.classList].find(c => /^t\\d$/.test(c))), gat, document.documentElement.scrollWidth - innerWidth, k.top >= vak.bottom - 0.5, q.left, innerWidth - q.right, parseFloat(getComputedStyle(document.querySelector('.site-footer .wrap')).paddingLeft)]; }"""
+
+def controleer_hero_mobiel(browser):
+    for b, h, soort in [(360, 740, "mobiel"), (390, 844, "mobiel"), (430, 932, "mobiel"), (844, 390, "mobiel"), (932, 430, "mobiel"),
+                        (768, 1024, "tablet"), (1024, 1366, "tablet")]:
+        ctx, page = nieuwe_pagina(browser, "index.html", b, h, True, reduced_motion="reduce")
+        tag = f"index.html [{b} x {h}, hero]"
+        for s in ["a", "b"]:
+            if s == "b":
+                page.tap(".hero-wissel button[data-set='b']"); page.wait_for_timeout(300)
+            tegels, gat, breed, kop_onder, ql, qr, rand = page.evaluate(LEES_HERO)
+            if soort == "mobiel":
+                if tegels != ["t2", "t4", "t5"] or not kop_onder:
+                    fouten.append(f"{tag}: verwacht t2, t4 en t5 met de kop onder de foto's ({tegels}, kop onder: {kop_onder})")
+                if min(ql, qr) < rand - 1:
+                    fouten.append(f"{tag}: de quote valt buiten de zijmarges van {rand:.0f} px ({ql:.0f} / {qr:.0f} px)")
+            elif len(tegels) != 6:
+                fouten.append(f"{tag}: op tablet horen zes foto's ({tegels})")
+            if gat < (12 if soort == "tablet" else 0):
+                fouten.append(f"{tag}, set {s.upper()}: de kop staat {gat:.0f} px van een foto (min. {12 if soort == 'tablet' else 0})")
+            if breed:
+                fouten.append(f"{tag}: pagina scrollt horizontaal ({breed} px)")
+        ctx.close()
 
 def controleer_tablet(browser):
     """Geen horizontaal scrollen op 768 px (touch), ook niet na een wissel in Personaliseren."""
@@ -1398,6 +1431,7 @@ def main():
         controleer_stappen(browser)
         controleer_contact(browser)
         controleer_tablet(browser)
+        controleer_hero_mobiel(browser)
         for naam, (b, h) in SCHERMEN.items():
             touch = naam == "mobiel"  # has_touch + is_mobile: (hover: none) en (pointer: coarse), zoals op een telefoon
             ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch)

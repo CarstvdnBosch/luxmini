@@ -7,6 +7,9 @@
   var stil = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var muis = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   var html = document.documentElement;
+  // Mobiele hero (brief 2026-11-07-homepage-mobiel-stock): t/m 760 px en telefoons liggend (touch, hoogte t/m 500 px).
+  // Zelfde voorwaarde als in style.css ("Hero op mobiel"): drie foto's onder elkaar met de kop eronder, geen meebewegen.
+  var mobielHero = window.matchMedia('(max-width: 760px), (hover: none) and (pointer: coarse) and (max-height: 500px)');
   var opslag = {
     lees: function (k) { try { return window.sessionStorage.getItem(k); } catch (e) { return null; } },
     zet: function (k, v) { try { window.sessionStorage.setItem(k, v); } catch (e) { /* niet erg */ } }
@@ -46,15 +49,22 @@
   // Niet-dringende onderdelen starten elk in een eigen taak na de eerste weergave,
   // zodat het laden geen lange blokkerende taak wordt (Lighthouse TBT).
   var later = function (fn) { setTimeout(fn, 0); };
-  // Foto's van hero-set B ("Het cadeau") pas na het laden ophalen: ze zijn eerst onzichtbaar
+  // Foto's van hero-set B ("Het cadeau") pas na het laden ophalen: ze zijn eerst onzichtbaar.
+  // Alleen voor tegels die te zien zijn (op mobiel zijn t1, t3 en t6 verborgen); draait het scherm, dan komen de rest erbij.
+  var setBGevraagd = false;
   var laadSetB = function () {
+    setBGevraagd = true;
     document.querySelectorAll('img.set-b[data-src]').forEach(function (img) {
+      var tegel = img.closest('.tegel');
+      if (tegel && getComputedStyle(tegel).display === 'none') return;
       if (img.dataset.srcset) img.srcset = img.dataset.srcset;
       img.src = img.dataset.src;
       img.removeAttribute('data-src'); img.removeAttribute('data-srcset');
     });
   };
   if (document.readyState === 'complete') later(laadSetB); else window.addEventListener('load', function () { later(laadSetB); });
+  var bijWissel = function (mq, fn) { if (mq.addEventListener) mq.addEventListener('change', fn); else if (mq.addListener) mq.addListener(fn); };
+  bijWissel(mobielHero, function () { if (setBGevraagd) laadSetB(); });
   ['pointerover', 'focusin', 'touchstart'].forEach(function (s) { document.addEventListener(s, function h(e) { if (e.target.closest && e.target.closest('.hero')) { laadSetB(); document.removeEventListener(s, h); } }, { passive: true }); });
 
   /* ---------------------------------------------------------------
@@ -315,6 +325,7 @@
       var heroInBeeld = function () { var r = hero.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; };
       var heroRust = function () { tegels.forEach(function (t) { t.style.transform = ''; }); if (cirkel) cirkel.style.translate = ''; };
       window.addEventListener('mousemove', function (e) {
+        if (mobielHero.matches) { heroRust(); return; } // t/m 760 px niet meebewegen of kantelen, ook niet met een muis
         if (!heroInBeeld()) return;
         var r = hero.getBoundingClientRect();
         var x = ((e.clientX - r.left) / r.width) * 2 - 1;
@@ -332,13 +343,43 @@
     }
     // De kop staat naast de foto's, niet erop: is de langste regel (afhankelijk
     // van het lettertype) breder dan de ruimte tot de foto rechts ervan, dan
-    // wordt de kop iets kleiner (12 px lucht). Alleen vanaf 761 px.
+    // wordt de kop iets kleiner (12 px lucht). Vanaf 761 px; op de mobiele hero staat de kop onder de foto's.
+    // Tablet (t/m 1024 px, brief 2026-11-07-homepage-mobiel-stock, D9): gemeten met de woorden (.w, de vakken van de
+    // woorden die opkomen) en het vak van de kop, tegen elke foto in rust (zonder de opkomverschuiving); minstens 12 px vrij.
     var kop = hero.querySelector('.hero-tekst .kop-xl');
     if (kop) {
       var basisGrootte = kop.style.fontSize;
+      var tegelInRust = function (t) {
+        var r = t.getBoundingClientRect(), v = (getComputedStyle(t).translate || '').split(' ');
+        var dx = parseFloat(v[0]) || 0, dy = parseFloat(v[1]) || 0;
+        return { left: r.left - dx, right: r.right - dx, top: r.top - dy, bottom: r.bottom - dy };
+      };
+      var kopVak = function () {
+        var vak = kop.getBoundingClientRect();
+        var l = vak.left, rr = vak.right, b = vak.top, o = vak.bottom;
+        var woorden = kop.querySelectorAll('.w');
+        var delen = woorden.length ? Array.prototype.slice.call(woorden).map(function (w) { return w.getBoundingClientRect(); })
+          : (function () { var rg = document.createRange(); rg.selectNodeContents(kop); return Array.prototype.slice.call(rg.getClientRects()); })();
+        delen.forEach(function (d) { if (!d.width) return; l = Math.min(l, d.left); rr = Math.max(rr, d.right); b = Math.min(b, d.top); o = Math.max(o, d.bottom); });
+        return { left: l, right: rr, top: b, bottom: o };
+      };
+      var pasKopInTablet = function () {
+        for (var poging = 0; poging < 10; poging++) {
+          var k = kopVak(), teKrap = false;
+          tegels.forEach(function (t) {
+            if (getComputedStyle(t).display === 'none') return;
+            var r = tegelInRust(t);
+            var gat = Math.max(r.left - k.right, k.left - r.right, r.top - k.bottom, k.top - r.bottom);
+            if (gat < 12) teKrap = true;
+          });
+          if (!teKrap) break;
+          kop.style.fontSize = Math.floor(parseFloat(getComputedStyle(kop).fontSize) * 0.95) + 'px';
+        }
+      };
       var pasKopIn = function () {
         kop.style.fontSize = basisGrootte;
-        if (window.innerWidth <= 760) return;
+        if (window.innerWidth <= 760 || mobielHero.matches) return;
+        if (window.innerWidth <= 1024) { pasKopInTablet(); return; }
         for (var poging = 0; poging < 4; poging++) {
           var bereik = document.createRange(); bereik.selectNodeContents(kop);
           var regels = Array.prototype.slice.call(bereik.getClientRects()); // per regel(deel) van de tekst
@@ -356,7 +397,9 @@
       };
       pasKopIn();
       window.addEventListener('resize', pasKopIn);
+      bijWissel(mobielHero, pasKopIn);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(pasKopIn);
+      document.addEventListener('lux:klaar', function () { if (window.innerWidth <= 1024) pasKopIn(); });
     }
     if (!hero.hasAttribute('data-wissel')) return; // alleen de homepage heeft twee sets
     var knoppen = Array.prototype.slice.call(hero.querySelectorAll('.hero-wissel button'));
@@ -749,7 +792,10 @@
       var voorbij = kopEl.getBoundingClientRect().bottom < 40 || html.classList.contains('rij-open'); // de balk schuift mee in met de menu-rij
       balk.classList.toggle('zichtbaar', voorbij);
       var huidig = null;
-      secties.forEach(function (sec) { if (sec.getBoundingClientRect().top <= 90) huidig = sec; });
+      // Een foto over de volle breedte (.statement, zoals 003 Inspiratie) neemt op mobiel de balk pas over als hij de balk raakt;
+      // anders staat er een witte streep tussen de gekleurde balk en de foto (brief 2026-11-07-homepage-mobiel-stock, C8).
+      var balkH = window.innerWidth <= 760 ? balk.offsetHeight : 90;
+      secties.forEach(function (sec) { if (sec.getBoundingClientRect().top <= (sec.classList.contains('statement') ? Math.min(90, balkH) : 90)) huidig = sec; });
       // Onderaan de pagina komt de laatste sectie nooit tot 90 px; toon dan haar label.
       var doc = document.documentElement;
       if (secties.length && window.scrollY + window.innerHeight >= doc.scrollHeight - 2) huidig = secties[secties.length - 1];
@@ -1019,14 +1065,15 @@
   }
   // Foto's die pas bij nadering laden (Kraamcadeauboxen 002 en 003, ronde 8): de hele sectie wordt in één keer gevuld
   // zodra hij binnen 1200 px van het scherm komt, ook de foto's die horizontaal in een rij buiten beeld staan.
+  // (set B van de hero niet: die laadt laadSetB, alleen voor de tegels die te zien zijn)
   var laatLaden = function (sectie) {
-    sectie.querySelectorAll('img[data-src]').forEach(function (img) {
+    sectie.querySelectorAll('img[data-src]:not(.set-b)').forEach(function (img) {
       if (img.dataset.srcset) img.srcset = img.dataset.srcset;
       img.src = img.dataset.src;
       img.removeAttribute('data-src'); img.removeAttribute('data-srcset');
     });
   };
-  var lateSecties = Array.prototype.slice.call(document.querySelectorAll('main > section')).filter(function (s) { return s.querySelector('img[data-src]'); });
+  var lateSecties = Array.prototype.slice.call(document.querySelectorAll('main > section')).filter(function (s) { return s.querySelector('img[data-src]:not(.set-b)'); });
   if (lateSecties.length) {
     if ('IntersectionObserver' in window) {
       var laatIo = new IntersectionObserver(function (items) {

@@ -87,6 +87,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 
 /* ---------- Hero met collage: twee sets die samen wisselen ---------- */
 .hero { position: relative; max-width: var(--max); margin: 0 auto; height: clamp(680px, 100svh, 1000px); overflow-x: clip; }
+.hero-fotos { display: contents; } /* desktop en tablet: de tegels staan in het hero-vak; mobiel: eigen vak (onderaan) */
 .tegel { position: absolute; transition: transform .6s cubic-bezier(.2,.7,.2,1); -webkit-tap-highlight-color: transparent; }
 .tegel-binnen { position: relative; width: 100%; height: 100%; }
 .tegel img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -119,6 +120,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .t4 { left: 63%; top: 20%; width: 14.5%; aspect-ratio: .6;  z-index: 1; }
 .t5 { left: 68%; top: 39%; width: 16.5%; aspect-ratio: .77; z-index: 2; }
 .t6 { left: 65%; top: 71%; width: 12%;   aspect-ratio: 1.22; z-index: 3; }
+.t5 img { object-position: 30% 50%; }
 
 .intro { max-width: 900px; margin: 0 auto; padding: clamp(24px, 4vw, 56px) 24px clamp(96px, 13vw, 180px); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 32px; }
 
@@ -272,23 +274,12 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 
 /* ---------- Mobiel ---------- */
 @media (max-width: 760px) {
-  :root { --rand: 22px; }
+  :root { --rand: min(32px, 8.2vw); } /* zijmarge 32 px zoals Stock (brief 2026-11-07-homepage-mobiel-stock, B5) */
   .site-header { position: relative; background: var(--terracotta); }
   .site-header .wrap { min-height: 0; padding-top: 16px; padding-bottom: 12px; }
   .menu { gap: 0 18px; letter-spacing: .14em; }
   .menu a { padding: 8px 0; }
-  .hero { height: 740px; }
-  .hero-cirkel { left: calc(12% + 12px); top: calc(26% - 40px); width: 52%; } /* om de kop, 10 px vrij van "Carien Geurts / Atelier Ospel" */
-  .hero-tekst { left: var(--rand); right: var(--rand); top: 25.5%; transform: none; }
-  .badge { left: auto; right: 5%; top: auto; bottom: 6%; width: 70px; }
-  .hero-wissel { font-size: 13px; letter-spacing: .24em; }
-  /* bovenste rij blijft; onderste rij begint minimaal 16 px onder de wisselrij */
-  .t1 { left: 4%;  top: 3%;  width: 26%; }
-  .t2 { left: 36%; top: 1%;  width: 30%; }
-  .t3 { left: 72%; top: 5%;  width: 22%; }
-  .t4 { left: 5%;  top: 66%; width: 25%; }
-  .t5 { left: 35%; top: 68.5%; width: 30%; }
-  .t6 { left: 70%; top: 67.5%; width: 26%; }
+  /* de hero staat onderaan dit bestand (Hero op mobiel) */
   /* portfolio: foto boven de lijst in plaats van eroverheen */
   .hoverlijst .groot { position: relative; left: auto; top: auto; display: none; width: 64%; margin: 0 auto 24px; }
   .hoverlijst .klein-beeld { display: none; }
@@ -788,14 +779,6 @@ html.zacht-scrollen { scroll-behavior: auto; }
 @media (min-width: 761px) and (max-width: 1279px) {
   .js .site-header .menu { display: none; }
 }
-/* kraamcadeaubox op mobiel: geen wisselrij, dus de onderste rij foto's sluit dichter aan */
-@media (max-width: 760px) {
-  .hero:not([data-wissel]) { height: 680px; }
-  .hero:not([data-wissel]) .t4 { top: 62%; }
-  .hero:not([data-wissel]) .t5 { top: 65%; }
-  .hero:not([data-wissel]) .t6 { top: 64%; }
-}
-
 /* desktop en tablet: de header ligt los over de hero en blijft doorzichtig, zodat alleen de hero
    van kleur wisselt (anders schuiven twee overgangen over elkaar en zie je een band) */
 @media (min-width: 761px) {
@@ -1424,4 +1407,43 @@ html:not(.js) img[data-src] { display: none; }
   .formaat-kop, .formaat-lijst, .formaat-lijst li { display: inline; margin: 0; padding: 0; border: 0; font-weight: 400; }
   .formaat-lijst li + li::before { content: ", "; }
   .formaat .pijl { grid-column: 1 / -1; grid-row: 3; margin-top: 2px; justify-self: start; }
+}
+
+/* ---------- Hero op tablet (761–1024 px): zes foto's in de eigen indeling, de kop overlapt nooit een foto ----------
+   (brief 2026-11-07-homepage-mobiel-stock, D9). De kop is zo breed als de tekst; t4 en t5 staan rechts van de kop
+   met minstens 12 px ruimte (gemeten op 768 x 1024 en 1024 x 1366); main.js (pasKopIn) maakt de kop zo nodig kleiner. */
+@media (min-width: 761px) and (max-width: 1024px) {
+  .hero-tekst { align-items: flex-start; }
+  .hero .t4 { left: 69%; }
+  .hero .t5 { left: 74%; }
+}
+
+/* ---------- Hero op mobiel (≤ 760 px, en telefoons liggend: touch met hoogte ≤ 500 px) ----------
+   Zoals Stock (meting 7 nov., docs/ontwerp/bron/stock-analyse-2026-11-07-mobiel.md): alles onder elkaar, nooit tekst over
+   een foto. Fotogroep (vak 390 : 352, t2 groot in het midden, t5 Carien links, t4 rechts) → kop → namen → tabjes →
+   badge in de cirkel → quote → "Over Carien". Geen vaste hoogte; liggend in een gecentreerde kolom van max. 520 px. */
+@media (max-width: 760px), (hover: none) and (pointer: coarse) and (max-height: 500px) {
+  .hero { height: auto; max-width: 520px; display: flex; flex-direction: column; align-items: center; padding-top: 32px; }
+  .hero-fotos { display: block; position: relative; width: 100%; aspect-ratio: 390 / 352; }
+  .hero .tegel { right: auto; height: auto; }
+  .hero .t1, .hero .t3, .hero .t6 { display: none; }
+  .hero .t2 { left: 33.3%; top: 0;     width: 41.5%; aspect-ratio: .71; z-index: 1; }
+  .hero .t5 { left: 15.1%; top: 44.6%; width: 30%;   aspect-ratio: .6;  z-index: 2; }
+  .hero .t4 { left: 55.1%; top: 32.4%; width: 30%;   aspect-ratio: .6;  z-index: 2; }
+  .hero .t5 img { object-position: 40% 50%; }
+  .hero-tekst { order: 1; position: static; transform: none; width: 100%; margin-top: 32px; padding: 0 var(--rand); align-items: center; gap: 16px; text-align: center; }
+  .hero .kop-xl { font-size: min(42px, 10.25vw); }
+  .hero .kop-xl br.breed { display: none; }
+  .hero-tekst .caps { margin: 0; padding-left: .4em; } /* letterspatiëring na de laatste letter: optisch in het midden */
+  .js .hero-wissel { margin: 0; justify-content: center; font-size: 16px; letter-spacing: .12em; } /* zoals PR #39, ook liggend (ontwerpgate ronde 1) */
+  .hero-wissel span { padding: 0 .2em 0 .32em; }
+  .hero-cirkel { order: 2; position: relative; left: auto; top: auto; flex: none; width: 136px; margin-top: 40px; z-index: 1; }
+  .badge { order: 3; position: relative; left: auto; right: auto; top: auto; bottom: auto; flex: none; width: 96px; margin: -116px 0 20px; } /* midden in de ring van 136 px */
+  .hero-kleur .intro.kort { max-width: 520px; padding: 40px var(--rand) var(--ritme); gap: 24px; }
+  .hero-kleur .intro .quote { width: 100%; font-size: 24px; overflow-wrap: break-word; }
+}
+/* telefoon liggend: de header ligt over de hero (vanaf 761 px), dus de fotogroep begint 32 px onder de header */
+@media (min-width: 761px) and (hover: none) and (pointer: coarse) and (max-height: 500px) {
+  .hero { padding-top: 136px; }
+  .hero-fotos { width: min(100%, 70vh * 390 / 352); } /* fotogroep ca. 70 % van de schermhoogte, zodat de kop dichter bij het eerste scherm komt */
 }
