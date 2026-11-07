@@ -1,0 +1,76 @@
+name: Wens (user story)
+description: Eén wens voor luxmini.nl als korte user story. Eén story per pull request.
+title: "Wens: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Beschrijf één wens. Claude (de hoofdsessie) leest hem eerst na op gaten en tegenstrijdigheden, ook met `CLAUDE.md`, en zegt kort wat zij ervan vindt voordat de planner een brief maakt (zie `docs/ai-pdlc.md`).
+  - type: input
+    id: wie
+    attributes:
+      label: Wie
+      description: Voor wie is dit? Bijvoorbeeld een oma die op haar telefoon een kraamcadeau zoekt, of Carien.
+      placeholder: Als oma die een kraamcadeau zoekt
+    validations:
+      required: true
+  - type: textarea
+    id: wil
+    attributes:
+      label: Wil
+      description: Wat wil die persoon kunnen doen of zien?
+      placeholder: wil ik zonder scrollen zien wat een box kost
+    validations:
+      required: true
+  - type: textarea
+    id: zodat
+    attributes:
+      label: Zodat
+      description: Waarom? Wat wordt er beter?
+      placeholder: zodat ik snel kan kiezen en Carien een bericht stuur
+    validations:
+      required: true
+  - type: textarea
+    id: klaar-als
+    attributes:
+      label: Klaar als
+      description: Wanneer is het goed? Liefst toetsbaar, één punt per regel.
+      placeholder: |
+        - op de telefoon (390 px) staan de prijzen in het eerste scherm
+        - de link "Stuur Carien een bericht" vult het formulier vooraf in
+    validations:
+      required: true
+  - type: textarea
+    id: nu-niet
+    attributes:
+      label: Nu niet
+      description: Wat hoort er bewust niet bij? (optioneel)
+    validations:
+      required: false
+  - type: dropdown
+    id: prioriteit
+    attributes:
+      label: Prioriteit
+      options:
+        - must
+        - should
+        - could
+    validations:
+      required: true
+  - type: dropdown
+    id: onderdeel
+    attributes:
+      label: Onderdeel
+      description: Welk deel van de site of het proces? (optioneel)
+      options:
+        - Homepage
+        - Werkwijze
+        - Kraamcadeauboxen
+        - Prematuurkleding
+        - Babynest
+        - Inspiratie
+        - Contact en formulier
+        - Menu en algemeen
+        - Pipeline en techniek
+    validations:
+      required: false
