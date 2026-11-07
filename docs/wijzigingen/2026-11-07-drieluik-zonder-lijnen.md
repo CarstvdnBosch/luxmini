@@ -17,3 +17,7 @@
 | Stap | Wie | Uitkomst |
 |---|---|---|
 | Plannen | Claude (kleine wijziging, brief direct uit de wens) | — |
+| Bouwen | Claude (hoofdsessie) | Lijnen weg in CSS, F2 en `controleer_witte_lijn` strenger, ontwerpregel in CLAUDE.md aangepast |
+| Controle ronde 1 | website-controleur | NIET AKKOORD — F2 faalde: `::before`/`::after` gaven `display: block` |
+| Controle ronde 2 | website-controleur | AKKOORD — witte lijnen weg op alle schermen in rust en bij aanwijzen (F2, sitecontrole en eigen meting groen); axe, Lighthouse en visueel in CI |
+| Ontwerpgate | website-ontwerper | ONTWERP AKKOORD — witte lijnen weg op alle schermen; perzik, oker en mauve scheiden de kolommen duidelijk genoeg; aanwijzen, tablet en mobiel ongewijzigd |
