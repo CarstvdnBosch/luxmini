@@ -280,18 +280,18 @@ Advies ontwerper: testmodus met vaste rol (schrijven en lezen) en voorbeeldgegev
 ## Open vragen
 
 ### Blokkerend
-- **V1 · Issues.** Welke issuenummers horen bij S1–S7 (één issue per story)? Zonder nummer kan de pull request geen `Closes #…` bevatten.
+- **V1 · Issues.** Opgelost: S1 #44, S2 #45, S3 #46, S4 #47, S5 #48, S6 #49, S7 #50 (stories S1–S7 akkoord Carst 7 nov.).
 - **V2 · Domein.** Opgelost (Claude, 7 nov.): luxmini.nl staat sinds de domeinverhuizing bij Cloudflare (custom domains op de Worker), dus Access kan direct op `luxmini.nl/beheer`.
 - **V3 · Waarden van Carst.** `database_id`, team-domein en AUD-tag (Voorwaarden 1 en 3). Zonder deze kan S1 niet live; de bouw kan wel in testmodus.
-- **V4 · Bank en kas.** In de Excel is er één begin- en eindsaldo over bank (D/E) en kas (F/G) samen. Moet de app dat zo houden, of bank en kas elk een eigen saldo geven (zoals O14 als optie noemt)? De export blijft in beide gevallen gelijk aan de Excel.
-- **V5 · E-mailadressen en rollen.** Welke adressen krijgen `schrijven` en welke `lezen`? (Niet in de chat of repository; Carst zet ze zelf in Access en het secret.) Mag een afgesloten jaar worden heropend, en door wie?
+- **V4 · Bank en kas.** Besluit Carst 7 nov.: één saldo over bank en kas samen, zoals de Excel.
+- **V5 · E-mailadressen en rollen.** Welke adressen krijgen `schrijven` en welke `lezen`? (Niet in de chat of repository; Carst zet ze zelf in Access en het secret.) Mag een afgesloten jaar worden heropend, en door wie? Besluit Carst 7 nov.: een afgesloten boekjaar mag weer geopend worden door Carien en Carst (rol schrijven), met bevestiging; de accountant niet.
 - **V10 · Btw-berekening Excel.** De Excel rekent af te dragen btw (I) en voorbelasting (J) alleen over bankbedragen (D/E), niet over kas (F/G), en de aangifte-omzet uit Verkopen (M / 1,21), ongeacht de btw-code. Is dat zo bedoeld (accountant), of moet het anders? Tot een besluit volgt de app de Excel, zodat app en export gelijk zijn.
 - **V12 · Kolommen van de Excel.** Opgelost (Claude, 7 nov.): A datum, B dagafschrift-nr, C omschrijving; N en P zijn lege tussenkolommen; AB = (D+F)−(K+M+Q), AC = (E+G)−(L+O+R+S..AA), AD = AB+AC; somrij = SOM per kolom. Claude maakt in S5 het lege sjabloon uit de herstelde kopie (buiten de repo) en levert dat aan de bouwer.
 
 ### Niet blokkerend (wel vóór de betreffende story)
 - **V6 · Previews.** Een eigen preview-database met verzonnen gegevens (Carst maakt die), of beheer uit in previews (503)? Moet Access ook de preview-adressen beschermen, zodat Carst beheer op de preview kan bekijken?
 - **V7 · Migraties.** Past Carst migraties zelf toe (`wrangler d1 migrations apply --remote`), of komt dat in de build van Workers Builds?
-- **V8 · Accountant en export.** Mag de accountant zelf exporteren (voorstel: ja, het is lezen)? Moet een kwartaalexport alleen dat kwartaal bevatten of het hele jaar tot en met dat kwartaal?
+- **V8 · Accountant en export.** Besluit Carst 7 nov.: de accountant mag zelf exporteren, kwartaal en jaar.
 - **V9 · Standaard btw-code per rubriek.** Voorstel uit het gebruik in 2026 (meest gebruikte code): Verkopen 1300 → 1; Inkopen 1400 → 2; Omzetbelasting 1500, Privé 510, Verzekering 4000, Porto 4100, Rente/bank 4300, Km-vergoeding 4400 → 0; Bedrijfsbenodigdheden 4200, Kantoorkosten 4500, Communicatie 4600, Representatie 4700, Overige 4800 → 2. Altijd aanpasbaar. Ter bevestiging door Carien/accountant.
 - **V11 · Ruimte per maand.** Mogen er in het sjabloon extra rijen per maand worden ingevoegd (bijv. tot 150), zodat de export nooit vastloopt? Dat verandert de rijnummers van de somrij ten opzichte van de huidige Excel; de accountant ziet verder hetzelfde.
 - **V13 · Teksten.** De korte zinnen in lege staten en meldingen komen uit de Ontwerprichting; de plaatshoudertekst in S1 ("Hier komen je boekingen") laat de bouwer door de ontwerper bevestigen.
