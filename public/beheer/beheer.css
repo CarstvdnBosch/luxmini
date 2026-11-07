@@ -1,0 +1,75 @@
+/* LUX mini — beheer (luxmini.nl/beheer). Een rustige werkplek in de huisstijl
+   (brief 2026-11-07-beheer-administratie, Ontwerprichting en O1, O2, O4, O22).
+   Geen intro, overgang, kleurlaag, balk, collage of smooth scroll; style.css en main.js worden hier niet geladen.
+   De kleuren hieronder zijn dezelfde waarden als de variabelen in assets/css/style.css
+   (tests/beheer-ontwerp.test.js controleert dat ze gelijk blijven). */
+@font-face { font-family: 'Libre Caslon Display'; src: url('/assets/fonts/libre-caslon-display-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Source Sans 3'; src: url('/assets/fonts/source-sans-3-var.woff2') format('woff2'); font-weight: 400 700; font-style: normal; font-display: swap; }
+
+:root {
+  --terracotta: #BC8565;
+  --salie: #C3CFBC;
+  --grijsblauw: #E0E6E7;
+  --wit: #FFFFFF;
+  --inkt: #202020;
+  --display: 'Libre Caslon Display', Georgia, 'Times New Roman', serif;
+  --sans: 'Source Sans 3', 'Source Sans Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --rand: min(32px, 8.2vw);
+  --breed: 1120px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
+body { margin: 0; font-family: var(--sans); font-size: 16px; line-height: 1.5; color: var(--inkt); background: var(--wit); }
+[hidden] { display: none !important; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--inkt); outline-offset: 2px; }
+main:focus { outline: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.skip { position: absolute; left: -999px; top: 8px; z-index: 5; background: var(--wit); color: var(--inkt); padding: 10px 16px; }
+.skip:focus { left: 8px; }
+
+/* ---------- Kopregel: logo · Administratie · ingelogde + Uitloggen ---------- */
+.kop { border-bottom: 1px solid var(--grijsblauw); }
+.kop-rij {
+  max-width: var(--breed); margin: 0 auto; padding: 16px var(--rand);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px;
+}
+.kop-logo { width: 96px; height: auto; flex: none; }
+.kop-titel { margin: 0; font-family: var(--display); font-weight: 400; font-size: 28px; line-height: 1.1; }
+.kop-naam { margin: 0 0 0 auto; font-size: 16px; overflow-wrap: anywhere; min-width: 0; }
+.kop-uit { margin-left: auto; }
+.kop-naam:not([hidden]) + .kop-uit { margin-left: 0; }
+.kop-uit { display: inline-flex; align-items: center; min-height: 44px; font-size: 16px; font-weight: 600; text-underline-offset: 4px; }
+
+/* ---------- Inhoud ---------- */
+main { display: block; max-width: var(--breed); margin: 0 auto; padding: 0 var(--rand) 64px; }
+.meekijken { margin: 16px 0 0; padding: 10px 14px; background: var(--grijsblauw); font-size: 16px; }
+.melding { margin: 16px 0 0; padding: 10px 14px; border: 2px solid var(--inkt); font-size: 16px; }
+
+/* ---------- Tabs: op elke breedte op één regel, min. 44 px (O4) ---------- */
+.tabs { display: flex; margin-top: 16px; border-bottom: 1px solid var(--grijsblauw); }
+.tab {
+  flex: 0 1 auto; min-height: 48px; padding: 10px 20px; margin: 0;
+  font: inherit; font-size: 16px; color: var(--inkt); white-space: nowrap;
+  background: none; border: 0; border-bottom: 3px solid transparent; cursor: pointer;
+}
+.tab[aria-selected="true"] { font-weight: 700; border-bottom-color: var(--terracotta); }
+.tab:hover { border-bottom-color: var(--grijsblauw); }
+.tab[aria-selected="true"]:hover { border-bottom-color: var(--terracotta); }
+.tab:focus-visible { outline-offset: -2px; }
+
+.paneel { padding-top: 24px; }
+.paneel:focus-visible { outline-offset: 4px; }
+.paneel-kop { margin: 0 0 8px; font-family: var(--display); font-weight: 400; font-size: 24px; line-height: 1.2; }
+.paneel p { margin: 0; max-width: 60ch; }
+
+@media (max-width: 760px) {
+  .kop-rij { padding-top: 12px; padding-bottom: 12px; }
+  .kop-logo { width: 80px; }
+  .kop-titel { order: 3; flex: 1 1 100%; font-size: 26px; }
+  .kop-uit, .kop-naam:not([hidden]) + .kop-uit { order: 2; margin-left: auto; }
+  .kop-naam { order: 4; flex: 1 1 100%; margin: 0; }
+  .tab { flex: 1 1 0; padding: 10px 4px; }
+}

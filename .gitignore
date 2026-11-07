@@ -10,3 +10,7 @@ scripts/schermafdrukken/
 rapport/
 .lighthouseci/
 test-results/
+
+# Beheer (brief 2026-11-07-beheer-administratie, R3): nooit een Excel met gegevens committen.
+# Uitzonderingen (leeg sjabloon en verzonnen fixture) komen in S5 met een expliciete !-regel.
+*.xlsx

@@ -73,6 +73,24 @@ post_check "Formulier (POST, browser-navigatie)" \
 post_check "Formulier (POST, fetch)" \
   -H "Sec-Fetch-Mode: cors" -H "Sec-Fetch-Dest: empty" -H "Accept: */*"
 
+# Beheer (brief 2026-11-07-beheer-administratie, R15c): zonder inlog nooit 200.
+# Verwacht 403 van de Worker, of een doorverwijzing naar de inlog van Cloudflare Access (*.cloudflareaccess.com).
+beheer_check() { # omschrijving, pad
+  local wat="$1" pad="$2" uit status locatie
+  uit=$(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" "$BASIS$pad")
+  status="${uit%% *}"; locatie="${uit#* }"
+  if [ "$status" = "403" ]; then echo "✓ $wat (403)"; return; fi
+  case "$status" in
+    301|302|303|307|308)
+      case "$locatie" in
+        https://*.cloudflareaccess.com/*) echo "✓ $wat (naar de inlog van Access)"; return ;;
+      esac ;;
+  esac
+  echo "x $wat: status $status ${locatie:+naar $locatie }(verwacht 403 of de inlog van Access)"; fout=1
+}
+beheer_check "Beheer zonder inlog"        /beheer
+beheer_check "Beheer-API zonder inlog"    /api/beheer/boekingen
+
 # CSS en JS: geen lange cache zonder hercontrole (anders blijft na een release de oude versie staan)
 for pad in /assets/css/style.css /assets/js/main.js; do
   cc=$(curl -sI "$BASIS$pad" | tr -d '\r' | grep -i '^cache-control:' | cut -d: -f2- | tr 'A-Z' 'a-z')

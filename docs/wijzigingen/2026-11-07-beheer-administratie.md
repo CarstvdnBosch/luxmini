@@ -99,7 +99,8 @@ Acceptatiecriteria
 3. `GET /api/beheer/ik` geeft `{ rol, naam of e-mail }` voor de ingelogde; zonder geldige JWT 403 (R5–R7).
 4. Rol `lezen` krijgt 403 op een (proef-)schrijfroute; een POST zonder of met vreemde `Origin` krijgt 403 (R8). Gate 4 bevat deze veiligheidstests.
 5. Alle headers uit R9 staan op `/beheer`, de beheerbestanden en `/api/beheer/*` (e2e-test). `robots.txt` bevat `Disallow: /beheer`; sitemap ongewijzigd (R10).
-6. `wrangler.jsonc`: `run_worker_first` bevat `/api/*`, `/beheer` en `/beheer/*`; binding `BEHEER_DB` (D1); `vars` `BEHEER_ACCESS_TEAM` en `BEHEER_ACCESS_AUD`; `previews` volgt R11. `wrangler deploy --dry-run` (Gate 1) slaagt. Zolang Carst de waarden niet heeft teruggegeven, staat er een duidelijke plaatshouder in commentaar en blijft de pull request op NO-GO (zie V3).
+6. `wrangler.jsonc`: `run_worker_first` bevat `/api/*`, `/beheer` en `/beheer/*`; `vars` `BEHEER_ACCESS_TEAM` en `BEHEER_ACCESS_AUD` (leeg tot Carst ze geeft); de binding `BEHEER_DB` (D1) staat als commentaar klaar met de plaatshouder `[DATABASE_ID VAN CARST]`; `previews` volgt R11 (geen D1-binding, lege Access-waarden). `wrangler deploy --dry-run` (Gate 1) slaagt. Zonder team/AUD of zonder geldige JWT geeft beheer altijd 403; met geldige JWT maar zonder `BEHEER_DB` geven routes met opslag 503 "Opslag nog niet ingesteld" (`/api/beheer/ik` heeft geen opslag nodig). Zo kan de pull request veilig gemerged worden en faalt de preview niet (zie V3).
+   *Aangepast door hoofdsessie (7 nov.): binding pas na de waarden van Carst.*
 7. Migratie `migrations/0001_beheer.sql` maakt de tabellen voor boekjaren (jaar, IBAN, beginsaldo in centen, afgesloten ja/nee), boekingen (datum, omschrijving, dagafschrift-nr, bank of kas, ontvangen of uitgegeven, bedrag in centen, btw-code 0/1/2, aangemaakt/gewijzigd door en op, versie) en de verdeling van een boeking over rubrieken (rubriekcode, bedrag in centen). De rubriekcodes zijn die van de Excel (510 storting/opname, 1300, 1400, 1500 ontvangen/betaald, 4000–4800).
 8. De testmodus werkt zoals R14 en is afgedwongen en getest zoals R15 (a en b). `scripts/rooktest.sh` heeft de controle uit R15 (c).
 9. Het beheerscherm laadt `main.js` niet, heeft geen intro, pagina-overgang, kleurlaag, balk of collage, en heeft `<meta name="robots" content="noindex, nofollow">` (O1).
@@ -282,7 +283,7 @@ Advies ontwerper: testmodus met vaste rol (schrijven en lezen) en voorbeeldgegev
 ### Blokkerend
 - **V1 · Issues.** Opgelost: S1 #44, S2 #45, S3 #46, S4 #47, S5 #48, S6 #49, S7 #50 (stories S1–S7 akkoord Carst 7 nov.).
 - **V2 · Domein.** Opgelost (Claude, 7 nov.): luxmini.nl staat sinds de domeinverhuizing bij Cloudflare (custom domains op de Worker), dus Access kan direct op `luxmini.nl/beheer`.
-- **V3 · Waarden van Carst.** `database_id`, team-domein en AUD-tag (Voorwaarden 1 en 3). Zonder deze kan S1 niet live; de bouw kan wel in testmodus.
+- **V3 · Waarden van Carst.** `database_id`, team-domein en AUD-tag (Voorwaarden 1 en 3). Zonder deze kan S1 niet live; de bouw kan wel in testmodus. Aanpak S1 (hoofdsessie, 7 nov.): de D1-binding staat als commentaar in `wrangler.jsonc` en `BEHEER_ACCESS_TEAM`/`BEHEER_ACCESS_AUD` zijn leeg. Daardoor geeft beheer live, op workers.dev en op previews altijd 403, en kan de pull request veilig gemerged worden. Na de waarden van Carst volgt een kleine pull request die ze invult (exacte stappen in `docs/beheer.md`).
 - **V4 · Bank en kas.** Besluit Carst 7 nov.: één saldo over bank en kas samen, zoals de Excel.
 - **V5 · E-mailadressen en rollen.** Welke adressen krijgen `schrijven` en welke `lezen`? (Niet in de chat of repository; Carst zet ze zelf in Access en het secret.) Mag een afgesloten jaar worden heropend, en door wie? Besluit Carst 7 nov.: een afgesloten boekjaar mag weer geopend worden door Carien en Carst (rol schrijven), met bevestiging; de accountant niet.
 - **V10 · Btw-berekening Excel.** De Excel rekent af te dragen btw (I) en voorbelasting (J) alleen over bankbedragen (D/E), niet over kas (F/G), en de aangifte-omzet uit Verkopen (M / 1,21), ongeacht de btw-code. Is dat zo bedoeld (accountant), of moet het anders? Tot een besluit volgt de app de Excel, zodat app en export gelijk zijn.
@@ -301,7 +302,7 @@ Advies ontwerper: testmodus met vaste rol (schrijven en lezen) en voorbeeldgegev
 | Stap | Wie | Uitkomst |
 |---|---|---|
 | Plannen | website-planner | Brief met journey "Administratie bijhouden", S1–S9 (release 1: S1–S7), ontwerprichting en O1–O22 van website-ontwerper (7 nov.) |
-| Bouwen | website-bouwer | |
+| Bouwen | website-bouwer | Ronde 1 (7 nov.): S1 gebouwd. Worker controleert `/beheer*` en `/api/beheer/*` zelf (Access-JWT RS256 met Web Crypto en JWKS-cache, aud/iss/exp/nbf, rol uit `BEHEER_ROLLEN`, Origin bij schrijven, headers R9); zonder team/AUD 403, zonder `BEHEER_DB` 503. Eerste scherm met kopregel, drie tabs en de regel voor rol lezen; migratie 0001; testmodus alleen in `serveer.mjs`; rooktest R15c; `docs/beheer.md`. Lokaal groen: `npm test` (92/92), sitecontrole (Gate 2, geen fouten) en Playwright zonder axe op desktop, tablet en mobiel (233 groen, 0 rood). `npm run check` als geheel kan lokaal niet groen worden. Alleen in CI: axe (ook `beheer-toegankelijkheid.spec.js`), WebKit/iPhone, Lighthouse en `wrangler deploy --dry-run` (de npm-registry is lokaal niet bereikbaar). |
 | Controleren | website-controleur | |
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | Carst | |
