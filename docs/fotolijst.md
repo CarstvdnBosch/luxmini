@@ -56,6 +56,9 @@ Met de grotere originelen kan ook:
 - de Instagram-foto (`ig-outfit-ladder.jpg`, nu 480 × 640, getoond als 3 : 4) naar de verhouding 2 : 3 van Stock;
 - `ig-babynest.jpg` als grote portfoliofoto gebruikt worden (nu alleen klein, anders wordt hij vergroot).
 
+## Kopfoto Contact groter (gewenst)
+De kopfoto van Contact (`home-hero-handwerk.jpg`, handwerk aan de naaimachine) is 1800 × 1012 px. Op telefoons staat sinds 7 nov. een staande uitsnede (`home-hero-handwerk-staand-530.jpg`, 530 × 1012 px). Die wordt in CSS-pixels niet vergroot, maar op een retina-scherm is hij nog ongeveer 1,4× vergroot, omdat het origineel maar 1012 px hoog is. Is er een groter origineel van deze foto in de mediamap? Dan kan er een uitsnede van ongeveer 900 × 1300 px komen.
+
 ## Logo als vector (gewenst)
 Het logo is nu een PNG van 248 px breed. Daardoor kan het in de intro niet groter dan 200 px getoond worden. Met een vectorlogo (SVG) kan het logo in de intro groter en scherper.
 
