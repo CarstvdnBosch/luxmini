@@ -41,7 +41,8 @@ Wat het doet:
     minder beweging; pijl-links 44 px, data-labels en geen horizontaal
     scrollen op 390, 768 en 1440 px
   - maakt screenshots per schermhoogte in scripts/screenshots/
-    (<pagina>-<schermmaat>-01.png, -02.png …; max. 8 per pagina en schermmaat),
+    (<pagina>-<schermmaat>-01.png, -02.png …; max. 8 per pagina en schermmaat, het laatste
+    scherm (onderkant) altijd erbij),
     zodat de vaste kleurlaag per scherm de kleur van de sectie in beeld heeft
   - controleert kapotte links en afbeeldingen, ontbrekende alt-teksten,
     horizontaal scrollen op mobiel, JavaScript-fouten en of de
@@ -70,13 +71,13 @@ def screenshots_per_scherm(page, pagina, naam):
     hoogte_scherm = page.viewport_size["height"]
     hoogte = page.evaluate("document.documentElement.scrollHeight")
     terug = page.evaluate("window.scrollY")
-    y, nr = 0, 1
-    while y < hoogte and nr <= MAX_SCREENSHOTS:
+    posities = list(range(0, hoogte, hoogte_scherm - SCREENSHOT_OVERLAP))
+    if len(posities) > MAX_SCREENSHOTS:  # te lang: de eerste schermen plus altijd het laatste (onderkant en footer)
+        posities = posities[:MAX_SCREENSHOTS - 1] + [max(0, hoogte - hoogte_scherm)]
+    for nr, y in enumerate(posities, start=1):
         page.evaluate(f"window.scrollTo({{ top: {y}, behavior: 'instant' }})")
         page.wait_for_timeout(1300)  # kleurlaag en balk laten bijkomen (overgangen tot 1,2 s)
         page.screenshot(path=str(SHOTS / f"{pagina.replace('.html', '')}-{naam}-{nr:02d}.png"))
-        y += hoogte_scherm - SCREENSHOT_OVERLAP
-        nr += 1
     page.evaluate(f"window.scrollTo({{ top: {terug}, behavior: 'instant' }})")
 
 fouten, waarschuwingen = [], []
