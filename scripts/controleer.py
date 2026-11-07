@@ -389,8 +389,8 @@ def controleer_home(page, tag, naam):
         fouten.append(f"{tag}: {n} links naar contact.html#formulier in main, verwacht precies 1")
 
 def controleer_witte_lijn(browser):
-    """F2 (feedback Carst 6 nov. 14:28): geen losse witte lijn in of langs 001 — Producten. Op desktop (muis) alleen de twee
-    bedoelde lijnen tussen de kolommen; op touch geen enkele dunne witte lijn; langs de randen van #producten geen witte rij of kolom."""
+    """F2 (feedback Carst 6 nov. 14:28 en 7 nov. 16:47): geen enkele dunne witte lijn in of langs 001 — Producten, ook niet
+    tussen de kolommen; langs de randen van #producten geen witte rij of kolom."""
     from PIL import Image
     import io
     wit = lambda c: c[0] > 240 and c[1] > 240 and c[2] > 240
@@ -417,9 +417,9 @@ def controleer_witte_lijn(browser):
                 if wit(px[x, y]) and not wit(px[x, y - 1]) and not wit(px[x, y + 1]): run += 1; best = max(best, run)
                 else: run = 0
             if best > 12: hor.append(y)
-        bedoeld = [] if touch else [kol[1], kol[2] - 1]
+        bedoeld = []
         los = [x for x in lijnen if not any(abs(x - k) <= 1 for k in bedoeld)]
-        if los or hor or (not touch and sorted(set(round(x) for x in lijnen)) != sorted(bedoeld)):
+        if los or hor:
             fouten.append(f"index.html [{b} x {h}, 001 — Producten]: losse witte lijn(en): verticaal {los or lijnen}, horizontaal {hor[:6]} (bedoeld: {bedoeld})")
         ctx.close()
 
