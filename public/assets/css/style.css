@@ -557,6 +557,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .kolom-prem { background: var(--oker); }
 .kolom-nest { background: var(--mauve); }
 /* geen witte scheidingslijnen tussen de kolommen (feedback Carst 7 nov. 16:47) */
+.kern-kolom::before, .kern-kolom::after { display: none; }
 .kern-tekst { width: min(280px, 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 20px; color: var(--inkt); }
 .kern-tekst .nr { font-family: var(--serif); font-size: 16px; line-height: 1; }
 .kern-tekst .kop-m { color: inherit; hyphens: manual; }
