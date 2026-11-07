@@ -38,10 +38,11 @@ In deze volgorde blijft de oude Wix-site gewoon bereikbaar tot de allerlaatste s
 2. Settings → **Rules → Rulesets → New branch ruleset** voor `main`:
    - *Restrict deletions* en *Block force pushes*;
    - *Require a pull request before merging* (0 goedkeuringen nodig: je kunt je eigen pull request niet goedkeuren);
-   - *Require status checks to pass*: `Gate 1 · Tests` en `Gate 2 · Sitecontrole`;
+   - *Require status checks to pass*: `Gate 1 · Tests`, `Gate 2 · Sitecontrole` en **`GO · Akkoord Carst`** (die laatste blijft de verplichte controle voor het besluit, of je GO nu met het label of met een reactie geeft);
    - geen uitzonderingen (bypass list leeg).
    De controles verschijnen pas in de keuzelijst nadat ze één keer gedraaid hebben: kom na de eerste pull request terug om ze aan te vinken.
 3. Vanaf nu kan niemand nog direct op `main` zetten: alles gaat via een pull request met groene controles.
+   **GO geven:** zet het label `GO` of plaats een reactie met precies `GO` in de pull request (zie `docs/kwaliteit.md`). De reactievariant werkt pas nadat `go-nogo.yml` met die regels op `main` staat, omdat GitHub reacties (`issue_comment`) altijd met de workflow van `main` draait; tot dan geldt alleen het label.
 4. **Eerlijk over de grens:** met 0 verplichte goedkeuringen kan iedereen met schrijfrechten een groene pull request mergen. Claude mag dat niet (afspraak in `CLAUDE.md` en de agents, en `.claude/settings.json` blokkeert `gh pr merge`, `gh api` en `git merge`), maar dat is een afspraak, geen slot. Wil je het hard afdwingen, geef Carien dan een eigen GitHub-account en zet in de ruleset **1 goedkeuring** verplicht: dan gaat er niets live zonder haar klik.
 5. GitHub zet geplande workflows (de dagelijkse rooktest) uit als er 60 dagen niets aan de repository verandert. Je krijgt daar een mail over; met één klik staat hij weer aan.
 

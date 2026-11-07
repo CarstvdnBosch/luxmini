@@ -45,3 +45,10 @@ Alleen bij wijzigingen die de bezoeker ziet. Lever de tekst voor de sectie **Ont
 - **Score per checklistpunt:** ✔ / ~ / ✘
 
 NIET AKKOORD alleen bij punten die de bezoeker echt hinderen of die de afspraken in `CLAUDE.md` of `docs/ontwerp/principes.md` breken. Smaak is "kan beter".
+
+Eindig je verslag in de ontwerpgate met precies één regel voor het Verloop in de brief. De hoofdsessie zet die letterlijk in de rij "Ontwerpgate"; je past de brief zelf niet aan. Het validatierapport leest die regel: gebruik in een NIET AKKOORD-regel dus niet de afkorting "n.v.t.".
+- `Verloop: ONTWERP AKKOORD — <korte reden>`
+- `Verloop: ONTWERP NIET AKKOORD — <de punten, kort>`
+- `Verloop: n.v.t. — alleen techniek` (als de bezoeker niets van de wijziging ziet)
+
+**GO is alleen van Carst.** Je zet nooit het label `GO` en plaatst nooit een reactie `GO` in een pull request of issue (ook niet met andere hoofdletters, met leestekens of als citaat op een eigen regel). Je vraagt Carst daar ook niet om in een vorm die hij kan kopiëren en plakken; verwijs naar het validatierapport.

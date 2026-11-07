@@ -12,11 +12,11 @@ Elke wijziging volgt `docs/ai-pdlc.md`: **plannen → bouwen → controleren →
 2. **website-bouwer** voert die uit op een branch `wijziging/<naam>` en draait `npm run check` (harness: tests, sitecontrole, toegankelijkheid, SEO, veiligheid, snelheid, visueel en het validatierapport).
 3. **website-controleur** toetst onafhankelijk of het werkt en klopt en draait zelf `npm run check`; bij NIET AKKOORD terug naar de bouwer (max. 3 rondes).
 4. **Ontwerpgate:** **website-ontwerper** beoordeelt de schermen (desktop, tablet, mobiel; `python3 scripts/schermafdrukken.py`) tegen `docs/ontwerp/principes.md` en de ontwerpregels hieronder; bij ONTWERP NIET AKKOORD terug naar de bouwer (max. 3 rondes).
-5. Bij AKKOORD van beiden (of n.v.t. van de ontwerper bij alleen techniek): branch pushen en pull request openen → GitHub draait de controles (gate 1, 2, 4 en 5), Cloudflare maakt een preview en GitHub zet het **validatierapport** in de pull request → **Carst** beoordeelt rapport en preview en geeft **GO** (label `GO`) of NO-GO → na GO merget Carst (of Claude op zijn uitdrukkelijke verzoek) naar `main` → Cloudflare zet live, de rooktest controleert.
+5. Bij AKKOORD van beiden (of n.v.t. van de ontwerper bij alleen techniek): branch pushen en pull request openen → GitHub draait de controles (gate 1, 2, 4 en 5), Cloudflare maakt een preview en GitHub zet het **validatierapport** in de pull request → **Carst** beoordeelt rapport en preview en geeft **GO** (label `GO` of een reactie `GO` van de eigenaar in de pull request) of NO-GO → na GO merget Carst (of Claude op zijn uitdrukkelijke verzoek) naar `main` → Cloudflare zet live, de rooktest controleert.
 
 **Harness:** een wijziging is pas klaar als `npm run check` groen is (zie `docs/kwaliteit.md`). Los rode tests op door de site te verbeteren; tests, grenzen en axe-regels worden niet versoepeld zonder akkoord van Carst.
 
-Agents mergen nooit zonder GO van Carst, zetten nooit zelf het label `GO` en zetten nooit zelf iets live.
+Agents mergen nooit zonder GO van Carst, zetten nooit zelf het label `GO`, plaatsen nooit een reactie `GO` (in welke schrijfwijze ook) en zetten nooit zelf iets live.
 
 ## Mappen
 
@@ -35,7 +35,7 @@ Agents mergen nooit zonder GO van Carst, zetten nooit zelf het label `GO` en zet
   - `assets/img/` — webversies van foto's (max. ~1400 px, JPEG kwaliteit ~80)
 - `src/worker.js` + `src/contact.js` + `src/formulier.js` — contactformulier (`POST /api/contact`) → mail via Cloudflare Email Routing naar info.luxmini@gmail.com; bij een fout terug naar `/contact?verzonden=fout#formulier`
 - `wrangler.jsonc` — Cloudflare-configuratie
-- `.github/workflows/` — `controle.yml` (gate 1, 2, 4, 5 en het validatierapport bij elke pull request), `go-nogo.yml` (GO · Akkoord Carst), `visueel-basis.yml` (basisschermen bijwerken), `rooktest.yml` (gate 3 na live zetten en dagelijks)
+- `.github/workflows/` — `controle.yml` (gate 1, 2, 4, 5 en het validatierapport bij elke pull request), `go-nogo.yml` (GO · Akkoord Carst: label `GO` of reactie `GO` van de eigenaar), `visueel-basis.yml` (basisschermen bijwerken), `rooktest.yml` (gate 3 na live zetten en dagelijks)
 - `tests/` — tests voor het formulier (`npm test`); `tests/e2e/` — harness met Playwright Test: toegankelijkheid, SEO/veiligheid, kernpaden, visueel (`npm run test:e2e`, `npm run test:visueel`); basisschermen in `tests/e2e/basis/`
 - `playwright.config.js`, `lighthouserc.cjs` — instellingen van de harness; `scripts/serveer.mjs` — lokale testserver zoals Cloudflare; `scripts/validatierapport.mjs` — validatierapport voor GO / NO-GO
 - `scripts/controleer.py` — sitecontrole met screenshots; `scripts/rooktest.sh` — controle van de live site
