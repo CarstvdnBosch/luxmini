@@ -187,3 +187,269 @@ test('kraamcadeauboxen: vier formaten compact binnen 1,2 scherm, elk met prijs, 
     expect(k.achtergrond, `kaart ${i + 1}: wit`).toBe('rgb(255, 255, 255)');
   });
 });
+
+/* ---------- Homepage op mobiel zoals Stock (brief 2026-11-07-homepage-mobiel-stock) ----------
+   Hero op mobiel (≤ 760 px en telefoons liggend): drie foto's, daaronder kop, namen, tabjes, badge, quote en "Over Carien";
+   nooit tekst over een foto. Tablet (761–1024 px): zes foto's, de kop minstens 12 px vrij van elke foto. Zijmarge 32 px. */
+const BRIEF = 'brief 2026-11-07-homepage-mobiel-stock';
+// Schermen uit de ontwerpcriteria (deel 2); 390 × 664 is het iPhone-project zelf (WebKit). Tablet ook 1024 × 1366 (criterium 5).
+const HERO_SCHERMEN = [
+  { b: 360, h: 740 }, { b: 390, h: 844 }, { b: 430, h: 932 }, { b: 768, h: 1024, tablet: true }, { b: 1024, h: 1366, tablet: true },
+  { b: 844, h: 390, liggend: true }, { b: 932, h: 430, liggend: true }, { b: 390, h: 844, tekst: 1.3 },
+];
+const INTRO_WEG = () => { try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) { /* geen opslag */ } };
+
+// Meet de hero: overlap van de kop (vak van de h1 én de woorden) met elke zichtbare tegel, horizontaal scrollen en de quote.
+const meetHero = (page) => page.evaluate(() => {
+  const zicht = e => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return s.display !== 'none' && r.width > 0 && r.height > 0; };
+  const hero = document.querySelector('.hero'), kop = hero.querySelector('.kop-xl');
+  const rg = document.createRange(); rg.selectNodeContents(kop);
+  const kopVakken = [kop.getBoundingClientRect(), ...[...kop.querySelectorAll('.w')].map(w => w.getBoundingClientRect()), ...[...rg.getClientRects()].filter(r => r.width)];
+  const tegels = [...hero.querySelectorAll('.tegel')].filter(zicht);
+  const gat = (a, b) => Math.max(b.left - a.right, a.left - b.right, b.top - a.bottom, a.top - b.bottom);
+  let kopGat = Infinity;
+  for (const t of tegels) for (const k of kopVakken) kopGat = Math.min(kopGat, gat(t.getBoundingClientRect(), k));
+  // geen tekstelement van de hero over een foto (kop, namen, tabjes, badge)
+  const tekst = ['.kop-xl', '.hero-tekst .caps', '.hero-wissel', '.badge'].map(s => hero.querySelector(s)).filter(e => e && zicht(e));
+  const overFoto = [];
+  for (const e of tekst) for (const t of tegels) if (gat(t.getBoundingClientRect(), e.getBoundingClientRect()) < 0) overFoto.push(`${e.className.baseVal ?? e.className} over ${[...t.classList].join('.')}`);
+  const q = document.querySelector('.hero-kleur .quote').getBoundingClientRect();
+  const rand = parseFloat(getComputedStyle(document.querySelector('.site-footer .wrap')).paddingLeft);
+  return { kopGat, overFoto, breed: document.documentElement.scrollWidth - innerWidth, quote: [q.left, q.right], vw: innerWidth, rand, tegels: tegels.length };
+});
+
+async function zetSetB(page, aanraken) {
+  const knop = page.locator('.hero-wissel button[data-set="b"]');
+  if (aanraken) await knop.tap(); else await knop.click();
+  await expect(knop).toHaveAttribute('aria-pressed', 'true');
+}
+
+for (const s of HERO_SCHERMEN) {
+  const naam = `${s.b} × ${s.h}${s.tekst ? ` met tekst op ${s.tekst * 100} %` : ''}`;
+  test(`hero ${naam}: kop overlapt geen foto, niets breder dan het scherm, quote binnen de marges (${BRIEF})`, async ({ browser }, info) => {
+    test.skip(info.project.name !== 'mobiel', 'eigen schermen in Chromium; de iPhone toetst 390 × 664 hieronder');
+    // tablet met beweging: dan staat de kop in woorden (.w) en meet pasKopIn die (criterium 5)
+    const ctx = await browser.newContext({ viewport: { width: s.b, height: s.h }, hasTouch: true, isMobile: true, reducedMotion: s.tablet ? 'no-preference' : 'reduce' });
+    await ctx.addInitScript(INTRO_WEG);
+    const page = await ctx.newPage();
+    await page.goto('/');
+    await page.evaluate(() => document.fonts.ready);
+    if (s.tekst) await page.evaluate(z => { for (const p of ['text-size-adjust', '-webkit-text-size-adjust']) document.documentElement.style.setProperty(p, `${z * 100}%`); }, s.tekst);
+    await page.waitForTimeout(s.tablet ? 1800 : 300); // tablet: de tegels zijn na de opkomverschuiving in rust
+    const minGat = s.tablet ? 12 : 0;
+    for (const set of ['A', 'B']) {
+      if (set === 'B') { await zetSetB(page, true); await page.waitForTimeout(300); }
+      const m = await meetHero(page);
+      expect(m.breed, `set ${set}: scrollWidth − innerWidth`).toBe(0);
+      expect(m.kopGat, `set ${set}: ruimte tussen de kop en de dichtstbijzijnde foto (min. ${minGat} px)`).toBeGreaterThanOrEqual(minGat);
+      expect(m.overFoto, `set ${set}: tekst van de hero over een foto`).toEqual([]);
+      expect(m.tegels, 'aantal zichtbare foto\'s').toBe(s.tablet ? 6 : 3);
+      // de quote valt binnen de zijmarges (op tablet binnen het scherm)
+      const marge = s.tablet ? 0 : m.rand;
+      expect(m.quote[0], 'quote links binnen de marge').toBeGreaterThanOrEqual(marge - 1);
+      expect(m.quote[1], 'quote rechts binnen de marge').toBeLessThanOrEqual(m.vw - marge + 1);
+    }
+    await ctx.close();
+  });
+}
+
+test(`hero op de iPhone (WebKit, 390 × 664): foto's en kop in het eerste scherm, geen overlap, quote binnen de marges (${BRIEF})`, async ({ page }, info) => {
+  test.skip(info.project.name !== 'iphone', 'alleen de iPhone (Safari)');
+  await page.goto('/');
+  await wachtOpRust(page);
+  for (const set of ['A', 'B']) {
+    if (set === 'B') { await zetSetB(page, true); await page.waitForTimeout(300); }
+    const m = await meetHero(page);
+    expect(m.breed, `set ${set}: scrollWidth − innerWidth`).toBe(0);
+    expect(m.kopGat, `set ${set}: kop over een foto`).toBeGreaterThanOrEqual(0);
+    expect(m.overFoto).toEqual([]);
+    expect(m.quote[0], 'quote links binnen de marge').toBeGreaterThanOrEqual(m.rand - 1);
+    expect(m.quote[1], 'quote rechts binnen de marge').toBeLessThanOrEqual(m.vw - m.rand + 1);
+  }
+  // ontwerpcriterium 6: de drie foto's en de volledige kop zonder scrollen in beeld
+  const eerste = await page.evaluate(() => [...document.querySelectorAll('.hero .tegel'), document.querySelector('.hero .kop-xl')]
+    .filter(e => getComputedStyle(e).display !== 'none').map(e => e.getBoundingClientRect().bottom <= innerHeight));
+  expect(eerste, 'foto\'s en kop in het eerste scherm').toEqual([true, true, true, true]);
+});
+
+test(`hero op 390 × 844: drie foto's op de maten van Stock, volgorde, kop, tabjes, quote en pijl-link (${BRIEF})`, async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'gemeten op 390 × 844');
+  await page.goto('/');
+  await wachtOpRust(page);
+  const m = await page.evaluate(() => {
+    const r = s => { const e = document.querySelector(s); const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, b: b.width, h: b.height, onder: b.bottom, rechts: b.right }; };
+    const tegels = Object.fromEntries([...document.querySelectorAll('.hero .tegel')].map(t => [[...t.classList].find(k => /^t\d$/.test(k)), getComputedStyle(t).display]));
+    const vak = r('.hero-fotos'), kop = document.querySelector('.hero .kop-xl');
+    const rg = document.createRange(); rg.selectNodeContents(kop);
+    const regels = new Set([...rg.getClientRects()].filter(x => x.width).map(x => Math.round(x.top))).size;
+    const t2img = document.querySelector('.hero .t2 img.set-a');
+    return { tegels, vak, t2: r('.hero .t2'), t4: r('.hero .t4'), t5: r('.hero .t5'), kop: r('.hero .kop-xl'), caps: r('.hero-tekst .caps'), wissel: r('.hero-wissel'),
+      cirkel: r('.hero-cirkel'), badge: r('.hero .badge'), quote: r('.hero-kleur .quote'), pijl: r('.hero-kleur .intro .pijl'), hero: r('.hero'),
+      kopPx: parseFloat(getComputedStyle(kop).fontSize), kopUitlijning: getComputedStyle(kop).textAlign, regels,
+      quotePx: parseFloat(getComputedStyle(document.querySelector('.hero-kleur .quote')).fontSize),
+      knoppen: [...document.querySelectorAll('.hero-wissel button')].map(k => [k.getBoundingClientRect().height, parseFloat(getComputedStyle(k).fontSize)]),
+      t2lazy: t2img.loading, hoogteStijl: document.querySelector('.hero').style.height, vw: innerWidth, vh: innerHeight };
+  });
+  // precies drie foto's: t2, t4 en t5 (criterium 3, ontwerpcriterium 3)
+  expect(m.tegels).toEqual({ t1: 'none', t2: 'block', t3: 'none', t4: 'block', t5: 'block', t6: 'none' });
+  // posities: hooguit 4 px van de tabel (vak 390 : 352; ontwerpcriterium 4)
+  const tabel = { t2: [130, 0, 162], t5: [59, 157, 117], t4: [215, 114, 117] };
+  for (const [t, [x, y, b]] of Object.entries(tabel)) {
+    expect(Math.abs(m[t].x - x), `${t} x`).toBeLessThanOrEqual(4);
+    expect(Math.abs(m[t].y - m.vak.y - y), `${t} boven in het vak`).toBeLessThanOrEqual(4);
+    expect(Math.abs(m[t].b - b), `${t} breedte`).toBeLessThanOrEqual(4);
+    expect(m[t].x, `${t} binnen de zijmarge links`).toBeGreaterThanOrEqual(32);
+    expect(m[t].rechts, `${t} binnen de zijmarge rechts`).toBeLessThanOrEqual(m.vw - 32);
+  }
+  expect(m.t2lazy, 't2 is de LCP-foto en wordt niet lazy geladen').not.toBe('lazy');
+  // volgorde: fotogroep → kop → namen → tabjes → badge in de cirkel → quote → "Over Carien" (criterium 2)
+  const volgorde = [m.vak, m.kop, m.caps, m.wissel, m.cirkel, m.quote, m.pijl];
+  for (let i = 1; i < volgorde.length; i++) expect(volgorde[i].y, `blok ${i + 1} staat onder blok ${i}`).toBeGreaterThanOrEqual(volgorde[i - 1].onder - 0.5);
+  // badge in het midden van de cirkel (ring 136 px, badge 96 px)
+  expect(Math.round(m.cirkel.b)).toBe(136);
+  expect(Math.round(m.badge.b)).toBe(96);
+  expect(Math.abs(m.badge.x + m.badge.b / 2 - (m.cirkel.x + m.cirkel.b / 2)), 'badge horizontaal in de cirkel').toBeLessThanOrEqual(1);
+  expect(Math.abs(m.badge.y + m.badge.h / 2 - (m.cirkel.y + m.cirkel.h / 2)), 'badge verticaal in de cirkel').toBeLessThanOrEqual(1);
+  // geen vaste hoogte: alles staat in de hero, de hero is zo hoog als de inhoud
+  expect(m.hero.onder, 'de cirkel valt binnen de hero').toBeGreaterThanOrEqual(m.cirkel.onder - 0.5);
+  expect(m.hero.onder - m.cirkel.onder, 'geen lege ruimte onder de cirkel').toBeLessThanOrEqual(1);
+  // kop: gecentreerd, 35–42 px, twee regels (ontwerpcriterium 8)
+  expect(m.kopPx).toBeGreaterThanOrEqual(35); expect(m.kopPx).toBeLessThanOrEqual(42);
+  expect(m.kopUitlijning).toBe('center');
+  expect(m.regels, 'kop op twee regels').toBe(2);
+  // tabjes: 44 px hoog, 16 px, gecentreerd (ontwerpcriterium 7)
+  for (const [h, px] of m.knoppen) { expect(h).toBeGreaterThanOrEqual(44); expect(px).toBeGreaterThanOrEqual(16); }
+  expect(Math.abs(m.wissel.x + m.wissel.b / 2 - m.vw / 2), 'tabjes gecentreerd').toBeLessThanOrEqual(6);
+  // quote 24 px, breedte ≤ schermbreedte − 64, gecentreerd; pijl-link eronder met tikdoel 44 px (ontwerpcriterium 9)
+  expect(m.quotePx).toBe(24);
+  expect(m.quote.b, 'quote binnen 2 × 32 px zijmarge (min(32px, 8.2vw) = 31,98 px: halve pixel speling)').toBeLessThanOrEqual(m.vw - 64 + 0.5);
+  expect(Math.abs(m.quote.x + m.quote.b / 2 - m.vw / 2), 'quote gecentreerd').toBeLessThanOrEqual(1);
+  expect(m.pijl.h).toBeGreaterThanOrEqual(43.5);
+  // eerste scherm: de drie foto's, de volledige kop, de namen en de tabjes zonder scrollen (ontwerpcriterium 5)
+  for (const blok of [m.t2, m.t4, m.t5, m.kop, m.caps, m.wissel]) expect(blok.onder).toBeLessThanOrEqual(m.vh);
+});
+
+test(`hero op 390 × 844: de foto's van t1, t3 en t6 worden niet opgehaald, set B alleen voor t2 en t4 (${BRIEF})`, async ({ browser }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'gemeten op 390 × 844');
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await ctx.addInitScript(INTRO_WEG);
+  const page = await ctx.newPage();
+  const opgehaald = new Set();
+  page.on('request', r => { if (r.resourceType() === 'image') opgehaald.add(new URL(r.url()).pathname.replace(/^\//, '')); });
+  await page.goto('/');
+  await page.waitForLoadState('load');
+  await page.waitForTimeout(2500); // set B wordt na het laden opgehaald
+  const m = await page.evaluate(() => {
+    const bestanden = img => ['src', 'data-src', 'srcset', 'data-srcset'].flatMap(a => (img.getAttribute(a) || '').split(',').map(d => d.trim().split(/\s+/)[0]).filter(Boolean));
+    const verborgen = [...document.querySelectorAll('.hero .t1 img, .hero .t3 img, .hero .t6 img')].flatMap(bestanden);
+    // hetzelfde bestand kan ook buiten de hero staan (ig-babynest.jpg in het drieluik, lazy): dan haalt dat blok het op, niet de hero
+    const elders = new Set([...document.querySelectorAll('img')].filter(i => !i.closest('.hero')).flatMap(bestanden));
+    const setB = [...document.querySelectorAll('.hero img.set-b')].map(i => [[...i.closest('.tegel').classList].find(k => /^t\d$/.test(k)), !i.hasAttribute('data-src')]);
+    return { verborgen: [...new Set(verborgen)].filter(f => !elders.has(f)), setB, lazy: [...document.querySelectorAll('.hero .t1 img, .hero .t3 img.set-a, .hero .t6 img.set-a')].map(i => i.loading) };
+  });
+  expect(m.lazy, 't1, t3 en t6 hebben loading="lazy"').toEqual(['lazy', 'lazy', 'lazy']);
+  expect(m.verborgen.length, 'er zijn bestanden van t1, t3 en t6 om te toetsen').toBeGreaterThan(0);
+  expect(m.verborgen.filter(f => opgehaald.has(f)), 'opgehaalde bestanden van t1, t3 en t6').toEqual([]);
+  expect(m.setB, 'set B alleen voor de zichtbare tegels').toEqual([['t2', true], ['t3', false], ['t4', true], ['t6', false]]);
+  await ctx.close();
+});
+
+test(`hero op 390 × 844: tabjes en foto's wisselen de set met een tik en met het toetsenbord (${BRIEF})`, async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'gemeten op 390 × 844');
+  await page.goto('/');
+  await wachtOpRust(page);
+  const stand = () => page.evaluate(() => {
+    const op = s => getComputedStyle(document.querySelector(s)).opacity;
+    return { knoppen: [...document.querySelectorAll('.hero-wissel button')].map(k => k.getAttribute('aria-pressed')), licht: document.documentElement.classList.contains('hero-licht'),
+      t2: op('.hero .t2 img.set-b'), t4: op('.hero .t4 img.set-b'), t5: document.querySelectorAll('.hero .t5 img').length, kop: getComputedStyle(document.querySelector('.hero .kop-xl')).color };
+  });
+  const A = { knoppen: ['true', 'false'], licht: false, t2: '0', t4: '0', t5: 1, kop: 'rgb(255, 255, 255)' };
+  const B = { knoppen: ['false', 'true'], licht: true, t2: '1', t4: '1', t5: 1, kop: 'rgb(32, 32, 32)' };
+  expect(await stand()).toEqual(A);
+  await page.locator('.hero-wissel button[data-set="b"]').tap();
+  expect(await stand(), 'tik op "Het cadeau": t2 en t4 wisselen, Carien (t5) blijft, kop inkt op salie').toEqual(B);
+  await page.locator('.hero .t2').tap();
+  expect(await stand(), 'tik op een foto wisselt terug').toEqual(A);
+  await page.locator('.hero-wissel button[data-set="b"]').focus();
+  await page.keyboard.press('Enter');
+  expect(await stand(), 'Enter op "Het cadeau"').toEqual(B);
+  await page.locator('.hero-wissel button[data-set="a"]').focus();
+  await page.keyboard.press(' ');
+  expect(await stand(), 'Spatie op "Het atelier"').toEqual(A);
+});
+
+test(`hero op ≤ 760 px: geen meebewegen of kantelen, ook niet met een muis (${BRIEF})`, async ({ browser }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'één keer is genoeg');
+  const ctx = await browser.newContext({ viewport: { width: 700, height: 900 } }); // muis, beweging aan
+  await ctx.addInitScript(INTRO_WEG);
+  const page = await ctx.newPage();
+  await page.goto('/');
+  await page.waitForTimeout(1500);
+  await page.mouse.move(100, 100); await page.mouse.move(650, 850, { steps: 6 });
+  await page.waitForTimeout(1200);
+  const m = await page.evaluate(() => [...document.querySelectorAll('.hero .tegel')].filter(t => getComputedStyle(t).display !== 'none')
+    .map(t => [t.style.transform, getComputedStyle(t).transform]));
+  expect(m.length).toBe(3);
+  for (const [stijl, berekend] of m) { expect(stijl).toBe(''); expect(berekend).toBe('none'); }
+  await ctx.close();
+});
+
+for (const { pad, naam } of [...PAGINAS, { pad: '/bestaat-niet-meer', naam: '404' }]) {
+  test(`${naam}: zijmarge 32 px op 390 px en niets breder dan het scherm op 360 px (${BRIEF})`, async ({ browser }, info) => {
+    test.skip(info.project.name !== 'mobiel', 'gemeten in Chromium');
+    for (const b of [390, 360]) {
+      const ctx = await browser.newContext({ viewport: { width: b, height: 800 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
+      await ctx.addInitScript(INTRO_WEG);
+      const page = await ctx.newPage();
+      await page.goto(pad);
+      await page.evaluate(() => document.fonts.ready);
+      const m = await page.evaluate(() => {
+        const zicht = e => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden' && !e.closest('.val, .sr-only, .skip, [aria-hidden="true"]'); };
+        const inRij = e => { for (let p = e.parentElement; p; p = p.parentElement) if (/(auto|scroll)/.test(getComputedStyle(p).overflowX)) return true; return false; };
+        // het begin van de tekst (de eerste letter van elke regel), buiten veegbare rijen
+        const links = [...document.querySelectorAll('main h1, main h2, main h3, main p, main li, main dt, main dd, main label')].filter(e => zicht(e) && !inRij(e) && e.textContent.trim())
+          .map(e => { const rg = document.createRange(); rg.selectNodeContents(e); const rs = [...rg.getClientRects()].filter(x => x.width); return rs.length ? Math.min(...rs.map(x => x.left)) : Infinity; });
+        return { breed: document.documentElement.scrollWidth - innerWidth, rand: getComputedStyle(document.querySelector('.site-footer .wrap')).paddingLeft, links: Math.min(...links) };
+      });
+      expect(m.breed, `${b} px: scrollWidth − innerWidth`).toBe(0);
+      if (b === 390) {
+        // min(32px, 8.2vw) = 31,98 px op 390 px: afgerond 32 px
+        expect(Math.abs(parseFloat(m.rand) - 32), `zijmarge (--rand) op 390 px is ${m.rand}`).toBeLessThanOrEqual(0.5);
+        expect(m.links, 'geen tekst dichter dan 32 px bij de rand').toBeGreaterThanOrEqual(31.5);
+      }
+      await ctx.close();
+    }
+  });
+}
+
+test(`kraamcadeauboxen op 360 px: prijs en aantal op één regel, de producten op één regel (${BRIEF}, criterium 10)`, async ({ browser }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'gemeten in Chromium');
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 740 }, hasTouch: true, isMobile: true, reducedMotion: 'reduce' });
+  await ctx.addInitScript(INTRO_WEG);
+  const page = await ctx.newPage();
+  await page.goto('/kraamcadeauboxen#formaten');
+  await page.evaluate(() => document.fonts.ready);
+  const m = await page.evaluate(() => [...document.querySelectorAll('#formaten .formaat')].map(k => {
+    const p = k.querySelector('.formaat-prijs').getBoundingClientRect(), a = k.querySelector('.formaat-aantal').getBoundingClientRect();
+    const rg = document.createRange(); rg.selectNodeContents(k.querySelector('.formaat-inhoud'));
+    return { naast: a.left >= p.right && a.top < p.bottom && a.bottom > p.top, regels: new Set([...rg.getClientRects()].filter(x => x.width).map(x => Math.round(x.top))).size };
+  }));
+  expect(m.length).toBe(4);
+  m.forEach((k, i) => { expect(k.naast, `kaart ${i + 1}: prijs en aantal op één regel`).toBe(true); expect(k.regels, `kaart ${i + 1}: producten op één regel`).toBe(1); });
+  await ctx.close();
+});
+
+test(`003 Inspiratie op 390 × 844: geen witte streep tussen de balk en de foto (${BRIEF}, criterium 9)`, async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'gemeten op 390 × 844');
+  await page.goto('/');
+  await wachtOpRust(page);
+  for (const afstand of [0, 20, 40, 56, 60, 70, 89, 120]) {
+    await page.evaluate(a => { const e = document.querySelector('#inspiratie'); window.scrollTo(0, e.getBoundingClientRect().top + scrollY - a); }, afstand);
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const m = await page.evaluate(() => { const b = document.querySelector('.balk'), f = document.querySelector('#inspiratie > img').getBoundingClientRect();
+      return { onder: b.getBoundingClientRect().bottom, label: b.querySelector('.sectie-label').textContent.replace(/\s+/g, ' ').trim(), foto: f.top, achtergrond: getComputedStyle(b).backgroundColor }; });
+    // neemt de balk de kleur van Inspiratie, dan raakt de foto de balk (geen strook van de laag ertussen)
+    if (m.label === '003 — Inspiratie') expect(m.foto, `${afstand} px: foto begint onder de balk met een streep (balk ${m.onder}, foto ${m.foto})`).toBeLessThanOrEqual(m.onder + 0.5);
+    else expect(m.achtergrond, `${afstand} px: de balk heeft de kleur van de sectie erboven`).not.toBe('rgb(188, 133, 101)');
+  }
+});
