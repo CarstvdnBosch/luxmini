@@ -255,8 +255,11 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .site-footer { background: var(--inkt); color: #E0E0E0; font-size: 16px; line-height: 1.7; } /* min. 16 px (mobiele regel 2) */
 .site-footer .wrap { padding-top: 48px; padding-bottom: 48px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; }
 .site-footer .naam { font-family: var(--serif); font-size: 22px; color: var(--wit); }
-.site-footer nav { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+/* footerlinks 16 px (brief 2026-11-07: leesbaar voor (groot)ouders); de directe kanalen als drie regels onder elkaar */
+.site-footer nav { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 16px; }
+.site-footer .footer-kanalen { flex-direction: column; gap: 0; }
 .site-footer a { color: var(--wit); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px; }
 
 /* ---------- Eenvoudige tekstpagina's ---------- */
 .pagina { min-height: 70vh; padding-top: 180px; padding-bottom: 120px; }
@@ -330,7 +333,7 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 @media (max-width: 760px) {
   .logo img { height: 36px; }
   .menu { font-size: 11px; letter-spacing: .18em; }
-  .caps { letter-spacing: .4em; font-size: 12px; }
+  .caps { letter-spacing: .4em; font-size: 13px; } /* decoratief label: min. 13 px (principes.md, Mobiel regel 2) */
   .balk .menu { display: none; }
   .balk .wrap { min-height: 56px; }
   /* balklabel op één regel naast het logo, ook '005 — Kraamcadeauboxen' (brief homepage per product) */
@@ -1143,6 +1146,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
 /* ---------- Prematuurkleding en Babynest: prijsrichtlijn als eigen, compact blok ---------- */
 .prijs-sectie .sectie { gap: 24px; }
 .prijs-sectie .prijs { margin: 0; }
+/* zolang er geen prijs is: een korte zin in lopende tekst met de pijl-link eronder (brief 2026-11-07, A) */
+.prijs-sectie .prijs-zin + .pijl { margin-top: -16px; }
 /* anker voor oude adressen (/producten#prematuur, #kraamcadeaubox): bovenaan het blok, neemt geen ruimte in */
 .anker { position: absolute; top: 0; left: 0; width: 1px; height: 1px; }
 .categorie { position: relative; }
@@ -1394,3 +1399,29 @@ html:not(.js) img[data-src] { display: none; }
 /* lege fotovakken (nog niet geladen) krijgen een lichte tint die bij de sectie past (ronde 9) */
 #in-de-box .product img, #in-de-box .stof img { background-color: rgba(224,230,231,.6); }
 #themas .thema-tegel img { background-color: rgba(255,255,255,.35); }
+
+/* ---------- Mobiel: leesbare letters en compacte formaten (brief 2026-11-07, D en E; principes.md, Mobiel regel 2) ----------
+   Alles wat je aantikt of moet lezen om iets te bedienen is op mobiel minimaal 16 px. Decoratieve labels ("001 —", .caps)
+   blijven klein en ruim gespatieerd (min. 13 px). Desktop en tablet blijven gelijk. */
+@media (max-width: 760px) {
+  .pijl { font-size: 16px; }
+  .js .hero-wissel { font-size: 16px; letter-spacing: .12em; }
+  .hero-wissel span { padding: 0 .2em 0 .32em; }
+  .slider-tab { font-size: 16px; letter-spacing: .04em; }
+  .slider-tab span { margin-right: -.04em; padding-right: .04em; }
+  .slider-tab span::after { right: .04em; }
+  .formulier label, .formulier .keuzes > legend { font-size: 16px; font-weight: 600; letter-spacing: normal; text-transform: none; }
+  .menu-kolom { font-size: 17px; }
+
+  /* 001 Kies je formaat: compacte kaarten; prijs en aantal op één regel, daaronder de producten op één regel
+     ("In deze box: …" of "plus: …", zonder herhaalde vinklijst) en de pijl-link. Het takje en de korte omschrijving vallen weg. */
+  .formaten { gap: 12px; }
+  .formaat { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 16px; padding: 18px 20px 8px; }
+  .formaat .takje, .formaat-regel, .formaat-kop-lang, .formaat-lijst .vink { display: none; }
+  .formaat-prijs { font-size: 40px; }
+  .formaat-aantal { margin: 0; }
+  .formaat-inhoud { grid-column: 1 / -1; margin-top: 10px; font-size: 16px; line-height: 1.5; }
+  .formaat-kop, .formaat-lijst, .formaat-lijst li { display: inline; margin: 0; padding: 0; border: 0; font-weight: 400; }
+  .formaat-lijst li + li::before { content: ", "; }
+  .formaat .pijl { grid-column: 1 / -1; grid-row: 3; margin-top: 2px; justify-self: start; }
+}

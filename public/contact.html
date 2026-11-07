@@ -106,7 +106,9 @@
 
 <!-- Fotokop over de volle hoogte (zoals Stock /contact): donkere foto, witte tekst, direct de twee belangrijkste wegen -->
 <section class="contact-kop" data-label="<span>—</span> Contact">
-  <div class="contact-kop-foto"><img src="assets/img/home-hero-handwerk.jpg" srcset="assets/img/home-hero-handwerk-800.jpg 800w, assets/img/home-hero-handwerk.jpg 1800w" sizes="100vw" width="1800" height="1012" fetchpriority="high" alt="" style="object-position: 50% 40%"></div>
+  <!-- kopfoto: op smalle telefoons een staande uitsnede (530 × 1012, uit home-hero-handwerk.jpg), daarboven het hele bestand (1800 × 1012);
+       de kop is hoger dan breed of minstens 640 px hoog, dus de 800-versie zou vergroot worden (object-fit: cover; brief 2026-11-07, B) -->
+  <div class="contact-kop-foto"><picture><source media="(max-width: 530px)" srcset="assets/img/home-hero-handwerk-staand-530.jpg" width="530" height="1012"><img src="assets/img/home-hero-handwerk.jpg" width="1800" height="1012" fetchpriority="high" alt="" style="object-position: 50% 40%"></picture></div>
   <div class="contact-kop-tekst">
     <h1 class="caps">Contact</h1>
     <!-- LET OP: wacht op akkoord Carien -->
@@ -235,6 +237,11 @@
       <div>Carien Geurts · Sperwerstraat 10, 6035 GH Ospel</div>
       <div>KvK 78234654 · © <span data-jaar>2026</span></div>
     </div>
+    <nav class="footer-kanalen" aria-label="Direct contact">
+      <a href="https://wa.me/31643791618">WhatsApp</a>
+      <a href="tel:+31643791618">06 – 43 79 16 18</a>
+      <a href="mailto:info.luxmini@gmail.com">info.LUXmini@gmail.com</a>
+    </nav>
     <nav aria-label="Footer">
       <a href="https://www.instagram.com/Luxmini2020/">Instagram</a>
       <a href="https://nl-nl.facebook.com/luxmini2020/">Facebook</a>
