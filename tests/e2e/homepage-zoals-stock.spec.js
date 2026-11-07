@@ -324,12 +324,11 @@ test('F1 hero: meebewegen zoals Stock (absolute muispositie /20 /15 /10, kanteli
   await ctx.close();
 });
 
-test('F2: geen losse scheidingslijn in 001 — Producten op touch; met een muis alleen tussen de kolommen', async ({ page }, info) => {
+test('F2: geen witte scheidingslijn in 001 — Producten (ook niet tussen de kolommen, feedback Carst 7 nov.)', async ({ page }) => {
   await page.goto('/');
   const lijnen = await page.evaluate(() => { const k = document.querySelector('#producten .kern-kolom:nth-child(2)');
     return ['::before', '::after'].map(p => getComputedStyle(k, p).display); });
-  if (info.project.name === 'desktop') expect(lijnen).toEqual(['block', 'block']);
-  else expect(lijnen, 'op touch geen lijnen die los door foto en tekst lopen').toEqual(['none', 'none']);
+  expect(lijnen, 'geen witte lijnen tussen de kolommen').toEqual(['none', 'none']);
 });
 
 test('F3: label 002 — Handwerk en vier namen waarin elk woord één keer voorkomt', async ({ page }) => {
