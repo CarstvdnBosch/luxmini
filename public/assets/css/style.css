@@ -556,9 +556,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .kern-kolom { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: calc(var(--ritme) + 48px) 24px calc(var(--ritme) / 2) clamp(24px, calc(var(--u) * 8.333), 120px); }
 .kolom-prem { background: var(--oker); }
 .kolom-nest { background: var(--mauve); }
-/* witte lijnen van 1 px, alleen tussen de kolommen, verticaal in het midden */
-.kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { content: ""; position: absolute; top: 50%; width: 1px; height: calc(var(--u) * 18); background: var(--wit); transform: translateY(-50%); z-index: 2; pointer-events: none; }
-.kern-kolom:nth-child(2)::before { left: 0; } .kern-kolom:nth-child(2)::after { right: 0; }
+/* geen witte scheidingslijnen tussen de kolommen (feedback Carst 7 nov. 16:47) */
+.kern-kolom::before, .kern-kolom::after { display: none; }
 .kern-tekst { width: min(280px, 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 20px; color: var(--inkt); }
 .kern-tekst .nr { font-family: var(--serif); font-size: 16px; line-height: 1; }
 .kern-tekst .kop-m { color: inherit; hyphens: manual; }
@@ -609,7 +608,6 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .kern-kolommen { grid-template-columns: minmax(0, 1fr); }
   .kern-kolom { padding: 40px var(--rand) 48px; }
   .kolom-box { padding-top: 32px; }
-  .kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { display: none; }
   .kern-beeld { aspect-ratio: 4 / 3; margin-bottom: 24px; }
   .nest-lijst { align-self: center; margin-bottom: 16px; }
   .kern-tekst { width: 100%; }
@@ -1319,23 +1317,13 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
   #technieken .hoverlijst.sferen .klein-beeld::after { background: rgba(60,40,30,.55); } /* ronde 5: ook de kleine foto 55%, zodat de witte naam erop minstens 3:1 haalt */
 }
 
-/* ---------- Feedback Carst 6 nov. 14:28 (F2): geen losse witte lijn in 001 — Producten ----------
-   De scheidingslijnen horen alleen tussen de kolommen, verticaal in het midden van de kolommen in rust (desktop met muis).
-   Op touch staan de kolommen bovenaan uitgelijnd en liep de lijn los door foto en tekst: daar geen lijn.
-   Ligt er bij aanwijzen een foto in een kolom, dan vervagen de lijnen (geen witte streep langs de foto). */
-@media (hover: none), (pointer: coarse), (max-width: 760px) {
-  .kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { display: none; }
-}
+/* ---------- 001 — Producten: geen witte lijnen (F2, feedback Carst 6 nov. 14:28 en 7 nov. 16:47) ---------- */
 @media (hover: hover) and (pointer: fine) and (min-width: 761px) {
-  .kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { transition: opacity .6s var(--rustig); }
-  .kern-kolommen:has(.kolom-box:hover, .kolom-box:focus-within, .kolom-prem:hover, .kolom-prem:focus-within) .kern-kolom:nth-child(2)::before,
-  .kern-kolommen:has(.kolom-box:hover, .kolom-box:focus-within, .kolom-prem:hover, .kolom-prem:focus-within) .kern-kolom:nth-child(2)::after { opacity: 0; }
   /* het label 001 kleurt even rustig mee als de kop (de opkom-overgang overschreef de kleurovergang) */
   .js .kern-label.opkomen, .js .kern-tekst .pijl.opkomen { transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1), color .6s var(--rustig); transition-delay: 0s !important; }
 }
 /* Handwerk (002): de pijl-link "Zo personaliseert Carien" ligt boven de foto's die bij aanwijzen verschijnen */
 #technieken .sectie > .pijl { position: relative; z-index: 2; }
-@media (prefers-reduced-motion: reduce) { .kern-kolom:nth-child(2)::before, .kern-kolom:nth-child(2)::after { transition: none; } }
 
 /* ---------- Kraamcadeauboxen (feedback Carst 6 nov. 14:28, F4) ----------
    001 formaten op salie, 002 producten en stoffen samen, 003 de thema's groot in sets van drie (scroll-snap per set,
