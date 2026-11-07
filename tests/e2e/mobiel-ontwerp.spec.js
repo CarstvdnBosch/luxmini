@@ -215,7 +215,8 @@ const meetHero = (page) => page.evaluate(() => {
   for (const e of tekst) for (const t of tegels) if (gat(t.getBoundingClientRect(), e.getBoundingClientRect()) < 0) overFoto.push(`${e.className.baseVal ?? e.className} over ${[...t.classList].join('.')}`);
   const q = document.querySelector('.hero-kleur .quote').getBoundingClientRect();
   const rand = parseFloat(getComputedStyle(document.querySelector('.site-footer .wrap')).paddingLeft);
-  return { kopGat, overFoto, breed: document.documentElement.scrollWidth - innerWidth, quote: [q.left, q.right], vw: innerWidth, rand, tegels: tegels.length };
+  const tabjes = [...hero.querySelectorAll('.hero-wissel button')].map(k => { const c = getComputedStyle(k); return { tekst: k.textContent.trim(), px: parseFloat(c.fontSize), spatie: parseFloat(c.letterSpacing), h: k.getBoundingClientRect().height }; });
+  return { tabjes, kopGat, overFoto, breed: document.documentElement.scrollWidth - innerWidth, quote: [q.left, q.right], vw: innerWidth, rand, tegels: tegels.length };
 });
 
 async function zetSetB(page, aanraken) {
@@ -244,6 +245,12 @@ for (const s of HERO_SCHERMEN) {
       expect(m.kopGat, `set ${set}: ruimte tussen de kop en de dichtstbijzijnde foto (min. ${minGat} px)`).toBeGreaterThanOrEqual(minGat);
       expect(m.overFoto, `set ${set}: tekst van de hero over een foto`).toEqual([]);
       expect(m.tegels, 'aantal zichtbare foto\'s').toBe(s.tablet ? 6 : 3);
+      // tabjes op mobiel en liggend: 16 px, letterspatiëring .12em, 44 px hoog (ontwerpcriterium 7, Mobiel-regel 2; ontwerpgate ronde 1)
+      if (!s.tablet && !s.tekst) for (const k of m.tabjes) {
+        expect(k.px, `tabje "${k.tekst}" in px`).toBe(16);
+        expect(k.spatie / k.px, `tabje "${k.tekst}": letterspatiëring in em`).toBeCloseTo(0.12, 2);
+        expect(k.h, `tabje "${k.tekst}" hoogte`).toBeGreaterThanOrEqual(44);
+      }
       // de quote valt binnen de zijmarges (op tablet binnen het scherm)
       const marge = s.tablet ? 0 : m.rand;
       expect(m.quote[0], 'quote links binnen de marge').toBeGreaterThanOrEqual(marge - 1);
@@ -345,9 +352,10 @@ test(`hero op 390 × 844: de foto's van t1, t3 en t6 worden niet opgehaald, set 
     // hetzelfde bestand kan ook buiten de hero staan (ig-babynest.jpg in het drieluik, lazy): dan haalt dat blok het op, niet de hero
     const elders = new Set([...document.querySelectorAll('img')].filter(i => !i.closest('.hero')).flatMap(bestanden));
     const setB = [...document.querySelectorAll('.hero img.set-b')].map(i => [[...i.closest('.tegel').classList].find(k => /^t\d$/.test(k)), !i.hasAttribute('data-src')]);
-    return { verborgen: [...new Set(verborgen)].filter(f => !elders.has(f)), setB, lazy: [...document.querySelectorAll('.hero .t1 img, .hero .t3 img.set-a, .hero .t6 img.set-a')].map(i => i.loading) };
+    // t1, t3 en t6 (set A): op mobiel kiest <picture> een leeg plaatje (data:), op desktop en tablet het echte bestand (niet lazy: daar in het eerste scherm)
+    return { verborgen: [...new Set(verborgen)].filter(f => !elders.has(f)), setB, leeg: [...document.querySelectorAll('.hero .t1 img, .hero .t3 img.set-a, .hero .t6 img.set-a')].map(i => i.currentSrc.startsWith('data:')) };
   });
-  expect(m.lazy, 't1, t3 en t6 hebben loading="lazy"').toEqual(['lazy', 'lazy', 'lazy']);
+  expect(m.leeg, 't1, t3 en t6 tonen op mobiel het lege plaatje (geen netwerkverzoek)').toEqual([true, true, true]);
   expect(m.verborgen.length, 'er zijn bestanden van t1, t3 en t6 om te toetsen').toBeGreaterThan(0);
   expect(m.verborgen.filter(f => opgehaald.has(f)), 'opgehaalde bestanden van t1, t3 en t6').toEqual([]);
   expect(m.setB, 'set B alleen voor de zichtbare tegels').toEqual([['t2', true], ['t3', false], ['t4', true], ['t6', false]]);

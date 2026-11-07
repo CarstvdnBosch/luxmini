@@ -1435,7 +1435,8 @@ html:not(.js) img[data-src] { display: none; }
   .hero .kop-xl { font-size: min(42px, 10.25vw); }
   .hero .kop-xl br.breed { display: none; }
   .hero-tekst .caps { margin: 0; padding-left: .4em; } /* letterspatiëring na de laatste letter: optisch in het midden */
-  .js .hero-wissel { margin: 0; justify-content: center; }
+  .js .hero-wissel { margin: 0; justify-content: center; font-size: 16px; letter-spacing: .12em; } /* zoals PR #39, ook liggend (ontwerpgate ronde 1) */
+  .hero-wissel span { padding: 0 .2em 0 .32em; }
   .hero-cirkel { order: 2; position: relative; left: auto; top: auto; flex: none; width: 136px; margin-top: 40px; z-index: 1; }
   .badge { order: 3; position: relative; left: auto; right: auto; top: auto; bottom: auto; flex: none; width: 96px; margin: -116px 0 20px; } /* midden in de ring van 136 px */
   .hero-kleur .intro.kort { max-width: 520px; padding: 40px var(--rand) var(--ritme); gap: 24px; }
@@ -1444,4 +1445,5 @@ html:not(.js) img[data-src] { display: none; }
 /* telefoon liggend: de header ligt over de hero (vanaf 761 px), dus de fotogroep begint 32 px onder de header */
 @media (min-width: 761px) and (hover: none) and (pointer: coarse) and (max-height: 500px) {
   .hero { padding-top: 136px; }
+  .hero-fotos { width: min(100%, 70vh * 390 / 352); } /* fotogroep ca. 70 % van de schermhoogte, zodat de kop dichter bij het eerste scherm komt */
 }
