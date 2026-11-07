@@ -54,7 +54,7 @@ Resultaten staan in `rapport/` (niet in git): `playwright-html/index.html` (met 
 
 1. Bij elke pull request zet GitHub het **validatierapport** als reactie in de pull request (en als bijlage, ook in HTML). Het rapport geeft een **advies**: GO als alle blokkerende gates groen zijn én controleur en ontwerper akkoord gaven, anders NO-GO met de reden.
 2. Carst bekijkt het rapport en de **preview-link**, en loopt de checklist in het rapport langs (telefoon, laptop, teksten, prijzen, contactlinks, visuele verschillen).
-3. **GO**, op een van twee manieren:
+3. **GO**, op een van drie manieren:
    - Carst zet het label **`GO`**; of
    - Carst zegt in de chat met Claude uitdrukkelijk **"Go"** voor die pull request; Claude zet dan namens hem het label `GO` en legt in een reactie vast dat het GO uit de chat komt (besluit Carst 7 nov.); of
    - Carst plaatst een reactie met precies **`GO`** in de pull request (handig op de telefoon). Hoofdletters en spaties of witregels eromheen tellen niet; `GO!`, `GO graag` of `ok GO` tellen niet. De workflow zet dan zelf de status op groen en het label `GO`.
