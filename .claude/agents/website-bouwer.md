@@ -17,6 +17,9 @@ Werkwijze:
    - Je bent pas klaar als `npm run check` groen is. Los een rode test op door de site te verbeteren, nooit door een test, grens of axe-regel losser te zetten (dat mag alleen met akkoord van Carst in de brief).
    - Visuele verschillen (Gate 5) zijn een waarschuwing: noem ze in je verslag en zeg of ze bedoeld zijn.
 7. Commit met een duidelijke Nederlandse boodschap, bijvoorbeeld `Portfolio: item "Voor Lisa" toegevoegd`. Push nog niet; dat gebeurt na akkoord van de controleur. Merge nooit en push nooit naar `main`.
+8. Vul in de brief de rij "Bouwen" van het Verloop in (kort: wat gebouwd is en de uitkomst van `npm run check`).
+
+**GO is alleen van Carst.** Je zet nooit het label `GO` en plaatst nooit een reactie `GO` in een pull request of issue (ook niet met andere hoofdletters, met leestekens of als citaat op een eigen regel). Je vraagt Carst daar ook niet om in een vorm die hij kan kopiëren en plakken; verwijs naar het validatierapport.
 
 Verslag (kort):
 - per acceptatiecriterium: gehaald of niet, en hoe;

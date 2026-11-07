@@ -60,22 +60,75 @@ jobs:
   kwaliteit:
     name: "Gate 4 · Kwaliteit"
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45  # browserinstallatie max. 18 min (2 × 8) + tests + Lighthouse met mogelijke TBT-herkansing
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm ci || npm install
-      - name: Chromium voor Playwright
-        run: npx playwright install --with-deps chromium webkit
+      # Browsers uit de cache (sleutel: besturingssysteem + Playwright-versie uit node_modules, niet hard
+      # in de workflow). Systeempakketten staan niet in de cache: bij een treffer alleen install-deps.
+      - name: Playwright-versie bepalen
+        id: pw
+        run: echo "versie=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - name: Browsers uit de cache halen
+        id: pw-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.versie }}-chromium-webkit
+      - name: Browsers installeren (Chromium en WebKit)
+        id: browsers
+        # twee pogingen van hooguit 8 minuten (besluit 7 nov.); hangt de eerste, dan stopt timeout hem
+        timeout-minutes: 18
+        env:
+          CACHE_HIT: ${{ steps.pw-cache.outputs.cache-hit }}
+        run: |
+          if [ "$CACHE_HIT" = "true" ]; then
+            echo "Browsers uit de cache; alleen systeempakketten installeren."
+            installeer() { npx playwright install-deps chromium webkit; }
+          else
+            installeer() { npx playwright install --with-deps chromium webkit; }
+          fi
+          export -f installeer
+          timeout -k 30 480 bash -c installeer || {
+            echo "::warning::Browserinstallatie mislukt of duurde langer dan 8 minuten; tweede en laatste poging."
+            timeout -k 30 480 bash -c installeer
+          }
+      - name: Browsers in de cache bewaren
+        if: steps.pw-cache.outputs.cache-hit != 'true' && steps.browsers.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.versie }}-chromium-webkit
       - name: Toegankelijkheid, SEO, veiligheid en kernpaden (Playwright Test)
         id: e2e
         run: npx playwright test
       - name: Snelheid en kwaliteit per pagina (Lighthouse CI)
         id: lighthouse
         if: always()
-        run: npx lhci autorun
+        # Eén herkansing, alleen voor total-blocking-time (TBT): die meting wisselt op de GitHub-runner.
+        # Faalt de toets en staat in .lighthouseci/assertion-results.json als fout (level "error")
+        # uitsluitend auditId "total-blocking-time", dan wordt de eerste meting bewaard in
+        # rapport/lighthouse-poging-1/ en meet lhci autorun precies één keer opnieuw (weer 3 runs,
+        # median-run, zelfde grenzen uit lighthouserc.cjs); de tweede uitslag telt. Bij elke andere fout
+        # (prestatiescore, LCP, CLS, toegankelijkheid, SEO, gewicht …) of als er geen uitslag is: geen herkansing.
+        run: |
+          set +e
+          npx lhci autorun; status=$?
+          if [ "$status" -ne 0 ] && [ -f .lighthouseci/assertion-results.json ] && jq -e \
+               '[.[] | select(.level == "error" and (.passed | not))] as $f | ($f | length) > 0 and ($f | all(.auditId == "total-blocking-time"))' \
+               .lighthouseci/assertion-results.json > /dev/null; then
+            echo "::warning::Lighthouse faalde alleen op total-blocking-time; precies één herkansing (de tweede uitslag telt)."
+            echo "### Lighthouse: alleen TBT te hoog, één herkansing gedaan (eerste meting in rapport/lighthouse-poging-1/)" >> "$GITHUB_STEP_SUMMARY"
+            mkdir -p rapport/lighthouse-poging-1
+            cp -r .lighthouseci rapport/lighthouse-poging-1/lighthouseci
+            if [ -d rapport/lighthouse ]; then mv rapport/lighthouse rapport/lighthouse-poging-1/lighthouse; fi
+            rm -rf .lighthouseci
+            npx lhci autorun; status=$?
+          fi
+          exit "$status"
       - name: Resultaten bewaren
         if: always()
         uses: actions/upload-artifact@v4
@@ -90,18 +143,50 @@ jobs:
   visueel:
     name: "Gate 5 · Visueel (waarschuwing)"
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35  # browserinstallatie max. 18 min (2 × 8) + schermvergelijking
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm ci || npm install
-      - name: Browsers installeren
-        # niet blokkerend: hangt de installatie (gezien bij WebKit), dan stopt hij na 10 minuten zonder de run te laten mislukken
+      # Browsers uit de cache (sleutel: besturingssysteem + Playwright-versie uit node_modules, niet hard
+      # in de workflow). Systeempakketten staan niet in de cache: bij een treffer alleen install-deps.
+      - name: Playwright-versie bepalen
+        id: pw
+        run: echo "versie=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - name: Browsers uit de cache halen
+        id: pw-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.versie }}-chromium-webkit
+      - name: Browsers installeren (Chromium en WebKit)
+        id: browsers
+        # niet blokkerend: lukt de installatie ook na de herkansing niet, dan mislukt de run niet
         continue-on-error: true
-        timeout-minutes: 10
-        run: npx playwright install --with-deps chromium webkit
+        # twee pogingen van hooguit 8 minuten (besluit 7 nov.); hangt de eerste, dan stopt timeout hem
+        timeout-minutes: 18
+        env:
+          CACHE_HIT: ${{ steps.pw-cache.outputs.cache-hit }}
+        run: |
+          if [ "$CACHE_HIT" = "true" ]; then
+            echo "Browsers uit de cache; alleen systeempakketten installeren."
+            installeer() { npx playwright install-deps chromium webkit; }
+          else
+            installeer() { npx playwright install --with-deps chromium webkit; }
+          fi
+          export -f installeer
+          timeout -k 30 480 bash -c installeer || {
+            echo "::warning::Browserinstallatie mislukt of duurde langer dan 8 minuten; tweede en laatste poging."
+            timeout -k 30 480 bash -c installeer
+          }
+      - name: Browsers in de cache bewaren
+        if: steps.pw-cache.outputs.cache-hit != 'true' && steps.browsers.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.versie }}-chromium-webkit
       - name: Schermen vergelijken met de goedgekeurde basis
         id: vergelijk
         continue-on-error: true   # niet blokkerend: verschillen gaan naar het validatierapport

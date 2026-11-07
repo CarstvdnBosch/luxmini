@@ -188,8 +188,8 @@ for (const c of [
 md.push('');
 md.push('## 5. Jouw besluit');
 md.push('');
-md.push('- **GO:** zet het label **`GO`** op deze pull request. De verplichte controle "GO · Akkoord Carst" wordt groen; daarna kun jij mergen (of Claude op jouw uitdrukkelijke verzoek). Cloudflare zet live, de rooktest controleert.');
-md.push('- **NO-GO:** zet geen label en schrijf in een reactie wat er anders moet. Elke nieuwe commit haalt een eerder `GO` automatisch weg, zodat je altijd de laatste versie goedkeurt.');
+md.push('- **GO:** zet het label **`GO`** op deze pull request, of plaats een reactie met alleen het woord GO (hoofdletters maken niet uit; werkt zodra `go-nogo.yml` met de reactievariant op `main` staat). Alleen jouw account telt. De verplichte controle "GO · Akkoord Carst" wordt groen; daarna kun jij mergen (of Claude op jouw uitdrukkelijke verzoek). Cloudflare zet live, de rooktest controleert.');
+md.push('- **NO-GO:** geen label en geen GO-reactie; schrijf in een reactie wat er anders moet. Elke nieuwe commit haalt een eerder GO automatisch weg (ook een GO via een reactie), zodat je altijd de laatste versie goedkeurt.');
 md.push('');
 
 await mkdir('rapport', { recursive: true });

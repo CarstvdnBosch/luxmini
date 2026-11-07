@@ -4,7 +4,9 @@ Elke aanpassing aan luxmini.nl, groot of klein, doorloopt dezelfde vijf fasen. A
 
 ```mermaid
 flowchart LR
-  W([Wens]) --> P[1 · Plannen<br/>website-planner]
+  W([Wens als issue<br/>user story of journey]) --> I{Intake<br/>hoofdsessie}
+  I -->|gaten of vragen| W
+  I --> P[1 · Plannen<br/>website-planner]
   P -.->|zichtbare wijziging| O1[Ontwerprichting<br/>website-ontwerper]
   O1 -.-> P
   P -->|brief met<br/>acceptatiecriteria| B[2 · Bouwen<br/>website-bouwer]
@@ -19,10 +21,18 @@ flowchart LR
   G5 --> VR[/Validatierapport<br/>+ preview-link/]
   VR --> M{GO / NO-GO<br/>Carst}
   M -->|NO-GO| B
-  M -->|GO-label, merge naar main| L[5 · Live: Cloudflare<br/>Workers Builds]
+  M -->|GO: label of reactie,<br/>merge naar main| L[5 · Live: Cloudflare<br/>Workers Builds]
   L --> G3[[Gate 3 · rooktest live]]
   G3 -->|mislukt| RB[Terugdraaien in<br/>Cloudflare-dashboard]
 ```
+
+## Intake (vóór fase 1)
+
+Elke wens begint als **issue** in GitHub, met het formulier **Wens (user story)** of **Bezoekerspad (user journey)** (`.github/ISSUE_TEMPLATE/`; lege issues staan uit). Het formulier vraagt: Wie, Wil, Zodat, Klaar als, Nu niet, Prioriteit (must / should / could) en Onderdeel; een bezoekerspad ook de stappen van de bezoeker.
+
+1. De **hoofdsessie** (orchestrator) leest het issue na op gaten en tegenstrijdigheden, ook met `CLAUDE.md` (ontwerp- en inhoudsregels, eerdere besluiten van Carst).
+2. Ze geeft kort terug wat ze van de vraag vindt (wat duidelijk is, wat ontbreekt of botst, een voorstel) **vóór** de planner start.
+3. **Eén story per pull request.** De beschrijving van de pull request bevat `Closes #<nummer>`, zodat het issue sluit bij de merge (`.github/pull_request_template.md`).
 
 ## De fasen
 
@@ -30,9 +40,13 @@ flowchart LR
 |---|---|---|---|
 | 1 · Plannen | `website-planner` (+ `website-ontwerper` bij zichtbare wijzigingen) | Maakt van de wens een korte brief met toetsbare acceptatiecriteria en open vragen; de ontwerper levert de tekst voor de ontwerprichting en ontwerpcriteria, de planner zet die erin | `docs/wijzigingen/<datum>-<naam>.md` |
 | 2 · Bouwen | `website-bouwer` | Voert de brief uit op een eigen branch; klaar als `npm run check` groen is (harness, zie `docs/kwaliteit.md`) | Commit op `wijziging/<naam>` |
-| 3 · Controleren | `website-controleur` | Toetst onafhankelijk tegen de brief en `CLAUDE.md`: werking, inhoud, toegankelijkheid, techniek; past zelf niets aan | AKKOORD of verbeterpunten |
-| 4 · Ontwerpgate | `website-ontwerper` (senior UX/UI) | Beoordeelt de schermen op desktop, tablet en mobiel tegen `docs/ontwerp/principes.md`, de ontwerpregels in `CLAUDE.md` en de ontwerpcriteria in de brief; past zelf niets aan | ONTWERP AKKOORD of verbeterpunten |
-| 5 · Release | Carst + Cloudflare | Validatierapport en preview beoordelen: **GO** (label `GO`) of **NO-GO**; na GO mergen; Cloudflare Workers Builds zet live, GitHub draait de rooktest | Live site + rooktest |
+| 3 · Controleren | `website-controleur` | Toetst onafhankelijk tegen de brief en `CLAUDE.md`: werking, inhoud, toegankelijkheid, techniek; past zelf niets aan | AKKOORD of verbeterpunten, met een regel `Verloop: …` |
+| 4 · Ontwerpgate | `website-ontwerper` (senior UX/UI) | Beoordeelt de schermen op desktop, tablet en mobiel tegen `docs/ontwerp/principes.md`, de ontwerpregels in `CLAUDE.md` en de ontwerpcriteria in de brief; past zelf niets aan | ONTWERP AKKOORD of verbeterpunten, met een regel `Verloop: …` |
+| 5 · Release | Carst + Cloudflare | Validatierapport en preview beoordelen: **GO** (label `GO` of reactie `GO` in de pull request) of **NO-GO**; na GO mergen; Cloudflare Workers Builds zet live, GitHub draait de rooktest | Live site + rooktest |
+
+**Verloop in de brief.** Elke brief eindigt met een tabel Verloop. De bouwer vult de rij "Bouwen". De controleur en de ontwerper passen zelf geen bestanden aan: ze eindigen hun verslag met één vaste regel (`Verloop: AKKOORD — …`, `Verloop: NIET AKKOORD — …`, `Verloop: ONTWERP AKKOORD — …`, `Verloop: ONTWERP NIET AKKOORD — …` of `Verloop: n.v.t. — alleen techniek`). De **hoofdsessie** (orchestrator) zet die tekst letterlijk in de rijen "Controleren" en "Ontwerpgate" en commit dat op de branch. Het validatierapport leest die rijen (AKKOORD zonder NIET AKKOORD, of n.v.t.).
+
+**GO is alleen van Carst**: het label `GO` of een reactie `GO` van zijn account in de pull request (zie `docs/kwaliteit.md`). Agents zetten nooit het label en plaatsen nooit zo'n reactie.
 
 Starten doe je met één opdracht in Claude Code:
 
@@ -49,7 +63,7 @@ Starten doe je met één opdracht in Claude Code:
 | 4 · Kwaliteit | GitHub Actions, elke pull request | Toegankelijkheid (axe, WCAG 2.1 AA), SEO, beveiligingsheaders, links, kernpaden (Playwright Test) en snelheid (Lighthouse CI); details in `docs/kwaliteit.md` | Merge-knop blijft geblokkeerd |
 | 5 · Visueel | GitHub Actions, elke pull request | Schermen vergeleken met de goedgekeurde basis | Alleen waarschuwing, in het rapport |
 | Validatierapport | GitHub Actions, elke pull request | Alle gates + oordelen controleur/ontwerper + open punten + checklist, als reactie in de pull request | — |
-| GO · Akkoord Carst | Label `GO` op de pull request | Carst heeft rapport en preview beoordeeld; vervalt bij elke nieuwe commit | Merge-knop blijft geblokkeerd |
+| GO · Akkoord Carst | Label `GO` of reactie `GO` van de eigenaar in de pull request (`go-nogo.yml`) | Carst heeft rapport en preview beoordeeld; vervalt bij elke nieuwe commit (label weg, status terug op wachten) | Merge-knop blijft geblokkeerd |
 | 3 · Rooktest | GitHub Actions, na elke merge en dagelijks | Pagina's, foto's, oude Wix-adressen, 404-pagina en formulier-endpoint op de echte site (`scripts/rooktest.sh`) | Rood → terugdraaien in Cloudflare |
 
 ## Definition of Done
@@ -64,7 +78,7 @@ Een wijziging is pas klaar als:
 
 ## Rollen en rechten
 
-- **Agents** mogen lezen, bouwen, testen en een branch pushen. Ze mergen nooit naar `main` en zetten niets live. Dat is technisch afgedwongen: een GitHub-ruleset op `main` staat alleen pull requests met groene gates toe (zonder uitzonderingen), en `.claude/settings.json` verbiedt `wrangler deploy`, `wrangler rollback`, `git merge`, `gh pr merge` en pushen naar `main`. Er bestaat geen Cloudflare-token: alleen Cloudflare Workers Builds kan live zetten, en dat gebeurt pas na een merge.
+- **Agents** mogen lezen, bouwen, testen en een branch pushen. Ze mergen nooit naar `main`, geven nooit GO (geen label `GO`, geen reactie `GO`) en zetten niets live. Dat is technisch afgedwongen: een GitHub-ruleset op `main` staat alleen pull requests met groene gates toe (zonder uitzonderingen), en `.claude/settings.json` verbiedt `wrangler deploy`, `wrangler rollback`, `git merge`, `gh pr merge` en pushen naar `main`. Er bestaat geen Cloudflare-token: alleen Cloudflare Workers Builds kan live zetten, en dat gebeurt pas na een merge.
 - **De controleur** en **de ontwerper** kunnen alleen lezen; ze beoordelen hun eigen werk dus nooit. De controleur kijkt of het werkt en klopt, de ontwerper of het duidelijk, leesbaar en mooi is voor de bezoeker.
 - **Ontwerpkaders:** `CLAUDE.md` (stijl) en `docs/ontwerp/principes.md` (UX). Een volledige nulmeting staat in `docs/ontwerp/review-2026-11-02.md`; die dient als ontwerpbacklog.
 - **Een mens** (jij of Carien) bekijkt de preview en merget. Inhoud zoals quotes, prijzen en teksten over Carien wordt pas live gezet na haar akkoord.
