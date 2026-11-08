@@ -35,8 +35,28 @@ test('assets.run_worker_first bevat /api/* (formulier bereikt de Worker, geen 40
   assert.ok(rwf.includes('/api/*'), 'run_worker_first moet "/api/*" bevatten');
 });
 
-test('alleen /api/* gaat eerst naar de Worker (de rest blijft statisch)', () => {
-  assert.ok(config.assets.run_worker_first.every((p) => p.startsWith('/api/')));
+test('alleen /api/* en beheer gaan eerst naar de Worker (de rest blijft statisch)', () => {
+  // brief 2026-11-07-beheer-administratie, S1 criterium 6: /beheer en /beheer/* langs de inlogcontrole
+  assert.deepEqual([...config.assets.run_worker_first].sort(), ['/api/*', '/beheer', '/beheer/*']);
+});
+
+test('beheer: Access-waarden als vars (geen geheimen), ook in previews; rollen nooit in de config', () => {
+  for (const vars of [config.vars, config.previews.vars]) {
+    assert.equal(typeof vars.BEHEER_ACCESS_TEAM, 'string');
+    assert.equal(typeof vars.BEHEER_ACCESS_AUD, 'string');
+    assert.equal(vars.BEHEER_ROLLEN, undefined, 'BEHEER_ROLLEN is een secret, niet in wrangler.jsonc');
+    if (vars.BEHEER_ACCESS_TEAM) assert.match(vars.BEHEER_ACCESS_TEAM, /^[a-z0-9-]+\.cloudflareaccess\.com$/);
+  }
+});
+
+test('beheer: D1-binding BEHEER_DB alleen met een echte database_id; previews nooit de echte database (R11)', () => {
+  const d1 = (config.d1_databases || []).find((d) => d.binding === 'BEHEER_DB');
+  if (d1) {
+    assert.match(d1.database_id, /^[0-9a-f-]{32,36}$/, 'database_id ingevuld (geen plaatshouder)');
+    assert.equal(d1.migrations_dir, 'migrations');
+  }
+  const preview = ((config.previews && config.previews.d1_databases) || []).find((d) => d.binding === 'BEHEER_DB');
+  if (preview && d1) assert.notEqual(preview.database_id, d1.database_id, 'previews gebruiken niet de echte database');
 });
 
 test('previews overschrijven assets niet zonder run_worker_first', () => {

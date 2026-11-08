@@ -29,18 +29,20 @@ Agents mergen nooit zonder GO van Carst, zetten nooit zelf het label `GO`, plaat
   - `inspiratie.html` — Inspiratie (was Portfolio; `/portfolio` geeft 301): vier groepen in metselwerk (kleding, knuffels/swaddles/babynest, siliconen en hangers, kraamcadeauboxen), het atelierstatement en contact; bij aanwijzen de diepe tint van de groep
   - `contact.html` — Contact: fotokop (op telefoons tot 530 px een staande uitsnede, `home-hero-handwerk-staand-530.jpg`), contactgegevens en het contactformulier (`#formulier`, `POST /api/contact`)
   - `privacy.html`, `bedankt.html`, `404.html`, `robots.txt`, `sitemap.xml`
+  - `beheer/` — beheerscherm administratie (luxmini.nl/beheer, brief 2026-11-07-beheer-administratie): `index.html`, `beheer.css`, `beheer.js`; geen gegevens, achter de inlogcontrole van de Worker; laadt `main.js` en `style.css` niet; noindex, niet in de sitemap, nergens gelinkt
   - `_redirects` — doorverwijzingen van oude Wix-adressen; `_headers` — beveiliging en caching
   - `assets/css/style.css` — alle opmaak; kleuren als variabelen bovenaan
   - `assets/js/main.js` — intro, collage (sets wisselen), hover-lijst, tabbladen, vaste balk, opkomen bij scrollen
   - `assets/img/` — webversies van foto's (max. ~1400 px, JPEG kwaliteit ~80)
 - `src/worker.js` + `src/contact.js` + `src/formulier.js` — contactformulier (`POST /api/contact`) → mail via Cloudflare Email Routing naar info.luxmini@gmail.com; bij een fout terug naar `/contact?verzonden=fout#formulier`
-- `wrangler.jsonc` — Cloudflare-configuratie; `assets.run_worker_first: ["/api/*"]` stuurt het formulier eerst naar de Worker (anders geeft een echte browserverzending 405 van de assets-laag, brief 7 nov.)
+- `src/beheer/` — beheer: `toegang.js` (JWT van Cloudflare Access met Web Crypto, rollen uit het secret `BEHEER_ROLLEN`, Origin), `api.js` (routes `/beheer*` en `/api/beheer/*`, headers; verificatie en opslag worden meegegeven), `opslag.js` (D1); `migrations/` — SQL-migraties van D1 (`BEHEER_DB`). Zonder team/AUD of geldige JWT altijd 403; zonder `BEHEER_DB` 503 "Opslag nog niet ingesteld". Handleiding en stappen voor Carst: `docs/beheer.md`
+- `wrangler.jsonc` — Cloudflare-configuratie; `assets.run_worker_first: ["/api/*", "/beheer", "/beheer/*"]` stuurt het formulier eerst naar de Worker (anders geeft een echte browserverzending 405 van de assets-laag, brief 7 nov.) en beheer langs de inlogcontrole; `vars` `BEHEER_ACCESS_TEAM`/`BEHEER_ACCESS_AUD` (nog leeg) en de D1-binding als commentaar tot Carst de waarden geeft
 - `.github/workflows/` — `controle.yml` (gate 1, 2, 4, 5 en het validatierapport bij elke pull request), `go-nogo.yml` (GO · Akkoord Carst: label `GO` of reactie `GO` van de eigenaar), `visueel-basis.yml` (basisschermen bijwerken), `rooktest.yml` (gate 3 na live zetten en dagelijks)
 - `tests/` — tests voor het formulier (`npm test`); `tests/e2e/` — harness met Playwright Test: toegankelijkheid, SEO/veiligheid, kernpaden, visueel (`npm run test:e2e`, `npm run test:visueel`); basisschermen in `tests/e2e/basis/`
-- `playwright.config.js`, `lighthouserc.cjs` — instellingen van de harness; `scripts/serveer.mjs` — lokale testserver zoals Cloudflare; `scripts/validatierapport.mjs` — validatierapport voor GO / NO-GO
+- `playwright.config.js`, `lighthouserc.cjs` — instellingen van de harness; `scripts/serveer.mjs` — lokale testserver zoals Cloudflare, met de **testmodus van beheer** (alleen daar: nep-inlog met rol via header `x-testrol` of `BEHEER_TESTROL`, opslag in het geheugen met verzonnen gegevens); `scripts/validatierapport.mjs` — validatierapport voor GO / NO-GO
 - `scripts/controleer.py` — sitecontrole met screenshots; `scripts/rooktest.sh` — controle van de live site
 - `docs/` — AI-PDLC, `kwaliteit.md` (harness en GO / NO-GO), wijzigingsbriefs, fotolijst, `ontwerp/` (UX-principes en ontwerpreviews) (niet online)
-- `scripts/schermafdrukken.py` — schermafdrukken per schermhoogte voor de ontwerpgate
+- `scripts/schermafdrukken.py` — schermafdrukken per schermhoogte voor de ontwerpgate (ook `beheer-schrijven` en `beheer-lezen` in testmodus)
 
 ## Ontwerpregels (niet zonder overleg veranderen)
 
