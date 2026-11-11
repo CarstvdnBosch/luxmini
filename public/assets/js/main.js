@@ -1248,11 +1248,13 @@
       var o = document.querySelector('.formulier select[name="onderwerp"]');
       return !!(r && r.checked && (!o || o.value === 'Kraamcadeaubox'));
     };
-    var linkGoed = function () { var w = linkVeld.value.trim(); return w === '' || (/^https:\/\/[^\s<>"]+\.[^\s<>"]+$/i.test(w) && w.length <= 300); };
-    // de melding van de browser (bij versturen) is dezelfde als onder het veld; een verborgen veld blokkeert nooit
+    // zoals de Worker (controleerLink): https://, een punt in de naam, geen spaties en geen gebruikersgegevens (naam:wachtwoord@)
+    var linkGoed = function () { var w = linkVeld.value.trim(); return w === '' || (/^https:\/\/[^\s<>"]+\.[^\s<>"]+$/i.test(w) && !/^https:\/\/[^\/?#]*@/i.test(w) && w.length <= 300); };
+    // het veld is type=text (controle ronde 1: zonder JavaScript mag de browser een verborgen link nooit tegenhouden; de Worker controleert);
+    // met JavaScript houdt setCustomValidity een zichtbare foute link tegen, met dezelfde melding als onder het veld
     var metHas = window.CSS && CSS.supports && CSS.supports('selector(:has(a))');
     var linkPas = function (tonen) {
-      // verborgen (ander thema of onderwerp): uitgeschakeld, zodat de controle van de browser (type=url) nooit blokkeert
+      // verborgen (ander thema of onderwerp): uitgeschakeld, zodat setCustomValidity nooit blokkeert
       if (metHas) linkVeld.disabled = !eigenGekozen();
       var fout = eigenGekozen() && !linkGoed();
       linkVeld.setCustomValidity(fout ? 'Let op: begin de link met https://' : '');

@@ -1184,7 +1184,8 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .formulier .stof-kaart { gap: 8px; padding: 8px 8px 12px; }
 .stof-kaart img, .stof-eigen-tekening { display: block; width: 100%; max-width: 240px; height: auto; aspect-ratio: 1; object-fit: cover; }
 .stof-eigen-tekening { background: var(--grijsblauw); color: var(--inkt); }
-.stof-kaart-naam { font-family: var(--serif); font-size: 16px; line-height: 1.3; }
+.stof-kaart-naam { display: block; min-width: 0; font-family: var(--serif); font-size: 16px; line-height: 1.3; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: anywhere; }
+/* lange namen (Wilgen&shy;takjes, Regen&shy;boog, Fram&shy;boos) breken binnen de kaart af, ook op 320 px (ontwerpgate ronde 1) */
 .stof-kaart-regel { display: block; font-size: 16px; line-height: 1.35; margin-top: 2px; }
 .stofkeuze .keuze-vink { top: 14px; right: 14px; width: 24px; height: 24px; padding: 3px; background: var(--wit); color: var(--inkt); border-radius: 50%; }
 .formulier .stof-geen { margin-top: 12px; padding: 10px 52px 10px 16px; justify-content: center; }
@@ -1197,7 +1198,17 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .formulier input[type="file"] { background: transparent; border: 0; padding: 0; min-height: 44px; color: var(--inkt); cursor: pointer; }
 .formulier input[type="file"]::file-selector-button { font: 16px/1.2 var(--serif); color: var(--inkt); background: var(--wit); border: 0; border-radius: 0; padding: 13px 20px; min-height: 44px; margin-right: 14px; cursor: pointer; }
 .formulier input[type="file"]:focus-visible { outline: 2px solid var(--inkt); outline-offset: 3px; }
-.eigen-uitleg, .veld-fout { margin: 0; font-size: 16px; line-height: 1.45; color: var(--inkt); }
+/* Met JavaScript (html.js): het echte veld alleen visueel verborgen (blijft focusbaar en in de tabvolgorde), het label toont de knop
+   "Kies een foto"; de gekozen naam staat bij de miniatuur. Zonder JavaScript blijft de gewone weergave (met de gekozen naam). */
+.formulier .eigen-foto { position: relative; align-items: flex-start; }
+.eigen-foto-knop { display: none; }
+.js .formulier .eigen-foto input[type="file"] { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; min-height: 0; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; opacity: 0; }
+.js .eigen-foto-knop { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; font: 16px/1.2 var(--serif); letter-spacing: normal; text-transform: none; font-weight: 400; color: var(--inkt); background: var(--wit); cursor: pointer; }
+.js .eigen-foto input:focus-visible + .eigen-foto-knop { outline: 2px solid var(--inkt); outline-offset: 3px; }
+@media (hover: hover) { .js .eigen-foto:hover .eigen-foto-knop { text-decoration: underline; text-underline-offset: 4px; } }
+.eigen-uitleg, .veld-fout { margin: 0; max-width: 60ch; font-size: 16px; line-height: 1.45; color: var(--inkt); }
+/* meldingen "Let op: …" onderscheiden met een smalle inktlijn links (ontwerpgate ronde 1) */
+.veld-fout:not(:empty) { border-left: 2px solid var(--inkt); padding-left: 12px; }
 .veld-fout:empty { display: block; height: 0; }
 .eigen-link { margin-top: 8px; }
 .eigen-voorbeeld { display: flex; align-items: center; gap: 14px; min-width: 0; }

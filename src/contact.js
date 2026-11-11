@@ -8,12 +8,21 @@ export const NA_VERSTUURFOUT = '/contact?verzonden=fout&reden=versturen#formulie
 export const NA_FOTOFOUT = '/contact?verzonden=fout&reden=foto#formulier'; // foto te groot of geen foto (eigen stof)
 export const NA_LINKFOUT = '/contact?verzonden=fout&reden=link#formulier'; // link naar de stof begint niet met https://
 export const NAAR_FORMULIER = '/contact#formulier';
+// grootste verzoek dat we lezen: een foto van 5 MB plus de velden en de multipart-koppen past ruim binnen 6 MB (controle ronde 1)
+export const VERZOEK_MAX = 6 * 1024 * 1024;
 
 const terug = (request, pad) => Response.redirect(new URL(pad, request.url).toString(), 303);
 
 // verstuur(velden, foto) verstuurt de mail (foto: null of { naam, type, bytes } als bijlage) en gooit een fout als dat mislukt.
 export async function verwerkContact(request, verstuur) {
   if (request.method !== 'POST') return terug(request, NAAR_FORMULIER);
+
+  // te groot verzoek: weigeren vóór het lezen (anders leest de Worker eerst alles in het geheugen); bijna altijd een te grote foto
+  const lengte = Number(request.headers.get('content-length'));
+  if (Number.isFinite(lengte) && lengte > VERZOEK_MAX) {
+    console.warn('Formulier ongeldig: foto');
+    return terug(request, NA_FOTOFOUT);
+  }
 
   let form;
   try {

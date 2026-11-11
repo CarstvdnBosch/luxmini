@@ -1303,7 +1303,7 @@ def controleer_balk_labels(browser):
             ctx.close()
 
 # brief 2026-11-06: eerst het onderwerp, dan de groepen; thema als keuzekaarten met het blok eigen stof (brief 2026-11-11-c7-stofkeuze) (alle velden optioneel), bericht, naam, e-mail, telefoon
-FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["input", "box_thema", "radio"]] * 10 + [["input", "stof_foto", "file"], ["input", "stof_link", "url"], ["input", "box_thema", "radio"]] + [["input", "box_naam", "text"], ["input", "box_datum", "text"], ["select", "box_maat", ""],
+FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["input", "box_thema", "radio"]] * 11 + [["input", "stof_foto", "file"], ["input", "stof_link", "text"]] + [["input", "box_naam", "text"], ["input", "box_datum", "text"], ["select", "box_maat", ""],
                     ["select", "prem_maat", ""], ["input", "prem_maat_anders", "text"], ["input", "prem_naam", "text"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"],
                     ["select", "op_maat", ""], ["input", "op_maat_anders", "text"],  # maatkeuzes: brief 2026-11-11-c5-babymaten (besluit Carst)
                     ["textarea", "bericht", ""], ["input", "naam", "text"], ["input", "email", "email"], ["input", "telefoon", "tel"], ["input", "website", "text"]]

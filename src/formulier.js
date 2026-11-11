@@ -62,7 +62,16 @@ export function fotoType(b) {
   if (bytesZijn(b, 0, [0xff, 0xd8, 0xff])) return 'image/jpeg';
   if (bytesZijn(b, 0, [0x89, 0x50, 0x4e, 0x47])) return 'image/png';
   if (ascii(b, 0, 4) === 'RIFF' && ascii(b, 8, 4) === 'WEBP') return 'image/webp';
-  if (ascii(b, 4, 4) === 'ftyp' && ['heic', 'heix', 'mif1'].includes(ascii(b, 8, 4))) return 'image/heic';
+  if (ascii(b, 4, 4) === 'ftyp') {
+    // HEIC: hoofdmerk heic/heix, of mif1/msf1 met heic/heix bij de compatibele merken. AVIF (mif1 + avif zonder heic-merk)
+    // is geen HEIC en wordt geweigerd (controle ronde 1): de site accepteert alleen JPG, PNG, WEBP en HEIC.
+    const hoofd = ascii(b, 8, 4);
+    if (hoofd === 'heic' || hoofd === 'heix') return 'image/heic';
+    if (hoofd === 'mif1' || hoofd === 'msf1') {
+      const lengte = Math.min(b.length, ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0, 64);
+      for (let i = 16; i + 4 <= lengte; i += 4) if (['heic', 'heix'].includes(ascii(b, i, 4))) return 'image/heic';
+    }
+  }
   return null;
 }
 /** Bestandsnaam voor de bijlage: zonder map, alleen a-z, 0-9, punt, streepje en liggend streepje, met de juiste extensie. */
@@ -81,7 +90,8 @@ export function controleerLink(waarde) {
   if (w.length > LINK_MAX || /[\s<>"]/.test(w) || !/^https:\/\//i.test(w)) return { ok: false };
   try {
     const u = new URL(w);
-    if (u.protocol !== 'https:' || !u.hostname.includes('.')) return { ok: false };
+    // geen gebruikersgegevens in de link (https://naam:wachtwoord@…): misleidend en nooit nodig voor een webshop
+    if (u.protocol !== 'https:' || !u.hostname.includes('.') || u.username || u.password || /^https:\/\/[^/?#]*@/i.test(w)) return { ok: false };
   } catch { return { ok: false }; }
   return { ok: true, link: w };
 }

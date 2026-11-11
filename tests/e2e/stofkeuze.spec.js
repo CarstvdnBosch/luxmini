@@ -63,6 +63,19 @@ test('keuzekaarten: raster zonder horizontaal scrollen, tegels max. 240 px, naam
   await info.attach('maten', { body: JSON.stringify(m, null, 2), contentType: 'application/json' });
 });
 
+test('themanamen blijven binnen hun kaart op 320, 360 en 390 px (ontwerpgate ronde 1)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'smalle telefoons: één project is genoeg');
+  for (const breedte of [320, 360, 390]) {
+    await page.setViewportSize({ width: breedte, height: 844 });
+    await naarStoffen(page);
+    const te = await page.locator('.stofkeuze').evaluate(f => [...f.querySelectorAll('.stof-kaart-naam')]
+      .filter(n => n.scrollWidth > n.clientWidth || n.getBoundingClientRect().right > n.closest('.keuze-kaart').getBoundingClientRect().right + 0.5)
+      .map(n => [n.textContent, n.scrollWidth, n.clientWidth]));
+    expect(te, `namen buiten hun kaart op ${breedte} px`).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1), `horizontaal scrollen op ${breedte} px`).toBe(false);
+  }
+});
+
 test('gekozen kaart: inktrand en vink; "Nog niet gekozen" standaard en opnieuw te kiezen (O5, O7)', async ({ page }) => {
   await naarStoffen(page);
   await expect(page.locator('input[name="box_thema"]:checked')).toHaveValue('');
@@ -84,13 +97,31 @@ test('blok "Je eigen stof" alleen bij een eigen stof, zonder vervagen bij minder
   expect(await blok(page).locator('legend').evaluate(l => l.innerText.trim())).toBe('Je eigen stof (optioneel)');
   await expect(blok(page)).toHaveCSS('animation-name', 'none');
   await expect(page.getByLabel('Foto van de stof')).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp,image/heic');
-  await expect(page.getByLabel('Link naar de stof (bijvoorbeeld een webshop)')).toHaveAttribute('type', 'url');
+  // type=text met inputmode=url: zonder JavaScript houdt de browser een (verborgen) link nooit tegen; de Worker controleert (controle ronde 1)
+  const linkVeld = page.getByLabel('Link naar de stof (bijvoorbeeld een webshop)');
+  await expect(linkVeld).toHaveAttribute('type', 'text');
+  await expect(linkVeld).toHaveAttribute('inputmode', 'url');
+  await expect(linkVeld).toHaveAttribute('autocomplete', 'url');
   const uitleg = page.locator('#stof-foto-uitleg');
   await expect(uitleg).toContainText('Je foto gaat alleen als bijlage mee in de mail aan Carien en wordt niet bewaard.');
   await expect(uitleg).toHaveCSS('font-size', '16px');
-  // bestandsknop: 44 px hoog (O9)
-  const knopHoogte = await page.locator('input[name="stof_foto"]').evaluate(i => i.getBoundingClientRect().height);
-  expect(knopHoogte).toBeGreaterThanOrEqual(44);
+  // bestandsknop (O9, ontwerpgate ronde 1): het label "Kies een foto" is de knop (≥ 44 px, serif 16 px); het echte veld is alleen
+  // visueel verborgen (niet display:none, focusbaar) en de focus is op de knop te zien
+  const knop = blok(page).locator('.eigen-foto-knop');
+  await expect(knop).toHaveText('Kies een foto');
+  const km = await knop.evaluate(k => { const r = k.getBoundingClientRect(), c = getComputedStyle(k); return [r.height, c.fontSize, c.textTransform]; });
+  expect(km[0]).toBeGreaterThanOrEqual(44); expect(km[1]).toBe('16px'); expect(km[2]).toBe('none');
+  const veldFoto = page.locator('input[name="stof_foto"]');
+  expect(await veldFoto.evaluate(i => getComputedStyle(i).display !== 'none' && getComputedStyle(i).visibility !== 'hidden' && i.tabIndex >= 0)).toBe(true);
+  await veldFoto.focus();
+  await expect(veldFoto).toBeFocused();
+  // de regel onder "Een eigen stof"
+  await expect(page.locator('#stof-eigen-regel')).toHaveText('Foto of link');
+  // "Nog niet gekozen" direct onder het raster, vóór het blok
+  const volgorde = await page.locator('.stofkeuze').evaluate(f => { const r = f.querySelector('.stof-kaarten'); return [r.nextElementSibling.matches('.stof-geen'), !!(f.querySelector('.stof-geen').compareDocumentPosition(f.querySelector('.eigen-stof')) & Node.DOCUMENT_POSITION_FOLLOWING)]; });
+  expect(volgorde).toEqual([true, true]);
+  // meldingen: maximaal ca. 60 tekens breed
+  for (const id of ['#stof-foto-uitleg', '#stof-foto-fout']) expect(await page.locator(id).evaluate(e => getComputedStyle(e).maxWidth)).not.toBe('none');
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1), 'horizontaal scrollen met het blok open').toBe(false);
   await kies(page, 'Giraf');
   await expect(blok(page)).toBeHidden();
@@ -231,5 +262,40 @@ test.describe('zonder JavaScript', () => {
     await vulVerplicht(page);
     await page.locator('button.verstuur').click();
     await expect(page).toHaveURL(/\/contact\?verzonden=fout&reden=foto#formulier$/);
+  });
+
+  test('bestandsveld zonder JavaScript: de gewone weergave van de browser (met de gekozen naam), geen losse knop', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
+    await page.goto('/contact#formulier');
+    await page.locator(`input[name="box_thema"][value="${EIGEN}"]`).check({ force: true });
+    await expect(page.locator('.eigen-foto-knop')).toBeHidden();
+    const h = await page.locator('input[name="stof_foto"]').evaluate(i => i.getBoundingClientRect().height);
+    expect(h, 'echte bestandsknop zichtbaar en 44 px').toBeGreaterThanOrEqual(44);
+  });
+
+  test('een ongeldige link bij een eigen stof blokkeert niet na wisselen van thema; de Worker krijgt het (controle ronde 1)', async ({ page }) => {
+    await nepMail(page, 'ok');
+    await page.goto('/contact?onderwerp=kraamcadeaubox#formulier');
+    await page.locator('select[name="onderwerp"]').selectOption('Kraamcadeaubox');
+    await page.locator(`input[name="box_thema"][value="${EIGEN}"]`).check({ force: true });
+    await page.locator('input[name="stof_link"]').fill('www.stof.nl');
+    await page.locator('input[name="box_thema"][value="Giraf"]').check({ force: true });
+    await expect(blok(page)).toBeHidden();
+    await vulVerplicht(page);
+    expect(await page.locator('form.formulier').evaluate(f => f.checkValidity()), 'de browser houdt het formulier niet tegen').toBe(true);
+    await page.locator('button.verstuur').click();
+    await expect(page).toHaveURL(/\/bedankt$/);
+  });
+
+  test('een ongeldige link bij een eigen stof: de browser laat hem door, de Worker stuurt terug met reden=link', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
+    await nepMail(page, 'ok');
+    await page.goto('/contact#formulier');
+    await page.locator('select[name="onderwerp"]').selectOption('Kraamcadeaubox');
+    await page.locator(`input[name="box_thema"][value="${EIGEN}"]`).check({ force: true });
+    await page.locator('input[name="stof_link"]').fill('www.stof.nl');
+    await vulVerplicht(page);
+    await page.locator('button.verstuur').click();
+    await expect(page).toHaveURL(/\/contact\?verzonden=fout&reden=link#formulier$/);
   });
 });

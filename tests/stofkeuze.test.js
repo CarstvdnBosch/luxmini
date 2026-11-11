@@ -12,6 +12,8 @@ const met = (kop, lengte = 32) => { const b = new Uint8Array(lengte); b.set(kop)
 const JPEG = met([0xff, 0xd8, 0xff, 0xe0]);
 const WEBP = met([...Buffer.from('RIFF'), 0, 0, 0, 0, ...Buffer.from('WEBPVP8 ')]);
 const heic = (merk) => met([0, 0, 0, 24, ...Buffer.from('ftyp' + merk)]);
+// ftyp-box zoals in echte HEIC/AVIF-bestanden: grootte, 'ftyp', hoofdmerk, versie 0 en de compatibele merken
+const ftyp = (hoofd, merken) => { const n = 16 + 4 * merken.length; return met([0, 0, 0, n, ...Buffer.from('ftyp' + hoofd), 0, 0, 0, 0, ...Buffer.from(merken.join(''))], Math.max(32, n + 8)); };
 const bestand = (bytes, naam, type) => new File([bytes], naam, { type });
 
 const geldig = { naam: 'Zoë de Vries', email: 'zoe@example.nl', telefoon: '', onderwerp: 'Kraamcadeaubox', bericht: 'Graag een box', website: '' };
@@ -25,11 +27,52 @@ async function metLog(fn) {
 }
 
 /* ---------- eerste bytes, type en grootte ---------- */
+test('fotoType: mif1 alleen met een heic-merk is HEIC; AVIF (mif1 + avif, of hoofdmerk avif) wordt geweigerd', () => {
+  assert.equal(fotoType(ftyp('mif1', ['mif1', 'heic'])), 'image/heic');
+  assert.equal(fotoType(ftyp('msf1', ['msf1', 'heix'])), 'image/heic');
+  assert.equal(fotoType(ftyp('heic', ['mif1', 'heic'])), 'image/heic');
+  assert.equal(fotoType(ftyp('mif1', ['mif1', 'avif', 'miaf'])), null);
+  assert.equal(fotoType(ftyp('avif', ['avif', 'mif1', 'miaf'])), null);
+  assert.equal(fotoType(ftyp('mif1', ['mif1'])), null);
+});
+
+test('controleerFoto: AVIF met type image/heic of leeg type wordt geweigerd', async () => {
+  const avif = ftyp('mif1', ['mif1', 'avif', 'miaf']);
+  assert.equal((await controleerFoto(bestand(avif, 'stof.heic', 'image/heic'))).ok, false);
+  assert.equal((await controleerFoto(bestand(avif, 'stof.avif', ''))).ok, false);
+  assert.equal((await controleerFoto(bestand(avif, 'stof.avif', 'image/avif'))).ok, false);
+});
+
+test('controleerLink weigert gebruikersgegevens in de link', () => {
+  for (const l of ['https://naam:geheim@stof.nl/x', 'https://naam@stof.nl', 'https://:geheim@stof.nl', 'https://stof.nl@kwaad.nl/']) {
+    assert.equal(controleerLink(l).ok, false, l);
+  }
+  assert.equal(controleerLink('https://stof.nl/stoffen?kleur=mint&a=b@c').ok, true);
+});
+
+test('te groot verzoek (Content-Length > 6 MB) → reden=foto, zonder het formulier te lezen', async () => {
+  let gelezen = false, verstuurd = false;
+  const req = new Request('https://luxmini.nl/api/contact', { method: 'POST', headers: { 'content-length': String(6 * 1024 * 1024 + 1), 'content-type': 'multipart/form-data; boundary=x' }, body: 'x' });
+  Object.defineProperty(req, 'formData', { value: async () => { gelezen = true; return new FormData(); } });
+  const { uit, regels } = await metLog(() => verwerkContact(req, async () => { verstuurd = true; }));
+  assert.equal(doel(uit), '/contact?verzonden=fout&reden=foto#formulier');
+  assert.equal(gelezen, false);
+  assert.equal(verstuurd, false);
+  assert.ok(regels.every((r) => r === 'Formulier ongeldig: foto'));
+});
+
+test('Content-Length tot 6 MB gaat gewoon door de controle', async () => {
+  let verstuurd = false;
+  const req = post({ ...geldig, box_thema: EIGEN_STOF }, bestand(PNG, 'stof.png', 'image/png'));
+  const res = await verwerkContact(req, async () => { verstuurd = true; });
+  assert.equal(doel(res), '/bedankt');
+  assert.equal(verstuurd, true);
+});
 test('fotoType herkent JPEG, PNG, WEBP en HEIC aan de eerste bytes', () => {
   assert.equal(fotoType(JPEG), 'image/jpeg');
   assert.equal(fotoType(PNG), 'image/png');
   assert.equal(fotoType(WEBP), 'image/webp');
-  for (const m of ['heic', 'heix', 'mif1']) assert.equal(fotoType(heic(m)), 'image/heic', m);
+  for (const m of ['heic', 'heix']) assert.equal(fotoType(heic(m)), 'image/heic', m);
   for (const b of [met([...Buffer.from('%PDF-1.7')]), met([...Buffer.from('GIF89a')]), heic('avif'), met([...Buffer.from('RIFF'), 0, 0, 0, 0, ...Buffer.from('WAVE')]), new Uint8Array(4), null]) {
     assert.equal(fotoType(b), null);
   }
