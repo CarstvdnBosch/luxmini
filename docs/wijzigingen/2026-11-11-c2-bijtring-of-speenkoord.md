@@ -22,3 +22,8 @@
 |---|---|---|
 | Plannen | Claude (hoofdsessie) | Brief direct uit de wens (issue #54) |
 | Bouwen | website-bouwer | Prijskaart € 80 en formulier: "bijtring of speenkoord"; achtste product Speenkoord met eigen foto (`p-speenkoord-hond(-600).jpg`); desktop 8 kolommen; tests en sitecontrole volgen de nieuwe eis (ook afdruktest 24 → 25 foto's). `npm test` 94/94, sitecontrole zonder fouten, e2e (desktop, tablet, mobiel; zonder axe) groen. Axe, WebKit, Lighthouse en visueel in CI; visueel verschil op kraamcadeauboxen en contact is bedoeld. Op 1025 px breekt "in de box van € 80" op twee regels (net als Douche-handschoen al deed). |
+| Controle | website-controleur | AKKOORD — overal "bijtring of speenkoord" bij € 80 (kaart, formulier, CLAUDE.md, tests), prijzen gelijk, foto echt van Carien (Samsung 15 sep., 3:4, q≈80), tests strenger (ook 24→25 klopt); npm test 94/94, sitecontrole zonder fouten, e2e 233 groen; axe, WebKit en Lighthouse in CI |
+| Ontwerpgate | website-ontwerper | ONTWERP AKKOORD — achtste product en "bijtring of speenkoord" kloppen op 1440 t/m 390 en in het formulier; geen horizontaal scrollen; mobiele prijskaarten 628 px (binnen 1,2 scherm); foto warm en scherp, vrijstaand maken is een kan-beter |
+| Na controle (hoofdsessie) | Claude | Korte regel op de kaart € 80 "Met bijtring of speenkoord" (gelijk aan het formulier, kan-beter controleur en ontwerper); bron foto vastgelegd |
+
+**Bron foto speenkoord:** eigen telefoonfoto van Carien (Samsung Galaxy, 15 sep. 2026, `speenkood hond20260915_130916.jpg`, uit `mobiel_hondje.zip` van Carst, 7 nov.).
