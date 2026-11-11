@@ -137,6 +137,7 @@ test('tijdens het versturen: knop uit met "Bezig met versturen…"', async ({ pa
   await page.locator('button.verstuur').click();
   await expect(page.locator('button.verstuur')).toBeDisabled();
   await expect(page.locator('button.verstuur')).toHaveText('Bezig met versturen…');
+  await expect(page.locator('button.verstuur')).toHaveCSS('cursor', 'progress');
   laatGaan();
   await expect(page.locator('button.verstuur')).toBeEnabled();
 });
@@ -167,5 +168,79 @@ test.describe('zonder JavaScript', () => {
     await page.locator('button.verstuur').click();
     await expect(page).toHaveURL(/\/contact\?verzonden=fout&reden=versturen#formulier$/);
     expect(verstuurd).toContain('naam=Test+Persoon');
+  });
+});
+
+// Ontwerpgate ronde 1 (11 nov.): rustige regellengte, gecentreerd, geen los woord op de laatste regel.
+async function regels(page) {
+  return page.locator('.formulier .melding.fout').evaluate(m => {
+    const r = m.getBoundingClientRect();
+    const f = m.closest('form').getBoundingClientRect();
+    const rng = document.createRange(); rng.selectNodeContents(m);
+    const lijnen = new Map();
+    for (const q of rng.getClientRects()) {
+      if (q.width < 1) continue;
+      const k = Math.round(q.top / 4);
+      const l = lijnen.get(k) || { links: q.left, rechts: q.right };
+      l.links = Math.min(l.links, q.left); l.rechts = Math.max(l.rechts, q.right); lijnen.set(k, l);
+    }
+    const breedtes = [...lijnen.values()].map(l => l.rechts - l.links);
+    const ch = (() => { const s = document.createElement('span'); s.textContent = '0'.repeat(60); s.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap'; m.appendChild(s); const w = s.getBoundingClientRect().width; s.remove(); return w; })();
+    return { breed: r.width, max60ch: ch, midden: Math.abs((r.left + r.right) / 2 - (f.left + f.right) / 2), aantal: breedtes.length, laatste: breedtes[breedtes.length - 1], langste: Math.max(...breedtes) };
+  });
+}
+
+test('versturen-melding: max. ca. 60ch, gecentreerd, 2–3 rustige regels zonder los woord', async ({ page }, info) => {
+  test.skip(info.project.name === 'mobiel' || info.project.name === 'iphone', 'regellengte geldt voor 1440 en 768');
+  await nepWorker(page, VERSTUREN);
+  await vulIn(page);
+  await page.locator('button.verstuur').click();
+  await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou');
+  const r = await regels(page);
+  expect(r.breed, 'melding niet breder dan ca. 60 tekens').toBeLessThanOrEqual(r.max60ch + 1);
+  expect(r.midden, 'melding gecentreerd in het formulier').toBeLessThanOrEqual(2);
+  expect(r.aantal, '2 of 3 regels').toBeGreaterThanOrEqual(2);
+  expect(r.aantal, '2 of 3 regels').toBeLessThanOrEqual(3);
+  expect(r.laatste / r.langste, 'geen los woord op de laatste regel').toBeGreaterThan(0.5);
+});
+
+test.describe('390 met beweging', () => {
+  test.beforeEach(async ({ page }, info) => {
+    test.skip(info.project.name !== 'mobiel', 'alleen 390 × 844');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  test('versturen mislukt, een paar keer achter elkaar: melding en knop altijd in beeld', async ({ page }) => {
+    await nepWorker(page, VERSTUREN);
+    await vulIn(page);
+    for (let i = 0; i < 4; i++) {
+      // begin telkens ergens anders op de pagina
+      await page.evaluate(y => window.scrollTo({ top: y, behavior: 'instant' }), [0, 400, 99999, 1200][i]);
+      await page.locator('button.verstuur').click();
+      await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou');
+      await expect(page.locator('button.verstuur')).toBeEnabled();
+      await page.waitForTimeout(700); // na de tweede meting
+      const m = await meldingMeten(page);
+      expect(m.boven, `poging ${i + 1}: melding in beeld (boven)`).toBeGreaterThanOrEqual(0);
+      expect(m.onder, `poging ${i + 1}: melding in beeld (onder)`).toBeLessThanOrEqual(m.hoogte);
+      expect(m.knopBoven, `poging ${i + 1}: knop in beeld (boven)`).toBeGreaterThanOrEqual(0);
+      expect(m.knopOnder, `poging ${i + 1}: knop in beeld (onder)`).toBeLessThanOrEqual(m.hoogte);
+      await expect(page.locator('.formulier .melding.fout')).toHaveCount(1);
+    }
+    await veldenGevuld(page);
+  });
+
+  test('ongeldige invoer: foute veld heeft focus, melding en knop in beeld', async ({ page }) => {
+    await nepWorker(page, ONGELDIG);
+    await vulIn(page, { ...INVOER, email: 'test@voorbeeld' });
+    await page.locator('button.verstuur').click();
+    await expect(page.locator('.formulier .melding.fout')).toContainText('Controleer je naam');
+    await expect(page.locator('input[name="email"]')).toBeFocused();
+    await page.waitForTimeout(700);
+    const m = await meldingMeten(page);
+    expect(m.boven).toBeGreaterThanOrEqual(0);
+    expect(m.knopOnder, 'knop volledig in beeld').toBeLessThanOrEqual(m.hoogte);
+    const veld = await page.locator('input[name="email"]').boundingBox();
+    expect(veld.y, 'het foute veld blijft in beeld').toBeGreaterThanOrEqual(0);
   });
 });

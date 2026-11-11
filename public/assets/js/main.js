@@ -1048,18 +1048,28 @@
     m.innerHTML = MELDINGEN[soort] || MELDINGEN.ongeldig;
     return m;
   };
-  // melding en verstuurknop samen in beeld, direct (zonder glijden, dus ook goed bij "minder beweging")
-  var meldingInBeeld = function (m) {
-    var knopEl = m.parentNode && m.parentNode.querySelector('button[type="submit"]');
-    var balkEl = document.querySelector('.balk');
-    var boven = (balkEl ? balkEl.offsetHeight : 0) + 16; // de vaste balk bedekt de bovenkant
-    var onder = window.innerHeight - 16;
-    var top = m.getBoundingClientRect().top;
-    var bodem = knopEl ? Math.max(knopEl.getBoundingClientRect().bottom, m.getBoundingClientRect().bottom) : m.getBoundingClientRect().bottom;
-    var dy = 0;
-    if (bodem > onder) dy = bodem - onder;           // knop onder de rand: omhoog schuiven
-    if (top - dy < boven) dy = top - boven;          // maar de melding blijft altijd zichtbaar
-    if (dy) window.scrollTo({ top: window.scrollY + dy, behavior: 'instant' });
+  // melding en verstuurknop samen in beeld, direct (zonder glijden, dus ook goed bij "minder beweging").
+  // Na de eerste sprong nog één keer meten en corrigeren (ontwerpgate 11 nov.): een glijdende scroll van de browser
+  // (bijv. focus op een veld met scroll-behavior: smooth) kan nog lopen. Met `veld` blijft dat veld ook in beeld.
+  var meldingInBeeld = function (m, veld) {
+    var pas = function () {
+      var knopEl = m.parentNode && m.parentNode.querySelector('button[type="submit"]');
+      var balkEl = document.querySelector('.balk');
+      var boven = (balkEl ? balkEl.offsetHeight : 0) + 16; // de vaste balk bedekt de bovenkant
+      var onder = window.innerHeight - 16;
+      var top = m.getBoundingClientRect().top;
+      var bodem = knopEl ? Math.max(knopEl.getBoundingClientRect().bottom, m.getBoundingClientRect().bottom) : m.getBoundingClientRect().bottom;
+      var dy = 0;
+      if (bodem > onder) dy = bodem - onder;           // knop onder de rand: omhoog schuiven
+      if (veld) dy = Math.min(dy, veld.getBoundingClientRect().top - boven); // het foute veld blijft zichtbaar
+      if (top - dy < boven) dy = top - boven;          // maar de melding blijft altijd zichtbaar
+      if (Math.abs(dy) >= 1) window.scrollTo({ top: window.scrollY + dy, behavior: 'instant' });
+    };
+    pas();
+    // pas() is idempotent: na het einde van de scroll (waar ondersteund) en in elk geval na 450 ms
+    var naScroll = function () { window.removeEventListener('scrollend', naScroll); requestAnimationFrame(pas); };
+    if ('onscrollend' in window) window.addEventListener('scrollend', naScroll);
+    setTimeout(function () { requestAnimationFrame(pas); }, 450);
   };
   if (/[?&]verzonden=fout/.test(location.search)) {
     var m = toonFout(/[?&]reden=versturen(&|$)/.test(location.search) ? 'versturen' : 'ongeldig');
@@ -1095,7 +1105,7 @@
           return el.name === 'email' ? !EMAIL.test(w) : w === '';
         })[0] || null;
       }
-      if (veld) veld.focus(); else { m.focus({ preventScroll: true }); meldingInBeeld(m); }
+      if (veld) { veld.focus(); meldingInBeeld(m, veld); } else { m.focus({ preventScroll: true }); meldingInBeeld(m); }
     };
     verzendForm.addEventListener('submit', function (e) {
       e.preventDefault();
