@@ -24,3 +24,6 @@
 |---|---|---|
 | Plannen | Claude (hoofdsessie) | Brief uit de wens en besluiten van Carst (11 nov.) |
 | Bouwen | website-bouwer | Keuzelijsten in `contact.html` (nieuwe groep Iets op maat, vrij veld bij Anders via `:has`), validatie en mailtekst in `src/formulier.js`, unit- en e2e-tests, sitecontrole volgt de nieuwe velden (LET OP kledingmaat vervallen), CLAUDE.md bijgewerkt. `npm test` 97/97, `controleer.py` zonder fouten, e2e formulier/contact/kernpaden/SEO groen op desktop, tablet en mobiel; axe, WebKit, Lighthouse en visueel in CI |
+| Controle | website-controleur | AKKOORD — maatkeuzes volgens issue #57; formulier.js laat alleen toegestane maten door en het vrije veld is begrensd en zonder regeleinden; werkt zonder JS en zonder :has; vooraf invullen ongewijzigd; npm test 97/97, controleer.py zonder fouten, e2e 215 groen (axe, WebKit en Lighthouse in CI) |
+| Ontwerpgate | website-ontwerper | ONTWERP AKKOORD — keuzelijsten volgen het bestaande formulierpatroon, vrij veld alleen bij Anders direct naast/onder de lijst, 390 px één kolom zonder horizontaal scrollen, velden 49 px en 16 px |
+| Na controle (hoofdsessie) | Claude | Kan-beter verwerkt: vrij veld alleen bij Anders of zonder keuze (controleur); voorbeeld "Bijvoorbeeld 1800 gram" en groepskop "Je maatwerk" (ontwerper); npm test 97/97 |

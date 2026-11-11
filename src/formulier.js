@@ -75,7 +75,7 @@ export function controleer(form) {
     if (MATEN[naam]) waarde = MATEN[naam].includes(waarde) && waarde !== 'anders' ? `maat ${waarde}` : '';
     if (ANDERS_BIJ[naam]) {
       const keuze = schoon(get(ANDERS_BIJ[naam]), 20);
-      if (keuze !== 'anders' && MATEN[ANDERS_BIJ[naam]].includes(keuze)) waarde = '';
+      if (keuze !== 'anders' && keuze !== '') waarde = ''; // vrij veld alleen bij Anders (of zonder keuze, zonder JS)
     }
     if (waarde) velden.extra.push([kop, waarde]);
   }
