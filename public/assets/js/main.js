@@ -1027,20 +1027,77 @@
   /* ---------------------------------------------------------------
      11. Formulier-foutmelding en jaartal
      --------------------------------------------------------------- */
-  if (/[?&]verzonden=fout/.test(location.search)) {
+  // Twee soorten fout (brief 2026-11-11): ongeldige invoer (?verzonden=fout) of versturen mislukt (&reden=versturen).
+  var MELDINGEN = {
+    ongeldig: '<strong>Je bericht is niet verstuurd.</strong> Controleer je naam, e-mailadres en bericht.',
+    versturen: '<strong>Je bericht is niet verstuurd.</strong> Dat ligt niet aan jou: er ging iets mis bij het versturen. Probeer het later nog eens, of stuur Carien een <a href="https://wa.me/31643791618">WhatsApp</a> of <a href="mailto:info.LUXmini@gmail.com">mail</a>.'
+  };
+  var toonFout = function (soort) {
     var m = document.querySelector('.formulier .melding');
+    if (!m) return null;
+    m.setAttribute('role', 'alert');
+    m.setAttribute('tabindex', '-1');
+    m.innerHTML = MELDINGEN[soort] || MELDINGEN.ongeldig;
+    return m;
+  };
+  // de melding zonder scrollen in beeld
+  var meldingInBeeld = function (m) {
+    var r = m.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) m.scrollIntoView({ block: 'center', behavior: 'instant' });
+  };
+  if (/[?&]verzonden=fout/.test(location.search)) {
+    var m = toonFout(/[?&]reden=versturen(&|$)/.test(location.search) ? 'versturen' : 'ongeldig');
     if (m) {
-      m.setAttribute('role', 'alert');
-      m.innerHTML = '<strong>Je bericht is niet verstuurd.</strong> Controleer je naam, e-mailadres en bericht, of stuur Carien een WhatsApp of mail.';
       // contact.html?verzonden=fout#formulier: zorg dat de melding zonder scrollen in beeld staat
-      var toonMelding = function () {
-        setTimeout(function () {
-          var r = m.getBoundingClientRect();
-          if (r.top < 0 || r.bottom > window.innerHeight) m.scrollIntoView({ block: 'center', behavior: 'instant' });
-        }, 60);
-      };
+      var toonMelding = function () { setTimeout(function () { meldingInBeeld(m); }, 60); };
       if (document.readyState === 'complete') toonMelding(); else window.addEventListener('load', toonMelding);
     }
+  }
+  // Versturen met JavaScript (brief 2026-11-11): dezelfde formulierdata via fetch naar dezelfde Worker, zodat bij een fout
+  // alle ingevulde velden blijven staan. Zonder JavaScript (of zonder fetch) gewoon de POST met doorverwijzing.
+  var verzendForm = document.querySelector('form.formulier[action="/api/contact"]');
+  if (verzendForm && window.fetch && window.URLSearchParams && window.FormData) {
+    var EMAIL = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]{2,}$/; // zelfde controle als src/formulier.js
+    var knop = verzendForm.querySelector('button[type="submit"]');
+    var knopTekst = knop ? knop.lastChild : null;
+    var bezigMet = false;
+    var klaar = function () {
+      bezigMet = false;
+      if (knop) { knop.disabled = false; knop.removeAttribute('aria-busy'); if (knopTekst) knopTekst.textContent = 'Verstuur bericht'; }
+    };
+    var mislukt = function (soort) {
+      klaar();
+      var m = toonFout(soort);
+      if (!m) return;
+      var veld = null;
+      if (soort === 'ongeldig') {
+        var v = function (n) { return verzendForm.querySelector('[name="' + n + '"]'); };
+        // eerste foute veld in de volgorde van het formulier (bericht, naam, e-mail)
+        veld = [v('bericht'), v('naam'), v('email')].filter(function (el) {
+          if (!el) return false;
+          var w = el.value.trim();
+          return el.name === 'email' ? !EMAIL.test(w) : w === '';
+        })[0] || null;
+      }
+      if (veld) veld.focus(); else { m.focus({ preventScroll: true }); meldingInBeeld(m); }
+    };
+    verzendForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (bezigMet) return;
+      bezigMet = true;
+      if (knop) { knop.disabled = true; knop.setAttribute('aria-busy', 'true'); if (knopTekst) knopTekst.textContent = 'Bezig met versturen…'; }
+      fetch(verzendForm.action, { method: 'POST', body: new URLSearchParams(new FormData(verzendForm)), credentials: 'same-origin' })
+        .then(function (res) {
+          var pad = new URL(res.url, location.href);
+          if (/^\/bedankt(\.html)?$/.test(pad.pathname)) { location.assign(pad.pathname); return; }
+          if (/^\/contact(\.html)?$/.test(pad.pathname) && /[?&]verzonden=fout/.test(pad.search)) {
+            mislukt(/[?&]reden=versturen(&|$)/.test(pad.search) ? 'versturen' : 'ongeldig');
+            return;
+          }
+          mislukt('versturen'); // onverwacht antwoord (bijv. 405 of 500)
+        })
+        .catch(function () { mislukt('versturen'); }); // netwerkfout
+    });
   }
   // Vooraf invullen vanaf de productpagina's (contact.html?onderwerp=kraamcadeaubox&formaat=50&thema=giraf#formulier).
   // Alleen bekende waarden tellen; er komt niets uit het adres in de pagina en er wordt niet gefocust.

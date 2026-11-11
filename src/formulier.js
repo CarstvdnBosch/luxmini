@@ -37,7 +37,8 @@ const schoon = (waarde, max = 200) =>
 
 const EMAIL = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]{2,}$/;
 
-/** Leest de formuliervelden uit en controleert ze. Geeft { ok, spam, velden }. */
+/** Leest de formuliervelden uit en controleert ze. Geeft { ok, spam, velden, fouten }.
+ *  fouten: de namen van de velden die ontbreken of ongeldig zijn (naam, email, bericht), nooit de waarden. */
 export function controleer(form) {
   const get = (k) => (typeof form.get === 'function' ? form.get(k) : form[k]);
   if (schoon(get('website'))) return { ok: false, spam: true };
@@ -60,8 +61,11 @@ export function controleer(form) {
     if (waarde) velden.extra.push([kop, waarde]);
   }
 
-  const ok = velden.naam !== '' && velden.bericht !== '' && EMAIL.test(velden.email);
-  return { ok, spam: false, velden };
+  const fouten = [];
+  if (velden.naam === '') fouten.push('naam');
+  if (!EMAIL.test(velden.email)) fouten.push('email');
+  if (velden.bericht === '') fouten.push('bericht');
+  return { ok: fouten.length === 0, spam: false, velden, fouten };
 }
 
 const b64 = (tekst) => {
