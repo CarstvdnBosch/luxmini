@@ -46,14 +46,67 @@ export const MATEN = {
 const ANDERS_BIJ = { prem_maat_anders: 'prem_maat', op_maat_anders: 'op_maat' };
 // Thema's zoals op de site (Kraamcadeauboxen en de keuzelijst in het formulier); andere waarden vallen weg.
 export const THEMAS = ['Giraf', 'Vos', 'Tulp', 'Walvis', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur'];
+export const EIGEN_STOF = 'Een eigen stof of kleur';
+
+// Eigen stof (wens Carst 11 nov., brief 2026-11-11-c7-stofkeuze): optioneel een foto en/of een link, alleen bij thema = eigen stof.
+// De foto gaat alleen als bijlage mee in de mail; er wordt niets opgeslagen of gelogd (geen naam, geen inhoud).
+export const FOTO_MAX = 5 * 1024 * 1024; // 5 MB
+export const LINK_MAX = 300;
+// toegestane typen: opgegeven type (leeg mag: sommige systemen geven HEIC geen type) en de eerste bytes moeten kloppen
+export const FOTO_TYPEN = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic' };
+const bytesZijn = (b, start, lijst) => lijst.every((x, i) => b[start + i] === x);
+const ascii = (b, start, lengte) => String.fromCharCode(...b.slice(start, start + lengte));
+/** Herkent het formaat aan de eerste bytes; geeft het MIME-type of null. */
+export function fotoType(b) {
+  if (!b || b.length < 12) return null;
+  if (bytesZijn(b, 0, [0xff, 0xd8, 0xff])) return 'image/jpeg';
+  if (bytesZijn(b, 0, [0x89, 0x50, 0x4e, 0x47])) return 'image/png';
+  if (ascii(b, 0, 4) === 'RIFF' && ascii(b, 8, 4) === 'WEBP') return 'image/webp';
+  if (ascii(b, 4, 4) === 'ftyp' && ['heic', 'heix', 'mif1'].includes(ascii(b, 8, 4))) return 'image/heic';
+  return null;
+}
+/** Bestandsnaam voor de bijlage: zonder map, alleen a-z, 0-9, punt, streepje en liggend streepje, met de juiste extensie. */
+export function schoneNaam(naam, type) {
+  const ext = FOTO_TYPEN[type];
+  let basis = String(naam ?? '').split(/[\\/]/).pop().replace(/\.[^.]*$/, '')
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-').replace(/^[-._]+|[-._]+$/g, '').slice(0, 60);
+  if (!basis) basis = 'stof';
+  return `${basis}.${ext}`;
+}
+/** Link naar de stof: alleen https://, max. 300 tekens, zonder regeleinden of spaties. Geeft { ok, link }. */
+export function controleerLink(waarde) {
+  const w = String(waarde ?? '').trim();
+  if (w === '') return { ok: true, link: '' };
+  if (w.length > LINK_MAX || /[\s<>"]/.test(w) || !/^https:\/\//i.test(w)) return { ok: false };
+  try {
+    const u = new URL(w);
+    if (u.protocol !== 'https:' || !u.hostname.includes('.')) return { ok: false };
+  } catch { return { ok: false }; }
+  return { ok: true, link: w };
+}
+/** Leest de foto (File of Blob) en controleert type, grootte en eerste bytes.
+ *  Geeft { ok: true, foto: null } zonder foto, { ok: true, foto: { naam, type, bytes } } of { ok: false }. */
+export async function controleerFoto(bestand) {
+  if (!bestand || typeof bestand === 'string' || typeof bestand.arrayBuffer !== 'function' || !bestand.size) return { ok: true, foto: null };
+  if (bestand.size > FOTO_MAX) return { ok: false };
+  const opgegeven = String(bestand.type || '').toLowerCase();
+  if (opgegeven && opgegeven !== 'application/octet-stream' && !FOTO_TYPEN[opgegeven]) return { ok: false };
+  const bytes = new Uint8Array(await bestand.arrayBuffer());
+  if (bytes.length > FOTO_MAX) return { ok: false };
+  const type = fotoType(bytes);
+  if (!type) return { ok: false };
+  return { ok: true, foto: { naam: schoneNaam(bestand.name, type), type, bytes } };
+}
 
 const schoon = (waarde, max = 200) =>
   String(waarde ?? '').replace(/[\r\n]+/g, ' ').trim().slice(0, max);
 
 const EMAIL = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]{2,}$/;
 
-/** Leest de formuliervelden uit en controleert ze. Geeft { ok, spam, velden, fouten }.
- *  fouten: de namen van de velden die ontbreken of ongeldig zijn (naam, email, bericht), nooit de waarden. */
+/** Leest de formuliervelden uit en controleert ze. Geeft { ok, spam, velden, fouten, stofFouten }.
+ *  fouten: de namen van de velden die ontbreken of ongeldig zijn (naam, email, bericht), nooit de waarden.
+ *  stofFouten: ['link'] als bij een eigen stof de link ongeldig is (de foto controleert controleerFoto). */
 export function controleer(form) {
   const get = (k) => (typeof form.get === 'function' ? form.get(k) : form[k]);
   if (schoon(get('website'))) return { ok: false, spam: true };
@@ -80,25 +133,34 @@ export function controleer(form) {
     }
     if (waarde) velden.extra.push([kop, waarde]);
   }
+  // eigen stof: de link (platte tekst) telt alleen bij thema = eigen stof; de foto leest controleerFoto (async)
+  velden.eigenStof = velden.onderwerp === 'Kraamcadeaubox' && schoon(get('box_thema'), 80) === EIGEN_STOF;
+  const stofFouten = [];
+  if (velden.eigenStof) {
+    const l = controleerLink(get('stof_link'));
+    if (!l.ok) stofFouten.push('link');
+    else if (l.link) velden.extra.push(['Link naar de stof', l.link]);
+  }
 
   const fouten = [];
   if (velden.naam === '') fouten.push('naam');
   if (!EMAIL.test(velden.email)) fouten.push('email');
   if (velden.bericht === '') fouten.push('bericht');
-  return { ok: fouten.length === 0, spam: false, velden, fouten };
+  return { ok: fouten.length === 0, spam: false, velden, fouten, stofFouten };
 }
 
-const b64 = (tekst) => {
-  const bytes = new TextEncoder().encode(tekst);
+const b64Bytes = (bytes) => {
   let bin = '';
-  for (const b of bytes) bin += String.fromCharCode(b);
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   return btoa(bin);
 };
+const b64 = (tekst) => b64Bytes(new TextEncoder().encode(tekst));
 const kop = (tekst) => `=?UTF-8?B?${b64(tekst)}?=`;
 const regels = (s) => s.replace(/.{1,76}/g, '$&\r\n').trimEnd();
 
-/** Bouwt een eenvoudig tekstbericht (MIME) voor Cloudflare Email Routing. */
-export function bouwMail({ velden, afzender, ontvanger, nu = new Date(), id = crypto.randomUUID() }) {
+/** Bouwt een eenvoudig tekstbericht (MIME) voor Cloudflare Email Routing.
+ *  Met `foto` ({ naam, type, bytes }) wordt het multipart/mixed: dezelfde tekst plus de foto als bijlage. */
+export function bouwMail({ velden, foto = null, afzender, ontvanger, nu = new Date(), id = crypto.randomUUID() }) {
   const domein = afzender.split('@')[1];
   const extra = (velden.extra || []).map(([k, w]) => `${k}: ${w}\n`).join('');
   const tekst =
@@ -108,9 +170,10 @@ export function bouwMail({ velden, afzender, ontvanger, nu = new Date(), id = cr
     `Telefoon: ${velden.telefoon || '-'}\n` +
     `Onderwerp: ${velden.onderwerp}\n` +
     (extra ? `\n${extra}` : '') +
+    (foto ? `Foto van de stof: bijlage (${foto.naam})\n` : '') +
     `\nBericht:\n${velden.bericht}\n`;
 
-  return [
+  const koppen = [
     `From: ${kop('LUX mini website')} <${afzender}>`,
     `To: <${ontvanger}>`,
     `Reply-To: <${velden.email}>`,
@@ -118,10 +181,34 @@ export function bouwMail({ velden, afzender, ontvanger, nu = new Date(), id = cr
     `Date: ${nu.toUTCString()}`,
     `Message-ID: <${id}@${domein}>`,
     'MIME-Version: 1.0',
+  ];
+  if (!foto) {
+    return [
+      ...koppen,
+      'Content-Type: text/plain; charset=UTF-8',
+      'Content-Transfer-Encoding: base64',
+      '',
+      regels(b64(tekst)),
+      '',
+    ].join('\r\n');
+  }
+  const grens = `=_luxmini_${String(id).replace(/[^A-Za-z0-9]/g, '')}`;
+  return [
+    ...koppen,
+    `Content-Type: multipart/mixed; boundary="${grens}"`,
+    '',
+    `--${grens}`,
     'Content-Type: text/plain; charset=UTF-8',
     'Content-Transfer-Encoding: base64',
     '',
     regels(b64(tekst)),
+    `--${grens}`,
+    `Content-Type: ${foto.type}; name="${foto.naam}"`,
+    `Content-Disposition: attachment; filename="${foto.naam}"`,
+    'Content-Transfer-Encoding: base64',
+    '',
+    regels(b64Bytes(foto.bytes)),
+    `--${grens}--`,
     '',
   ].join('\r\n');
 }

@@ -11,9 +11,12 @@
 //
 // TESTMODUS FORMULIER (alleen hier, nooit in src/ of wrangler.jsonc; brief 2026-11-11-formulier-foutmelding):
 // POST /api/contact gaat door de echte afhandeling (verwerkContact uit src/contact.js, met echte 303-doorverwijzingen),
-// maar er gaat nooit een mail weg: de nep-verzending slaagt of faalt op verzoek.
+// maar er gaat nooit een mail weg: de mail wordt opgebouwd (ook multipart met de foto van een eigen stof) en de
+// nep-verzending slaagt of faalt op verzoek. Formulierdata mag urlencoded of multipart/form-data zijn.
 //   per verzoek:  header  x-testmail: ok | fout   (standaard ok; fout = versturen mislukt → &reden=versturen)
 //                 header  x-testmail-wacht: <ms>  (optioneel, max. 5000: de nep-verzending duurt zo lang, voor "Bezig met versturen…")
+//                 header  x-testmail-bijlage: ja | nee  (optioneel: de nep-verzending mislukt als er wel/geen foto als bijlage
+//                         in de mail zit; zo toetst e2e dat een foto van een eigen stof echt aankomt, brief 2026-11-11-c7-stofkeuze)
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -21,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { behandelBeheer, isBeheerPad } from '../src/beheer/api.js';
 import { verwerkContact } from '../src/contact.js';
+import { bouwMail } from '../src/formulier.js';
 
 const ROOT = fileURLToPath(new URL('../public/', import.meta.url));
 const POORT = Number(process.argv[2] || process.env.POORT || 4173);
@@ -100,8 +104,14 @@ async function beheerVerzoek(req, res) {
 async function contactVerzoek(req, res) {
   const request = await alsRequest(req);
   const testmail = request.headers.get('x-testmail') || 'ok';
+  const bijlage = request.headers.get('x-testmail-bijlage');
   const wacht = Math.min(Number(request.headers.get('x-testmail-wacht')) || 0, 5000);
-  const antwoord = await verwerkContact(request, async () => {
+  const antwoord = await verwerkContact(request, async (velden, foto) => {
+    // de mail wordt wel opgebouwd (ook met bijlage, multipart), maar nooit verstuurd
+    const raw = bouwMail({ velden, foto, afzender: 'website@voorbeeld.test', ontvanger: 'ontvanger@voorbeeld.test' });
+    const metBijlage = /\r\nContent-Disposition: attachment; /.test(raw);
+    if (bijlage === 'ja' && !metBijlage) throw new Error('testmodus: geen bijlage in de mail (x-testmail-bijlage: ja)');
+    if (bijlage === 'nee' && metBijlage) throw new Error('testmodus: onverwachte bijlage in de mail (x-testmail-bijlage: nee)');
     if (wacht > 0) await new Promise((klaar) => setTimeout(klaar, wacht));
     if (testmail === 'fout') throw new Error('testmodus: versturen mislukt (x-testmail: fout)');
   });

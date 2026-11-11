@@ -55,3 +55,18 @@ for (const [soort, pad] of [['ongeldig', '/contact?verzonden=fout#formulier'], [
     expect(uitslag.violations, `WCAG-overtredingen op ${pad}:\n${samenvatting(uitslag.violations)}`).toEqual([]);
   });
 }
+
+// Brief 2026-11-11-c7-stofkeuze (O12): de stofkeuze met het blok "Je eigen stof" open, met een gekozen foto en een foutmelding, heeft 0 fouten
+test('toegankelijkheid formulier met eigen stof (blok open, foto en melding)', async ({ page }) => {
+  await page.goto('/contact?onderwerp=kraamcadeaubox&thema=eigen#formulier');
+  await wachtOpRust(page);
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  await page.locator('input[name="stof_foto"]').setInputFiles({ name: 'stof.png', mimeType: 'image/png', buffer: png });
+  await page.locator('input[name="stof_link"]').fill('www.stof.test');
+  await page.locator('input[name="stof_link"]').blur();
+  await expect(page.locator('#stof-link-fout')).toContainText('Let op:');
+  await page.locator('.stofkeuze').evaluate(el => el.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await page.waitForTimeout(400);
+  const uitslag = await new AxeBuilder({ page }).include('#formulier').withTags(REGELS).analyze();
+  expect(uitslag.violations, `WCAG-overtredingen in de stofkeuze:\n${samenvatting(uitslag.violations)}`).toEqual([]);
+});

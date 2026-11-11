@@ -1030,8 +1030,12 @@
   // Twee soorten fout (brief 2026-11-11): ongeldige invoer (?verzonden=fout) of versturen mislukt (&reden=versturen).
   var MELDINGEN = {
     ongeldig: '<strong>Je bericht is niet verstuurd.</strong> Controleer je naam, e-mailadres en bericht.',
-    versturen: '<strong>Je bericht is niet verstuurd.</strong> Dat ligt niet aan jou: er ging iets mis bij het versturen. Probeer het later nog eens, of stuur Carien een <a href="https://wa.me/31643791618">WhatsApp</a> of <a href="mailto:info.LUXmini@gmail.com">mail</a>.'
+    versturen: '<strong>Je bericht is niet verstuurd.</strong> Dat ligt niet aan jou: er ging iets mis bij het versturen. Probeer het later nog eens, of stuur Carien een <a href="https://wa.me/31643791618">WhatsApp</a> of <a href="mailto:info.LUXmini@gmail.com">mail</a>.',
+    // eigen stof (brief 2026-11-11-c7-stofkeuze): de Worker weigert een foto die te groot of geen foto is, of een link zonder https://
+    foto: '<strong>Je bericht is niet verstuurd.</strong> De foto van je stof kon niet mee. Kies een JPG, PNG of HEIC van hooguit 5 MB, of verstuur je bericht zonder foto.',
+    link: '<strong>Je bericht is niet verstuurd.</strong> De link naar je stof klopt niet. Begin de link met https://, of laat het veld leeg.'
   };
+  var redenUit = function (search) { var r = /[?&]reden=(versturen|foto|link)(&|$)/.exec(search); return r ? r[1] : 'ongeldig'; };
   // De foutmelding staat in een eigen element boven de privacyzin (die blijft staan, met de link naar privacy.html);
   // bij opnieuw versturen wordt hetzelfde element hergebruikt, dus nooit twee meldingen.
   var toonFout = function (soort) {
@@ -1095,7 +1099,7 @@
     }, 450);
   };
   if (/[?&]verzonden=fout/.test(location.search)) {
-    var m = toonFout(/[?&]reden=versturen(&|$)/.test(location.search) ? 'versturen' : 'ongeldig');
+    var m = toonFout(redenUit(location.search));
     if (m) {
       // contact.html?verzonden=fout#formulier: zorg dat de melding zonder scrollen in beeld staat
       var toonMelding = function () { setTimeout(function () { meldingInBeeld(m); }, 60); };
@@ -1119,6 +1123,11 @@
       var m = toonFout(soort);
       if (!m) return;
       var veld = null;
+      if (soort === 'foto' || soort === 'link') {
+        veld = verzendForm.querySelector(soort === 'foto' ? 'input[name="stof_foto"]' : 'input[name="stof_link"]');
+        if (soort === 'foto' && window.luxStofFoto) window.luxStofFoto.weg(false); // de geweigerde foto gaat niet nog eens mee
+        if (veld && !veld.getClientRects().length) veld = null;
+      }
       if (soort === 'ongeldig') {
         var v = function (n) { return verzendForm.querySelector('[name="' + n + '"]'); };
         // eerste foute veld in de volgorde van het formulier (bericht, naam, e-mail)
@@ -1135,12 +1144,13 @@
       if (bezigMet) return;
       bezigMet = true;
       if (knop) { knop.disabled = true; knop.setAttribute('aria-busy', 'true'); if (knopTekst) knopTekst.textContent = 'Bezig met versturen…'; }
-      fetch(verzendForm.action, { method: 'POST', body: new URLSearchParams(new FormData(verzendForm)), credentials: 'same-origin' })
+      // multipart/form-data, zoals het formulier zonder JavaScript (enctype): de foto van een eigen stof gaat mee
+      fetch(verzendForm.action, { method: 'POST', body: new FormData(verzendForm), credentials: 'same-origin' })
         .then(function (res) {
           var pad = new URL(res.url, location.href);
           if (/^\/bedankt(\.html)?$/.test(pad.pathname)) { location.assign(pad.pathname); return; }
           if (/^\/contact(\.html)?$/.test(pad.pathname) && /[?&]verzonden=fout/.test(pad.search)) {
-            mislukt(/[?&]reden=versturen(&|$)/.test(pad.search) ? 'versturen' : 'ongeldig');
+            mislukt(redenUit(pad.search));
             return;
           }
           mislukt('versturen'); // onverwacht antwoord (bijv. 405 of 500)
@@ -1167,7 +1177,92 @@
       var rondje = form.querySelector('input[name="box_formaat"][value="' + formaat + '"]');
       if (rondje) rondje.checked = true;
     }
-    kies(form.querySelector('select[name="box_thema"]'), vraag.get('thema'));
+    // thema: keuzekaarten (brief 2026-11-11-c7-stofkeuze); ?thema=eigen kiest de eigen stof, onbekend blijft "Nog niet gekozen"
+    var thema = sleutel(vraag.get('thema'));
+    if (thema === 'eigen' || thema === 'eigen stof') thema = sleutel('Een eigen stof of kleur');
+    if (thema) {
+      var themaKaart = Array.prototype.slice.call(form.querySelectorAll('input[name="box_thema"]')).filter(function (r) { return r.value && sleutel(r.value) === thema; })[0];
+      if (themaKaart) themaKaart.checked = true;
+    }
+  }
+  // Eigen stof (brief 2026-11-11-c7-stofkeuze): foto en link vooraf controleren, met "Let op: …" onder het veld (aria-live);
+  // een geweigerde foto gaat niet mee. Met JavaScript een miniatuur, de bestandsnaam en "Verwijderen".
+  var fotoVeld = document.querySelector('.formulier input[name="stof_foto"]');
+  if (fotoVeld) {
+    var FOTO_MAX = 5 * 1024 * 1024;
+    var FOTO_TYPEN = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+    var fotoFout = document.getElementById('stof-foto-fout');
+    var voorbeeld = null, voorbeeldUrl = null;
+    var fotoMelding = function (tekst) { if (fotoFout) fotoFout.textContent = tekst || ''; };
+    var weg = function (focus) {
+      fotoVeld.value = '';
+      if (voorbeeldUrl && window.URL && URL.revokeObjectURL) URL.revokeObjectURL(voorbeeldUrl);
+      voorbeeldUrl = null;
+      if (voorbeeld) { voorbeeld.parentNode.removeChild(voorbeeld); voorbeeld = null; }
+      if (focus) fotoVeld.focus();
+    };
+    var toonVoorbeeld = function (bestand) {
+      voorbeeld = document.createElement('div');
+      voorbeeld.className = 'eigen-voorbeeld';
+      if (window.URL && URL.createObjectURL) {
+        var img = document.createElement('img');
+        img.alt = '';
+        img.width = 72; img.height = 72;
+        voorbeeldUrl = URL.createObjectURL(bestand);
+        img.onerror = function () { img.style.visibility = 'hidden'; }; // HEIC kan de browser vaak niet tonen
+        img.src = voorbeeldUrl;
+        voorbeeld.appendChild(img);
+      }
+      var naam = document.createElement('span');
+      naam.className = 'eigen-voorbeeld-naam';
+      naam.textContent = bestand.name;
+      voorbeeld.appendChild(naam);
+      var knopWeg = document.createElement('button');
+      knopWeg.type = 'button';
+      knopWeg.className = 'eigen-weg';
+      knopWeg.textContent = 'Verwijderen';
+      knopWeg.addEventListener('click', function () { weg(true); fotoMelding(''); });
+      voorbeeld.appendChild(knopWeg);
+      var label = fotoVeld.closest('label');
+      label.parentNode.insertBefore(voorbeeld, label.nextSibling);
+    };
+    fotoVeld.addEventListener('change', function () {
+      var bestand = fotoVeld.files && fotoVeld.files[0];
+      if (voorbeeld) { voorbeeld.parentNode.removeChild(voorbeeld); voorbeeld = null; }
+      if (!bestand) { fotoMelding(''); return; }
+      var type = String(bestand.type || '').toLowerCase();
+      var heic = !type && /\.(heic|heif)$/i.test(bestand.name);
+      if (FOTO_TYPEN.indexOf(type) < 0 && !heic) { weg(false); fotoMelding('Let op: dit is geen foto. Kies een JPG, PNG of HEIC.'); return; }
+      if (bestand.size > FOTO_MAX) { weg(false); fotoMelding('Let op: deze foto is groter dan 5 MB. Kies een kleinere foto.'); return; }
+      fotoMelding('');
+      toonVoorbeeld(bestand);
+    });
+    window.luxStofFoto = { weg: function (focus) { weg(focus); } };
+  }
+  var linkVeld = document.querySelector('.formulier input[name="stof_link"]');
+  if (linkVeld) {
+    var linkFout = document.getElementById('stof-link-fout');
+    // alleen bij onderwerp Kraamcadeaubox en thema eigen stof telt de link (zoals de Worker); anders blokkeert hij nooit
+    var eigenGekozen = function () {
+      var r = document.querySelector('.formulier input[name="box_thema"][value="Een eigen stof of kleur"]');
+      var o = document.querySelector('.formulier select[name="onderwerp"]');
+      return !!(r && r.checked && (!o || o.value === 'Kraamcadeaubox'));
+    };
+    var linkGoed = function () { var w = linkVeld.value.trim(); return w === '' || (/^https:\/\/[^\s<>"]+\.[^\s<>"]+$/i.test(w) && w.length <= 300); };
+    // de melding van de browser (bij versturen) is dezelfde als onder het veld; een verborgen veld blokkeert nooit
+    var metHas = window.CSS && CSS.supports && CSS.supports('selector(:has(a))');
+    var linkPas = function (tonen) {
+      // verborgen (ander thema of onderwerp): uitgeschakeld, zodat de controle van de browser (type=url) nooit blokkeert
+      if (metHas) linkVeld.disabled = !eigenGekozen();
+      var fout = eigenGekozen() && !linkGoed();
+      linkVeld.setCustomValidity(fout ? 'Let op: begin de link met https://' : '');
+      if (tonen || !fout) linkFout.textContent = fout ? 'Let op: begin de link met https://' : '';
+    };
+    linkVeld.addEventListener('input', function () { linkPas(false); });
+    linkVeld.addEventListener('change', function () { linkPas(true); });
+    linkVeld.addEventListener('invalid', function () { linkPas(true); });
+    document.querySelectorAll('.formulier input[name="box_thema"], .formulier select[name="onderwerp"]').forEach(function (el) { el.addEventListener('change', function () { linkPas(false); }); });
+    linkPas(false);
   }
   // Foto's die pas bij nadering laden (Kraamcadeauboxen 002 en 003, ronde 8): de hele sectie wordt in één keer gevuld
   // zodra hij binnen 1200 px van het scherm komt, ook de foto's die horizontaal in een rij buiten beeld staan.

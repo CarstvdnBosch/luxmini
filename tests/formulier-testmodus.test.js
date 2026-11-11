@@ -76,3 +76,28 @@ test('testserver: ongeldige invoer → 303 naar de foutpagina zonder reden (echt
   assert.equal(res.status, 303);
   assert.equal(naar(res), '/contact?verzonden=fout');
 });
+
+// Brief 2026-11-11-c7-stofkeuze: de testmodus kan ook multipart/form-data met de foto van een eigen stof (nooit een mail)
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+const postMultipart = (velden, foto, kop = {}) => {
+  const f = new FormData();
+  for (const [k, v] of Object.entries(velden)) f.append(k, v);
+  if (foto) f.append('stof_foto', foto);
+  return fetch(`http://127.0.0.1:${POORT}/api/contact`, { method: 'POST', redirect: 'manual', body: f, headers: kop });
+};
+const EIGEN = { ...GOED, box_thema: 'Een eigen stof of kleur', stof_link: 'https://stof.test/a' };
+
+test('testserver: multipart met een PNG bij eigen stof → /bedankt; x-testmail fout → reden=versturen', async () => {
+  const ok = await postMultipart(EIGEN, new File([PNG], 'stof.png', { type: 'image/png' }), { 'x-testmail': 'ok' });
+  assert.equal(ok.status, 303);
+  assert.equal(naar(ok), '/bedankt');
+  const fout = await postMultipart(EIGEN, new File([PNG], 'stof.png', { type: 'image/png' }), { 'x-testmail': 'fout' });
+  assert.equal(naar(fout), '/contact?verzonden=fout&reden=versturen');
+});
+
+test('testserver: multipart met een bestand dat geen foto is → reden=foto; link zonder https → reden=link', async () => {
+  const pdf = await postMultipart(EIGEN, new File([Buffer.from('%PDF-1.7 verzonnen')], 'stof.jpg', { type: 'image/jpeg' }));
+  assert.equal(naar(pdf), '/contact?verzonden=fout&reden=foto');
+  const link = await postMultipart({ ...EIGEN, stof_link: 'http://stof.test' });
+  assert.equal(naar(link), '/contact?verzonden=fout&reden=link');
+});
