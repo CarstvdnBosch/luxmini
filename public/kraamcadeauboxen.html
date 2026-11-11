@@ -207,7 +207,7 @@
         <li class="product"><img fetchpriority="low" data-src="assets/img/p-bijtring-kleur-600.jpg" data-srcset="assets/img/p-bijtring-kleur-600.jpg 600w, assets/img/p-bijtring-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Bijtring met een linnen zakje met de naam Tobi" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/p-bijtring-kleur-600.jpg" srcset="assets/img/p-bijtring-kleur-600.jpg 600w, assets/img/p-bijtring-kleur.jpg 900w" sizes="(max-width: 760px) 136px, (max-width: 1024px) 160px, 180px" width="600" height="800" alt="Bijtring met een linnen zakje met de naam Tobi" loading="lazy" decoding="async"></noscript><p class="product-naam">Bijtring</p><p class="product-regel">in de box van €&nbsp;80</p></li>
       </ul>
     <h3 class="producten-kop">De stoffen</h3>
-    <div class="stoffen" role="region" aria-label="Stoffen" tabindex="0">
+    <div id="stoffenrij" class="stoffen carrousel" role="region" aria-label="Stoffen" tabindex="0">
       <ul role="list">
         <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-giraf.jpg" width="240" height="240" alt="Stof van het thema Giraf" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-giraf.jpg" width="240" height="240" alt="Stof van het thema Giraf" loading="lazy" decoding="async"></noscript><p class="stof-naam">Giraf</p></li>
         <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-vos.jpg" width="240" height="240" alt="Stof van het thema Vos" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-vos.jpg" width="240" height="240" alt="Stof van het thema Vos" loading="lazy" decoding="async"></noscript><p class="stof-naam">Vos</p></li>
@@ -220,6 +220,10 @@
         <li class="stof"><img fetchpriority="low" data-src="assets/img/stof-blaadjes-en-bloemen.jpg" width="240" height="240" alt="Stof van het thema Blaadjes en bloemen" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/stof-blaadjes-en-bloemen.jpg" width="240" height="240" alt="Stof van het thema Blaadjes en bloemen" loading="lazy" decoding="async"></noscript><p class="stof-naam">Blaadjes en bloemen</p></li>
       </ul>
     </div>
+    <div class="carrousel-knoppen">
+      <button type="button" class="carrousel-knop" data-richting="-1" aria-label="Vorige stoffen" aria-controls="stoffenrij"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M28 5H2M6 1L2 5l4 4"/></svg></button>
+      <button type="button" class="carrousel-knop" data-richting="1" aria-label="Volgende stoffen" aria-controls="stoffenrij"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg></button>
+    </div>
     </div>
   </div>
 </section>
@@ -230,7 +234,7 @@
   <div class="wrap sectie">
     <p class="label"><span>003 —</span> Thema's</p>
     <h2 class="sr-only">Thema's</h2>
-    <div id="themacarrousel" class="themacarrousel" role="region" aria-label="Thema's" tabindex="0">
+    <div id="themacarrousel" class="themacarrousel carrousel" role="region" aria-label="Thema's" tabindex="0">
       <ul role="list">
         <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-giraf-600.jpg" data-srcset="assets/img/box-giraf-600.jpg 600w, assets/img/box-giraf.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Giraf" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-giraf-600.jpg" srcset="assets/img/box-giraf-600.jpg 600w, assets/img/box-giraf.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Giraf" loading="lazy" decoding="async"></noscript><figcaption>Giraf</figcaption></figure></li>
         <li class="thema-tegel"><figure><img fetchpriority="low" data-src="assets/img/box-vos-600.jpg" data-srcset="assets/img/box-vos-600.jpg 600w, assets/img/box-vos.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Vos" loading="lazy" decoding="async"><noscript><img fetchpriority="low" src="assets/img/box-vos-600.jpg" srcset="assets/img/box-vos-600.jpg 600w, assets/img/box-vos.jpg 1100w" sizes="(max-width: 760px) 80vw, (max-width: 1024px) 34vw, 33vw" width="600" height="450" alt="Kraamcadeaubox thema Vos" loading="lazy" decoding="async"></noscript><figcaption>Vos</figcaption></figure></li>

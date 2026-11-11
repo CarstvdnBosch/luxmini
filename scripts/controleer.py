@@ -1110,7 +1110,7 @@ def controleer_themas(browser):
             fouten.append(f"{tag}: themarij niet binnen de rand of geen stukje van de volgende set in beeld (eerste t.o.v. label, zichtbaar deel vierde: {st})")
         if naam == "desktop":
             # knop "volgende" schuift precies één set (de vierde tegel komt links in beeld)
-            page.click(".carrousel-knop[data-richting='1']"); page.wait_for_timeout(600)
+            page.click(".carrousel-knop[aria-controls='themacarrousel'][data-richting='1']"); page.wait_for_timeout(600)
             vier = page.evaluate("() => Math.round(document.querySelectorAll('.themacarrousel li')[3].getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left)")
             if abs(vier) > 2:
                 fouten.append(f"{tag}: na 'Volgende thema's' staat het vierde thema niet onder het label ({vier} px)")
