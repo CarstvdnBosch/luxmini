@@ -1063,13 +1063,36 @@
       if (bodem > onder) dy = bodem - onder;           // knop onder de rand: omhoog schuiven
       if (veld) dy = Math.min(dy, veld.getBoundingClientRect().top - boven); // het foute veld blijft zichtbaar
       if (top - dy < boven) dy = top - boven;          // maar de melding blijft altijd zichtbaar
-      if (Math.abs(dy) >= 1) window.scrollTo({ top: window.scrollY + dy, behavior: 'instant' });
+      if (Math.abs(dy) < 1) return false;
+      window.scrollTo({ top: window.scrollY + dy, behavior: 'instant' });
+      return true;
     };
-    pas();
-    // pas() is idempotent: na het einde van de scroll (waar ondersteund) en in elk geval na 450 ms
-    var naScroll = function () { window.removeEventListener('scrollend', naScroll); requestAnimationFrame(pas); };
-    if ('onscrollend' in window) window.addEventListener('scrollend', naScroll);
-    setTimeout(function () { requestAnimationFrame(pas); }, 450);
+    var gesprongen = pas();
+    var verwacht = window.scrollY;
+    // Nameting alleen zolang de bezoeker niet zelf scrolt (controle ronde 3): anders trekken we hem terug naar het formulier.
+    var zelf = false;
+    var SIGNALEN = ['wheel', 'touchstart', 'touchmove', 'keydown', 'pointerdown'];
+    var eigen = function () { zelf = true; };
+    var naMeten = function () {
+      if (zelf) return;
+      // zonder foutveld start de browser zelf geen scroll; wijkt de positie af, dan scrolde iemand anders (de bezoeker)
+      if (!veld && Math.abs(window.scrollY - verwacht) > 2) return;
+      pas();
+      verwacht = window.scrollY;
+    };
+    var naScroll = function () { requestAnimationFrame(naMeten); };
+    // scrollend alleen als er echt een scroll loopt: onze eigen sprong, of de focus op het foute veld (kan glijden)
+    var luistert = (gesprongen || !!veld) && 'onscrollend' in window;
+    SIGNALEN.forEach(function (s) { window.addEventListener(s, eigen, { capture: true, passive: true }); });
+    if (luistert) window.addEventListener('scrollend', naScroll, { once: true });
+    setTimeout(function () {
+      requestAnimationFrame(function () {
+        naMeten();
+        // altijd opruimen: geen luisteraar blijft hangen
+        if (luistert) window.removeEventListener('scrollend', naScroll);
+        SIGNALEN.forEach(function (s) { window.removeEventListener(s, eigen, { capture: true }); });
+      });
+    }, 450);
   };
   if (/[?&]verzonden=fout/.test(location.search)) {
     var m = toonFout(/[?&]reden=versturen(&|$)/.test(location.search) ? 'versturen' : 'ongeldig');

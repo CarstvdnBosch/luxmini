@@ -10,7 +10,11 @@ async function vulIn(page, invoer = INVOER) {
   await page.goto('/contact#formulier');
   await wachtOpRust(page);
   await page.locator('select[name="onderwerp"]').selectOption('Kraamcadeaubox');
-  await page.locator('input[name="box_formaat"][value="50"]').check({ force: true });
+  // met beweging glijdt de browser naar het veld (scroll-behavior: smooth); eerst direct in beeld, anders mist de klik soms
+  const formaat = page.locator('input[name="box_formaat"][value="50"]');
+  await formaat.evaluate(el => (el.closest('label') || el).scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await page.waitForTimeout(50);
+  await formaat.check({ force: true });
   await page.locator('select[name="box_thema"]').selectOption('Giraf');
   for (const [naam, waarde] of Object.entries(invoer)) await page.locator(`[name="${naam}"]`).fill(waarde);
 }
@@ -242,5 +246,52 @@ test.describe('390 met beweging', () => {
     expect(m.knopOnder, 'knop volledig in beeld').toBeLessThanOrEqual(m.hoogte);
     const veld = await page.locator('input[name="email"]').boundingBox();
     expect(veld.y, 'het foute veld blijft in beeld').toBeGreaterThanOrEqual(0);
+  });
+});
+
+// Controle ronde 3: staat de melding al in beeld (geen sprong nodig), dan mag een eigen scroll van de bezoeker daarna
+// nooit teruggetrokken worden naar het formulier (scrollend-luisteraar en nameting na 450 ms).
+test.describe('touch met beweging: eigen scroll na de melding blijft staan', () => {
+  test.beforeEach(async ({ page }, info) => {
+    test.skip(info.project.name !== 'mobiel' && info.project.name !== 'tablet', 'mobiel en tablet met touch (Chromium)');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
+  test('melding al in beeld, daarna 900 px omhoog vegen: pagina blijft daar, ook na 1 s', async ({ page }) => {
+    await nepWorker(page, VERSTUREN);
+    await vulIn(page);
+    // melding komt boven de privacyzin; zet de knop ruim in beeld zodat er geen verschuiving nodig is
+    await page.evaluate(() => {
+      const k = document.querySelector('.formulier button.verstuur').getBoundingClientRect();
+      window.scrollTo({ top: window.scrollY + k.bottom - window.innerHeight / 2, behavior: 'instant' });
+    });
+    await page.waitForTimeout(300);
+    const voor = await page.evaluate(() => window.scrollY);
+    await page.locator('button.verstuur').tap();
+    await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou');
+    await page.waitForTimeout(100);
+    const na = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(na - voor), 'geen verschuiving nodig: melding en knop stonden al in beeld').toBeLessThanOrEqual(2);
+    const m = await meldingMeten(page);
+    expect(m.boven).toBeGreaterThanOrEqual(0);
+    expect(m.knopOnder).toBeLessThanOrEqual(m.hoogte);
+    expect(na, 'genoeg ruimte om 900 px omhoog te scrollen').toBeGreaterThan(950);
+
+    // de bezoeker veegt zelf 900 px omhoog: echte touch-events via Chromium, twee halen van 450 px, aan het eind even stil (geen fling)
+    const cdp = await page.context().newCDPSession(page);
+    const x = Math.round(page.viewportSize().width / 2);
+    const raak = (type, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+    for (let haal = 0; haal < 2; haal++) {
+      await raak('touchStart', 150);
+      for (let i = 1; i <= 30; i++) { await raak('touchMove', 150 + i * 15); await page.waitForTimeout(16); }
+      await page.waitForTimeout(120);
+      await raak('touchEnd');
+    }
+    await page.waitForTimeout(200);
+    const doel = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(doel - (na - 900)), 'eigen scroll van 900 px omhoog is gebeurd').toBeLessThanOrEqual(40);
+    await page.waitForTimeout(1000);
+    const later = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(later - doel), 'pagina blijft waar de bezoeker heen scrolde (± 2 px), ook na 1 s').toBeLessThanOrEqual(2);
   });
 });
