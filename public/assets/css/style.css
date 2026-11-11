@@ -1159,7 +1159,11 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .formulier .groep { display: none; }
   .formulier:has(select[name="onderwerp"] option[value="Kraamcadeaubox"]:checked) .groep[data-groep="Kraamcadeaubox"],
   .formulier:has(select[name="onderwerp"] option[value="Prematuurkleding"]:checked) .groep[data-groep="Prematuurkleding"],
-  .formulier:has(select[name="onderwerp"] option[value="Babynest"]:checked) .groep[data-groep="Babynest"] { display: grid; }
+  .formulier:has(select[name="onderwerp"] option[value="Babynest"]:checked) .groep[data-groep="Babynest"],
+  .formulier:has(select[name="onderwerp"] option[value="Iets op maat laten maken"]:checked) .groep[data-groep="Iets op maat laten maken"] { display: grid; }
+  /* vrij maatveld alleen bij "Anders" (brief 2026-11-11-c5-babymaten); zonder :has altijd zichtbaar */
+  .formulier .groep .maat-anders { display: none; }
+  .formulier .groep:has(option[value="anders"]:checked) .maat-anders { display: flex; }
   .js .formulier .groep { animation: groep-in .3s ease both; } /* vervaagt in bij het tonen; zonder JavaScript direct */
 }
 @keyframes groep-in { from { opacity: 0; } }
