@@ -27,3 +27,4 @@
 | Controle ronde 2 | website-controleur | NIET AKKOORD — alt van p-swaddle-open-kleur in kraamcadeauboxen.html (r. 201, img en noscript) nog "Opgerolde … vosjes en egeltjes" |
 | Ontwerpgate ronde 2 | website-ontwerper | ONTWERP AKKOORD — swaddles staan op 1440, 768 en 390 niet meer naast elkaar; de nieuwe foto staat vrij op perzik in 3:4, scherp en warm, en sluit aan bij de buren |
 | Bouwen ronde 3 | Claude (hoofdsessie) | Alt op kraamcadeauboxen gelijk aan Inspiratie (img en noscript); srcset p-knuffel-naam 900w → 675w (bestaande fout, bestand is 675 breed) |
+| Controle ronde 3 | website-controleur | AKKOORD — alt van de swaddle op Kraamcadeauboxen (img en noscript) gelijk aan Inspiratie, srcset van p-knuffel-naam klopt (675w), npm test 94/94, e2e seo-veiligheid en kernpaden 87 geslaagd en 0 fout |
