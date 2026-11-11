@@ -4,7 +4,7 @@
 
 ## Wat verandert
 - De foto van het mintgroene knuffeldoekje-konijn met LUX-label (`p-knuffel.jpg`, `p-knuffel-600.jpg`) verdwijnt van de site. Hij stond alleen op Inspiratie, in groep 002 Knuffels, swaddles en babynest (`#textiel`), met bijschrift "Knuffel mint".
-- Om de groep op vier items te houden (vier kolommen op desktop, geen leeg vak) komt er een bestaande eigen foto bij die nog niet op de site stond: de opgerolde swaddle met strik (`p-swaddle.jpg`, met een nieuwe webversie `p-swaddle-600.jpg`). Het is dezelfde swaddle als het item "Swaddle", in een andere stand; daarom staat hij niet naast dat item.
+- Om de groep op vier items te houden (vier kolommen op desktop, geen leeg vak) komt er een bestaande eigen foto bij die nog niet op de site stond: de opgerolde swaddle met strik (origineel `p-swaddle.jpg`, vrijgesteld op perzik: `p-swaddle-strik-kleur.jpg` en `-600`). Het is dezelfde swaddle als het item "Swaddle, open", in een andere stand; daarom staan ze nooit naast elkaar (ronde 2, ontwerpgate).
 - De bestanden `p-knuffel.jpg` en `p-knuffel-600.jpg` worden verwijderd (niets gebruikt ze meer).
 - Het crème knuffeldoekje met naam (`p-knuffel-naam*.jpg`) en de doos met mintgroen vloeipapier blijven (vloeipapier valt onder C1).
 - `docs/fotolijst.md`: gewenst een foto van de nieuwe knuffel van Carien (vervangt het mintgroene konijn).
@@ -22,3 +22,5 @@
 |---|---|---|
 | Plannen | Claude (hoofdsessie) | Brief uit de wens van Carien (issue #55) |
 | Bouwen | website-bouwer | Mintgroene knuffel weg uit Inspiratie (enige plek), `p-knuffel(-600).jpg` verwijderd; `p-swaddle.jpg` + nieuwe `p-swaddle-600.jpg` als vierde item (achteraan, niet naast "Swaddle"); fotolijst punt 21. `npm test` groen, `controleer.py` geen fouten, e2e kernpaden/mobiel-ontwerp/seo-veiligheid groen op desktop, tablet en mobiel (Chromium); axe, WebKit, Lighthouse en visueel in CI. Schermafdrukken 1440/768/390: vier items, geen gat |
+| Ontwerpgate ronde 1 | website-ontwerper | ONTWERP NIET AKKOORD — de twee swaddles mogen niet naast elkaar staan; nieuwe foto vrijstaand op perzik in 3:4 zoals de buur; bijschriften en alt gelijktrekken |
+| Bouwen ronde 2 | website-bouwer | Volgorde Swaddle, open · Knuffel met naam · Babynest · Swaddle, dichtgestrikt (1440: kolom 1 en 4; 768: Babynest ertussen; 390: linksboven en rechtsonder). Foto vrijgesteld met `scripts/vrijstaand.py` op perzik `#DEB799`: `p-swaddle-strik-kleur.jpg` (900 × 1200) + `-600`; `p-swaddle-600.jpg` verwijderd. Alt beide "print van bosdieren". `npm test` 94/94, `controleer.py` geen fouten, e2e kernpaden en seo-veiligheid 87 geslaagd, 0 fout (desktop, tablet, mobiel; Chromium); axe, WebKit, Lighthouse en visueel in CI |
