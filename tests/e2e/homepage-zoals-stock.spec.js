@@ -81,13 +81,13 @@ test.describe('zonder JavaScript', () => {
   });
 });
 
-/* ---------- Kraamcadeauboxen: zeven producten en de stoffenrij ---------- */
-test('kraamcadeauboxen: zeven producten met de juiste prijsregels', async ({ page }, info) => {
+/* ---------- Kraamcadeauboxen: acht producten en de stoffenrij (speenkoord erbij: wens Carien 11 nov., brief 2026-11-11-c2) ---------- */
+test('kraamcadeauboxen: acht producten met de juiste prijsregels', async ({ page }, info) => {
   await page.goto('/kraamcadeauboxen');
   const p = await page.locator('#in-de-box .producten > li').evaluateAll(ls => ls.map(l => [l.querySelector('.product-naam').textContent.replace(/­/g, ''), l.querySelector('.product-regel').textContent.replace(/\s+/g, ' '), !!l.querySelector('img'), !!l.querySelector('svg')]));
   expect(p).toEqual([['Knuffel', 'vanaf € 35', true, false], ['Swaddle', 'vanaf € 35', true, false], ['Broekje', 'vanaf € 35', true, false], ['Sjaaltje', 'vanaf € 50', true, false],
-    ['Shirtje', 'vanaf € 65', true, false], ['Douchehandschoen', 'vanaf € 65', false, true], ['Bijtring', 'in de box van € 80', true, false]]);
-  if (info.project.name === 'desktop') { // desktop: alle zeven naast elkaar, zonder scrollen
+    ['Shirtje', 'vanaf € 65', true, false], ['Douchehandschoen', 'vanaf € 65', false, true], ['Bijtring', 'in de box van € 80', true, false], ['Speenkoord', 'in de box van € 80', true, false]]);
+  if (info.project.name === 'desktop') { // desktop: alle acht naast elkaar, zonder scrollen
     const rij = await page.locator('#in-de-box .producten').evaluate(u => [u.scrollWidth - u.clientWidth, new Set([...u.children].map(l => Math.round(l.getBoundingClientRect().top))).size]);
     expect(rij).toEqual([0, 1]);
   }
@@ -409,5 +409,5 @@ test('afdrukken: na beforeprint staan alle foto\'s in 002 en 003 klaar (geen dat
   await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
   const open = await page.locator('#in-de-box img, #themas img').evaluateAll(is => is.filter(i => i.hasAttribute('data-src') || !i.getAttribute('src')).length);
   expect(open, 'foto\'s zonder src bij afdrukken').toBe(0);
-  await expect(page.locator('#in-de-box img, #themas img')).toHaveCount(24);
+  await expect(page.locator('#in-de-box img, #themas img')).toHaveCount(25); // 7 productfoto's (speenkoord erbij, brief 2026-11-11-c2) + 9 stoffen + 9 thema's
 });
