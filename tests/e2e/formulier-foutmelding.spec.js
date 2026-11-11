@@ -1,5 +1,8 @@
 // Brief 2026-11-11 (formulier: eerlijke foutmelding en invoer bewaren), blokkerend.
-// Er gaat nooit een echte mail weg: /api/contact is in elke test een nep-antwoord via page.route.
+// Er gaat nooit een echte mail weg. /api/contact loopt via de testmodus van scripts/serveer.mjs: de echte afhandeling
+// (src/contact.js, echte 303-doorverwijzingen) met een nep-verzending die slaagt of faalt via de header x-testmail.
+// Zo toetst elk project (ook iphone/WebKit, dat route.fulfill met een 303 niet kan) hetzelfde.
+// Alleen netwerkfout (abort) en een onverwacht antwoord (405, zonder doorverwijzing) blijven via page.route.
 import { test, expect, wachtOpRust } from './hulp.js';
 
 const ONGELDIG = '/contact?verzonden=fout#formulier';
@@ -18,11 +21,11 @@ async function vulIn(page, invoer = INVOER) {
   await page.locator('select[name="box_thema"]').selectOption('Giraf');
   for (const [naam, waarde] of Object.entries(invoer)) await page.locator(`[name="${naam}"]`).fill(waarde);
 }
-// nep-Worker: antwoordt met een doorverwijzing (303), zoals src/contact.js
-const nepWorker = (page, locatie, opslaan) => page.route('**/api/contact', async r => {
-  if (opslaan) opslaan(r.request());
-  await r.fulfill({ status: 303, headers: { location: locatie } });
-});
+// testmodus van de server: x-testmail ok (versturen lukt) of fout (versturen mislukt → &reden=versturen);
+// ongeldige invoer keurt de echte controle (src/formulier.js) zelf af. Optioneel: wacht = ms voordat de server antwoordt.
+const nepMail = (page, uitkomst, wacht) => page.setExtraHTTPHeaders({ 'x-testmail': uitkomst, ...(wacht ? { 'x-testmail-wacht': String(wacht) } : {}) });
+// bewaart het POST-verzoek naar /api/contact (zonder onderscheppen)
+const bewaarVerzoek = (page, opslaan) => page.on('request', r => { if (r.method() === 'POST' && new URL(r.url()).pathname === '/api/contact') opslaan(r); });
 async function veldenGevuld(page) {
   for (const [naam, waarde] of Object.entries(INVOER)) await expect(page.locator(`[name="${naam}"]`), `veld ${naam} blijft gevuld`).toHaveValue(waarde);
   await expect(page.locator('select[name="onderwerp"]')).toHaveValue('Kraamcadeaubox');
@@ -45,7 +48,7 @@ async function privacyBlijft(page) {
 }
 
 test('versturen mislukt: velden blijven staan, eerlijke melding met WhatsApp en mail in beeld', async ({ page }) => {
-  await nepWorker(page, VERSTUREN);
+  await nepMail(page, 'fout');
   await vulIn(page);
   await page.locator('button.verstuur').click();
   const melding = page.locator('.formulier .melding.fout');
@@ -72,12 +75,11 @@ test('versturen mislukt: velden blijven staan, eerlijke melding met WhatsApp en 
 });
 
 test('twee keer mislukt: één melding, privacylink blijft, knop en melding in beeld', async ({ page }) => {
-  await nepWorker(page, ONGELDIG);
+  await nepMail(page, 'ok');
   await vulIn(page, { ...INVOER, email: 'test@voorbeeld' });
   await page.locator('button.verstuur').click();
   await expect(page.locator('.formulier .melding.fout')).toContainText('Controleer je naam');
-  await page.unroute('**/api/contact');
-  await nepWorker(page, VERSTUREN);
+  await nepMail(page, 'fout');
   await page.locator('input[name="email"]').fill(INVOER.email);
   await page.locator('button.verstuur').click();
   await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou');
@@ -103,7 +105,7 @@ test('onverwacht antwoord (bijv. 405): melding versturen', async ({ page }) => {
 });
 
 test('ongeldige invoer: melding ongeldig, focus naar het eerste foute veld, velden blijven staan', async ({ page }) => {
-  await nepWorker(page, ONGELDIG);
+  await nepMail(page, 'ok');
   // de browser vindt dit adres goed, de Worker niet (geen punt in het domein)
   await vulIn(page, { ...INVOER, email: 'test@voorbeeld' });
   await page.locator('button.verstuur').click();
@@ -120,7 +122,8 @@ test('ongeldige invoer: melding ongeldig, focus naar het eerste foute veld, veld
 
 test('gelukt: dezelfde formulierdata naar /api/contact en dan naar /bedankt', async ({ page }) => {
   let verzoek = null;
-  await nepWorker(page, '/bedankt', r => { verzoek = { methode: r.method(), type: r.headers()['content-type'], data: r.postData() }; });
+  await nepMail(page, 'ok');
+  bewaarVerzoek(page, r => { verzoek = { methode: r.method(), type: r.headers()['content-type'], data: r.postData() }; });
   await vulIn(page);
   await page.locator('button.verstuur').click();
   await expect(page).toHaveURL(/\/bedankt$/);
@@ -134,15 +137,13 @@ test('gelukt: dezelfde formulierdata naar /api/contact en dan naar /bedankt', as
 });
 
 test('tijdens het versturen: knop uit met "Bezig met versturen…"', async ({ page }) => {
-  let laatGaan;
-  const wacht = new Promise(r => { laatGaan = r; });
-  await page.route('**/api/contact', async r => { await wacht; await r.fulfill({ status: 303, headers: { location: VERSTUREN } }); });
+  await nepMail(page, 'fout', 2500); // de server wacht 2,5 s met antwoorden
   await vulIn(page);
   await page.locator('button.verstuur').click();
   await expect(page.locator('button.verstuur')).toBeDisabled();
   await expect(page.locator('button.verstuur')).toHaveText('Bezig met versturen…');
   await expect(page.locator('button.verstuur')).toHaveCSS('cursor', 'progress');
-  laatGaan();
+  await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou', { timeout: 10000 });
   await expect(page.locator('button.verstuur')).toBeEnabled();
 });
 
@@ -164,7 +165,8 @@ test.describe('zonder JavaScript', () => {
   test('gewone POST: bij versturen mislukt naar de foutpagina met reden=versturen', async ({ page }, info) => {
     test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
     let verstuurd = null;
-    await nepWorker(page, VERSTUREN, r => { verstuurd = r.postData(); });
+    await nepMail(page, 'fout');
+    bewaarVerzoek(page, r => { verstuurd = r.postData(); });
     await page.goto('/contact#formulier');
     await page.locator('textarea[name="bericht"]').fill(INVOER.bericht);
     await page.locator('input[name="naam"]').fill(INVOER.naam);
@@ -196,7 +198,7 @@ async function regels(page) {
 
 test('versturen-melding: max. ca. 60ch, gecentreerd, 2–3 rustige regels zonder los woord', async ({ page }, info) => {
   test.skip(info.project.name === 'mobiel' || info.project.name === 'iphone', 'regellengte geldt voor 1440 en 768');
-  await nepWorker(page, VERSTUREN);
+  await nepMail(page, 'fout');
   await vulIn(page);
   await page.locator('button.verstuur').click();
   await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou');
@@ -215,7 +217,7 @@ test.describe('390 met beweging', () => {
   });
 
   test('versturen mislukt, een paar keer achter elkaar: melding en knop altijd in beeld', async ({ page }) => {
-    await nepWorker(page, VERSTUREN);
+    await nepMail(page, 'fout');
     await vulIn(page);
     for (let i = 0; i < 4; i++) {
       // begin telkens ergens anders op de pagina
@@ -235,7 +237,7 @@ test.describe('390 met beweging', () => {
   });
 
   test('ongeldige invoer: foute veld heeft focus, melding en knop in beeld', async ({ page }) => {
-    await nepWorker(page, ONGELDIG);
+    await nepMail(page, 'ok');
     await vulIn(page, { ...INVOER, email: 'test@voorbeeld' });
     await page.locator('button.verstuur').click();
     await expect(page.locator('.formulier .melding.fout')).toContainText('Controleer je naam');
@@ -258,7 +260,7 @@ test.describe('touch met beweging: eigen scroll na de melding blijft staan', () 
   });
 
   test('melding al in beeld, daarna 900 px omhoog vegen: pagina blijft daar, ook na 1 s', async ({ page }) => {
-    await nepWorker(page, VERSTUREN);
+    await nepMail(page, 'fout');
     await vulIn(page);
     // melding komt boven de privacyzin; zet de knop ruim in beeld zodat er geen verschuiving nodig is
     await page.evaluate(() => {
