@@ -1032,18 +1032,34 @@
     ongeldig: '<strong>Je bericht is niet verstuurd.</strong> Controleer je naam, e-mailadres en bericht.',
     versturen: '<strong>Je bericht is niet verstuurd.</strong> Dat ligt niet aan jou: er ging iets mis bij het versturen. Probeer het later nog eens, of stuur Carien een <a href="https://wa.me/31643791618">WhatsApp</a> of <a href="mailto:info.LUXmini@gmail.com">mail</a>.'
   };
+  // De foutmelding staat in een eigen element boven de privacyzin (die blijft staan, met de link naar privacy.html);
+  // bij opnieuw versturen wordt hetzelfde element hergebruikt, dus nooit twee meldingen.
   var toonFout = function (soort) {
-    var m = document.querySelector('.formulier .melding');
-    if (!m) return null;
-    m.setAttribute('role', 'alert');
-    m.setAttribute('tabindex', '-1');
+    var privacy = document.querySelector('.formulier .melding:not(.fout)');
+    var m = document.querySelector('.formulier .melding.fout');
+    if (!m) {
+      if (!privacy) return null;
+      m = document.createElement('p');
+      m.className = 'melding fout';
+      m.setAttribute('role', 'alert');
+      m.setAttribute('tabindex', '-1');
+      privacy.parentNode.insertBefore(m, privacy);
+    }
     m.innerHTML = MELDINGEN[soort] || MELDINGEN.ongeldig;
     return m;
   };
-  // de melding zonder scrollen in beeld
+  // melding en verstuurknop samen in beeld, direct (zonder glijden, dus ook goed bij "minder beweging")
   var meldingInBeeld = function (m) {
-    var r = m.getBoundingClientRect();
-    if (r.top < 0 || r.bottom > window.innerHeight) m.scrollIntoView({ block: 'center', behavior: 'instant' });
+    var knopEl = m.parentNode && m.parentNode.querySelector('button[type="submit"]');
+    var balkEl = document.querySelector('.balk');
+    var boven = (balkEl ? balkEl.offsetHeight : 0) + 16; // de vaste balk bedekt de bovenkant
+    var onder = window.innerHeight - 16;
+    var top = m.getBoundingClientRect().top;
+    var bodem = knopEl ? Math.max(knopEl.getBoundingClientRect().bottom, m.getBoundingClientRect().bottom) : m.getBoundingClientRect().bottom;
+    var dy = 0;
+    if (bodem > onder) dy = bodem - onder;           // knop onder de rand: omhoog schuiven
+    if (top - dy < boven) dy = top - boven;          // maar de melding blijft altijd zichtbaar
+    if (dy) window.scrollTo({ top: window.scrollY + dy, behavior: 'instant' });
   };
   if (/[?&]verzonden=fout/.test(location.search)) {
     var m = toonFout(/[?&]reden=versturen(&|$)/.test(location.search) ? 'versturen' : 'ongeldig');

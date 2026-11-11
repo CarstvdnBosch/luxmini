@@ -26,18 +26,25 @@ async function veldenGevuld(page) {
   await expect(page.locator('select[name="box_thema"]')).toHaveValue('Giraf');
 }
 async function meldingMeten(page) {
-  return page.locator('.formulier .melding').evaluate(m => {
+  return page.locator('.formulier .melding.fout').evaluate(m => {
     const r = m.getBoundingClientRect();
     const maten = [m, ...m.querySelectorAll('*')].map(el => parseFloat(getComputedStyle(el).fontSize));
-    return { boven: r.top, onder: r.bottom, hoogte: window.innerHeight, kleinste: Math.min(...maten), breed: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 };
+    const k = document.querySelector('.formulier button.verstuur').getBoundingClientRect();
+    return { knopBoven: k.top, knopOnder: k.bottom, boven: r.top, onder: r.bottom, hoogte: window.innerHeight, kleinste: Math.min(...maten), breed: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 };
   });
+}
+
+// de privacyzin met de link blijft staan naast de foutmelding (kan-beter controleur, ronde 2)
+async function privacyBlijft(page) {
+  await expect(page.locator('.formulier .melding:not(.fout) a[href="privacy.html"]')).toBeVisible();
+  await expect(page.locator('.formulier .melding.fout')).toHaveCount(1);
 }
 
 test('versturen mislukt: velden blijven staan, eerlijke melding met WhatsApp en mail in beeld', async ({ page }) => {
   await nepWorker(page, VERSTUREN);
   await vulIn(page);
   await page.locator('button.verstuur').click();
-  const melding = page.locator('.formulier .melding');
+  const melding = page.locator('.formulier .melding.fout');
   await expect(melding).toContainText('Je bericht is niet verstuurd.');
   await expect(melding).toContainText('Dat ligt niet aan jou: er ging iets mis bij het versturen.');
   await expect(melding).not.toContainText('Controleer je naam');
@@ -52,16 +59,35 @@ test('versturen mislukt: velden blijven staan, eerlijke melding met WhatsApp en 
   expect(m.onder, 'melding in beeld (onder)').toBeLessThanOrEqual(m.hoogte);
   expect(m.kleinste, 'geen tekst onder 16 px in de melding').toBeGreaterThanOrEqual(16);
   expect(m.breed, 'niets scrolt horizontaal').toBe(false);
+  expect(m.knopBoven, 'knop volledig in beeld (boven)').toBeGreaterThanOrEqual(0);
+  expect(m.knopOnder, 'knop volledig in beeld (onder)').toBeLessThanOrEqual(m.hoogte);
+  await privacyBlijft(page);
   // de knop is weer bruikbaar
   await expect(page.locator('button.verstuur')).toBeEnabled();
   await expect(page.locator('button.verstuur')).toHaveText('Verstuur bericht');
+});
+
+test('twee keer mislukt: één melding, privacylink blijft, knop en melding in beeld', async ({ page }) => {
+  await nepWorker(page, ONGELDIG);
+  await vulIn(page, { ...INVOER, email: 'test@voorbeeld' });
+  await page.locator('button.verstuur').click();
+  await expect(page.locator('.formulier .melding.fout')).toContainText('Controleer je naam');
+  await page.unroute('**/api/contact');
+  await nepWorker(page, VERSTUREN);
+  await page.locator('input[name="email"]').fill(INVOER.email);
+  await page.locator('button.verstuur').click();
+  await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou');
+  await privacyBlijft(page);
+  const m = await meldingMeten(page);
+  expect(m.boven).toBeGreaterThanOrEqual(0);
+  expect(m.knopOnder, 'knop volledig in beeld').toBeLessThanOrEqual(m.hoogte);
 });
 
 test('netwerkfout: zelfde melding als versturen mislukt, velden blijven staan', async ({ page }) => {
   await page.route('**/api/contact', r => r.abort('internetdisconnected'));
   await vulIn(page);
   await page.locator('button.verstuur').click();
-  await expect(page.locator('.formulier .melding')).toContainText('Dat ligt niet aan jou');
+  await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou');
   await veldenGevuld(page);
 });
 
@@ -69,7 +95,7 @@ test('onverwacht antwoord (bijv. 405): melding versturen', async ({ page }) => {
   await page.route('**/api/contact', r => r.fulfill({ status: 405, body: '' }));
   await vulIn(page);
   await page.locator('button.verstuur').click();
-  await expect(page.locator('.formulier .melding')).toContainText('Dat ligt niet aan jou');
+  await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou');
 });
 
 test('ongeldige invoer: melding ongeldig, focus naar het eerste foute veld, velden blijven staan', async ({ page }) => {
@@ -77,7 +103,7 @@ test('ongeldige invoer: melding ongeldig, focus naar het eerste foute veld, veld
   // de browser vindt dit adres goed, de Worker niet (geen punt in het domein)
   await vulIn(page, { ...INVOER, email: 'test@voorbeeld' });
   await page.locator('button.verstuur').click();
-  const melding = page.locator('.formulier .melding');
+  const melding = page.locator('.formulier .melding.fout');
   await expect(melding).toHaveText('Je bericht is niet verstuurd. Controleer je naam, e-mailadres en bericht.');
   await expect(melding).toHaveAttribute('role', 'alert');
   await expect(melding.locator('a')).toHaveCount(0);
@@ -85,6 +111,7 @@ test('ongeldige invoer: melding ongeldig, focus naar het eerste foute veld, veld
   await expect(page.locator('input[name="email"]')).toHaveValue('test@voorbeeld');
   await expect(page.locator('textarea[name="bericht"]')).toHaveValue(INVOER.bericht);
   expect((await meldingMeten(page)).kleinste).toBeGreaterThanOrEqual(16);
+  await privacyBlijft(page);
 });
 
 test('gelukt: dezelfde formulierdata naar /api/contact en dan naar /bedankt', async ({ page }) => {
@@ -116,13 +143,15 @@ test('tijdens het versturen: knop uit met "Bezig met versturen…"', async ({ pa
 
 test('foutpagina na een gewone POST: de melding hoort bij de reden', async ({ page }) => {
   await page.goto(VERSTUREN);
-  await expect(page.locator('.formulier .melding')).toContainText('Dat ligt niet aan jou');
-  await expect(page.locator('.formulier .melding a[href="https://wa.me/31643791618"]')).toHaveCount(1);
+  await expect(page.locator('.formulier .melding.fout')).toContainText('Dat ligt niet aan jou');
+  await expect(page.locator('.formulier .melding.fout a[href="https://wa.me/31643791618"]')).toHaveCount(1);
   const m = await meldingMeten(page);
   expect(m.onder, 'melding zonder scrollen in beeld').toBeLessThanOrEqual(m.hoogte);
   expect(m.boven).toBeGreaterThanOrEqual(0);
+  expect(m.knopOnder, 'knop volledig in beeld').toBeLessThanOrEqual(m.hoogte);
+  await privacyBlijft(page);
   await page.goto(ONGELDIG);
-  await expect(page.locator('.formulier .melding')).toHaveText('Je bericht is niet verstuurd. Controleer je naam, e-mailadres en bericht.');
+  await expect(page.locator('.formulier .melding.fout')).toHaveText('Je bericht is niet verstuurd. Controleer je naam, e-mailadres en bericht.');
 });
 
 test.describe('zonder JavaScript', () => {

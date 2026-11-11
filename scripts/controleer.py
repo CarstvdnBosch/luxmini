@@ -1339,7 +1339,7 @@ def controleer_contactpagina(browser):
         page = ctx.new_page()
         page.goto(url("contact.html?verzonden=fout#formulier"), wait_until="load")
         page.wait_for_timeout(1500)
-        m = page.evaluate("""() => { const m = document.querySelector('.formulier .melding'); const r = m.getBoundingClientRect();
+        m = page.evaluate("""() => { const m = document.querySelector('.formulier .melding.fout'); const r = m.getBoundingClientRect();
           return [m.textContent.includes('niet verstuurd'), m.getAttribute('role'), r.top >= 0 && r.bottom <= innerHeight]; }""")
         if m != [True, "alert", True]:
             fouten.append(f"{tag}: na ?verzonden=fout staat de foutmelding niet (in beeld) ({m})")
