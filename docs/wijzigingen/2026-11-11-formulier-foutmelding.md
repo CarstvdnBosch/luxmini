@@ -17,7 +17,7 @@
 ## Acceptatiecriteria
 1. Unit-tests: ongeldig → `/contact?verzonden=fout#formulier`; versturen gooit → `/contact?verzonden=fout&reden=versturen#formulier`; log bij ongeldig bevat veldnamen en geen waarden.
 2. e2e (desktop, tablet, mobiel): met een nep-`/api/contact` die faalt blijven alle velden gevuld en staat de versturen-melding in beeld met WhatsApp- en maillink; met ongeldige invoer de ongeldig-melding; met succes naar `/bedankt`.
-3. Zonder JavaScript: POST werkt en de foutpagina toont de melding die bij `reden` hoort.
+3. Zonder JavaScript: POST werkt en komt op de juiste foutpagina (`reden=versturen` of niet). *Aangepast door hoofdsessie 11 nov.:* met JavaScript helemaal uit verschijnt de melding niet (zo was het al; een statische pagina kan het adres niet lezen en `run_worker_first` blijft ongewijzigd). Geaccepteerd: vrijwel alle bezoekers hebben JavaScript.
 4. axe 0 overtredingen op de contactpagina met beide meldingen; tikdoelen 44 px; geen tekst onder 16 px in de melding.
 5. `npm run check` groen; publieke pagina's verder ongewijzigd.
 
