@@ -172,7 +172,7 @@ test('kraamcadeauboxen: vier formaten compact binnen 1,2 scherm, elk met prijs, 
   expect(m.hoogte, `€ 35 t/m € 80 beslaan ${Math.round(m.hoogte)} px (scherm ${m.scherm} px)`).toBeLessThanOrEqual(1.2 * m.scherm);
   expect(m.breed, 'pagina is breder dan het scherm').toBeLessThanOrEqual(0);
   const VERWACHT = [['€ 35', '3 producten', ['knuffel', 'swaddle', 'broekje']], ['€ 50', '4 producten', ['sjaaltje']],
-    ['€ 65', '6 producten', ['shirtje', 'douchehandschoen']], ['€ 80', '7 producten', ['bijtring']]];
+    ['€ 65', '6 producten', ['shirtje', 'douchehandschoen']], ['€ 80', '7 producten', ['bijtring of speenkoord']]];
   m.kaarten.forEach((k, i) => {
     const [prijs, aantal, producten] = VERWACHT[i];
     expect(k.prijs, `kaart ${i + 1}: prijs`).toBe(prijs);

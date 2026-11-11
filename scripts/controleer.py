@@ -188,7 +188,7 @@ def controleer_contact(browser):
 
 # Prijstabel kraamcadeaubox: gegevens volgens CLAUDE.md en docs/ontwerp/bron/prijstabel-oude-site.png
 PRIJZEN = ["€ 35", "€ 50", "€ 65", "€ 80"]
-PRODUCTEN = {"Knuffel": 1, "Swaddle": 1, "Broekje": 1, "Sjaaltje": 2, "Shirtje": 3, "Douchehandschoen": 3, "Bijtring": 4}  # vanaf welk formaat
+PRODUCTEN = {"Knuffel": 1, "Swaddle": 1, "Broekje": 1, "Sjaaltje": 2, "Shirtje": 3, "Douchehandschoen": 3, "Bijtring of speenkoord": 4}  # vanaf welk formaat (bijtring of speenkoord: wens Carien 11 nov.)
 AANTALLEN = ["3", "4", "6", "7"]
 
 LEES_PRIJSTABEL = """() => {
