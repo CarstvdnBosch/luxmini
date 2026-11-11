@@ -1090,9 +1090,10 @@
     var stilLaden = function () { if (window.requestIdleCallback) window.requestIdleCallback(allesLaden, { timeout: 3000 }); else setTimeout(allesLaden, 1500); };
     if (document.readyState === 'complete') setTimeout(stilLaden, 1000); else window.addEventListener('load', function () { setTimeout(stilLaden, 1000); });
   }
-  // Thema's (Kraamcadeauboxen 003): pijlknoppen schuiven één set van drie verder (scroll-snap legt hem precies neer);
+  // Carrousels (thema's en stoffen op Kraamcadeauboxen, fotorij op Werkwijze; feedback Carst 11 nov.: geen scrollbalk):
+  // pijlknoppen schuiven één set verder (zoveel tegels als er binnen de rand passen; scroll-snap legt hem precies neer);
   // aan het begin of eind is de knop uit. Vegen op touch en de pijltoetsen in de rij werken vanzelf.
-  document.querySelectorAll('.themacarrousel').forEach(function (rij) {
+  document.querySelectorAll('.carrousel').forEach(function (rij) {
     var knoppen = Array.prototype.slice.call(document.querySelectorAll('.carrousel-knop[aria-controls="' + rij.id + '"]'));
     var stand = function () {
       var max = rij.scrollWidth - rij.clientWidth - 2;
@@ -1102,8 +1103,12 @@
     knoppen.forEach(function (k) {
       k.addEventListener('click', function () {
         if (k.getAttribute('aria-disabled') === 'true') return;
-        var gat = parseFloat(getComputedStyle(rij.querySelector('ul')).columnGap) || 0;
-        rij.scrollBy({ left: Number(k.dataset.richting) * (rij.clientWidth + gat), behavior: stil ? 'auto' : 'smooth' });
+        var spoor = rij.querySelector('ul') || rij, st = getComputedStyle(spoor), tegel = spoor.firstElementChild;
+        var gat = parseFloat(st.columnGap) || 0;
+        var binnen = rij.clientWidth - (spoor === rij ? 0 : (parseFloat(st.paddingLeft) || 0) + (parseFloat(st.paddingRight) || 0));
+        var stap = tegel ? tegel.getBoundingClientRect().width + gat : binnen;
+        var aantal = Math.max(1, Math.floor((binnen + gat + 1) / stap)); // een set: de tegels die helemaal binnen de rand passen
+        rij.scrollBy({ left: Number(k.dataset.richting) * aantal * stap, behavior: stil ? 'auto' : 'smooth' });
       });
     });
     rij.addEventListener('scroll', function () { window.requestAnimationFrame(stand); }, { passive: true });

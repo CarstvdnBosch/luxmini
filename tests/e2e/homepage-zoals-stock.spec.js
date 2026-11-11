@@ -372,7 +372,7 @@ test('F3: label 002 — Handwerk en vier namen waarin elk woord één keer voork
 test('F4: de thema-knoppen schuiven één set; aan het begin staat "vorige" uit', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'knoppen alleen met een muis');
   await page.goto('/kraamcadeauboxen#themas');
-  const vorige = page.locator('.carrousel-knop[data-richting="-1"]'), volgende = page.locator('.carrousel-knop[data-richting="1"]');
+  const vorige = page.locator('.carrousel-knop[aria-controls="themacarrousel"][data-richting="-1"]'), volgende = page.locator('.carrousel-knop[aria-controls="themacarrousel"][data-richting="1"]');
   const links = () => page.locator('.themacarrousel li').nth(3).evaluate(l => Math.abs(Math.round(l.getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left)));
   await expect(vorige).toHaveAttribute('aria-disabled', 'true'); // aria-disabled: de focus blijft op de knop
   await volgende.click();
@@ -390,6 +390,75 @@ test('F4: de thema-knoppen schuiven één set; aan het begin staat "vorige" uit'
   await expect.poll(() => rij.evaluate(r => r.scrollWidth - r.clientWidth - r.scrollLeft)).toBeLessThanOrEqual(2);
   await page.keyboard.press('Home');
   await expect.poll(() => rij.evaluate(r => r.scrollLeft)).toBeLessThanOrEqual(2);
+});
+
+/* ---------- C6 (feedback Carst 11 nov.): de stoffenrij volgt het themapatroon, zonder scrollbalk ---------- */
+test('C6: stoffenrij zonder scrollbalk, met knoppen (muis), aria-disabled en Home/End', async ({ page }, info) => {
+  await page.goto('/kraamcadeauboxen#in-de-box');
+  const rij = page.locator('#stoffenrij');
+  await expect(rij).toHaveClass(/\bcarrousel\b/);
+  await expect(rij).toHaveAttribute('role', 'region');
+  await expect(rij).toHaveAttribute('aria-label', 'Stoffen');
+  await expect(rij).toHaveAttribute('tabindex', '0');
+  // geen zichtbare scrollbalk: geen ruimte voor een balk en scrollbar-width none
+  const balk = await rij.evaluate(r => [r.offsetHeight - r.clientHeight, getComputedStyle(r).scrollbarWidth, getComputedStyle(r).scrollSnapType]);
+  expect(balk[0], 'geen hoogte voor een scrollbalk').toBe(0);
+  expect(balk[1]).toBe('none');
+  expect(balk[2]).toMatch(/x mandatory/);
+  // binnen de rand: de eerste stof begint onder het label van de sectie
+  const eerste = await page.evaluate(() => Math.round(document.querySelector('#stoffenrij li').getBoundingClientRect().left - document.querySelector('#in-de-box .label').getBoundingClientRect().left));
+  expect(Math.abs(eerste), 'eerste stof onder het label').toBeLessThanOrEqual(1);
+  const vorige = page.locator('.carrousel-knop[aria-controls="stoffenrij"][data-richting="-1"]'), volgende = page.locator('.carrousel-knop[aria-controls="stoffenrij"][data-richting="1"]');
+  await expect(vorige).toHaveAttribute('aria-label', 'Vorige stoffen');
+  await expect(volgende).toHaveAttribute('aria-label', 'Volgende stoffen');
+  if (info.project.name === 'desktop') {
+    for (const k of [vorige, volgende]) { const b = await k.boundingBox(); expect(b.width).toBeGreaterThanOrEqual(44); expect(b.height).toBeGreaterThanOrEqual(44); }
+    await expect(vorige).toHaveAttribute('aria-disabled', 'true');
+    await expect(volgende).toHaveAttribute('aria-disabled', 'false');
+    // "volgende" schuift een set: de eerste tegel die niet helemaal binnen de rand stond, staat daarna onder het label
+    // (of de rij staat aan het eind, als de laatste set korter is)
+    const voor = await rij.evaluate(r => { const ul = r.querySelector('ul'), rechts = r.getBoundingClientRect().right - parseFloat(getComputedStyle(ul).paddingRight);
+      return [...r.querySelectorAll('li')].findIndex(l => l.getBoundingClientRect().right > rechts + 1); });
+    expect(voor, 'er staan stoffen buiten de rand').toBeGreaterThan(0);
+    await volgende.click();
+    await expect.poll(() => page.evaluate(i => { const r = document.querySelector('#stoffenrij');
+      const onder = Math.abs(document.querySelectorAll('#stoffenrij li')[i].getBoundingClientRect().left - document.querySelector('#in-de-box .label').getBoundingClientRect().left) <= 1;
+      return onder || r.scrollWidth - r.clientWidth - r.scrollLeft <= 2; }, voor), { message: 'een set verder' }).toBe(true);
+    // nooit voorbij een tegel die nog niet helemaal in beeld stond
+    expect(await page.evaluate(i => document.querySelectorAll('#stoffenrij li')[i].getBoundingClientRect().left - document.querySelector('#in-de-box .label').getBoundingClientRect().left, voor), 'geen stof overgeslagen').toBeGreaterThanOrEqual(-1);
+    await expect(vorige).toHaveAttribute('aria-disabled', 'false');
+    await volgende.focus();
+    for (let i = 0; i < 3 && (await volgende.getAttribute('aria-disabled')) !== 'true'; i++) { await volgende.click(); await page.waitForTimeout(700); }
+    await expect(volgende).toHaveAttribute('aria-disabled', 'true');
+    await expect(volgende, 'focus blijft op de knop').toBeFocused();
+  } else {
+    await expect(vorige, 'op touch geen knoppen (vegen)').toBeHidden();
+    await expect(volgende).toBeHidden();
+  }
+  // Home en End in de rij: eerste en laatste stof
+  await rij.focus();
+  await page.keyboard.press('End');
+  await expect.poll(() => rij.evaluate(r => r.scrollWidth - r.clientWidth - r.scrollLeft)).toBeLessThanOrEqual(2);
+  await page.keyboard.press('Home');
+  await expect.poll(() => rij.evaluate(r => r.scrollLeft)).toBeLessThanOrEqual(2);
+  // tegels nooit groter dan het bestand (240 px) en de pagina scrolt niet horizontaal
+  for (const m of await rij.locator('img').evaluateAll(is => is.map(i => i.getBoundingClientRect().width))) expect(m).toBeLessThanOrEqual(240);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), 'de pagina scrolt niet horizontaal').toBeLessThanOrEqual(0);
+});
+
+test('C6: nergens een zichtbare horizontale scrollbalk in carrousels (kraamcadeauboxen, werkwijze)', async ({ page }, info) => {
+  for (const pad of ['/kraamcadeauboxen', '/werkwijze']) {
+    await page.goto(pad);
+    const rijen = await page.locator('.carrousel').evaluateAll(rs => rs.map(r => [r.id, r.offsetHeight - r.clientHeight, getComputedStyle(r).scrollbarWidth,
+      document.querySelectorAll(`.carrousel-knop[aria-controls="${r.id}"]`).length]));
+    expect(rijen.length, `${pad}: carrousels`).toBeGreaterThan(0);
+    for (const [id, h, w, knoppen] of rijen) {
+      expect(h, `${pad} #${id}: geen scrollbalk`).toBe(0);
+      expect(w, `${pad} #${id}`).toBe('none');
+      expect(knoppen, `${pad} #${id}: vorige en volgende`).toBe(2);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), `${pad}: geen horizontaal scrollen`).toBeLessThanOrEqual(0);
+  }
 });
 
 /* ---------- Controle ronde 6: ankers landen goed na scrollen en na een pagina-overgang (zonder minder beweging) ----------
