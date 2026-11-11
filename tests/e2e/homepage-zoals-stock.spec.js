@@ -1,7 +1,7 @@
 // Brief 2026-11-06 (homepage, menu, overgang, kraamcadeauboxen en formulier zoals Stock): nieuwe kernpaden (blokkerend).
 import { test, expect } from './hulp.js';
 
-const GROEPEN = ['Kraamcadeaubox', 'Prematuurkleding', 'Babynest'];
+const GROEPEN = ['Kraamcadeaubox', 'Prematuurkleding', 'Babynest', 'Iets op maat laten maken']; // Iets op maat: brief 2026-11-11-c5-babymaten
 const zichtbareGroepen = page => page.locator('form .groep').evaluateAll(gs => gs.filter(g => getComputedStyle(g).display !== 'none').map(g => g.dataset.groep));
 
 /* ---------- Formulier: vooraf invullen en groepen per onderwerp ---------- */
@@ -28,7 +28,7 @@ test('formulier: onbekende waarden veranderen niets en komen niet in de pagina',
 
 test('formulier: per onderwerp alleen de eigen groep zichtbaar', async ({ page }) => {
   await page.goto('/contact#formulier');
-  for (const o of [...GROEPEN, 'Iets op maat laten maken', 'Iets anders']) {
+  for (const o of [...GROEPEN, 'Iets anders']) {
     await page.locator('select[name="onderwerp"]').selectOption(o);
     expect(await zichtbareGroepen(page), `zichtbare groepen bij ${o}`).toEqual(GROEPEN.includes(o) ? [o] : []);
   }
@@ -51,6 +51,35 @@ test('formulier: per onderwerp alleen de eigen groep zichtbaar', async ({ page }
     await expect(veld).toHaveAccessibleName(/\S/);
     expect(parseFloat(await veld.evaluate(e => getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(16);
   }
+});
+
+// Brief 2026-11-11-c5-babymaten: maatkeuzes per onderwerp (besluit Carst 11 nov.); vrij veld alleen bij "Anders"
+test('formulier: maatkeuzes per onderwerp en het vrije veld alleen bij anders', async ({ page }) => {
+  await page.goto('/contact#formulier');
+  const keuzes = naam => page.locator(`select[name="${naam}"] option`).evaluateAll(os => os.map(o => [o.value, o.textContent.trim()]));
+  const onderwerp = page.locator('select[name="onderwerp"]');
+  await onderwerp.selectOption('Kraamcadeaubox');
+  expect(await keuzes('box_maat')).toEqual([['', 'Weet ik nog niet'], ...['50', '56', '62', '68', '74'].map(m => [m, `Maat ${m}`])]);
+  await expect(page.locator('select[name="box_maat"]')).toBeVisible();
+  for (const [o, naam, maten, anders, vrij] of [
+    ['Prematuurkleding', 'prem_maat', ['32', '38', '44', '50'], 'Anders / gewicht', 'prem_maat_anders'],
+    ['Iets op maat laten maken', 'op_maat', ['32', '38', '44', '50', '56', '62', '68', '74', '80', '86'], 'Anders', 'op_maat_anders'],
+  ]) {
+    await onderwerp.selectOption(o);
+    const kies = page.locator(`select[name="${naam}"]`), veld = page.locator(`input[name="${vrij}"]`);
+    await expect(kies).toBeVisible();
+    expect(await keuzes(naam)).toEqual([['', 'Nog niet gekozen'], ...maten.map(m => [m, `Maat ${m}`]), ['anders', anders]]);
+    await expect(veld).toBeHidden();
+    await kies.selectOption('anders');
+    await expect(veld).toBeVisible();
+    await expect(veld).toHaveAccessibleName(/\S/);
+    expect(Math.round((await veld.boundingBox()).height)).toBeGreaterThanOrEqual(44);
+    expect(Math.round((await kies.boundingBox()).height)).toBeGreaterThanOrEqual(44);
+    await kies.selectOption(maten[1]);
+    await expect(veld).toBeHidden();
+  }
+  expect(await page.locator('form [required]').evaluateAll(es => es.map(e => e.name))).toEqual(['bericht', 'naam', 'email']);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'niet horizontaal scrollen').toBe(true);
 });
 
 test('formulier: op 390 x 844 staat "002 — Stuur een bericht" onder de balk', async ({ page }, info) => {
@@ -81,13 +110,13 @@ test.describe('zonder JavaScript', () => {
   });
 });
 
-/* ---------- Kraamcadeauboxen: zeven producten en de stoffenrij ---------- */
-test('kraamcadeauboxen: zeven producten met de juiste prijsregels', async ({ page }, info) => {
+/* ---------- Kraamcadeauboxen: acht producten en de stoffenrij (speenkoord erbij: wens Carien 11 nov., brief 2026-11-11-c2) ---------- */
+test('kraamcadeauboxen: acht producten met de juiste prijsregels', async ({ page }, info) => {
   await page.goto('/kraamcadeauboxen');
   const p = await page.locator('#in-de-box .producten > li').evaluateAll(ls => ls.map(l => [l.querySelector('.product-naam').textContent.replace(/­/g, ''), l.querySelector('.product-regel').textContent.replace(/\s+/g, ' '), !!l.querySelector('img'), !!l.querySelector('svg')]));
   expect(p).toEqual([['Knuffel', 'vanaf € 35', true, false], ['Swaddle', 'vanaf € 35', true, false], ['Broekje', 'vanaf € 35', true, false], ['Sjaaltje', 'vanaf € 50', true, false],
-    ['Shirtje', 'vanaf € 65', true, false], ['Douchehandschoen', 'vanaf € 65', false, true], ['Bijtring', 'in de box van € 80', true, false]]);
-  if (info.project.name === 'desktop') { // desktop: alle zeven naast elkaar, zonder scrollen
+    ['Shirtje', 'vanaf € 65', true, false], ['Douchehandschoen', 'vanaf € 65', false, true], ['Bijtring', 'in de box van € 80', true, false], ['Speenkoord', 'in de box van € 80', true, false]]);
+  if (info.project.name === 'desktop') { // desktop: alle acht naast elkaar, zonder scrollen
     const rij = await page.locator('#in-de-box .producten').evaluate(u => [u.scrollWidth - u.clientWidth, new Set([...u.children].map(l => Math.round(l.getBoundingClientRect().top))).size]);
     expect(rij).toEqual([0, 1]);
   }
@@ -478,5 +507,5 @@ test('afdrukken: na beforeprint staan alle foto\'s in 002 en 003 klaar (geen dat
   await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
   const open = await page.locator('#in-de-box img, #themas img').evaluateAll(is => is.filter(i => i.hasAttribute('data-src') || !i.getAttribute('src')).length);
   expect(open, 'foto\'s zonder src bij afdrukken').toBe(0);
-  await expect(page.locator('#in-de-box img, #themas img')).toHaveCount(24);
+  await expect(page.locator('#in-de-box img, #themas img')).toHaveCount(25); // 7 productfoto's (speenkoord erbij, brief 2026-11-11-c2) + 9 stoffen + 9 thema's
 });

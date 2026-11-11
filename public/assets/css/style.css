@@ -1160,7 +1160,11 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .formulier .groep { display: none; }
   .formulier:has(select[name="onderwerp"] option[value="Kraamcadeaubox"]:checked) .groep[data-groep="Kraamcadeaubox"],
   .formulier:has(select[name="onderwerp"] option[value="Prematuurkleding"]:checked) .groep[data-groep="Prematuurkleding"],
-  .formulier:has(select[name="onderwerp"] option[value="Babynest"]:checked) .groep[data-groep="Babynest"] { display: grid; }
+  .formulier:has(select[name="onderwerp"] option[value="Babynest"]:checked) .groep[data-groep="Babynest"],
+  .formulier:has(select[name="onderwerp"] option[value="Iets op maat laten maken"]:checked) .groep[data-groep="Iets op maat laten maken"] { display: grid; }
+  /* vrij maatveld alleen bij "Anders" (brief 2026-11-11-c5-babymaten); zonder :has altijd zichtbaar */
+  .formulier .groep .maat-anders { display: none; }
+  .formulier .groep:has(option[value="anders"]:checked) .maat-anders { display: flex; }
   .js .formulier .groep { animation: groep-in .3s ease both; } /* vervaagt in bij het tonen; zonder JavaScript direct */
 }
 @keyframes groep-in { from { opacity: 0; } }
@@ -1170,13 +1174,13 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 @media (prefers-reduced-motion: reduce) { .formulier .groep { animation: none !important; } }
 
-/* ---------- Kraamcadeauboxen: wat er in de box kan (zeven producten) en de stoffen (brief 2026-11-06) ----------
-   Desktop: zeven tegels naast elkaar; tablet en mobiel een veegbare rij tot de schermrand.
+/* ---------- Kraamcadeauboxen: wat er in de box kan (acht producten) en de stoffen (brief 2026-11-06) ----------
+   Desktop: acht tegels naast elkaar; tablet en mobiel een veegbare rij tot de schermrand.
    De stoffen: één rij in het patroon van de thema's (.carrousel, feedback Carst 11 nov.: geen scrollbalk), tegels 200 px
    (mobiel 128 px), nooit groter dan het bestand (240 px). */
 .producten-kop { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 24px; line-height: 1.3; }
 .formaten-blok .producten-kop { margin-top: 24px; }
-.producten { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 16px; }
+.producten { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 16px; }
 .producten:focus-visible { outline-offset: 4px; }
 .product { margin: 0; min-width: 0; }
 .product img, .product-tekening { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
