@@ -32,6 +32,8 @@ De huidige productfoto's zijn bruikbaar, maar het zijn vooral studiofoto's op ee
 12. "Voor …": per gemaakt cadeau een sfeerfoto en een detail van de naam
 13. Prematuurkleding naast een gewoon maatje 50, zodat je het verschil ziet
 
+21. **Nieuwe knuffel van Carien** — foto van de nieuwe knuffel (vervangt het mintgroene konijn, dat op wens van Carien van de site is gehaald; brief 2026-11-11-c3-mintgroene-knuffel). Staand (3 : 4), op een lichte, warme ondergrond zoals de andere productfoto's. Tot dan staat in Inspiratie (groep Knuffels, swaddles en babynest) de opgerolde swaddle als vierde item.
+
 ### Kraamcadeaubox
 14. De dichte box met naam op linnen, en dezelfde box half open
 15. Per thema een **staande** foto van de open box (de huidige zijn liggend en grijs)
