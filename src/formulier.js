@@ -17,18 +17,33 @@ export const EXTRA_VELDEN = {
     ['box_thema', 'Thema', 80],
     ['box_naam', 'Naam op het product', 120],
     ['box_datum', 'Geboortedatum of uitgerekende datum', 60],
-    ['box_maat', 'Kledingmaat', 60],
+    ['box_maat', 'Kledingmaat', 20],
   ],
   Prematuurkleding: [
-    ['prem_maat', 'Maat of gewicht van de baby', 80],
+    ['prem_maat', 'Maat van de baby', 20],
+    ['prem_maat_anders', 'Andere maat of gewicht', 80],
     ['prem_naam', 'Naam op het kledingstuk', 120],
   ],
   Babynest: [
     ['nest_stof', 'Stof of kleur', 120],
     ['nest_naam', 'Naam op het babynest', 120],
   ],
+  'Iets op maat laten maken': [
+    ['op_maat', 'Maat', 20],
+    ['op_maat_anders', 'Andere maat', 80],
+  ],
 };
 export const FORMATEN = ['35', '50', '65', '80'];
+// Maatkeuzes per veld (besluit Carst 11 nov., brief 2026-11-11-c5-babymaten). Andere waarden vallen weg;
+// in de mail staat "maat 50". "anders" geeft geen maatregel, dan telt het vrije veld.
+export const MATEN = {
+  box_maat: ['50', '56', '62', '68', '74'],
+  prem_maat: ['32', '38', '44', '50', 'anders'],
+  op_maat: ['32', '38', '44', '50', '56', '62', '68', '74', '80', '86', 'anders'],
+};
+// Vrij veld bij "Anders" → het bijbehorende keuzeveld. Valt weg als daar een vaste maat is gekozen
+// (een verborgen, eerder ingevuld vrij veld gaat dus niet mee naast een vaste maat).
+const ANDERS_BIJ = { prem_maat_anders: 'prem_maat', op_maat_anders: 'op_maat' };
 // Thema's zoals op de site (Kraamcadeauboxen en de keuzelijst in het formulier); andere waarden vallen weg.
 export const THEMAS = ['Giraf', 'Vos', 'Tulp', 'Walvis', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur'];
 
@@ -57,6 +72,11 @@ export function controleer(form) {
     let waarde = schoon(get(naam), max);
     if (naam === 'box_formaat') waarde = FORMATEN.includes(waarde) ? `€ ${waarde}` : '';
     if (naam === 'box_thema' && !THEMAS.includes(waarde)) waarde = '';
+    if (MATEN[naam]) waarde = MATEN[naam].includes(waarde) && waarde !== 'anders' ? `maat ${waarde}` : '';
+    if (ANDERS_BIJ[naam]) {
+      const keuze = schoon(get(ANDERS_BIJ[naam]), 20);
+      if (keuze !== 'anders' && MATEN[ANDERS_BIJ[naam]].includes(keuze)) waarde = '';
+    }
     if (waarde) velden.extra.push([kop, waarde]);
   }
 

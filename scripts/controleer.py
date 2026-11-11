@@ -736,7 +736,8 @@ def controleer_bestanden():
     if "Douchehandschoen" not in (PROJECT / "docs" / "fotolijst.md").read_text(encoding="utf-8"):
         fouten.append("docs/fotolijst.md: de opname 'Douchehandschoen' ontbreekt")
     contact = (ROOT / "contact.html").read_text(encoding="utf-8")
-    for stuk in ["prematuurkleding", "babynest", "kledingmaat"]:
+    # de kledingmaat is sinds 11 nov. een keuze van Carst (brief 2026-11-11-c5-babymaten) en heeft geen LET OP meer nodig
+    for stuk in ["prematuurkleding", "babynest"]:
         if not re.search(r"<!--\s*LET OP:[^>]*" + stuk, contact, re.I):
             fouten.append(f"contact.html: de formuliervelden voor {stuk} hebben geen LET OP-opmerking")
 
@@ -1302,8 +1303,9 @@ def controleer_balk_labels(browser):
             ctx.close()
 
 # brief 2026-11-06: eerst het onderwerp, dan de groepen (alle velden optioneel), bericht, naam, e-mail, telefoon
-FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["select", "box_thema", ""], ["input", "box_naam", "text"], ["input", "box_datum", "text"], ["input", "box_maat", "text"],
-                    ["input", "prem_maat", "text"], ["input", "prem_naam", "text"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"],
+FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["select", "box_thema", ""], ["input", "box_naam", "text"], ["input", "box_datum", "text"], ["select", "box_maat", ""],
+                    ["select", "prem_maat", ""], ["input", "prem_maat_anders", "text"], ["input", "prem_naam", "text"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"],
+                    ["select", "op_maat", ""], ["input", "op_maat_anders", "text"],  # maatkeuzes: brief 2026-11-11-c5-babymaten (besluit Carst)
                     ["textarea", "bericht", ""], ["input", "naam", "text"], ["input", "email", "email"], ["input", "telefoon", "tel"], ["input", "website", "text"]]
 
 def controleer_contactpagina(browser):
