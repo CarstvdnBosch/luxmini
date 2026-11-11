@@ -9,7 +9,7 @@ test('formulier: vooraf ingevuld met onderwerp, formaat en thema', async ({ page
   await page.goto('/contact?onderwerp=kraamcadeaubox&formaat=50&thema=wilde-blaadjes#formulier');
   await expect(page.locator('select[name="onderwerp"]')).toHaveValue('Kraamcadeaubox');
   await expect(page.locator('input[name="box_formaat"][value="50"]')).toBeChecked();
-  await expect(page.locator('select[name="box_thema"]')).toHaveValue('Wilde blaadjes');
+  await expect(page.locator('input[name="box_thema"][value="Wilde blaadjes"]')).toBeChecked(); // keuzekaarten (brief 2026-11-11-c7-stofkeuze)
   expect(await page.evaluate(() => document.activeElement === document.body), 'er wordt niet automatisch gefocust').toBe(true);
   for (const [w, verwacht] of [['prematuurkleding', 'Prematuurkleding'], ['babynest', 'Babynest']]) {
     await page.goto(`/contact?onderwerp=${w}#formulier`);
@@ -22,7 +22,8 @@ test('formulier: onbekende waarden veranderen niets en komen niet in de pagina',
   await page.goto('/contact?onderwerp=x&formaat=99&thema=%3Cscript%3Ealert(1)%3C%2Fscript%3E#formulier');
   await expect(page.locator('select[name="onderwerp"]')).toHaveValue('Kraamcadeaubox'); // de eerste keuze, zoals zonder adres
   await expect(page.locator('input[name="box_formaat"]:checked')).toHaveCount(0);
-  await expect(page.locator('select[name="box_thema"]')).toHaveValue('');
+  await expect(page.locator('input[name="box_thema"][value=""]')).toBeChecked(); // "Nog niet gekozen"
+  await expect(page.locator('input[name="box_thema"]:checked')).toHaveCount(1);
   expect(await page.content()).not.toContain('alert(1)');
 });
 
@@ -34,10 +35,10 @@ test('formulier: per onderwerp alleen de eigen groep zichtbaar', async ({ page }
   }
   // kraamcadeaubox: vier formaten (keuzekaartjes van minstens 44 px), negen thema's plus een eigen stof
   await page.locator('select[name="onderwerp"]').selectOption('Kraamcadeaubox');
-  const kaarten = await page.locator('.keuze-kaart').evaluateAll(ks => ks.map(k => [k.querySelector('input').value, Math.round(k.getBoundingClientRect().height), Math.round(k.querySelector('input').getBoundingClientRect().height)]));
+  const kaarten = await page.locator('.keuze-kaart:has(input[name="box_formaat"])').evaluateAll(ks => ks.map(k => [k.querySelector('input').value, Math.round(k.getBoundingClientRect().height), Math.round(k.querySelector('input').getBoundingClientRect().height)]));
   expect(kaarten.map(k => k[0])).toEqual(['35', '50', '65', '80']);
   for (const [, h, ih] of kaarten) { expect(h).toBeGreaterThanOrEqual(44); expect(ih).toBeGreaterThanOrEqual(44); }
-  const themas = await page.locator('select[name="box_thema"] option').evaluateAll(os => os.map(o => o.value).filter(Boolean));
+  const themas = await page.locator('input[name="box_thema"]').evaluateAll(os => os.map(o => o.value).filter(Boolean));
   expect(themas).toEqual(['Giraf', 'Vos', 'Tulp', 'Walvis', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur']);
   // alle groepsvelden zijn optioneel; verplicht blijven naam, e-mail en bericht
   expect(await page.locator('form .groep [required]').count()).toBe(0);
@@ -106,7 +107,7 @@ test.describe('zonder JavaScript', () => {
     await page.locator('input[name="email"]').fill('test@example.nl');
     await page.locator('button.verstuur').click();
     await expect(page).toHaveURL(/\/bedankt$/);
-    expect(verstuurd).toContain('onderwerp=Babynest');
+    expect(verstuurd).toMatch(/name="onderwerp"\r\n\r\nBabynest\r\n/); // multipart/form-data (enctype, brief 2026-11-11-c7-stofkeuze)
   });
 });
 

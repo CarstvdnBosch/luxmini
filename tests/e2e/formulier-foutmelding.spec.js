@@ -18,7 +18,7 @@ async function vulIn(page, invoer = INVOER) {
   await formaat.evaluate(el => (el.closest('label') || el).scrollIntoView({ block: 'center', behavior: 'instant' }));
   await page.waitForTimeout(50);
   await formaat.check({ force: true });
-  await page.locator('select[name="box_thema"]').selectOption('Giraf');
+  await page.locator('input[name="box_thema"][value="Giraf"]').check({ force: true }); // keuzekaarten (brief 2026-11-11-c7-stofkeuze)
   for (const [naam, waarde] of Object.entries(invoer)) await page.locator(`[name="${naam}"]`).fill(waarde);
 }
 // testmodus van de server: x-testmail ok (versturen lukt) of fout (versturen mislukt → &reden=versturen);
@@ -30,7 +30,7 @@ async function veldenGevuld(page) {
   for (const [naam, waarde] of Object.entries(INVOER)) await expect(page.locator(`[name="${naam}"]`), `veld ${naam} blijft gevuld`).toHaveValue(waarde);
   await expect(page.locator('select[name="onderwerp"]')).toHaveValue('Kraamcadeaubox');
   await expect(page.locator('input[name="box_formaat"][value="50"]')).toBeChecked();
-  await expect(page.locator('select[name="box_thema"]')).toHaveValue('Giraf');
+  await expect(page.locator('input[name="box_thema"][value="Giraf"]')).toBeChecked();
 }
 async function meldingMeten(page) {
   return page.locator('.formulier .melding.fout').evaluate(m => {
@@ -123,13 +123,15 @@ test('ongeldige invoer: melding ongeldig, focus naar het eerste foute veld, veld
 test('gelukt: dezelfde formulierdata naar /api/contact en dan naar /bedankt', async ({ page }) => {
   let verzoek = null;
   await nepMail(page, 'ok');
-  bewaarVerzoek(page, r => { verzoek = { methode: r.method(), type: r.headers()['content-type'], data: r.postData() }; });
+  bewaarVerzoek(page, r => { verzoek = { methode: r.method(), type: r.headers()['content-type'], data: r.postDataBuffer() }; });
   await vulIn(page);
   await page.locator('button.verstuur').click();
   await expect(page).toHaveURL(/\/bedankt$/);
   expect(verzoek.methode).toBe('POST');
-  expect(verzoek.type).toContain('application/x-www-form-urlencoded');
-  const data = new URLSearchParams(verzoek.data);
+  // multipart/form-data, zoals het formulier zonder JavaScript (enctype; brief 2026-11-11-c7-stofkeuze: de foto van een eigen stof)
+  expect(verzoek.type).toContain('multipart/form-data');
+  const data = await new Response(verzoek.data, { headers: { 'content-type': verzoek.type } }).formData();
+  expect(data.get('box_thema')).toBe('Giraf');
   expect(data.get('onderwerp')).toBe('Kraamcadeaubox');
   expect(data.get('box_formaat')).toBe('50');
   expect(data.get('naam')).toBe(INVOER.naam);
@@ -166,14 +168,14 @@ test.describe('zonder JavaScript', () => {
     test.skip(info.project.name !== 'desktop', 'één keer is genoeg');
     let verstuurd = null;
     await nepMail(page, 'fout');
-    bewaarVerzoek(page, r => { verstuurd = r.postData(); });
+    bewaarVerzoek(page, r => { verstuurd = r.postData(); }); // multipart/form-data (enctype)
     await page.goto('/contact#formulier');
     await page.locator('textarea[name="bericht"]').fill(INVOER.bericht);
     await page.locator('input[name="naam"]').fill(INVOER.naam);
     await page.locator('input[name="email"]').fill(INVOER.email);
     await page.locator('button.verstuur').click();
     await expect(page).toHaveURL(/\/contact\?verzonden=fout&reden=versturen#formulier$/);
-    expect(verstuurd).toContain('naam=Test+Persoon');
+    expect(verstuurd).toMatch(/name="naam"\r\n\r\nTest Persoon\r\n/);
   });
 });
 

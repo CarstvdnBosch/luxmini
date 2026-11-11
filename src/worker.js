@@ -3,7 +3,8 @@
 // Deze code draait alleen voor verzoeken die geen bestand zijn, zoals POST /api/contact,
 // en voor alles onder /beheer en /api/beheer (run_worker_first in wrangler.jsonc).
 // Het formulier staat op /contact; na ongeldige invoer komt de bezoeker terug op /contact?verzonden=fout#formulier,
-// als het versturen mislukt op /contact?verzonden=fout&reden=versturen#formulier (src/contact.js).
+// als het versturen mislukt op /contact?verzonden=fout&reden=versturen#formulier, bij een ongeldige foto of link van de
+// eigen stof op &reden=foto of &reden=link (src/contact.js).
 import { EmailMessage } from 'cloudflare:email';
 import { bouwMail } from './formulier.js';
 import { verwerkContact } from './contact.js';
@@ -16,8 +17,9 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/contact') {
-      return verwerkContact(request, async (velden) => {
-        const raw = bouwMail({ velden, afzender: env.AFZENDER, ontvanger: env.ONTVANGER });
+      return verwerkContact(request, async (velden, foto) => {
+        // foto (eigen stof) alleen als bijlage in de mail; nergens opgeslagen (brief 2026-11-11-c7-stofkeuze)
+        const raw = bouwMail({ velden, foto, afzender: env.AFZENDER, ontvanger: env.ONTVANGER });
         await env.MAIL.send(new EmailMessage(env.AFZENDER, env.ONTVANGER, raw));
       });
     }
