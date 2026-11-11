@@ -3,7 +3,8 @@
 import { controleer } from './formulier.js';
 
 export const NA_VERZONDEN = '/bedankt';
-export const NA_FOUT = '/contact?verzonden=fout#formulier';
+export const NA_FOUT = '/contact?verzonden=fout#formulier'; // ongeldige invoer
+export const NA_VERSTUURFOUT = '/contact?verzonden=fout&reden=versturen#formulier'; // versturen mislukt (ligt niet aan de bezoeker)
 export const NAAR_FORMULIER = '/contact#formulier';
 
 const terug = (request, pad) => Response.redirect(new URL(pad, request.url).toString(), 303);
@@ -16,18 +17,22 @@ export async function verwerkContact(request, verstuur) {
   try {
     form = await request.formData();
   } catch {
+    console.warn('Formulier ongeldig: onleesbaar');
     return terug(request, NA_FOUT);
   }
 
-  const { ok, spam, velden } = controleer(form);
+  const { ok, spam, velden, fouten } = controleer(form);
   if (spam) return terug(request, NA_VERZONDEN); // spamval: doe alsof het gelukt is
-  if (!ok) return terug(request, NA_FOUT);
+  if (!ok) {
+    console.warn('Formulier ongeldig:', fouten.join(', ')); // alleen de veldnamen, nooit de waarden
+    return terug(request, NA_FOUT);
+  }
 
   try {
     await verstuur(velden);
     return terug(request, NA_VERZONDEN);
   } catch (err) {
     console.error('Versturen mislukt:', err && err.message);
-    return terug(request, NA_FOUT);
+    return terug(request, NA_VERSTUURFOUT);
   }
 }

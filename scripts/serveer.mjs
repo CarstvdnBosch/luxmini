@@ -8,12 +8,19 @@
 // maar met een nep-verificatie met vaste rol en een opslag in het geheugen met verzonnen gegevens.
 //   rol per verzoek:      header  x-testrol: schrijven | lezen | geen   (geen = niet ingelogd → 403)
 //   rol voor de server:   BEHEER_TESTROL=lezen node scripts/serveer.mjs   (standaard: schrijven)
+//
+// TESTMODUS FORMULIER (alleen hier, nooit in src/ of wrangler.jsonc; brief 2026-11-11-formulier-foutmelding):
+// POST /api/contact gaat door de echte afhandeling (verwerkContact uit src/contact.js, met echte 303-doorverwijzingen),
+// maar er gaat nooit een mail weg: de nep-verzending slaagt of faalt op verzoek.
+//   per verzoek:  header  x-testmail: ok | fout   (standaard ok; fout = versturen mislukt → &reden=versturen)
+//                 header  x-testmail-wacht: <ms>  (optioneel, max. 5000: de nep-verzending duurt zo lang, voor "Bezig met versturen…")
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { behandelBeheer, isBeheerPad } from '../src/beheer/api.js';
+import { verwerkContact } from '../src/contact.js';
 
 const ROOT = fileURLToPath(new URL('../public/', import.meta.url));
 const POORT = Number(process.argv[2] || process.env.POORT || 4173);
@@ -69,21 +76,42 @@ const testAssets = {
     return new Response(await readFile(join(ROOT, '404.html')).catch(() => 'Niet gevonden'), { status: 404, headers: { 'Content-Type': TYPES['.html'] } });
   },
 };
-async function beheerVerzoek(req, res) {
+// Node-verzoek → Request (zoals de Worker dat krijgt) en Response → Node-antwoord.
+async function alsRequest(req) {
   const kop = new Headers();
   for (const [k, v] of Object.entries(req.headers)) if (typeof v === 'string') kop.set(k, v);
   const methode = req.method || 'GET';
   let body;
   if (!['GET', 'HEAD'].includes(methode)) { const delen = []; for await (const d of req) delen.push(d); body = Buffer.concat(delen); }
-  const request = new Request(new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`), { method: methode, headers: kop, body });
-  const antwoord = await behandelBeheer(request, { wieIsHet: nepIdentiteit, opslag: testOpslag, assets: testAssets });
+  return new Request(new URL(req.url, `http://${req.headers.host || '127.0.0.1'}`), { method: methode, headers: kop, body });
+}
+async function stuurTerug(res, antwoord, methode) {
   res.writeHead(antwoord.status, Object.fromEntries(antwoord.headers));
   res.end(methode === 'HEAD' ? undefined : Buffer.from(await antwoord.arrayBuffer()));
+}
+async function beheerVerzoek(req, res) {
+  const request = await alsRequest(req);
+  const antwoord = await behandelBeheer(request, { wieIsHet: nepIdentiteit, opslag: testOpslag, assets: testAssets });
+  await stuurTerug(res, antwoord, request.method);
+}
+
+// ---------- Testmodus formulier ----------
+// Dezelfde afhandeling als src/worker.js, alleen de mail is nep: x-testmail: fout laat het versturen mislukken.
+async function contactVerzoek(req, res) {
+  const request = await alsRequest(req);
+  const testmail = request.headers.get('x-testmail') || 'ok';
+  const wacht = Math.min(Number(request.headers.get('x-testmail-wacht')) || 0, 5000);
+  const antwoord = await verwerkContact(request, async () => {
+    if (wacht > 0) await new Promise((klaar) => setTimeout(klaar, wacht));
+    if (testmail === 'fout') throw new Error('testmodus: versturen mislukt (x-testmail: fout)');
+  });
+  await stuurTerug(res, antwoord, request.method);
 }
 
 createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   if (isBeheerPad(url.pathname)) return beheerVerzoek(req, res).catch(() => { res.writeHead(500); res.end(); });
+  if (url.pathname === '/api/contact') return contactVerzoek(req, res).catch(() => { res.writeHead(500); res.end(); });
   let pad = decodeURIComponent(url.pathname);
   for (const r of redirects) {
     const m = r.van.endsWith('*') ? pad.startsWith(r.van.slice(0, -1)) : pad === r.van || pad === r.van + '/';

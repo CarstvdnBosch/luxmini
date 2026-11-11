@@ -43,3 +43,15 @@ for (const onderwerp of ['Kraamcadeaubox', 'Prematuurkleding', 'Babynest']) {
     expect(uitslag.violations, `WCAG-overtredingen in het formulier (${onderwerp}):\n${samenvatting(uitslag.violations)}`).toEqual([]);
   });
 }
+
+// Brief 2026-11-11: de contactpagina met elk van beide foutmeldingen (ongeldig en versturen) heeft 0 fouten
+for (const [soort, pad] of [['ongeldig', '/contact?verzonden=fout#formulier'], ['versturen', '/contact?verzonden=fout&reden=versturen#formulier']]) {
+  test(`toegankelijkheid contact met melding ${soort}`, async ({ page }) => {
+    await page.goto(pad);
+    await wachtOpRust(page);
+    await expect(page.locator('.formulier .melding[role="alert"]')).toContainText('Je bericht is niet verstuurd.');
+    await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 30)); } window.scrollTo(0, 0); });
+    const uitslag = await new AxeBuilder({ page }).withTags(REGELS).analyze();
+    expect(uitslag.violations, `WCAG-overtredingen op ${pad}:\n${samenvatting(uitslag.violations)}`).toEqual([]);
+  });
+}

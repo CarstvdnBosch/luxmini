@@ -2,7 +2,8 @@
 // Alle pagina's en foto's komen uit ./public (static assets).
 // Deze code draait alleen voor verzoeken die geen bestand zijn, zoals POST /api/contact,
 // en voor alles onder /beheer en /api/beheer (run_worker_first in wrangler.jsonc).
-// Het formulier staat op /contact; na een fout komt de bezoeker terug op /contact?verzonden=fout#formulier.
+// Het formulier staat op /contact; na ongeldige invoer komt de bezoeker terug op /contact?verzonden=fout#formulier,
+// als het versturen mislukt op /contact?verzonden=fout&reden=versturen#formulier (src/contact.js).
 import { EmailMessage } from 'cloudflare:email';
 import { bouwMail } from './formulier.js';
 import { verwerkContact } from './contact.js';
