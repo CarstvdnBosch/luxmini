@@ -200,3 +200,121 @@ test('intro: zonder main.js haalt de noodrem hem vóór 3,1 s weg', async ({ bro
   expect(await weg.jsonValue(), 'intro weg na ms').toBeLessThan(3100);
   await ctx.close();
 });
+
+/* ---------- Story 1 (issue #63, brief 2026-11-12-productrij-carrousel-en-maten): productrij als carrousel, zonder scrollbalk ---------- */
+const PRODUCTEN = ['Knuffel', 'Swaddle', 'Broekje', 'Sjaaltje', 'Shirtje', 'Douchehandschoen', 'Bijtring', 'Speenkoord'];
+const meetRij = page => page.evaluate(() => {
+  const r = document.querySelector('#productenrij'), lis = [...r.querySelectorAll('li')], rr = r.getBoundingClientRect();
+  const ul = r.querySelector('ul'), pl = parseFloat(getComputedStyle(ul).paddingLeft) || 0;
+  return { balk: r.offsetHeight - r.clientHeight, sb: getComputedStyle(r).scrollbarWidth, pagina: document.documentElement.scrollWidth - window.innerWidth,
+    scrolt: r.scrollWidth > r.clientWidth + 1, tab: r.getAttribute('tabindex'), links: lis.map(l => Math.round(l.getBoundingClientRect().left)),
+    rand: Math.round(rr.left + pl), rechts: rr.right, laatste: lis[7].getBoundingClientRect().right, scrollLeft: r.scrollLeft,
+    volledig: lis.filter(l => l.getBoundingClientRect().left >= -0.5 && l.getBoundingClientRect().right <= innerWidth + 0.5).length,
+    derde: innerWidth - lis[2].getBoundingClientRect().left, rijen: new Set(lis.map(l => Math.round(l.getBoundingClientRect().top))).size,
+    label: Math.round(document.querySelector('#in-de-box .label').getBoundingClientRect().left),
+    afgesneden: lis.some(l => { const n = l.querySelector('.product-naam'); return n.scrollWidth > n.clientWidth + 0.5 || n.getBoundingClientRect().right > l.getBoundingClientRect().right + 0.5; }) };
+});
+
+test('Story 1: productrij als carrousel, zonder scrollbalk, met knoppen (muis), Home/End en raster op desktop', async ({ page }, info) => {
+  await page.goto('/kraamcadeauboxen#in-de-box');
+  const rij = page.locator('#productenrij');
+  await expect(rij).toHaveClass(/\bcarrousel\b/);
+  await expect(rij).toHaveAttribute('role', 'region');
+  await expect(rij).toHaveAttribute('aria-label', 'Producten');
+  const namen = await rij.locator('ul[role="list"] > li .product-naam').evaluateAll(ns => ns.map(n => n.textContent.replace(/­/g, '')));
+  expect(namen).toEqual(PRODUCTEN);
+  const vorige = page.locator('.carrousel-knop[aria-controls="productenrij"][data-richting="-1"]'), volgende = page.locator('.carrousel-knop[aria-controls="productenrij"][data-richting="1"]');
+  await expect(vorige).toHaveAttribute('aria-label', 'Vorige producten');
+  await expect(volgende).toHaveAttribute('aria-label', 'Volgende producten');
+  const geenBalk = async (w) => {
+    const m = await meetRij(page);
+    expect(m.balk, `${w}: geen hoogte voor een scrollbalk`).toBe(0);
+    expect(m.sb, `${w}: scrollbar-width`).toBe('none');
+    expect(m.pagina, `${w}: pagina scrolt niet horizontaal`).toBeLessThanOrEqual(0);
+    return m;
+  };
+
+  if (info.project.name === 'desktop') {
+    // vanaf 1025 px: raster van acht binnen de rand, geen knoppen, geen tabstop; op 1025 geen afgesneden naam
+    for (const w of [1440, 1280, 1025]) {
+      await page.setViewportSize({ width: w, height: 900 });
+      await expect.poll(async () => (await meetRij(page)).tab, `${w}: geen tabstop`).toBe(null);
+      const m = await geenBalk(w);
+      expect(m.scrolt, `${w}: rij scrolt niet`).toBe(false);
+      expect(m.rijen, `${w}: één rij`).toBe(1);
+      expect(m.volledig, `${w}: acht producten in beeld`).toBe(8);
+      expect(m.afgesneden, `${w}: geen naam afgesneden`).toBe(false);
+      await expect(vorige, `${w}: geen knoppen`).toBeHidden();
+      await expect(volgende).toBeHidden();
+    }
+    // met een muis op 768 en 1024 px: knoppen, aria-disabled, snap per set, geen product overgeslagen
+    for (const w of [768, 1024]) {
+      await page.setViewportSize({ width: w, height: 900 });
+      await expect.poll(async () => (await meetRij(page)).tab, `${w}: tabstop`).toBe('0');
+      await rij.evaluate(r => { r.scrollLeft = 0; });
+      const m = await geenBalk(w);
+      expect(m.links[0], `${w}: eerste product onder het label`).toBe(m.label);
+      if (w === 768) expect(m.volledig, '768: minstens 4 volledig').toBeGreaterThanOrEqual(4);
+      for (const k of [vorige, volgende]) { const b = await k.boundingBox(); expect(b.width).toBeGreaterThanOrEqual(44); expect(b.height).toBeGreaterThanOrEqual(44); }
+      // dezelfde afstand van rij tot knoppen als bij de stoffen (±4 px)
+      const afstand = await page.evaluate(() => ['productenrij', 'stoffenrij'].map(id => document.querySelector(`.carrousel-knop[aria-controls="${id}"]`).getBoundingClientRect().top - document.getElementById(id).getBoundingClientRect().bottom));
+      expect(Math.abs(afstand[0] - afstand[1]), `${w}: afstand rij-knoppen gelijk aan de stoffen`).toBeLessThanOrEqual(4);
+      await expect(vorige).toHaveAttribute('aria-disabled', 'true');
+      await expect(volgende).toHaveAttribute('aria-disabled', 'false');
+      for (let i = 0; i < 8 && (await volgende.getAttribute('aria-disabled')) !== 'true'; i++) {
+        const voor = await meetRij(page);
+        const eersteNiet = voor.links.findIndex((l, j) => l + (voor.links[1] - voor.links[0]) - 12 > voor.rechts + 1);
+        await volgende.click();
+        await expect.poll(async () => { const na = await meetRij(page); return na.links.some(l => Math.abs(l - na.rand) <= 1) || (await rij.evaluate(r => r.scrollWidth - r.clientWidth - r.scrollLeft)) <= 2; },
+          { message: `${w}: na een klik ligt een tegel op de rand (snap)` }).toBe(true);
+        const na = await meetRij(page);
+        if (eersteNiet > 0) expect(na.links[eersteNiet], `${w}: geen product overgeslagen`).toBeGreaterThanOrEqual(na.rand - 1);
+      }
+      await expect(volgende).toHaveAttribute('aria-disabled', 'true');
+      await expect(vorige).toHaveAttribute('aria-disabled', 'false');
+      const eind = await meetRij(page);
+      expect(eind.laatste, `${w}: Speenkoord helemaal binnen de rij`).toBeLessThanOrEqual(eind.rechts + 1);
+    }
+    // toetsenbord: Tab bereikt de rij, pijl rechts scrolt, Home/End zonder verticaal verspringen
+    await page.setViewportSize({ width: 768, height: 900 });
+    await expect.poll(async () => (await meetRij(page)).tab).toBe('0');
+    await rij.evaluate(r => { r.scrollLeft = 0; });
+    await vorige.evaluate(k => k.closest('section').querySelector('.label').scrollIntoView({ block: 'start', behavior: 'instant' }));
+    await page.locator('#in-de-box .sr-only').evaluate(h => { h.tabIndex = -1; h.focus(); });
+    await page.keyboard.press('Tab');
+    await expect(rij).toBeFocused();
+    const rand = await rij.evaluate(r => getComputedStyle(r).outlineStyle);
+    expect(rand, 'zichtbare focusrand').not.toBe('none');
+    const y = await page.evaluate(() => scrollY);
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(() => rij.evaluate(r => r.scrollLeft)).toBeGreaterThan(0);
+    await page.keyboard.press('End');
+    await expect.poll(() => rij.evaluate(r => r.scrollWidth - r.clientWidth - r.scrollLeft)).toBeLessThanOrEqual(2);
+    await page.keyboard.press('Home');
+    await expect.poll(() => rij.evaluate(r => r.scrollLeft)).toBeLessThanOrEqual(2);
+    expect(Math.abs((await page.evaluate(() => scrollY)) - y), 'pagina verspringt niet verticaal').toBeLessThanOrEqual(2);
+  } else {
+    // touch (tablet 768, mobiel 390, iPhone in WebKit): geen knoppen, vegen, rand en een stukje van het volgende product
+    const w = page.viewportSize().width;
+    const m = await geenBalk(w);
+    expect(m.scrolt, 'rij scrolt (vegen)').toBe(true);
+    await expect(rij).toHaveAttribute('tabindex', '0');
+    await expect(vorige, 'op touch geen knoppen').toBeHidden();
+    await expect(volgende).toBeHidden();
+    expect(m.links[0], 'eerste product op de rand, gelijk met de stoffen').toBe(await page.evaluate(() => Math.round(document.querySelector('#stoffenrij li').getBoundingClientRect().left)));
+    if (w <= 430) {
+      expect(m.links[0], 'eerste product op 32 px').toBe(32);
+      expect(m.volledig, '2 producten volledig').toBe(2);
+      expect(m.derde, 'minstens 24 px van het derde').toBeGreaterThanOrEqual(24);
+      // ook op 460 px geen scrollbalk en niets horizontaal
+      await page.setViewportSize({ width: 460, height: 900 });
+      await geenBalk(460);
+    } else {
+      expect(m.volledig, 'minstens 4 volledig').toBeGreaterThanOrEqual(4);
+      expect(m.volledig, 'plus een stukje van het volgende').toBeLessThan(8);
+    }
+    // vegen: de rij schuift (scroll via touch is native; hier de scrollpositie als vervanging)
+    await rij.evaluate(r => r.scrollBy({ left: 300, behavior: 'instant' }));
+    await expect.poll(() => rij.evaluate(r => r.scrollLeft)).toBeGreaterThan(0);
+  }
+});

@@ -1293,12 +1293,17 @@
     var stilLaden = function () { if (window.requestIdleCallback) window.requestIdleCallback(allesLaden, { timeout: 3000 }); else setTimeout(allesLaden, 1500); };
     if (document.readyState === 'complete') setTimeout(stilLaden, 1000); else window.addEventListener('load', function () { setTimeout(stilLaden, 1000); });
   }
-  // Carrousels (thema's en stoffen op Kraamcadeauboxen, fotorij op Werkwijze; feedback Carst 11 nov.: geen scrollbalk):
+  // Carrousels (producten, thema's en stoffen op Kraamcadeauboxen, fotorij op Werkwijze; feedback Carst 11 nov.: geen scrollbalk):
   // pijlknoppen schuiven één set verder (zoveel tegels als er binnen de rand passen; scroll-snap legt hem precies neer);
   // aan het begin of eind is de knop uit. Vegen op touch en de pijltoetsen in de rij werken vanzelf.
+  // Scrolt een rij niet (bijv. de producten vanaf 1025 px), dan geen knoppen en geen tabstop (brief 2026-11-12, Story 1).
   document.querySelectorAll('.carrousel').forEach(function (rij) {
     var knoppen = Array.prototype.slice.call(document.querySelectorAll('.carrousel-knop[aria-controls="' + rij.id + '"]'));
+    var houders = knoppen.map(function (k) { return k.closest('.carrousel-knoppen'); }).filter(function (h, i, a) { return h && a.indexOf(h) === i; });
     var stand = function () {
+      var scrolt = rij.scrollWidth > rij.clientWidth + 1;
+      houders.forEach(function (h) { h.hidden = !scrolt; });
+      if (scrolt) rij.setAttribute('tabindex', '0'); else rij.removeAttribute('tabindex');
       var max = rij.scrollWidth - rij.clientWidth - 2;
       // aria-disabled in plaats van disabled: de focus blijft op de knop staan (ontwerpgate ronde 3)
       knoppen.forEach(function (k) { k.setAttribute('aria-disabled', (k.dataset.richting === '-1' ? rij.scrollLeft <= 2 : rij.scrollLeft >= max) ? 'true' : 'false'); });
@@ -1326,12 +1331,5 @@
     // opnieuw meten zodra de rij in beeld komt (de foto's laden pas bij nadering)
     if ('IntersectionObserver' in window) new IntersectionObserver(function (items) { if (items.some(function (it) { return it.isIntersecting; })) stand(); }).observe(rij);
   });
-  // Veegbare rijen (Kraamcadeauboxen, producten): alleen een tabstop als de rij echt scrolt (tablet en mobiel), niet op desktop
-  var scrollRijen = Array.prototype.slice.call(document.querySelectorAll('[data-scrollrij]'));
-  var zetTabstop = function () { scrollRijen.forEach(function (r) { if (r.scrollWidth > r.clientWidth + 1) r.setAttribute('tabindex', '0'); else r.removeAttribute('tabindex'); }); };
-  if (scrollRijen.length) {
-    zetTabstop(); window.addEventListener('resize', zetTabstop);
-    if ('IntersectionObserver' in window) { var rijIo = new IntersectionObserver(function (items) { if (items.some(function (it) { return it.isIntersecting; })) zetTabstop(); }); scrollRijen.forEach(function (r) { rijIo.observe(r); }); }
-  }
   document.querySelectorAll('[data-jaar]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 })();
