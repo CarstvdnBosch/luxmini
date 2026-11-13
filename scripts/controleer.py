@@ -1053,6 +1053,25 @@ LEES_THEMAS = """() => { const s = document.querySelector('#themas'); const kaar
     knoppen: [...s.querySelectorAll('.carrousel-knop')].map(k => [k.getAttribute('aria-label'), Math.round(k.getBoundingClientRect().width), Math.round(k.getBoundingClientRect().height), k.offsetParent !== null]),
     laag: s.getAttribute('data-achtergrond') || getComputedStyle(s).backgroundColor }; }"""
 
+def controleer_productrij():
+    """Story 1 (issue #63, brief 2026-11-12-productrij-carrousel-en-maten): de productrij in 002 is een .carrousel zoals de
+    stoffen (region met id, knoppen met aria-controls), zonder het oude data-scrollrij-gedrag."""
+    for f in ROOT.rglob("*"):
+        if f.suffix in (".html", ".js", ".css") and "data-scrollrij" in f.read_text(encoding="utf-8"):
+            fouten.append(f"{f.relative_to(ROOT)}: data-scrollrij komt nog voor (de productrij is een .carrousel)")
+    box = (ROOT / "kraamcadeauboxen.html").read_text(encoding="utf-8")
+    for rij, naam in (("productenrij", "producten"), ("stoffenrij", "stoffen")):
+        m = re.search(r'<div id="' + rij + r'" class="([^"]*)" role="region" aria-label="([^"]*)" tabindex="0">', box)
+        if not m or "carrousel" not in m.group(1).split():
+            fouten.append(f"kraamcadeauboxen.html: #{rij} is geen .carrousel-region met tabindex 0")
+        for richting, label in (("-1", f"Vorige {naam}"), ("1", f"Volgende {naam}")):
+            if not re.search(r'<button type="button" class="carrousel-knop" data-richting="' + richting + r'" aria-label="' + label + r'" aria-controls="' + rij + r'">', box):
+                fouten.append(f"kraamcadeauboxen.html: knop '{label}' met aria-controls=\"{rij}\" ontbreekt")
+    lijst = re.search(r'<div id="productenrij"[^>]*>\s*<ul class="producten" role="list">(.*?)</ul>', box, re.S)
+    namen = re.findall(r'<p class="product-naam">([^<]+)</p>', lijst.group(1)) if lijst else []
+    if [n.replace("&shy;", "") for n in namen] != ["Knuffel", "Swaddle", "Broekje", "Sjaaltje", "Shirtje", "Douchehandschoen", "Bijtring", "Speenkoord"]:
+        fouten.append(f"kraamcadeauboxen.html: de productrij heeft niet de acht producten in de goede volgorde ({namen})")
+
 def controleer_themas(browser):
     """F4 (feedback Carst 6 nov. 14:28): volgorde kop, statementfoto, formaten (lichte kleur, geen terracotta, buren verschillend),
     wat er in de box kan, thema's groot in sets van drie (scroll-snap, knoppen met een muis, mobiel één per keer), zo werkt het, contact.
@@ -1421,6 +1440,7 @@ def main():
         oud.unlink()
     controleer_headers()
     controleer_bestanden()
+    controleer_productrij()
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         controleer_navigatie(browser)

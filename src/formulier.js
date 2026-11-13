@@ -34,12 +34,13 @@ export const EXTRA_VELDEN = {
   ],
 };
 export const FORMATEN = ['35', '50', '65', '80'];
-// Maatkeuzes per veld (besluit Carst 11 nov., brief 2026-11-11-c5-babymaten). Andere waarden vallen weg;
+// Maatkeuzes per veld (besluit Carst 11 nov., brief 2026-11-11-c5-babymaten; 44, 46 en 48 erbij: Story 16, 12 nov.,
+// brief 2026-11-12-productrij-carrousel-en-maten). Andere waarden vallen weg;
 // in de mail staat "maat 50". "anders" geeft geen maatregel, dan telt het vrije veld.
 export const MATEN = {
-  box_maat: ['50', '56', '62', '68', '74'],
-  prem_maat: ['32', '38', '44', '50', 'anders'],
-  op_maat: ['32', '38', '44', '50', '56', '62', '68', '74', '80', '86', 'anders'],
+  box_maat: ['44', '46', '48', '50', '56', '62', '68', '74'],
+  prem_maat: ['32', '38', '44', '46', '48', '50', 'anders'],
+  op_maat: ['32', '38', '44', '46', '48', '50', '56', '62', '68', '74', '80', '86', 'anders'],
 };
 // Vrij veld bij "Anders" → het bijbehorende keuzeveld. Valt weg als daar een vaste maat is gekozen
 // (een verborgen, eerder ingevuld vrij veld gaat dus niet mee naast een vaste maat).

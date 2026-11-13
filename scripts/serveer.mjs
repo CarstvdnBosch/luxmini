@@ -17,6 +17,8 @@
 //                 header  x-testmail-wacht: <ms>  (optioneel, max. 5000: de nep-verzending duurt zo lang, voor "Bezig met versturen…")
 //                 header  x-testmail-bijlage: ja | nee  (optioneel: de nep-verzending mislukt als er wel/geen foto als bijlage
 //                         in de mail zit; zo toetst e2e dat een foto van een eigen stof echt aankomt, brief 2026-11-11-c7-stofkeuze)
+//                 header  x-testmail-bevat: <tekst, URL-gecodeerd>  (optioneel: de nep-verzending mislukt als de tekst van de
+//                         opgebouwde mail die regel niet bevat; zo toetst e2e bijv. "Kledingmaat: maat 46", brief 2026-11-12-productrij-carrousel-en-maten)
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -105,6 +107,7 @@ async function contactVerzoek(req, res) {
   const request = await alsRequest(req);
   const testmail = request.headers.get('x-testmail') || 'ok';
   const bijlage = request.headers.get('x-testmail-bijlage');
+  const bevat = decodeURIComponent(request.headers.get('x-testmail-bevat') || '');
   const wacht = Math.min(Number(request.headers.get('x-testmail-wacht')) || 0, 5000);
   const antwoord = await verwerkContact(request, async (velden, foto) => {
     // de mail wordt wel opgebouwd (ook met bijlage, multipart), maar nooit verstuurd
@@ -112,6 +115,12 @@ async function contactVerzoek(req, res) {
     const metBijlage = /\r\nContent-Disposition: attachment; /.test(raw);
     if (bijlage === 'ja' && !metBijlage) throw new Error('testmodus: geen bijlage in de mail (x-testmail-bijlage: ja)');
     if (bijlage === 'nee' && metBijlage) throw new Error('testmodus: onverwachte bijlage in de mail (x-testmail-bijlage: nee)');
+    if (bevat) {
+      // het tekstdeel van de mail (text/plain, base64) leesbaar maken en zoeken
+      const blok = /Content-Type: text\/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n([A-Za-z0-9+/=\r\n]+)/.exec(raw);
+      const tekst = blok ? Buffer.from(blok[1].replace(/\r\n/g, ''), 'base64').toString('utf8') : '';
+      if (!tekst.includes(bevat)) throw new Error('testmodus: tekst niet in de mail (x-testmail-bevat)');
+    }
     if (wacht > 0) await new Promise((klaar) => setTimeout(klaar, wacht));
     if (testmail === 'fout') throw new Error('testmodus: versturen mislukt (x-testmail: fout)');
   });

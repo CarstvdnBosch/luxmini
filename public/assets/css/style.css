@@ -1232,13 +1232,14 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 
 /* ---------- Kraamcadeauboxen: wat er in de box kan (acht producten) en de stoffen (brief 2026-11-06) ----------
-   Desktop: acht tegels naast elkaar; tablet en mobiel een veegbare rij tot de schermrand.
+   Desktop: acht tegels naast elkaar in een raster binnen de rand (de rij scrolt niet: geen knoppen, geen tabstop);
+   tablet en mobiel een veegbare rij tot de schermrand in het carrouselpatroon, zoals de stoffen (Story 1, issue #63, brief 2026-11-12).
    De stoffen: één rij in het patroon van de thema's (.carrousel, feedback Carst 11 nov.: geen scrollbalk), tegels 200 px
    (mobiel 128 px), nooit groter dan het bestand (240 px). */
 .producten-kop { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 24px; line-height: 1.3; }
 .formaten-blok .producten-kop { margin-top: 24px; }
 .producten { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 16px; }
-.producten:focus-visible { outline-offset: 4px; }
+.productenrij { align-self: stretch; }
 .product { margin: 0; min-width: 0; }
 .product img, .product-tekening { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
 .product-tekening { display: flex; align-items: center; justify-content: center; background: var(--grijsblauw); color: var(--inkt); }
@@ -1250,13 +1251,15 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .stof { margin: 0; scroll-snap-align: start; }
 .stof img { width: var(--stof); height: var(--stof); max-width: 240px; object-fit: cover; }
 .stof-naam { margin: 10px 0 0; font-family: var(--serif); font-size: 16px; line-height: 1.3; }
-@media (hover: none), (pointer: coarse) { .producten { scrollbar-width: none; } .producten::-webkit-scrollbar { display: none; } }
 @media (max-width: 1024px) {
-  .producten { --product: 160px; display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: var(--product); gap: 12px; width: auto; align-self: stretch; margin-right: calc(50% - 50cqw); padding-right: var(--rand); overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; }
+  /* scrollen, snap en knoppen: .carrousel; rand en scroll-padding zoals .stoffen */
+  .productenrij { --rand-px: calc(var(--B) * .082); width: var(--B); margin-left: calc(50% - var(--B) / 2); scroll-padding-inline: var(--rand-px); }
+  .producten { --product: 160px; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: var(--product); gap: 12px; width: max-content; padding: 0 var(--rand-px); }
   .product { scroll-snap-align: start; }
 }
 @media (max-width: 760px) {
   .producten { --product: 136px; }
+  .productenrij { --rand-px: var(--rand); width: auto; margin-left: calc(-1 * var(--rand)); margin-right: calc(-1 * var(--rand)); }
   .product-naam { font-size: 20px; }
   .stoffen { --stof: 128px; --gat: 12px; --rand-px: var(--rand); width: auto; margin-left: calc(-1 * var(--rand)); margin-right: calc(-1 * var(--rand)); }
 }
@@ -1392,7 +1395,7 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
    pijlknoppen met een muis, vegen op touch; mobiel één thema per keer met een stukje van de volgende). */
 .in-de-box { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
 .in-de-box .producten-kop { margin-top: 24px; }
-/* Carrousel (gedeeld door de thema's, de stoffen en de fotorij op Werkwijze; feedback Carst 11 nov.: nooit een scrollbalk):
+/* Carrousel (gedeeld door de producten, de thema's, de stoffen en de fotorij op Werkwijze; feedback Carst 11 nov.: nooit een scrollbalk):
    scroll-snap, pijlknoppen vorige/volgende alleen met een muis (main.js), vegen op touch, Home/End in de rij.
    Zonder JavaScript zijn er geen knoppen; dan krijgt een muis een dunne scrollbalk zodat de rij bruikbaar blijft. */
 .carrousel { overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; scroll-behavior: smooth; }
@@ -1409,7 +1412,8 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 .thema-tegel figcaption { margin: 14px 0 0; font-family: var(--display); font-size: clamp(24px, 2vw, 30px); line-height: 1.15; }
 .themas-onder { margin-top: 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 40px; }
 .carrousel-knoppen { display: none; gap: 8px; }
-.in-de-box .carrousel-knoppen { margin-top: -8px; } /* dicht onder de stoffen */
+.in-de-box .carrousel-knoppen { margin-top: -8px; } /* dicht onder de producten en de stoffen */
+.js .carrousel-knoppen[hidden] { display: none; } /* rij scrolt niet (main.js): geen knoppen */
 .carrousel-knop { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid currentColor; border-radius: 50%; background: none; color: var(--inkt); cursor: pointer; transition: opacity .3s ease; }
 .carrousel-knop svg { width: 20px; height: 10px; }
 .carrousel-knop[aria-disabled="true"] { opacity: .3; cursor: default; }
