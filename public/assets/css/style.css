@@ -1234,6 +1234,31 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 @media (prefers-reduced-motion: reduce) { .formulier .groep { animation: none !important; } }
 
+/* ---------- Contactformulier: "Geboortedatum volgt nog" (issue #69, brief 2026-11-14-geboortedatum-volgt) ----------
+   Een selectievakje per groep (Kraamcadeaubox onder het datumveld, de andere drie als laatste regel), afgeleid van de keuzekaarten.
+   Het echte input krijgt de focus en gaat met de spatie aan en uit; de toelichting staat altijd onder het label (aria-describedby).
+   Selectors met .formulier .vakje gaan voor .formulier label (11 px-kapitalen, mobiel 600) en .formulier input. */
+.formulier .datum-volgt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.formulier .vakje { flex-direction: row; align-items: center; gap: 12px; min-height: 44px; width: fit-content; max-width: 100%; font: 400 16px/1.35 var(--serif); letter-spacing: normal; text-transform: none; color: var(--inkt); cursor: pointer; }
+.formulier .vakje .vakje-vak { position: relative; flex: none; box-sizing: border-box; width: 24px; height: 24px; border: 1px solid var(--inkt);
+  background: linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.92)) var(--inkt); } /* zelfde vlak als voorheen: wit 92 % over inkt */
+/* het zichtbare vak van 24 × 24 px is een echte rand van 1 px inkt op .vakje-vak (blijft zichtbaar in geforceerde kleuren, ontwerpgate);
+   het echte vakje ligt er doorzichtig over als tikdoel van 44 × 44 px (mobiele principes, ook los van het label); de focusrand ligt 3 px om het vak.
+   Posities gelden vanaf de binnenkant van de rand: −11 px = −10 px vanaf de buitenrand. */
+.formulier .vakje input { -webkit-appearance: none; appearance: none; position: absolute; top: -11px; left: -11px; width: 44px; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 0; cursor: pointer; background: transparent; }
+.formulier .vakje input:focus-visible { outline: 2px solid var(--inkt); outline-offset: -7px; } /* 44 − 2 × 7 = 30 px: 3 px om het vak van 24 px */
+.vakje .keuze-vink { top: 2px; left: 2px; right: auto; color: var(--inkt); pointer-events: none; }
+.vakje input:checked ~ .keuze-vink { opacity: 1; }
+/* geforceerde kleuren (Windows hoog contrast): rand en vink in de systeemtekstkleur, vlak in de systeemachtergrond */
+@media (forced-colors: active) {
+  .formulier .vakje .vakje-vak { border: 1px solid CanvasText; background: Canvas; }
+  .vakje .keuze-vink { color: CanvasText; }
+  .formulier .vakje input:focus-visible { outline-color: Highlight; }
+}
+.formulier .vakje-uitleg { padding-left: 36px; } /* gelijk met de labeltekst: 24 px vakje + 12 px gat */
+.formulier .datum-volgt.breed .vakje-uitleg { max-width: none; } /* volle rij: de toelichting (70 tekens) op één regel vanaf 761 px (ontwerpcriterium 7) */
+@media (min-width: 761px) { .formulier .groep > .datum-volgt:not(.breed) { grid-column: 2; } } /* box: onder het datumveld */
+
 /* ---------- Contactformulier: thema als keuzekaarten met de stoffoto's (wens Carst 11 nov., brief 2026-11-11-c7-stofkeuze) ----------
    Raster zonder scrollbalk (indeling a, brief 2026-11-14, De stoffen: één raster): vanaf 761 px 5 kolommen, rij 1 vijf stoffen,
    rij 2 drie stoffen en "Een eigen stof" liggend over twee kolommen; op mobiel 3 × 3 met de eigen stof als negende tegel.

@@ -217,6 +217,8 @@
           </fieldset>
           <label>Naam op het product<input type="text" name="box_naam" autocomplete="off"></label>
           <label>Geboortedatum of uitgerekende datum<input type="text" name="box_datum" autocomplete="off"></label>
+          <!-- Geboortedatum volgt nog: issue #69, brief 2026-11-14-geboortedatum-volgt (teksten goedgekeurd door Carst 14 nov.) -->
+          <div class="datum-volgt"><label class="vakje"><span class="vakje-vak"><input type="checkbox" name="box_datum_volgt" value="ja" aria-describedby="box-datum-volgt-uitleg"><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg></span><span class="vakje-tekst">Geboortedatum volgt nog</span></label><p class="eigen-uitleg vakje-uitleg" id="box-datum-volgt-uitleg">Carien neemt contact met je op voordat ze de datum op het product zet.</p></div>
           <!-- Maatkeuzes: besluit Carst 11 nov. (brief 2026-11-11-c5-babymaten), maat 44, 46 en 48 erbij (Story 16, 12 nov., brief 2026-11-12-productrij-carrousel-en-maten), bij de box weer weg en maat 34 en 36 erbij bij prematuurkleding (Carst 14 nov., brief 2026-11-14-goedkeuringen-teksten); Carien kan ze later bijstellen -->
           <label class="breed">Kledingmaat
             <select name="box_maat">
@@ -247,11 +249,13 @@
           </label>
           <label class="maat-anders"><span><span class="groep-alleen">Alleen bij anders: </span>Anders of gewicht</span><input type="text" name="prem_maat_anders" autocomplete="off" placeholder="Bijvoorbeeld 1800 gram"></label>
           <label>Naam op het kledingstuk<input type="text" name="prem_naam" autocomplete="off"></label>
+          <div class="datum-volgt breed"><label class="vakje"><span class="vakje-vak"><input type="checkbox" name="prem_datum_volgt" value="ja" aria-describedby="prem-datum-volgt-uitleg"><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg></span><span class="vakje-tekst">Geboortedatum volgt nog</span></label><p class="eigen-uitleg vakje-uitleg" id="prem-datum-volgt-uitleg">Carien neemt contact met je op voordat ze de datum op het product zet.</p></div>
         </fieldset>
         <fieldset class="groep breed" data-groep="Babynest">
           <legend><span class="groep-alleen">Alleen bij een babynest: </span>Je babynest <span class="groep-optioneel">(optioneel)</span></legend>
           <label>Stof of kleur<input type="text" name="nest_stof" autocomplete="off"></label>
           <label>Naam op het babynest<input type="text" name="nest_naam" autocomplete="off"></label>
+          <div class="datum-volgt breed"><label class="vakje"><span class="vakje-vak"><input type="checkbox" name="nest_datum_volgt" value="ja" aria-describedby="nest-datum-volgt-uitleg"><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg></span><span class="vakje-tekst">Geboortedatum volgt nog</span></label><p class="eigen-uitleg vakje-uitleg" id="nest-datum-volgt-uitleg">Carien neemt contact met je op voordat ze de datum op het product zet.</p></div>
         </fieldset>
         <fieldset class="groep breed" data-groep="Iets op maat laten maken">
           <legend><span class="groep-alleen">Alleen bij iets op maat: </span>Je maatwerk <span class="groep-optioneel">(optioneel)</span></legend>
@@ -274,6 +278,7 @@
             </select>
           </label>
           <label class="maat-anders"><span><span class="groep-alleen">Alleen bij anders: </span>Andere maat</span><input type="text" name="op_maat_anders" autocomplete="off"></label>
+          <div class="datum-volgt breed"><label class="vakje"><span class="vakje-vak"><input type="checkbox" name="op_maat_datum_volgt" value="ja" aria-describedby="op-maat-datum-volgt-uitleg"><svg class="keuze-vink" aria-hidden="true" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg></span><span class="vakje-tekst">Geboortedatum volgt nog</span></label><p class="eigen-uitleg vakje-uitleg" id="op-maat-datum-volgt-uitleg">Carien neemt contact met je op voordat ze de datum op het product zet.</p></div>
         </fieldset>
         <label class="breed">Je idee<textarea name="bericht" rows="5" required placeholder="Vertel kort wat je zoekt en voor wanneer"></textarea></label>
         <label>Naam<input type="text" name="naam" autocomplete="name" required></label>
