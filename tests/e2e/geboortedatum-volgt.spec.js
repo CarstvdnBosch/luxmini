@@ -199,3 +199,49 @@ test.describe('zonder JavaScript', () => {
     await expect(page).toHaveURL(/\/bedankt$/);
   });
 });
+
+// Ontwerpgate ronde 1: in geforceerde kleuren (Windows hoog contrast) vallen achtergrondafbeeldingen weg. Het vak is daarom een
+// echte rand op .vakje-vak; hier moet die rand blijven staan en in beeld afsteken tegen het vlak, aangevinkt en niet aangevinkt.
+test.describe('geforceerde kleuren (hoog contrast)', () => {
+  test('het vak heeft een zichtbare rand en de vink blijft te zien, aangevinkt en niet aangevinkt', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'forcedColors-emulatie alleen in Chromium');
+    await page.emulateMedia({ forcedColors: 'active' });
+    for (const [onderwerp, naam] of Object.entries(VAKJES)) {
+      await naarFormulier(page, onderwerp);
+      expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
+      const input = page.locator(`input[name="${naam}"]`);
+      const vak = page.locator(`.vakje-vak:has(input[name="${naam}"])`);
+      for (const aan of [false, true]) {
+        if (aan) await input.check(); else await expect(input).not.toBeChecked();
+        const s = await vak.evaluate(v => {
+          const c = getComputedStyle(v), vink = getComputedStyle(v.querySelector('.keuze-vink'));
+          return { breedte: ['Top', 'Right', 'Bottom', 'Left'].map(k => parseFloat(c[`border${k}Width`])), stijl: c.borderTopStyle, rand: c.borderTopColor, vlak: c.backgroundColor, vinkKleur: vink.color, vinkZicht: parseFloat(vink.opacity) };
+        });
+        for (const b of s.breedte) expect(b, `${onderwerp}: randbreedte`).toBeGreaterThanOrEqual(1);
+        expect(s.stijl).toBe('solid');
+        expect(s.rand, `${onderwerp}: rand steekt af tegen het vlak`).not.toBe(s.vlak);
+        expect(s.vinkKleur).toBe(s.rand);
+        expect(s.vinkZicht).toBe(aan ? 1 : 0);
+        // in beeld: de randpixels verschillen duidelijk van het midden van het vak (aangevinkt: ook de vink zelf)
+        const png = (await vak.screenshot({ animations: 'disabled' })).toString('base64');
+        const contrast = await page.evaluate(async b64 => {
+          const img = new Image(); img.src = `data:image/png;base64,${b64}`; await img.decode();
+          const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+          const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0);
+          const px = (x, y) => cx.getImageData(x, y, 1, 1).data;
+          const helder = p => (p[0] + p[1] + p[2]) / 3;
+          const w = img.width, h = img.height, mx = Math.round(w / 2), my = Math.round(h / 2);
+          const midden = helder(px(Math.round(w * 0.15), Math.round(h * 0.15)));
+          // per zijde de sterkste afwijking in de buitenste drie pixels (het vak valt niet altijd op hele pixels)
+          const zijde = punten => Math.max(...punten.map(([x, y]) => Math.abs(helder(px(x, y)) - midden)));
+          const randen = [zijde([[0, my], [1, my], [2, my]]), zijde([[w - 1, my], [w - 2, my], [w - 3, my]]), zijde([[mx, 0], [mx, 1], [mx, 2]]), zijde([[mx, h - 1], [mx, h - 2], [mx, h - 3]])];
+          let donkersteVink = midden;
+          for (let y = 3; y < h - 3; y++) for (let x = 3; x < w - 3; x++) { const v = Math.abs(helder(px(x, y)) - midden); if (v > Math.abs(donkersteVink - midden)) donkersteVink = helder(px(x, y)); }
+          return { rand: Math.min(...randen), vink: Math.abs(donkersteVink - midden) };
+        }, png);
+        expect(contrast.rand, `${onderwerp}${aan ? ' (aan)' : ''}: rand zichtbaar in beeld`).toBeGreaterThan(100);
+        if (aan) expect(contrast.vink, `${onderwerp}: vink zichtbaar in beeld`).toBeGreaterThan(100);
+      }
+    }
+  });
+});
