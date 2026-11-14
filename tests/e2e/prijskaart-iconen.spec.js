@@ -130,8 +130,13 @@ test('formulier: kiezen met een klik op de iconen, het vinkje en de gekozen kaar
   const zicht = (p) => page.locator(`${KAART(p)} .icoon`).evaluateAll((ss) => ss.map((s) => getComputedStyle(s).opacity));
   if (muis(info)) await page.mouse.move(2, 2);
   expect((await zicht('65')).every((o) => o === '1'), '€ 65 gekozen: iconen zichtbaar').toBe(true);
-  // klik/tik midden op de iconen van € 80: kiest de kaart (de iconen vangen geen klik)
+  // klik/tik midden op de iconen van € 80: kiest de kaart (de iconen vangen geen klik).
+  // Eerst in beeld: op de iPhone (390 × 664) staat € 80 onder de vouw en een tik buiten het scherm raakt niets (CI 14 nov., PR #82).
+  await page.locator(`${KAART('80')} .keuze-iconen`).scrollIntoViewIfNeeded();
   const box = await page.locator(`${KAART('80')} .keuze-iconen`).boundingBox();
+  // onder het tikpunt ligt de onzichtbare radio van € 80 zelf, niet het icoon of iets anders (ook in WebKit)
+  const geraakt = await page.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? [e.tagName, e.name || '', e.value || ''] : null; }, [box.x + box.width / 2, box.y + box.height / 2]);
+  expect(geraakt, 'het tikpunt op de iconen raakt de radio van € 80').toEqual(['INPUT', 'box_formaat', '80']);
   if (info.project.use?.hasTouch || info.project.name !== 'desktop') await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
   else await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.locator('input[name="box_formaat"][value="80"]')).toBeChecked();
