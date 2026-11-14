@@ -1625,7 +1625,11 @@ html:not(.js) img[data-src] { display: none; }
   .js .site-header .logo-vast { display: block; position: fixed; left: var(--vast-x, var(--rand)); top: var(--vast-y, 17px); opacity: var(--logo-klein-o, 0); }
   .js .site-header .logo-vast img { height: var(--vast-h, 30px); width: auto; }
   .js .site-header .logo-klein { opacity: 0; }
-  .js .site-header .logo.overgenomen .logo-groot, .js .site-header .logo.overgenomen .logo-vast { visibility: hidden; }
+  /* de balk schuift in 0,4 s in (over het vaste logo heen, z-index 40): pas daarna verdwijnt het vaste logo, zodat er
+     nooit even geen logo staat; bij teruggaan komt het meteen terug */
+  .js .site-header .logo-groot, .js .site-header .logo-vast { transition: visibility 0s; }
+  .js .site-header .logo.overgenomen .logo-groot, .js .site-header .logo.overgenomen .logo-vast { visibility: hidden; transition: visibility 0s .4s; }
+
   .js .site-header .logo.zonder-groot .logo-groot, .js .site-header .logo.zonder-groot .logo-vast { display: none; }
   .js .site-header .logo.zonder-groot .logo-klein { opacity: 1; }
 }

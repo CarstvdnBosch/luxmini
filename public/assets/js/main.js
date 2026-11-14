@@ -357,8 +357,9 @@
       // mobiel ca. 18 px, zoals de burger); daarna staat het op precies die plek vast in beeld (.vast-klaar), zonder verspringen
       if (!logoBegin) logoBeginMeten();
       var x0 = logoBegin.x, y0 = logoBegin.y;
-      // eind: "LUX" in het balklogo (offset binnen de vaste balk, los van het in- en uitschuiven); pagina's zonder balk
-      // (privacy, bedankt, 404): het gewone logo op zijn eigen plek bovenaan
+      // eind: "LUX" in het balklogo (offset binnen de vaste balk, los van het in- en uitschuiven). Pagina's zonder balk
+      // (privacy, bedankt, 404): de maat en plek van het gewone logo bovenaan; na het krimpen scrolt "LUX mini" gewoon met
+      // de pagina mee naar boven weg (er komt geen balk die het overneemt), dus het blijft nooit boven de tekst zweven
       var b = balkLogo(), bx, by, bw, bh;
       if (b) {
         bx = b.offsetLeft; by = b.offsetTop; bw = b.offsetWidth; bh = b.offsetHeight;
@@ -376,11 +377,12 @@
       var s = 1 + (s1 - 1) * p;
       var dx = (x1 - x0) * p, dy = (y1 - y0) * p;
       var vaag = Math.max(0, Math.min(1, (p - 0.7) / 0.3)); // de laatste 30%: "LUX mini" komt op, het grote "LUX" gaat weg
-      var stand = [x0.toFixed(1), x1.toFixed(1), y1.toFixed(1), bh, s.toFixed(4), dx.toFixed(2), dy.toFixed(2), vaag.toFixed(3)].join('|');
+      var weg = b ? 0 : Math.max(0, window.scrollY - eind); // zonder balk: na het eindpunt mee omhoog
+      var stand = [x0.toFixed(1), x1.toFixed(1), y1.toFixed(1), (by - weg).toFixed(1), bh, s.toFixed(4), dx.toFixed(2), dy.toFixed(2), vaag.toFixed(3)].join('|');
       if (stand === logoStand) return;
       logoStand = stand;
       logoEl.style.setProperty('--vast-x', bx + 'px');
-      logoEl.style.setProperty('--vast-y', by + 'px');
+      logoEl.style.setProperty('--vast-y', (by - weg) + 'px');
       logoEl.style.setProperty('--vast-h', bh + 'px');
       logoEl.style.setProperty('--logo-s', s.toFixed(4));
       logoEl.style.setProperty('--logo-dx', dx.toFixed(2) + 'px');

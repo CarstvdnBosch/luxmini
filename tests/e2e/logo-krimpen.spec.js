@@ -62,8 +62,8 @@ for (const pad of OPENBAAR) {
       const st = await page.evaluate(LEES);
       // het grote logo blijft in beeld terwijl het krimpt (vast, zoals de burger)
       if (st.groot) expect(st.gi.t, `groot logo in beeld (y ${y})`).toBeGreaterThanOrEqual(0);
-      // nooit twee logo's: staat de balk er, dan zijn het vaste "LUX" en "LUX mini" weg
-      if (st.balk) expect([st.groot, st.vast], `alleen het balklogo (y ${y})`).toEqual([false, false]);
+      // nooit twee logo's: staat de balk er, dan zijn het vaste "LUX" en "LUX mini" weg zodra de balk is ingeschoven (0,4 s)
+      if (st.balk) await expect.poll(async () => { const x = await page.evaluate(LEES); return [x.groot, x.vast]; }, { message: `alleen het balklogo (y ${y})`, timeout: 2000 }).toEqual([false, false]);
     }
     // bij 20% van een schermhoogte (of eerder klaar): in beeld en tussen begin- en eindmaat
     if (vh * 0.2 < eind * 0.8) {
@@ -80,15 +80,15 @@ for (const pad of OPENBAAR) {
     const na = await page.evaluate(LEES);
     expect(na.klein).toBe(true);
     expect(na.groot).toBe(false);
-    // "LUX mini" staat op plek en maat van het balklogo (pagina's zonder balk: het gewone logo, 44 px, mobiel 36 px)
-    if (!na.balk) {
+    // "LUX mini" staat op plek en maat van het balklogo; pagina's zonder balk: het gewone logo in de header neemt het over
+    // (44 px, mobiel 36 px) en het vaste logo is weg
+    if (!na.balk && na.bi) {
       expect(na.vast, 'LUX mini op het eindpunt').toBe(true);
-      if (na.bi) {
-        expect(Math.round(na.vi.h)).toBe(na.bi.h);
-        expect(Math.abs(na.vi.l - na.bi.l)).toBeLessThanOrEqual(1);
-      } else {
-        expect(Math.round(na.vi.h)).toBe(['mobiel', 'iphone'].includes(info.project.name) ? 36 : 44);
-      }
+      expect(Math.round(na.vi.h)).toBe(na.bi.h);
+      expect(Math.abs(na.vi.l - na.bi.l)).toBeLessThanOrEqual(1);
+    } else if (!na.bi) {
+      expect(na.vast, 'LUX mini op de plek van het gewone logo').toBe(true);
+      expect(Math.round(na.vi.h)).toBe(['mobiel', 'iphone'].includes(info.project.name) ? 36 : 44);
     }
     // terugscrollen: groeit weer
     await scrolNaar(page, 0);
@@ -213,4 +213,44 @@ test('aria-label en tikdoel van 44 px; het grote beeld voegt geen tweede naam to
   await expect(logo).toHaveAttribute('aria-label', 'LUX mini, naar de homepage');
   expect((await logo.boundingBox()).height).toBeGreaterThanOrEqual(44);
   expect(await page.$$eval('.site-header .logo-groot img', i => i.map(x => x.getAttribute('alt')))).toEqual(['', '']);
+});
+
+test('pagina\'s zonder balk (privacy, bedankt, 404): na het krimpen scrolt "LUX mini" mee weg en zweeft het niet boven de tekst', async ({ page }) => {
+  await beweging(page);
+  for (const pad of ['/privacy', '/bedankt', '/bestaat-niet-meer']) {
+    await page.goto(pad);
+    await rust(page);
+    const [vh, max] = await page.evaluate(() => [innerHeight, document.documentElement.scrollHeight - innerHeight]);
+    const eind = Math.min(vh * 0.4, max);
+    await scrolNaar(page, eind);
+    const bij = await page.evaluate(LEES);
+    if (eind >= max) continue; // de pagina scrolt niet verder dan het eindpunt: niets om te toetsen
+    // een stukje verder staat het precies zoveel hoger (het scrolt mee)
+    const stap = Math.min(40, max - eind);
+    await scrolNaar(page, eind + stap);
+    const verder = await page.evaluate(LEES);
+    expect(Math.round(bij.vi.t - verder.vi.t), `${pad}: LUX mini scrolt mee`).toBe(Math.round(stap));
+    // ver voorbij het eindpunt: geen vast logo meer in beeld
+    for (const y of [eind + 200, eind + vh, max]) {
+      if (y > max) continue;
+      await scrolNaar(page, y);
+      const m = await page.evaluate(LEES);
+      expect([m.groot, m.vast], `${pad} bij ${Math.round(y)}: geen vast logo in beeld`).toEqual([false, false]);
+    }
+  }
+});
+
+test('bij het overnemen door de balk staat er steeds een logo (eerst het vaste, na het inschuiven het balklogo)', async ({ page }) => {
+  await beweging(page);
+  await page.goto('/babynest');
+  await rust(page);
+  const y = await page.evaluate(() => { const k = document.querySelector('main > .pagina-kop'); return k.offsetTop + k.offsetHeight; });
+  await scrolNaar(page, y);
+  expect((await page.evaluate(LEES)).balk).toBe(true);
+  // direct na het verschijnen van de balk is het vaste "LUX mini" er nog (de balk schuift eroverheen)
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('.site-header .logo-vast')).visibility)).toBe('visible');
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('.site-header .logo-vast')).visibility), { timeout: 2000 }).toBe('hidden');
+  // terug omhoog: het vaste logo is meteen terug
+  await scrolNaar(page, 0);
+  expect((await page.evaluate(LEES)).groot).toBe(true);
 });
