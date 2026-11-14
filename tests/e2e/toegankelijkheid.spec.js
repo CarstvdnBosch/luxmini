@@ -1,7 +1,7 @@
 // Toegankelijkheid (blokkerend): axe-core volgens WCAG 2.1 AA op elke pagina en elk scherm.
 // Ook het menu over het hele scherm wordt gescand. Een overtreding houdt de merge tegen.
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, PAGINAS, wachtOpRust } from './hulp.js';
+import { test, expect, PAGINAS, wachtOpRust, turnstileIframe } from './hulp.js';
 
 const REGELS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -69,4 +69,60 @@ test('toegankelijkheid formulier met eigen stof (blok open, foto en melding)', a
   await page.waitForTimeout(400);
   const uitslag = await new AxeBuilder({ page }).include('#formulier').withTags(REGELS).analyze();
   expect(uitslag.violations, `WCAG-overtredingen in de stofkeuze:\n${samenvatting(uitslag.violations)}`).toEqual([]);
+});
+
+// Brief 2026-11-14-formulier-botbescherming (criterium 21): de drie nieuwe meldingen, het zichtbare Turnstile-vak en zonder JavaScript
+for (const reden of ['controle', 'te-veel', 'te-snel']) {
+  test(`toegankelijkheid contact met melding ${reden}`, async ({ page }) => {
+    const pad = `/contact?verzonden=fout&reden=${reden}#formulier`;
+    await page.goto(pad);
+    await wachtOpRust(page);
+    await expect(page.locator('.formulier .melding[role="alert"]')).toContainText('Je bericht is niet verstuurd.');
+    await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 30)); } window.scrollTo(0, 0); });
+    const uitslag = await new AxeBuilder({ page }).withTags(REGELS).analyze();
+    expect(uitslag.violations, `WCAG-overtredingen op ${pad}:\n${samenvatting(uitslag.violations)}`).toEqual([]);
+  });
+}
+
+// Zonder JavaScript: axe zelf heeft JavaScript nodig (in een context met javaScriptEnabled: false blijft frame.evaluate hangen,
+// CI 14 nov.). Daarom laden we de pagina zoals een browser zonder JavaScript haar toont: alle <script> eruit en de inhoud van
+// <noscript> als gewone inhoud (dat doet een browser zonder JavaScript ook). Zo toetst axe precies wat die bezoeker ziet.
+async function alsZonderJavaScript(page) {
+  await page.route('**/*', async (route) => {
+    if (route.request().resourceType() !== 'document') return route.continue();
+    const res = await route.fetch();
+    const html = (await res.text())
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<noscript>/gi, '<div data-noscript="">')
+      .replace(/<\/noscript>/gi, '</div>');
+    const headers = { ...res.headers() };
+    delete headers['content-length'];
+    await route.fulfill({ status: res.status(), headers, body: html });
+  });
+}
+test('toegankelijkheid contact zonder JavaScript met de <noscript>-regel (testsite key)', async ({ page }) => {
+  await page.setExtraHTTPHeaders({ 'x-testturnstile': 'geslaagd' });
+  await alsZonderJavaScript(page);
+  await page.goto('/contact#formulier');
+  // echt de toestand zonder JavaScript: geen .js-klasse, geen formtijd-veld, de <noscript>-regel zichtbaar
+  await expect(page.locator('html')).not.toHaveClass(/(^|\s)js(\s|$)/);
+  await expect(page.locator('form.formulier input[name="formtijd"]')).toHaveCount(0);
+  await expect(page.locator('#formulier .noscript-melding')).toBeVisible();
+  const uitslag = await new AxeBuilder({ page }).withTags(REGELS).analyze();
+  expect(uitslag.violations, `WCAG-overtredingen zonder JavaScript:\n${samenvatting(uitslag.violations)}`).toEqual([]);
+});
+
+// Het zichtbare vak kan alleen met het echte script van Cloudflare (testsleutel "interactie"). In CI altijd; lokaal alleen als
+// challenges.cloudflare.com bereikbaar is.
+test('toegankelijkheid formulier met het zichtbare Turnstile-vak', async ({ page }) => {
+  let bereikbaar = !!process.env.CI;
+  if (!bereikbaar) { try { await fetch('https://challenges.cloudflare.com/turnstile/v0/api.js', { signal: AbortSignal.timeout(3000) }); bereikbaar = true; } catch { bereikbaar = false; } }
+  test.skip(!bereikbaar, 'challenges.cloudflare.com niet bereikbaar (alleen lokaal; in CI draait deze test altijd)');
+  await page.setExtraHTTPHeaders({ 'x-testturnstile': 'interactie' });
+  await page.goto('/contact#formulier');
+  await expect(page.locator('.turnstile-vak')).toHaveClass(/zichtbaar/, { timeout: 30000 });
+  // Cloudflare zet het iframe in een gesloten shadow root (CSS-locators zien het niet); zoek het via de frames van de pagina
+  await turnstileIframe(page);
+  const uitslag = await new AxeBuilder({ page }).include('#formulier').withTags(REGELS).analyze();
+  expect(uitslag.violations, `WCAG-overtredingen met het Turnstile-vak:\n${samenvatting(uitslag.violations)}`).toEqual([]);
 });

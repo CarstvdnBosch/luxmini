@@ -19,6 +19,15 @@
 //                         in de mail zit; zo toetst e2e dat een foto van een eigen stof echt aankomt, brief 2026-11-11-c7-stofkeuze)
 //                 header  x-testmail-bevat: <tekst, URL-gecodeerd>  (optioneel: de nep-verzending mislukt als de tekst van de
 //                         opgebouwde mail die regel niet bevat; zo toetst e2e bijv. "Kledingmaat: maat 50", brief 2026-11-12-productrij-carrousel-en-maten)
+//
+// TESTMODUS BOTBESCHERMING (alleen hier, nooit in src/, public/ of wrangler.jsonc; brief 2026-11-14-formulier-botbescherming):
+//   header  x-testlimiet: overschreden   de nep-rate limit weigert (→ &reden=te-veel); zonder header laat hij alles door
+//   header  x-testturnstile: geslaagd | mislukt | interactie
+//           GET /contact: data-sitekey krijgt de officiële testsite key van Cloudflare (geslaagd: altijd geslaagd en onzichtbaar,
+//           mislukt: altijd mislukt, interactie: dwingt een klik af) en de markeringen rond de <noscript>-regel gaan weg.
+//           POST /api/contact: Turnstile staat aan; het token wordt beoordeeld zoals siteverify dat met de testsecret doet
+//           (geslaagd en interactie: testsecret "geslaagd", mislukt: testsecret "mislukt"). Er gaat nooit iets naar Cloudflare.
+//   Zonder x-testturnstile staat Turnstile uit, zoals nu op de site (lege site key).
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -101,6 +110,15 @@ async function beheerVerzoek(req, res) {
   await stuurTerug(res, antwoord, request.method);
 }
 
+// ---------- Testmodus botbescherming ----------
+// Officiële testsleutels van Cloudflare Turnstile (developers.cloudflare.com → Turnstile → Testing).
+const TS_SITEKEY = { geslaagd: '1x00000000000000000000BB', mislukt: '2x00000000000000000000AB', interactie: '3x00000000000000000000FF' };
+const TS_SECRET = { geslaagd: '1x0000000000000000000000000000000AA', interactie: '1x0000000000000000000000000000000AA', mislukt: '2x0000000000000000000000000000000AA' };
+function metTurnstile(html, soort) {
+  return html.replace('data-sitekey=""', `data-sitekey="${TS_SITEKEY[soort]}"`)
+    .replace('<!--TURNSTILE-NOSCRIPT', '').replace('TURNSTILE-NOSCRIPT-->', '');
+}
+
 // ---------- Testmodus formulier ----------
 // Dezelfde afhandeling als src/worker.js, alleen de mail is nep: x-testmail: fout laat het versturen mislukken.
 async function contactVerzoek(req, res) {
@@ -109,6 +127,9 @@ async function contactVerzoek(req, res) {
   const bijlage = request.headers.get('x-testmail-bijlage');
   const bevat = decodeURIComponent(request.headers.get('x-testmail-bevat') || '');
   const wacht = Math.min(Number(request.headers.get('x-testmail-wacht')) || 0, 5000);
+  const limiet = request.headers.get('x-testlimiet');
+  const ts = request.headers.get('x-testturnstile');
+  const secret = TS_SECRET[ts];
   const antwoord = await verwerkContact(request, async (velden, foto) => {
     // de mail wordt wel opgebouwd (ook met bijlage, multipart), maar nooit verstuurd
     const raw = bouwMail({ velden, foto, afzender: 'website@voorbeeld.test', ontvanger: 'ontvanger@voorbeeld.test' });
@@ -123,6 +144,10 @@ async function contactVerzoek(req, res) {
     }
     if (wacht > 0) await new Promise((klaar) => setTimeout(klaar, wacht));
     if (testmail === 'fout') throw new Error('testmodus: versturen mislukt (x-testmail: fout)');
+  }, {
+    limiet: async () => limiet !== 'overschreden',
+    // zoals siteverify met de testsecrets van Cloudflare: "geslaagd" keurt elk token goed, "mislukt" keurt alles af
+    turnstile: secret ? async (token) => secret === TS_SECRET.geslaagd && token.length > 0 : null,
   });
   await stuurTerug(res, antwoord, request.method);
 }
@@ -144,6 +169,8 @@ createServer(async (req, res) => {
     if (await bestaat(bestand)) {
       let body = await readFile(bestand);
       const type = TYPES[extname(bestand)] || 'application/octet-stream';
+      const ts = req.headers['x-testturnstile'];
+      if (bestand.endsWith('/contact.html') && TS_SITEKEY[ts]) body = Buffer.from(metTurnstile(body.toString('utf8'), ts));
       const extra = {};
       const ae = req.headers['accept-encoding'] || '';
       if (/^(text|application\/(xml|json))|javascript|svg/.test(type)) {

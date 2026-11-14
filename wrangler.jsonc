@@ -30,8 +30,18 @@
     // Cloudflare Access voor /beheer (geen geheimen). Zolang deze leeg zijn, geeft beheer altijd 403.
     // Carst vult in: team-domein "<team>.cloudflareaccess.com" en de AUD-tag van de Access-applicatie.
     "BEHEER_ACCESS_TEAM": "",
-    "BEHEER_ACCESS_AUD": ""
+    "BEHEER_ACCESS_AUD": "",
+    // Turnstile (brief 2026-11-14-formulier-botbescherming, docs/formulier-beveiliging.md): de site key is publiek en staat
+    // ook als data-sitekey in public/contact.html (een test bewaakt dat ze gelijk zijn). Leeg = Turnstile uit.
+    // Het secret heet TURNSTILE_SECRET en is een Worker-secret dat Carst zelf instelt: NOOIT hier of ergens in de repo.
+    "TURNSTILE_SITEKEY": ""
   },
+  // Rate limit voor POST /api/contact: max. 5 verzendingen per 60 s per IP (Workers Rate Limiting-binding;
+  // namespace_id is een zelfgekozen getal als tekst, uniek binnen het account; period kan alleen 10 of 60 zijn).
+  // De teller is per Cloudflare-locatie en bij benadering. Ontbreekt de binding, dan laat de Worker het bericht door.
+  "ratelimits": [
+    { "name": "CONTACT_RATELIMIT", "namespace_id": "1001", "simple": { "limit": 5, "period": 60 } }
+  ],
   // Opslag voor beheer: Cloudflare D1 (jurisdictie EU). Nog uit tot Carst de database heeft gemaakt
   // (docs/beheer.md, stap 1). Zonder deze binding geeft beheer na het inloggen 503 "Opslag nog niet ingesteld".
   // Aanzetten (docs/beheer.md): haal de // weg voor de drie regels van "d1_databases" hieronder en
@@ -49,10 +59,17 @@
       "AFZENDER": "website@luxmini.nl",
       "ONTVANGER": "info.luxmini@gmail.com",
       "BEHEER_ACCESS_TEAM": "",
-      "BEHEER_ACCESS_AUD": ""
+      "BEHEER_ACCESS_AUD": "",
+      // Turnstile op previews: leeg (uit) zolang de preview-host niet in de hostnamen van de widget staat
+      // (docs/formulier-beveiliging.md); anders weigert de Worker op elke preview elk bericht.
+      "TURNSTILE_SITEKEY": ""
     },
     "send_email": [
       { "name": "MAIL", "destination_address": "info.luxmini@gmail.com" }
+    ],
+    // Bindings worden niet overgeërfd (net als send_email hierboven): previews krijgen een eigen teller (andere namespace_id).
+    "ratelimits": [
+      { "name": "CONTACT_RATELIMIT", "namespace_id": "1002", "simple": { "limit": 5, "period": 60 } }
     ]
   },
   "workers_dev": true,
