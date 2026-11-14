@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { controleer, bouwMail } from '../src/formulier.js';
+import { controleer, bouwMail, THEMAS } from '../src/formulier.js';
 
 const geldig = {
   naam: 'Zoë de Vries', email: 'zoe@example.nl', telefoon: '0612345678',
@@ -67,7 +67,7 @@ test('extra velden komen alleen in de mail bij het gekozen onderwerp', () => {
   assert.match(tekst, /Kledingmaat: maat 56/);
   assert.doesNotMatch(tekst, /1800 gram|teddy|Lot/);
   const nest = controleer({ ...alles, onderwerp: 'Babynest' }).velden;
-  assert.deepEqual(nest.extra, [['Stof of kleur', 'teddy'], ['Naam op het babynest', 'Lot']]);
+  assert.deepEqual(nest.extra, [['Stof', 'teddy'], ['Naam op het babynest', 'Lot']]);
   assert.doesNotMatch(leesTekst(mail(nest)), /Thema:|Naam op het product|1800 gram/);
   const prem = controleer({ ...alles, onderwerp: 'Prematuurkleding' }).velden;
   assert.deepEqual(prem.extra, [['Andere maat of gewicht', '1800 gram'], ['Naam op het kledingstuk', 'Noor']]);
@@ -99,28 +99,39 @@ test('geen regeleinden en een maximumlengte in extra velden (geen kopinjectie)',
   assert.equal(new TextDecoder().decode(Uint8Array.from(atob(onderwerp), (c) => c.charCodeAt(0))), 'Website: Kraamcadeaubox – Zoë de Vries');
 });
 
-test('thema geldt alleen als het een van de negen thema\'s of "Een eigen stof of kleur" is', () => {
+test('thema geldt alleen als het een van de acht thema\'s of "Een eigen stof of kleur" is', () => {
   const thema = (t) => (controleer({ ...geldig, box_thema: t }).velden.extra.find(([k]) => k === 'Thema') || [])[1];
   assert.equal(thema('Wilde blaadjes'), 'Wilde blaadjes');
   assert.equal(thema('Een eigen stof of kleur'), 'Een eigen stof of kleur');
   for (const t of ['giraf', 'Olifant', '<script>', 'Giraf\r\nBcc: x@y.nl', '']) assert.equal(thema(t), undefined, `thema ${JSON.stringify(t)}`);
 });
 
-// Brief 2026-11-11-c5-babymaten: maatkeuzes per onderwerp (besluit Carst 11 nov.); maat 44, 46 en 48 erbij (Story 16, 12 nov.)
+// Brief 2026-11-14-walvis-uit-assortiment: Walvis is uit het assortiment; de verzending slaagt, alleen het thema valt weg
+test('Walvis is geen geldig thema meer; de verzending slaagt wel', () => {
+  assert.ok(!THEMAS.includes('Walvis'));
+  assert.deepEqual(THEMAS, ['Giraf', 'Vos', 'Tulp', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur']);
+  for (const t of ['Walvis', 'walvis']) {
+    const r = controleer({ ...geldig, box_thema: t });
+    assert.equal(r.ok, true, `verzending met box_thema ${t}`);
+    assert.equal(r.velden.extra.find(([k]) => k === 'Thema'), undefined, `thema ${t}`);
+  }
+});
+
+// Brief 2026-11-11-c5-babymaten: maatkeuzes per onderwerp (besluit Carst 11 nov.); maat 44, 46 en 48 erbij (Story 16, 12 nov.), bij de box weer weg, 34 en 36 erbij bij prematuurkleding (Carst 14 nov.)
 const maatIn = (onderwerp, velden) => controleer({ ...geldig, onderwerp, ...velden }).velden.extra;
 
-test('kraamcadeaubox: alleen maat 44 t/m 74, als "maat 50" in de mail', () => {
-  for (const m of ['44', '46', '48', '50', '56', '62', '68', '74']) assert.deepEqual(maatIn('Kraamcadeaubox', { box_maat: m }), [['Kledingmaat', `maat ${m}`]]);
-  for (const m of ['', '32', '42', '47', '80', '92', 'anders', 'Weet ik nog niet', '56cm', '46cm', '<b>56</b>', '<b>46</b>', '5'.repeat(500)]) {
+test('kraamcadeaubox: alleen maat 50 t/m 74, als "maat 50" in de mail', () => {
+  for (const m of ['50', '56', '62', '68', '74']) assert.deepEqual(maatIn('Kraamcadeaubox', { box_maat: m }), [['Kledingmaat', `maat ${m}`]]);
+  for (const m of ['', '32', '42', '44', '46', '47', '48', '80', '92', 'anders', 'Weet ik nog niet', '56cm', '46cm', '<b>56</b>', '<b>46</b>', '5'.repeat(500)]) {
     assert.deepEqual(maatIn('Kraamcadeaubox', { box_maat: m }), [], `box_maat ${JSON.stringify(m)}`);
   }
   assert.match(leesTekst(mail(controleer({ ...geldig, box_maat: '62' }).velden)), /\nKledingmaat: maat 62\n/);
-  assert.match(leesTekst(mail(controleer({ ...geldig, box_maat: '46' }).velden)), /\nKledingmaat: maat 46\n/);
+  assert.match(leesTekst(mail(controleer({ ...geldig, box_maat: '50' }).velden)), /\nKledingmaat: maat 50\n/);
 });
 
 test('prematuurkleding: maat 32 t/m 50 of anders met een vrij veld', () => {
-  for (const m of ['32', '38', '44', '46', '48', '50']) assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: m }), [['Maat van de baby', `maat ${m}`]]);
-  for (const m of ['56', '42', '47', '92', '0', 'hack', '<script>', '<b>46</b>', '46cm', '4'.repeat(500)]) assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: m }), [], `prem_maat ${JSON.stringify(m)}`);
+  for (const m of ['32', '34', '36', '38', '44', '46', '48', '50']) assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: m }), [['Maat van de baby', `maat ${m}`]]);
+  for (const m of ['56', '33', '35', '37', '42', '47', '92', '0', 'hack', '<script>', '<b>46</b>', '46cm', '4'.repeat(500)]) assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: m }), [], `prem_maat ${JSON.stringify(m)}`);
   // anders: alleen het vrije veld; leeg vrij veld geeft niets
   assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: 'anders', prem_maat_anders: '1450 gram' }), [['Andere maat of gewicht', '1450 gram']]);
   assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: 'anders', prem_maat_anders: '  ' }), []);
@@ -131,6 +142,7 @@ test('prematuurkleding: maat 32 t/m 50 of anders met een vrij veld', () => {
   const tekst = leesTekst(mail(controleer({ ...geldig, onderwerp: 'Prematuurkleding', prem_maat: 'anders', prem_maat_anders: '1450 gram' }).velden));
   assert.match(tekst, /\nAndere maat of gewicht: 1450 gram\n/);
   assert.match(leesTekst(mail(controleer({ ...geldig, onderwerp: 'Prematuurkleding', prem_maat: '48' }).velden)), /\nMaat van de baby: maat 48\n/);
+  assert.match(leesTekst(mail(controleer({ ...geldig, onderwerp: 'Prematuurkleding', prem_maat: '34' }).velden)), /\nMaat van de baby: maat 34\n/);
   assert.doesNotMatch(tekst, /anders\n|Maat van de baby/);
 });
 
@@ -147,4 +159,53 @@ test('iets op maat: maat 32 t/m 86 of anders met een vrij veld', () => {
   // velden van andere onderwerpen gaan niet mee
   assert.deepEqual(maatIn('Iets anders', { op_maat: '62', box_maat: '56', prem_maat: '44' }), []);
   assert.deepEqual(maatIn('Kraamcadeaubox', { op_maat: '62', prem_maat: '44' }), []);
+});
+
+// Brief 2026-11-14-geboortedatum-volgt (issue #69): vakje "Geboortedatum volgt nog" bij vier onderwerpen; alleen "ja" telt
+const VOLGT = { Kraamcadeaubox: 'box_datum_volgt', Prematuurkleding: 'prem_datum_volgt', Babynest: 'nest_datum_volgt', 'Iets op maat laten maken': 'op_maat_datum_volgt' };
+const REGEL = 'Geboortedatum: volgt nog (Carien neemt eerst contact op)';
+const volgtRegel = (velden) => controleer({ ...geldig, ...velden }).velden.extra.filter(([k]) => k === 'Geboortedatum');
+
+test('geboortedatum volgt nog: "ja" geeft per onderwerp de regel in de mail', () => {
+  for (const [onderwerp, veld] of Object.entries(VOLGT)) {
+    const r = controleer({ ...geldig, onderwerp, [veld]: 'ja' });
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.velden.extra, [['Geboortedatum', 'volgt nog (Carien neemt eerst contact op)']], onderwerp);
+    assert.ok(leesTekst(mail(r.velden)).includes(`\n${REGEL}\n`), onderwerp);
+  }
+});
+
+test('geboortedatum volgt nog: andere waarden, leeg of het vakje van een ander onderwerp geven geen regel', () => {
+  for (const [onderwerp, veld] of Object.entries(VOLGT)) {
+    for (const w of ['nee', '1', 'JA', 'ja ', 'JA \r\nBcc: x@y.nl', 'ja\n', 'on', 'true', '', '<b>ja</b>']) {
+      assert.deepEqual(volgtRegel({ onderwerp, [veld]: w }), [], `${onderwerp} ${JSON.stringify(w)}`);
+    }
+    assert.deepEqual(volgtRegel({ onderwerp }), [], `${onderwerp} zonder vakje`);
+    // de vakjes van de andere onderwerpen tellen niet
+    const anderen = Object.fromEntries(Object.values(VOLGT).filter((v) => v !== veld).map((v) => [v, 'ja']));
+    assert.deepEqual(volgtRegel({ onderwerp, ...anderen }), [], `${onderwerp} met vakjes van andere onderwerpen`);
+  }
+  assert.deepEqual(volgtRegel({ onderwerp: 'Kraamcadeaubox', nest_datum_volgt: 'ja' }), []);
+  // bij "Iets anders" (en een onbekend onderwerp) nooit een regel
+  const alle = Object.fromEntries(Object.values(VOLGT).map((v) => [v, 'ja']));
+  for (const onderwerp of ['Iets anders', 'hack']) {
+    const r = controleer({ ...geldig, onderwerp, ...alle });
+    assert.deepEqual(r.velden.extra, []);
+    assert.doesNotMatch(leesTekst(mail(r.velden)), /Geboortedatum/);
+  }
+});
+
+test('geboortedatum volgt nog: bij de box gaan vakje en ingevulde datum allebei mee, de rest blijft gelijk', () => {
+  const r = controleer({ ...geldig, box_naam: 'Sem', box_datum: 'uitgerekend 3 maart', box_datum_volgt: 'ja', box_maat: '56' });
+  assert.deepEqual(r.velden.extra, [['Naam op het product', 'Sem'], ['Geboortedatum of uitgerekende datum', 'uitgerekend 3 maart'],
+    ['Geboortedatum', 'volgt nog (Carien neemt eerst contact op)'], ['Kledingmaat', 'maat 56']]);
+  const raw = mail(r.velden);
+  const tekst = leesTekst(raw);
+  assert.match(tekst, /\nGeboortedatum of uitgerekende datum: uitgerekend 3 maart\nGeboortedatum: volgt nog \(Carien neemt eerst contact op\)\n/);
+  // onderwerpregel en mailvorm veranderen niet
+  const onderwerp = raw.match(/\r\nSubject: =\?UTF-8\?B\?(.+)\?=\r\n/)[1];
+  assert.equal(new TextDecoder().decode(Uint8Array.from(atob(onderwerp), (c) => c.charCodeAt(0))), 'Website: Kraamcadeaubox – Zoë de Vries');
+  assert.match(raw, /\r\nContent-Type: text\/plain; charset=UTF-8\r\n/);
+  // zonder vakje precies zoals voorheen
+  assert.deepEqual(controleer({ ...geldig, box_datum: '3 maart' }).velden.extra, [['Geboortedatum of uitgerekende datum', '3 maart']]);
 });

@@ -27,12 +27,12 @@ Wat het doet:
     de foto (Babynest net zo vol als de andere twee), koppen binnen de kolom op 1025/1280/1440),
     002 Technieken (vier links, diepe tint bij aanwijzen, kaarten op touch),
     003 Inspiratie (grote foto, witte tekst 4,5:1 op de sluier, #contact),
-    004 Instagram; LET OP's (Borduren, babynestfoto, douchehandschoen,
-    formuliervelden); prijskaarten en contactlinks met ?onderwerp=;
+    004 Instagram; LET OP's (tijdelijke foto's, babynestfoto, douchehandschoen;
+    goedgekeurde teksten en formuliervelden juist zonder LET OP, Carst 14 nov.); prijskaarten en contactlinks met ?onderwerp=;
     formulier met groepen per onderwerp; Kraamcadeauboxen (volgorde,
-    negen thema's als raster 3/2/2, binnen twee schermen, statementfoto direct
-    na de intro); Prematuurkleding en Babynest (kop, foto, 002 Prijs: zin met
-    LET OP en pijl-link naar het formulier, oud prijsblok als commentaar met
+    acht thema's twee kolommen breed in sets van vier/twee, statementfoto direct
+    na de intro; geen "walvis" meer in public/ en src/); Prematuurkleding en Babynest (kop, foto, 002 Prijs: zin
+    (Babynest met LET OP) en pijl-link naar het formulier, oud prijsblok als commentaar met
     LET OP, Zo werkt het, contact; foto na hooguit één keer scrollen);
     navigatie met zes items op één regel vanaf 1280 px (daaronder de burger),
     aria-current, menu met subitems, tikdoelen 44 px op touch; _redirects
@@ -264,6 +264,51 @@ def controleer_stappen(browser):
         # vergelijk met de ingestelde breedte b: bij is_mobile groeit innerWidth mee met te brede inhoud
         if breedte > b:
             fouten.append(f"{tag}: pagina scrollt horizontaal (scrollWidth {breedte} > {b})")
+
+# Zo werkt het: je betaalt vooraf (brief 2026-11-14-vooraf-betalen, issue #70). Selectors, geen regelnummers.
+VOORAF_ZIN = "Je betaalt vooraf; daarna gaat Carien aan de slag."
+VOORAF = {
+    "kraamcadeauboxen.html": [
+        "Vertel voor wie de box is en wanneer de baby verwacht wordt.",
+        "Kies het thema, het formaat en de kledingmaat. Met naam en geboortedatum maak je de box helemaal persoonlijk. Je betaalt vooraf.",
+        "Binnen ongeveer 7 werkdagen is je box klaar om op te halen of te versturen."],
+    "prematuurkleding.html": [
+        "Samen kies je wat het wordt, en in welke stof, kleur en maat.",
+        "Altijd met naam of eigen detail. " + VOORAF_ZIN,
+        "Carien maakt elk stuk met de hand in haar atelier in Ospel."],
+    "babynest.html": [
+        "Samen kies je wat het wordt, en in welke stof, kleur en maat.",
+        "Altijd met naam of eigen detail. " + VOORAF_ZIN,
+        "Carien maakt elk stuk met de hand in haar atelier in Ospel."],
+}
+LEES_VOORAF = r"""() => { const schoon = t => t.replace(/\u00ad/g, '').replace(/\s+/g, ' ').trim();
+  const s = [...document.querySelectorAll('main section[data-label]')].find(x => /Zo werkt het/.test(x.getAttribute('data-label')));
+  if (!s) return null;
+  const items = [...s.querySelectorAll('ol.stappen > li')].map(li => { const p = li.querySelector('p.klein'); return p ? schoon(p.textContent) : ''; });
+  const main = document.querySelector('main'), treffers = (schoon(main.textContent).match(/Je betaalt vooraf/g) || []).length;
+  const tweede = s.querySelector('ol.stappen > li:nth-child(2) p.klein');
+  const opPlek = [...main.querySelectorAll('*')].filter(el => [...el.childNodes].some(n => n.nodeType === 3 && /Je betaalt vooraf/.test(n.textContent)));
+  return { items, treffers, alleenInStap2: opPlek.length === 1 && opPlek[0] === tweede }; }"""
+
+def controleer_vooraf_betalen(browser):
+    """Brief vooraf-betalen, criteria 1-4: de betaalzin sluit stap 02 af, één keer, stap 01 en 03 ongewijzigd."""
+    ctx = browser.new_context(viewport={"width": 1440, "height": 900})
+    ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
+    for pagina, verwacht in VOORAF.items():
+        page = ctx.new_page()
+        page.goto(url(pagina), wait_until="load")
+        stand = page.evaluate(LEES_VOORAF)
+        page.close()
+        tag = f"{pagina} [Zo werkt het, vooraf betalen]"
+        if stand is None:
+            fouten.append(f"{tag}: sectie met data-label Zo werkt het ontbreekt"); continue
+        if stand["items"] != verwacht:
+            fouten.append(f"{tag}: stappen zijn {stand['items']}, verwacht {verwacht}")
+        if stand["treffers"] != 1:
+            fouten.append(f"{tag}: 'Je betaalt vooraf' staat {stand['treffers']} keer in main, verwacht 1")
+        if not stand["alleenInStap2"]:
+            fouten.append(f"{tag}: 'Je betaalt vooraf' staat niet (alleen) in .stappen > li:nth-child(2) p.klein")
+    ctx.close()
 
 # Homepage zoals Stock (brief 2026-11-06): hero, 001 Producten (drieluik), 002 Technieken, 003 Inspiratie, 004 Instagram.
 # Vervangt de controle van de vijf productblokken (brief 2026-11-05); de teksten van Babykleding en Siliconen staan
@@ -701,13 +746,18 @@ def controleer_bestanden():
     # criterium 9 en 24: LET OP bij de prijs en bij de tijdelijke foto op Prematuurkleding
     prem = (ROOT / "prematuurkleding.html").read_text(encoding="utf-8")
     # brief 2026-11-07 (A2, A3): het oude prijsblok staat als commentaar met LET OP (terugzetten als Carien een prijs geeft);
-    # de neutrale zin heeft "wacht op akkoord Carien"
+    # brief 2026-11-14-goedkeuringen-teksten (criterium 18): de neutrale zin is goedgekeurd (Carst 14 nov.) en staat er zonder
+    # "wacht op akkoord" direct erboven
     if not re.search(r"<!--\s*LET OP:[^>]*prijsrichtlijn[^>]*nog niet bekend[^>]*terugzetten[^>]*-->\s*<!--\s*<p class=\"prijs\">Prijsrichtlijn: \[prijs\]</p>\s*-->", prem):
         fouten.append("prematuurkleding.html: het oude prijsblok staat er niet als commentaar met een LET OP-opmerking (terugzetten als Carien een prijs geeft)")
-    if not re.search(r"<!--\s*LET OP: wacht op akkoord Carien\s*-->\s*<p class=\"klein prijs-zin\">[^<\[]+</p>", prem):
-        fouten.append("prematuurkleding.html: de zin bij de prijs heeft geen LET OP 'wacht op akkoord Carien'")
-    if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"categorie-foto\"><img src=\"assets/img/p-broekje-kleur", prem):
-        fouten.append("prematuurkleding.html: de tijdelijke foto p-broekje-kleur heeft geen LET OP-opmerking")
+    prijszin = re.search(r"(<!--(?:(?!-->).)*-->\s*)?<p class=\"klein prijs-zin\">De prijs hangt af van de maat en de stof\.[^<\[]*</p>", prem, re.S)
+    if not prijszin:
+        fouten.append("prematuurkleding.html: de prijszin 'De prijs hangt af van de maat en de stof.' ontbreekt")
+    elif prijszin.group(1) and "wacht op akkoord" in prijszin.group(1):
+        fouten.append("prematuurkleding.html: boven de prijszin staat nog 'wacht op akkoord' (goedgekeurd door Carst, 14 nov.)")
+    # brief 2026-11-14-prematuur-fotos (criterium 5): de tijdelijke foto (het broekje) en zijn LET OP zijn weg; 001 toont een echte prematuurfoto
+    if "p-broekje-kleur" in prem or re.search(r"LET OP:[^>]*tijdelijke foto", prem):
+        fouten.append("prematuurkleding.html: de tijdelijke foto p-broekje-kleur of zijn LET OP staat er nog (vervangen door prematuur-regenboog-setje, brief 2026-11-14-prematuur-fotos)")
     nest = (ROOT / "babynest.html").read_text(encoding="utf-8")
     # besluit Carst 14 nov. (brief 2026-11-14-babynest-media-en-logo): titel, beschrijving, quote, werkwijzestappen en de richtprijs
     # zijn goedgekeurd (geen LET OP meer); de koppen en zinnen van 001–003 wachten nog op Carien
@@ -718,14 +768,25 @@ def controleer_bestanden():
     home = (ROOT / "index.html").read_text(encoding="utf-8")
     if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"kern-beeld\"><div class=\"kern-masker\"><img src=\"assets/img/p-broekje-kleur", home):
         fouten.append("index.html: de tijdelijke foto p-broekje-kleur bij Prematuurkleding heeft geen LET OP-opmerking")
-    # brief 2026-11-06, criterium 14: LET OP bij nieuwe teksten (drieluik, Technieken met Borduren, Inspiratie), de babynestfoto,
-    # de douchehandschoen en de nieuwe formuliervelden; het label "001 — Producten" is goedgekeurd (Carst, 6 nov.)
-    for id_ in ["kraamcadeauboxen", "prematuurkleding", "babynest", "technieken", "inspiratie"]:
+    # brief 2026-11-14-goedkeuringen-teksten (criterium 18): de teksten van het drieluik en Handwerk zijn goedgekeurd (Carst 14 nov.)
+    # en hebben geen "wacht op akkoord" meer; bij Handwerk blijft een smallere LET OP over de foto's. Ook de herotabjes, de
+    # pijl-link "Zo personaliseert Carien" en de linkteksten bij Inspiratie zijn goedgekeurd (Carst 14 nov., open vraag 1)
+    for id_ in ["kraamcadeauboxen", "prematuurkleding", "babynest", "technieken"]:
         blok = re.search(r'<section id="' + id_ + r'".*?</section>', home, re.S)
-        if not blok or "LET OP" not in blok.group(0):
-            fouten.append(f"index.html: sectie #{id_} zonder LET OP-opmerking")
-    if not re.search(r"<!--\s*LET OP:[^>]*Speels en levendig[^>]*Borduren", home, re.S):
-        fouten.append("index.html: bij Handwerk ontbreekt de LET OP over 'Speels en levendig' (Borduren)")
+        if not blok:
+            fouten.append(f"index.html: sectie #{id_} ontbreekt")
+        elif "wacht op akkoord" in blok.group(0):
+            fouten.append(f"index.html: sectie #{id_} heeft nog 'wacht op akkoord' (goedgekeurd door Carst, 14 nov.)")
+    blok = re.search(r'<section id="inspiratie".*?</section>', home, re.S)
+    if not blok or "LET OP" in blok.group(0):
+        fouten.append("index.html: sectie #inspiratie ontbreekt of heeft nog een LET OP (linkteksten goedgekeurd door Carst, 14 nov.)")
+    if re.search(r"<!--\s*LET OP:[^>]*(nieuwe linktekst|wacht op akkoord)", home):
+        fouten.append("index.html: er staat nog een LET OP over een goedgekeurde tekst of linktekst (Carst, 14 nov.)")
+    handwerk = re.search(r'<section id="technieken".*?</section>', home, re.S)
+    if not handwerk or not re.search(r"<!--\s*LET OP:[^>]*foto's[^>]*belettering op kleding[^>]*tijdelijke foto[^>]*-->", handwerk.group(0)):
+        fouten.append("index.html: bij Handwerk ontbreekt de LET OP over de foto's (belettering op kleding, tijdelijke prematuurfoto)")
+    if 'Speels en levendig' not in home or '"Borduren"' not in home and '>Borduren<' not in home:
+        fouten.append("index.html: 'Speels en levendig — Borduren' staat niet meer bij Handwerk")
     drie = re.search(r'<section id="producten".*?\n</section>', home, re.S)
     if not drie or re.search(r'<img(?![^>]*loading="lazy")[^>]*>', drie.group(0)):
         fouten.append("index.html: niet alle foto's in het drieluik hebben loading=\"lazy\"")
@@ -737,10 +798,49 @@ def controleer_bestanden():
     if "Douchehandschoen" not in (PROJECT / "docs" / "fotolijst.md").read_text(encoding="utf-8"):
         fouten.append("docs/fotolijst.md: de opname 'Douchehandschoen' ontbreekt")
     contact = (ROOT / "contact.html").read_text(encoding="utf-8")
-    # de kledingmaat is sinds 11 nov. een keuze van Carst (brief 2026-11-11-c5-babymaten) en heeft geen LET OP meer nodig
-    for stuk in ["prematuurkleding", "babynest"]:
-        if not re.search(r"<!--\s*LET OP:[^>]*" + stuk, contact, re.I):
-            fouten.append(f"contact.html: de formuliervelden voor {stuk} hebben geen LET OP-opmerking")
+    # brief 2026-11-14-goedkeuringen-teksten (criterium 18): de formuliervelden voor prematuurkleding en babynest zijn
+    # goedgekeurd (Carst 14 nov.) en hebben geen LET OP meer; de velden zelf staan er nog
+    for stuk, veld in [("prematuurkleding", "prem_maat"), ("babynest", "nest_stof")]:
+        if re.search(r"<!--\s*LET OP:[^>]*" + stuk, contact, re.I):
+            fouten.append(f"contact.html: de formuliervelden voor {stuk} hebben nog een LET OP-opmerking (goedgekeurd door Carst, 14 nov.)")
+        if f'name="{veld}"' not in contact:
+            fouten.append(f"contact.html: het veld {veld} ({stuk}) ontbreekt")
+    # criterium 8: "wacht op akkoord Carien" alleen nog bij de douchehandschoen (herotabjes goedgekeurd: Carst 14 nov., open vraag 1)
+    for pagina in ["index.html", "werkwijze.html", "prematuurkleding.html", "kraamcadeauboxen.html", "inspiratie.html", "contact.html", "privacy.html"]:
+        html = (ROOT / pagina).read_text(encoding="utf-8")
+        for m in re.finditer(r"<!--(?:(?!-->).)*?wacht op akkoord Carien(?:(?!-->).)*-->\s*(<[^>]*>)?", html, re.S):
+            toegestaan = pagina == "kraamcadeauboxen.html" and "douchehandschoen" in m.group(0)
+            if not toegestaan:
+                regel = html[:m.start()].count("\n") + 1
+                fouten.append(f"{pagina} r. {regel}: 'wacht op akkoord Carien' staat er nog (goedgekeurd door Carst, 14 nov.)")
+        if pagina != "kraamcadeauboxen.html" and "wacht op akkoord Carien" in html:
+            fouten.append(f"{pagina}: 'wacht op akkoord Carien' staat er nog (goedgekeurd door Carst, 14 nov.)")
+    # criterium 10 en 11: de quote op Inspiratie is Cariens zin van de oude site; de oude quote is overal weg
+    insp = (ROOT / "inspiratie.html").read_text(encoding="utf-8")
+    st = re.search(r'<section class="statement[^"]*".*?</section>', insp, re.S)
+    if not st or not re.search(r'<p class="quote">“Hoe bijzonder is het om één van de eerste pakjes voor iemand te mogen maken\.”</p>\s*<span class="caps">Carien Geurts —</span>\s*<a class="pijl" href="werkwijze\.html#atelier">', st.group(0)):
+        fouten.append("inspiratie.html: het atelierstatement heeft niet de quote 'Hoe bijzonder is het om één van de eerste pakjes voor iemand te mogen maken.' met Carien Geurts en de pijl-link")
+    elif "LET OP" in st.group(0):
+        fouten.append("inspiratie.html: bij het atelierstatement staat nog een LET OP")
+    for f in ROOT.rglob("*"):
+        if f.is_file() and f.suffix in (".html", ".js", ".css", ".txt", ".xml"):
+            t = f.read_text(encoding="utf-8", errors="ignore")
+            for oud in ("Door dezelfde handen", "genaaid, geborduurd en beletterd"):
+                if oud in t:
+                    fouten.append(f"{f.relative_to(ROOT)}: '{oud}' komt nog voor")
+    # brief 2026-11-14-formulier-botbescherming, criterium 13: data-sitekey gevuld als en alleen als de <noscript>-regel actief is
+    vakken = re.findall(r'class="turnstile-vak" data-sitekey="([^"]*)"', contact)
+    noscript_actief = '<noscript><p class="noscript-melding">' in re.sub(r"<!--.*?-->", "", contact, flags=re.S)
+    if len(vakken) != 1:
+        fouten.append(f"contact.html: verwacht precies één Turnstile-vak met data-sitekey, gevonden {len(vakken)}")
+    elif bool(vakken[0]) != noscript_actief:
+        fouten.append("contact.html: data-sitekey en de <noscript>-regel horen samen te gaan (site key ingevuld ⇔ markeringen TURNSTILE-NOSCRIPT weg; docs/formulier-beveiliging.md)")
+    elif not vakken[0] and not re.search(r"<!--TURNSTILE-NOSCRIPT\s*<noscript><p class=\"noscript-melding\">.*?</noscript>\s*TURNSTILE-NOSCRIPT-->", contact, re.S):
+        fouten.append("contact.html: de <noscript>-regel voor Turnstile staat er niet (in commentaar met de markeringen TURNSTILE-NOSCRIPT)")
+    if "noscript-melding" in contact:
+        kop = contact.find('<p class="label"><span>002 —</span> Stuur een bericht</p>')
+        if not (0 <= kop < contact.find("noscript-melding") < contact.find("<form")):
+            fouten.append("contact.html: de <noscript>-regel staat niet direct onder de kop van 002, vóór het formulier")
 
 def controleer_logo_groot():
     """Brief 2026-11-14-babynest-media-en-logo (B, criterium 29): de header van elke openbare pagina heeft het gewone logo
@@ -1064,9 +1164,9 @@ def controleer_werkwijze(browser):
     ctx.close()
 
 THEMA_KLEUREN_VERBODEN = {"rgb(188, 133, 101)"}  # terracotta
-THEMAS = ["Giraf", "Vos", "Tulp", "Walvis", "Wilde blaadjes", "Framboos", "Regenboog", "Wilgentakjes", "Blaadjes en bloemen"]
+THEMAS = ["Giraf", "Vos", "Tulp", "Wilde blaadjes", "Framboos", "Regenboog", "Wilgentakjes", "Blaadjes en bloemen"]
 # volgorde van de pagina (feedback Carst 6 nov. 14:28, F4): kop, statementfoto, 001 formaten (salie), 002 wat er in de box kan
-# (producten en stoffen), 003 thema's (groot, sets van drie), 004 zo werkt het, 005 contact
+# (producten en stoffen), 003 thema's (twee kolommen breed: desktop sets van vier, tablet sets van twee; brief 2026-11-14), 004 zo werkt het, 005 contact
 BOX_SECTIES = [["", "— Kraamcadeauboxen"], ["", "— Met naam"], ["formaten", "001 — Kies je formaat"], ["in-de-box", "002 — Wat er in de box kan"],
                ["themas", "003 — Thema's"], ["werkwijze", "004 — Zo werkt het"], ["contact", "005 — Contact"]]
 LEES_THEMAS = """() => { const s = document.querySelector('#themas'); const kaarten = [...s.querySelectorAll('.themacarrousel li')];
@@ -1097,10 +1197,30 @@ def controleer_productrij():
     if [n.replace("&shy;", "") for n in namen] != ["Knuffel", "Swaddle", "Broekje", "Sjaaltje", "Shirtje", "Douchehandschoen", "Bijtring", "Speenkoord"]:
         fouten.append(f"kraamcadeauboxen.html: de productrij heeft niet de acht producten in de goede volgorde ({namen})")
 
+# Brief 2026-11-14-walvis-uit-assortiment: Walvis is uit het assortiment. Nergens in public/ (HTML, JS, CSS, bestandsnamen van
+# assets/img) of src/ mag "walvis" nog voorkomen; enige uitzondering is exact de alt-tekst van de sfeerfoto pers-stoffen.jpg.
+WALVIS_UITZONDERING = 'alt="Vier stoffen met prints van vosjes, walvissen en blaadjes"'
+
+def controleer_walvis():
+    for f in sorted((ROOT / "assets" / "img").rglob("*")):
+        if "walvis" in f.name.lower():
+            fouten.append(f"{f.relative_to(PROJECT)}: bestandsnaam met 'walvis' (Walvis is uit het assortiment)")
+    for map_ in (ROOT, PROJECT / "src"):
+        for f in sorted(map_.rglob("*")):
+            if not f.is_file() or f.suffix not in (".html", ".js", ".mjs", ".css", ".json", ".txt", ".xml"):
+                continue
+            for nr, regel in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+                rest = regel
+                if f.parent == ROOT and f.suffix == ".html":
+                    rest = re.sub(r'<img [^>]*src="assets/img/pers-stoffen\.jpg"[^>]*>', lambda m: m.group(0).replace(WALVIS_UITZONDERING, ""), rest)
+                if "walvis" in rest.lower():
+                    fouten.append(f"{f.relative_to(PROJECT)}:{nr}: 'walvis' komt nog voor (Walvis is uit het assortiment)")
+
 def controleer_themas(browser):
     """F4 (feedback Carst 6 nov. 14:28): volgorde kop, statementfoto, formaten (lichte kleur, geen terracotta, buren verschillend),
-    wat er in de box kan, thema's groot in sets van drie (scroll-snap, knoppen met een muis, mobiel één per keer), zo werkt het, contact.
-    Vervangt de controle van het 3 x 3-raster en "negen thema's binnen twee schermen" (vervallen, testaanpassing ter beoordeling door Carst)."""
+    wat er in de box kan, thema's in sets (scroll-snap, knoppen met een muis, mobiel één per keer), zo werkt het, contact.
+    Brief 2026-11-14-walvis-uit-assortiment (besluit Carst 14 nov. 13:31, "Eén raster"): acht thema's, twee kolommen breed;
+    desktop sets van vier, tablet sets van twee, mobiel één per keer (vervangt "sets van drie")."""
     ctx, page = nieuwe_pagina(browser, "kraamcadeauboxen.html", 390, 844, True)
     zicht = page.evaluate("""() => { const p = [...document.querySelectorAll('.pagina-kop p')].find(p => p.textContent.trim() === 'Vier formaten, van € 35 tot € 80.');
       if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom <= innerHeight; }""")
@@ -1117,7 +1237,7 @@ def controleer_themas(browser):
     if not st or abs(st[0]) > 1 or st[1] > 844 * 1.5 or not st[2] or not st[3]:
         fouten.append(f"kraamcadeauboxen.html [mobiel]: de statementfoto staat niet direct na de intro (verschil, top, geladen, tekst: {st})")
     ctx.close()
-    for naam, (b, h, touch, kolommen) in {"desktop": (1440, 900, False, 3), "tablet": (768, 1024, True, 3), "mobiel": (390, 844, True, 1)}.items():
+    for naam, (b, h, touch, kolommen) in {"desktop": (1440, 900, False, 4), "tablet": (768, 1024, True, 2), "mobiel": (390, 844, True, 1)}.items():
         ctx, page = nieuwe_pagina(browser, "kraamcadeauboxen.html", b, h, touch, reduced_motion="reduce")
         tag = f"kraamcadeauboxen.html [{naam}]"
         secties = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()])")
@@ -1149,16 +1269,18 @@ def controleer_themas(browser):
         kleuren = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => s.getAttribute('data-achtergrond') || '')")
         if not kleuren[2] or kleuren[2].upper() == "#FFFFFF" or norm_kleur(page, kleuren[2]) in THEMA_KLEUREN_VERBODEN:
             fouten.append(f"{tag}: 001 formaten staat niet op een lichte paletkleur ({kleuren[2]})")
-        # ontwerpgate ronde 3: binnen de rand (eerste thema onder het label); op desktop en tablet minstens 40 px van het vierde thema in beeld
-        st = page.evaluate("() => { const ts = [...document.querySelectorAll('.themacarrousel li')].map(l => l.getBoundingClientRect()); const l = document.querySelector('#themas .label').getBoundingClientRect(); return [Math.round(ts[0].left - l.left), Math.round(Math.max(0, Math.min(innerWidth, ts[3].right) - ts[3].left))]; }")
-        if abs(st[0]) > 1 or (naam != "mobiel" and st[1] < 40):
-            fouten.append(f"{tag}: themarij niet binnen de rand of geen stukje van de volgende set in beeld (eerste t.o.v. label, zichtbaar deel vierde: {st})")
+        # binnen de rand (eerste thema onder het label, laatste van de set eindigt op de rechterkant van het label); van de eerste
+        # tegel van de volgende set staat alleen een stukje in de rand rechts in beeld (desktop en tablet minstens 40 px)
+        st = page.evaluate(f"""() => {{ const ts = [...document.querySelectorAll('.themacarrousel li')].map(l => l.getBoundingClientRect()); const l = document.querySelector('#themas .label').getBoundingClientRect(); const n = {kolommen};
+          return [Math.round(ts[0].left - l.left), Math.round(ts[n - 1].right - l.right), Math.round(ts[n].left - l.right), Math.round(Math.max(0, Math.min(innerWidth, ts[n].right) - ts[n].left))]; }}""")
+        if abs(st[0]) > 1 or (naam != "mobiel" and (abs(st[1]) > 1 or st[2] <= 0 or st[3] < 40)):
+            fouten.append(f"{tag}: themarij niet binnen de rand of de volgende set kijkt niet alleen in de rand naar binnen (eerste t.o.v. label links, laatste van de set t.o.v. label rechts, begin volgende, zichtbaar deel: {st})")
         if naam == "desktop":
-            # knop "volgende" schuift precies één set (de vierde tegel komt links in beeld)
+            # knop "volgende" schuift precies één set: het vijfde thema komt onder het label en "Volgende" is uit (twee sets)
             page.click(".carrousel-knop[aria-controls='themacarrousel'][data-richting='1']"); page.wait_for_timeout(600)
-            vier = page.evaluate("() => Math.round(document.querySelectorAll('.themacarrousel li')[3].getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left)")
-            if abs(vier) > 2:
-                fouten.append(f"{tag}: na 'Volgende thema's' staat het vierde thema niet onder het label ({vier} px)")
+            vijf = page.evaluate("() => [Math.round(document.querySelectorAll('.themacarrousel li')[4].getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left), document.querySelector(\".carrousel-knop[aria-controls='themacarrousel'][data-richting='1']\").getAttribute('aria-disabled')]")
+            if abs(vijf[0]) > 2 or vijf[1] != "true":
+                fouten.append(f"{tag}: na 'Volgende thema's' staat het vijfde thema niet onder het label of is 'Volgende' niet uit ({vijf})")
         ctx.close()
 
 # Geen scherm zonder inhoud: elk venster langs de pagina toont tekst of een foto
@@ -1170,8 +1292,9 @@ LEEG_SCHERM = """() => { const els = [...document.querySelectorAll('main h1, mai
 
 # Prematuurkleding en Babynest (criterium 2): kop -> voorbeeldfoto -> prijsrichtlijn -> Zo werkt het -> contact
 PRODUCTPAGINAS = {
-    "prematuurkleding.html": {"formulier": "contact.html?onderwerp=prematuurkleding#formulier", "h1": "Prematuurkleding", "foto_id": "maatwerk", "kleur": "#C3CFBC", "foto": "p-broekje-kleur.jpg", "max_b": 480,
-                              "secties": [["", "— Prematuurkleding"], ["maatwerk", "001 — Maatwerk"], ["prijs", "002 — Prijs"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
+    "prematuurkleding.html": {"formulier": "contact.html?onderwerp=prematuurkleding#formulier", "h1": "Prematuurkleding", "foto_id": "maatwerk", "kleur": "#C3CFBC", "foto": "prematuur-regenboog-setje.jpg", "max_b": 480, "alt_prematuur": True,
+                              # brief 2026-11-14-prematuur-fotos: 003 Voorbeelden erbij, Zo werkt het en Contact schuiven door
+                              "secties": [["", "— Prematuurkleding"], ["maatwerk", "001 — Maatwerk"], ["prijs", "002 — Prijs"], ["voorbeelden", "003 — Voorbeelden"], ["zo-werkt-het", "004 — Zo werkt het"], ["contact", "005 — Contact"]]},
     # brief 2026-11-14-babynest-media-en-logo (A): drie blokken zoals het Media-overzicht van Stock; eigen controle hieronder
     "babynest.html": {"formulier": "contact.html?onderwerp=babynest#formulier", "h1": "Babynest", "foto_id": "babynest", "kleur": "#B5969E", "max_b": 384,
                       "fotos": ["babynest-boven.jpg", "babynest-dekentje.jpg", "babynest-stof-rits.jpg", "babynest-voorkant.jpg"], "media": True,
@@ -1222,8 +1345,10 @@ def controleer_productpagina(browser, pagina):
                  !!ps.querySelector('.prijs')] : null]; }""", v["foto_id"])
         if st[0] != [["Bespreek je idee", v["formulier"]]] or st[1] != ["Samen kiezen", "Persoonlijk maken", "Met zorg gemaakt"] or st[2] != ["werkwijze.html#hoe-ik-werk"]:
             fouten.append(f"{tag}: fotosectie of Zo werkt het klopt niet ({st[:3]})")
-        if v["foto"] not in st[3] or st[4]:
-            fouten.append(f"{tag}: voorbeeldfoto {v['foto']} ontbreekt of de alt-tekst noemt het prematuurkleding")
+        # brief 2026-11-14-prematuur-fotos (besluit Carst): op Prematuurkleding is de foto echte prematuurkleding en noemt de alt dat;
+        # op Babynest noemt de alt geen prematuurkleding
+        if v["foto"] not in st[3] or st[4] != v["alt_prematuur"]:
+            fouten.append(f"{tag}: voorbeeldfoto {v['foto']} ontbreekt of de alt-tekst noemt prematuurkleding {'niet' if v['alt_prematuur'] else 'wel'}")
         breedte = bestandsbreedte(st[3])
         if str(breedte) != str(st[6]) or st[5] > min(breedte, v["max_b"]) + 0.5 or st[7] != "high" or st[8] == "lazy":
             fouten.append(f"{tag}: voorbeeldfoto {st[5]:.0f} px breed (max. {v['max_b']}, bestand {breedte}, width={st[6]}) of niet de LCP-foto (fetchpriority={st[7]}, loading={st[8]})")
@@ -1446,11 +1571,16 @@ def controleer_balk_labels(browser):
                     break
             ctx.close()
 
+# brief 2026-11-14-kleurkeuze: per groep (prematuurkleding, babynest, iets op maat) Hoofdkleur (11 keuzes + vrij veld) en Tweede kleur (12 keuzes met "Geen" + vrij veld)
+def KLEURVELDEN(pre):
+    return [["input", f"{pre}_kleur", "radio"]] * 11 + [["input", f"{pre}_kleur_anders", "text"]] + [["input", f"{pre}_kleur2", "radio"]] * 12 + [["input", f"{pre}_kleur2_anders", "text"]]
+
 # brief 2026-11-06: eerst het onderwerp, dan de groepen; thema als keuzekaarten met het blok eigen stof (brief 2026-11-11-c7-stofkeuze) (alle velden optioneel), bericht, naam, e-mail, telefoon
-FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["input", "box_thema", "radio"]] * 11 + [["input", "stof_foto", "file"], ["input", "stof_link", "text"]] + [["input", "box_naam", "text"], ["input", "box_datum", "text"], ["select", "box_maat", ""],
-                    ["select", "prem_maat", ""], ["input", "prem_maat_anders", "text"], ["input", "prem_naam", "text"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"],
-                    ["select", "op_maat", ""], ["input", "op_maat_anders", "text"],  # maatkeuzes: brief 2026-11-11-c5-babymaten (besluit Carst)
-                    ["textarea", "bericht", ""], ["input", "naam", "text"], ["input", "email", "email"], ["input", "telefoon", "tel"], ["input", "website", "text"]]
+FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["input", "box_thema", "radio"]] * 10 + [["input", "stof_foto", "file"], ["input", "stof_link", "text"]] + [["input", "box_naam", "text"], ["input", "box_datum", "text"], ["input", "box_datum_volgt", "checkbox"], ["select", "box_maat", ""],
+                    ["select", "prem_maat", ""], ["input", "prem_maat_anders", "text"], ["input", "prem_naam", "text"]] + KLEURVELDEN("prem") + [["input", "prem_datum_volgt", "checkbox"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"]] + KLEURVELDEN("nest") + [["input", "nest_datum_volgt", "checkbox"],
+                    ["select", "op_maat", ""], ["input", "op_maat_anders", "text"]] + KLEURVELDEN("op") + [["input", "op_maat_datum_volgt", "checkbox"],  # maatkeuzes: brief 2026-11-11-c5-babymaten (besluit Carst); vakjes "Geboortedatum volgt nog": brief 2026-11-14-geboortedatum-volgt
+                    ["textarea", "bericht", ""], ["input", "naam", "text"], ["input", "email", "email"], ["input", "telefoon", "tel"], ["input", "website", "text"],
+                    ["input", "formtijd", "hidden"]]  # tijdcontrole: main.js zet dit veld bij het laden achteraan (brief 2026-11-14-formulier-botbescherming); niet in de HTML
 
 def controleer_contactpagina(browser):
     """Criteria 20-23 en 30."""
@@ -1567,6 +1697,7 @@ def main():
     controleer_bestanden()
     controleer_productrij()
     controleer_logo_groot()
+    controleer_walvis()
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         controleer_navigatie(browser)
@@ -1582,6 +1713,7 @@ def main():
         controleer_zonder_js(browser)
         controleer_prijstabel(browser)
         controleer_stappen(browser)
+        controleer_vooraf_betalen(browser)
         controleer_contact(browser)
         controleer_tablet(browser)
         controleer_hero_mobiel(browser)

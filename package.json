@@ -17,6 +17,6 @@
     "@axe-core/playwright": "^4.10.0",
     "@lhci/cli": "^0.15.0",
     "@playwright/test": "1.63.0",
-    "wrangler": "^4.0.0"
+    "wrangler": "^4.36.0"
   }
 }

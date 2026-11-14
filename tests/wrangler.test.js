@@ -67,3 +67,23 @@ test('previews overschrijven assets niet zonder run_worker_first', () => {
 test('stripJsonc laat tekst tussen aanhalingstekens heel', () => {
   assert.deepEqual(JSON.parse(stripJsonc('{"a": "/api/*", // x\n "b": "http://y", /* z */ }')), { a: '/api/*', b: 'http://y' });
 });
+
+// Brief 2026-11-14-formulier-botbescherming (criterium 1 en 19): rate limit-binding en Turnstile-site key; het secret nooit in de config.
+test('botbescherming: rate limit-binding CONTACT_RATELIMIT, 5 per 60 s (ook previews, eigen teller)', () => {
+  for (const [waar, lijst] of [['hoofd', config.ratelimits], ['previews', config.previews && config.previews.ratelimits]]) {
+    assert.ok(Array.isArray(lijst), `${waar}: ratelimits ontbreekt`);
+    const r = lijst.find((b) => b.name === 'CONTACT_RATELIMIT');
+    assert.ok(r, `${waar}: binding CONTACT_RATELIMIT ontbreekt`);
+    assert.match(r.namespace_id, /^[1-9]\d*$/, `${waar}: namespace_id is een positief getal als tekst`);
+    assert.deepEqual(r.simple, { limit: 5, period: 60 });
+  }
+  assert.notEqual(config.ratelimits[0].namespace_id, config.previews.ratelimits[0].namespace_id, 'previews tellen niet mee met de echte site');
+});
+
+test('botbescherming: TURNSTILE_SITEKEY als var (ook previews); TURNSTILE_SECRET nooit in de config', () => {
+  for (const vars of [config.vars, config.previews.vars]) {
+    assert.equal(typeof vars.TURNSTILE_SITEKEY, 'string');
+    assert.equal(vars.TURNSTILE_SECRET, undefined, 'TURNSTILE_SECRET is een secret, niet in wrangler.jsonc');
+  }
+  assert.doesNotMatch(JSON.stringify(config), /TURNSTILE_SECRET/);
+});

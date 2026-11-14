@@ -17,37 +17,90 @@ export const EXTRA_VELDEN = {
     ['box_thema', 'Thema', 80],
     ['box_naam', 'Naam op het product', 120],
     ['box_datum', 'Geboortedatum of uitgerekende datum', 60],
+    ['box_datum_volgt', 'Geboortedatum', 3],
     ['box_maat', 'Kledingmaat', 20],
   ],
   Prematuurkleding: [
     ['prem_maat', 'Maat van de baby', 20],
     ['prem_maat_anders', 'Andere maat of gewicht', 80],
     ['prem_naam', 'Naam op het kledingstuk', 120],
+    ['prem_kleur', 'Hoofdkleur', 20],
+    ['prem_kleur_anders', 'Hoofdkleur anders', 80],
+    ['prem_kleur2', 'Tweede kleur', 20],
+    ['prem_kleur2_anders', 'Tweede kleur anders', 80],
+    ['prem_datum_volgt', 'Geboortedatum', 3],
   ],
   Babynest: [
-    ['nest_stof', 'Stof of kleur', 120],
+    ['nest_stof', 'Stof', 120], // was "Stof of kleur": de kleur kies je nu apart (brief 2026-11-14-kleurkeuze, criterium 11)
     ['nest_naam', 'Naam op het babynest', 120],
+    ['nest_kleur', 'Hoofdkleur', 20],
+    ['nest_kleur_anders', 'Hoofdkleur anders', 80],
+    ['nest_kleur2', 'Tweede kleur', 20],
+    ['nest_kleur2_anders', 'Tweede kleur anders', 80],
+    ['nest_datum_volgt', 'Geboortedatum', 3],
   ],
   'Iets op maat laten maken': [
     ['op_maat', 'Maat', 20],
     ['op_maat_anders', 'Andere maat', 80],
+    ['op_kleur', 'Hoofdkleur', 20],
+    ['op_kleur_anders', 'Hoofdkleur anders', 80],
+    ['op_kleur2', 'Tweede kleur', 20],
+    ['op_kleur2_anders', 'Tweede kleur anders', 80],
+    ['op_maat_datum_volgt', 'Geboortedatum', 3],
   ],
 };
 export const FORMATEN = ['35', '50', '65', '80'];
+// "Geboortedatum volgt nog" (issue #69, brief 2026-11-14-geboortedatum-volgt; teksten goedgekeurd door Carst 14 nov.):
+// alleen precies de waarde "ja" van het vakje van het gekozen onderwerp geeft deze vaste regel; nooit tekst uit het veld zelf.
+export const DATUM_VOLGT = ['box_datum_volgt', 'prem_datum_volgt', 'nest_datum_volgt', 'op_maat_datum_volgt'];
+export const DATUM_VOLGT_REGEL = 'volgt nog (Carien neemt eerst contact op)';
 // Maatkeuzes per veld (besluit Carst 11 nov., brief 2026-11-11-c5-babymaten; 44, 46 en 48 erbij: Story 16, 12 nov.,
-// brief 2026-11-12-productrij-carrousel-en-maten). Andere waarden vallen weg;
+// brief 2026-11-12-productrij-carrousel-en-maten; bij de box weer weg en 34 en 36 erbij bij prematuurkleding:
+// Carst 14 nov., brief 2026-11-14-goedkeuringen-teksten).
+// Andere waarden vallen weg;
 // in de mail staat "maat 50". "anders" geeft geen maatregel, dan telt het vrije veld.
 export const MATEN = {
-  box_maat: ['44', '46', '48', '50', '56', '62', '68', '74'],
-  prem_maat: ['32', '38', '44', '46', '48', '50', 'anders'],
+  box_maat: ['50', '56', '62', '68', '74'],
+  prem_maat: ['32', '34', '36', '38', '44', '46', '48', '50', 'anders'],
   op_maat: ['32', '38', '44', '46', '48', '50', '56', '62', '68', '74', '80', '86', 'anders'],
 };
 // Vrij veld bij "Anders" → het bijbehorende keuzeveld. Valt weg als daar een vaste maat is gekozen
 // (een verborgen, eerder ingevuld vrij veld gaat dus niet mee naast een vaste maat).
 const ANDERS_BIJ = { prem_maat_anders: 'prem_maat', op_maat_anders: 'op_maat' };
 // Thema's zoals op de site (Kraamcadeauboxen en de keuzelijst in het formulier); andere waarden vallen weg.
-export const THEMAS = ['Giraf', 'Vos', 'Tulp', 'Walvis', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur'];
+export const THEMAS = ['Giraf', 'Vos', 'Tulp', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur'];
 export const EIGEN_STOF = 'Een eigen stof of kleur';
+
+// Kleurkeuze (wens Carst 14 nov., brief 2026-11-14-kleurkeuze; Carien kan de lijst later bijstellen): hoofdkleur en tweede kleur
+// bij Prematuurkleding, Babynest en Iets op maat laten maken. Andere waarden vallen weg; "Weet ik nog niet" is leeg (geen regel).
+// "anders" geeft geen regel, dan telt het vrije veld ("Hoofdkleur anders: …"). "Geen" mag alleen bij de tweede kleur.
+export const KLEUREN = ['Naturel/wit', 'Oud roze', 'Bordeaux', 'Roest', 'Oker', 'Salie', 'Olijfgroen', 'Lichtblauw', 'Grijs', 'anders'];
+export const KLEUREN_TWEEDE = ['Geen', ...KLEUREN];
+// keuzeveld → toegestane waarden
+const KLEUR_KEUZE = {
+  prem_kleur: KLEUREN, nest_kleur: KLEUREN, op_kleur: KLEUREN,
+  prem_kleur2: KLEUREN_TWEEDE, nest_kleur2: KLEUREN_TWEEDE, op_kleur2: KLEUREN_TWEEDE,
+};
+// vrij veld bij "Anders" → het bijbehorende keuzeveld (zoals ANDERS_BIJ bij de maten)
+const KLEUR_ANDERS_BIJ = {
+  prem_kleur_anders: 'prem_kleur', prem_kleur2_anders: 'prem_kleur2',
+  nest_kleur_anders: 'nest_kleur', nest_kleur2_anders: 'nest_kleur2',
+  op_kleur_anders: 'op_kleur', op_kleur2_anders: 'op_kleur2',
+};
+// tweede kleur (en "Tweede kleur anders") telt alleen als er een hoofdkleur is: zo gaat een oude waarde uit een verborgen
+// Tweede kleur nooit mee (aanvulling ontwerper/hoofdsessie, brief 2026-11-14-kleurkeuze)
+const HOOFDKLEUR_BIJ = {
+  prem_kleur2: 'prem_kleur', prem_kleur2_anders: 'prem_kleur',
+  nest_kleur2: 'nest_kleur', nest_kleur2_anders: 'nest_kleur',
+  op_kleur2: 'op_kleur', op_kleur2_anders: 'op_kleur',
+};
+/** Is er een hoofdkleur: een vaste kleur, of "Anders" (of geen keuze, zonder JS) met tekst in het vrije veld. */
+function heeftHoofdkleur(get, veld) {
+  const keuze = schoon(get(veld), 20);
+  if (keuze !== 'anders' && KLEUREN.includes(keuze)) return true;
+  if (keuze === 'anders' || keuze === '') return schoon(get(`${veld}_anders`), 80) !== '';
+  return false;
+}
 
 // Eigen stof (wens Carst 11 nov., brief 2026-11-11-c7-stofkeuze): optioneel een foto en/of een link, alleen bij thema = eigen stof.
 // De foto gaat alleen als bijlage mee in de mail; er wordt niets opgeslagen of gelogd (geen naam, geen inhoud).
@@ -135,13 +188,16 @@ export function controleer(form) {
   velden.extra = [];
   for (const [naam, kop, max] of EXTRA_VELDEN[velden.onderwerp] || []) {
     let waarde = schoon(get(naam), max);
+    if (DATUM_VOLGT.includes(naam)) waarde = get(naam) === 'ja' ? DATUM_VOLGT_REGEL : '';
     if (naam === 'box_formaat') waarde = FORMATEN.includes(waarde) ? `€ ${waarde}` : '';
     if (naam === 'box_thema' && !THEMAS.includes(waarde)) waarde = '';
     if (MATEN[naam]) waarde = MATEN[naam].includes(waarde) && waarde !== 'anders' ? `maat ${waarde}` : '';
-    if (ANDERS_BIJ[naam]) {
-      const keuze = schoon(get(ANDERS_BIJ[naam]), 20);
+    if (KLEUR_KEUZE[naam]) waarde = KLEUR_KEUZE[naam].includes(waarde) && waarde !== 'anders' ? waarde : '';
+    if (ANDERS_BIJ[naam] || KLEUR_ANDERS_BIJ[naam]) {
+      const keuze = schoon(get(ANDERS_BIJ[naam] || KLEUR_ANDERS_BIJ[naam]), 20);
       if (keuze !== 'anders' && keuze !== '') waarde = ''; // vrij veld alleen bij Anders (of zonder keuze, zonder JS)
     }
+    if (HOOFDKLEUR_BIJ[naam] && !heeftHoofdkleur(get, HOOFDKLEUR_BIJ[naam])) waarde = '';
     if (waarde) velden.extra.push([kop, waarde]);
   }
   // eigen stof: de link (platte tekst) telt alleen bij thema = eigen stof; de foto leest controleerFoto (async)
