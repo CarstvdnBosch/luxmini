@@ -873,6 +873,8 @@
     /* 003 Zo werkt het: rondjes en lijnstukken tekenen zich één keer, 01 → 02 → 03 (CSS .stappen.teken) */
     document.querySelectorAll('main .stappen').forEach(function (el) { el.classList.add('teken'); io.observe(el); });
     document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld img, main .contact-foto').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
+    /* Prematuurkleding 003 Voorbeelden: het kader schuift één keer in (CSS .inschuif, brief 2026-11-14-prematuur-fotos) */
+    document.querySelectorAll('main .voorbeeld').forEach(function (f) { f.classList.add('inschuif'); io.observe(f); });
   }
 
   later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
