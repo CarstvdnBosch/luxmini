@@ -107,3 +107,41 @@ Wie een product bestelt voordat het kind geboren is, kan in het formulier aangev
 1. **Teksten (goedgekeurd):** label "Geboortedatum volgt nog"; toelichting "Carien neemt contact met je op voordat ze de datum op het product zet."; mailregel "Geboortedatum: volgt nog (Carien neemt eerst contact op)". Telefoon blijft optioneel.
 2. **Datumveld box:** blijft invulbaar naast het vakje (uitgerekende datum kan mee).
 3. **Prematuurkleding, Babynest, Iets op maat:** alleen het vakje, geen nieuw datumveld.
+
+## Ontwerprichting en ontwerpcriteria (website-ontwerper, 14 nov.)
+
+_Letterlijk overgenomen; deze sectie vervangt de lege sectie Ontwerprichting hierboven._
+
+### Tekst voor de sectie "Ontwerprichting" (letterlijk)
+
+1. **Plek.** Bij **Kraamcadeaubox** staat het vakje direct onder "Geboortedatum of uitgerekende datum", in dezelfde kolom. In de HTML komt het na `box_datum` en vóór "Kledingmaat". Vanaf 761 px krijgt het `grid-column: 2`, zodat het onder het datumveld staat; de linkercel van die rij blijft leeg. Bij **Prematuurkleding, Babynest en Iets op maat** is het vakje de laatste regel van de groep, over de volle breedte (`breed`). De tabvolgorde volgt de HTML: naam → datum → vakje → maat bij de box, en de velden → vakje bij de andere drie.
+2. **Opmaak: één nieuw patroon `.vakje`, afgeleid van de keuzekaarten.** Opbouw per groep:
+   `<div class="datum-volgt [breed]"><label class="vakje"><span class="vakje-vak"><input type="checkbox" name="…_datum_volgt" value="ja" aria-describedby="…-uitleg"><svg class="keuze-vink" aria-hidden="true">…zelfde pad als de keuzekaarten…</svg></span><span class="vakje-tekst">Geboortedatum volgt nog</span></label><p class="eigen-uitleg vakje-uitleg" id="…-uitleg">Carien neemt contact met je op voordat ze de datum op het product zet.</p></div>`
+   - **Label:** een rij (`flex-direction: row`, verticaal gecentreerd, gat 12 px), minstens 44 px hoog, zo breed als de inhoud (`width: fit-content`). Het label zelf heeft geen achtergrond.
+   - **Vakje:** het echte `input` blijft het element dat de focus krijgt en met de spatie aan en uit gaat. Het krijgt `appearance: none`, 24 × 24 px, een achtergrond `rgba(255,255,255,.92)` zoals de velden, een rand van 1 px in inkt en geen rondingen.
+   - **Aangevinkt:** de bestaande inktvink (`.keuze-vink`, 18 px) verschijnt midden in het vakje, net als bij de keuzekaarten. Geen andere kleur en geen animatie.
+   - **Focus:** `outline: 2px solid var(--inkt); outline-offset: 3px`, gelijk aan de rest van het formulier.
+   - **Labeltekst:** Libre Caslon Text (`var(--serif)`), 16 px, gewicht 400, geen kapitalen, letterafstand normaal, in inkt. Dat is dezelfde letter als de keuzenamen ("Nog niet gekozen", de stofnamen). Op terracotta komt geen witte tekst.
+3. **Toelichting altijd zichtbaar**, dus niet alleen als het vakje aan staat. Ze legt uit wat er gebeurt vóórdat je beslist, werkt met en zonder `:has`, en tekst die pas na het aanvinken verschijnt, wordt door schermlezers niet voorgelezen.
+   - **Stijl:** de bestaande `.eigen-uitleg` (Source Sans 3, 16 px, regelhoogte 1,45, inkt, max. 60ch).
+   - **Plek:** direct onder het label, ingesprongen tot de labeltekst (`padding-left: 36px`, dus 24 px vakje plus 12 px gat), met 2 px ruimte tussen label en toelichting.
+   - **Koppeling:** via `aria-describedby`. De toelichting staat buiten het `label`, zodat ze niet dubbel wordt voorgelezen.
+4. **Datumveld bij de box blijft zoals het is.** Niet dimmen, niet uitschakelen en het label niet veranderen (besluit Carst 2). Een gedimd veld lijkt uitgeschakeld, terwijl het toch wordt meegestuurd en de uitgerekende datum juist nuttig is. Er komt geen `:has`-gedrag op het datumveld.
+5. **Mobiel (≤ 760 px):** één kolom. Bij de box staan naam → datum → vakje met toelichting → kledingmaat onder elkaar, bij de andere drie het vakje als laatste. Het vakje voegt per groep hooguit ca. 115 px toe: label 44 px, 2 px, toelichting op twee regels en het rijgat van 18 px. Er komen geen extra randen, lijnen of vlakken bij. Zonder `:has` staan alle vier groepen er met hun "Alleen bij …"-kop, en dus ook vier vakjes. Dat is de bestaande terugvaloptie en zo bedoeld.
+6. **Geen nieuwe hover- of bewegingseffecten.** Alleen `cursor: pointer` op het label. Bij "minder beweging" en zonder JavaScript ziet het vakje er hetzelfde uit en werkt het hetzelfde.
+
+### Tekst voor de sectie "Ontwerpcriteria (toetsbaar)" (letterlijk)
+
+1. In elk van de vier groepen staat precies één `.vakje` met de labeltekst "Geboortedatum volgt nog" en daaronder de toelichting "Carien neemt contact met je op voordat ze de datum op het product zet." Bij "Iets anders" staat er geen vakje.
+2. Kraamcadeaubox, vanaf 761 px: de linkerrand van het vakje valt op de linkerrand van het veld `box_datum` (verschil ≤ 1 px), en de bovenkant van het label staat 12–24 px onder de onderkant van dat veld. Op 390 px staat het vakje direct onder `box_datum` en boven "Kledingmaat".
+3. Prematuurkleding, Babynest en Iets op maat: het vakje is het laatste zichtbare element van de groep en begint aan de linkerrand van de groep.
+4. Het label van het vakje (de klikbare rij) is op 390, 768 en 1440 px minstens 44 px hoog en minstens 44 px breed. Een klik of tik op de labeltekst zet het vakje aan en uit.
+5. Het zichtbare vakje is 24 × 24 px (± 1 px), wit (`rgba(255,255,255,.92)`) met een rand van 1 px in inkt. Aangevinkt staat de inktvink in het vakje.
+6. Labeltekst en toelichting zijn op elk scherm 16 px, in inkt `#202020` op terracotta (contrast ≥ 4,5:1, axe zonder nieuwe fouten). De labeltekst is gewicht 400 en niet in kapitalen, ook op desktop (de 11 px-kapitalen van `.formulier label` gelden hier niet).
+7. De linkerrand van de toelichting valt gelijk met de linkerrand van de labeltekst (± 2 px). Op 390 px loopt de toelichting over hooguit twee regels, op 1440 px over hooguit twee regels bij de box en één regel in een volle rij.
+8. Met het toetsenbord: Tab bereikt het vakje direct na `box_datum` (box) of na het laatste veld van de groep (de andere drie). De spatie zet het aan en uit. De focusrand (2 px inkt, 3 px afstand) is te zien.
+9. `box_datum` ziet er met en zonder vinkje hetzelfde uit: dezelfde dekking, kleur en labeltekst, geen `disabled` en geen `readonly`.
+10. Op 390 px scrolt niets horizontaal en wordt de groep Babynest hooguit 120 px hoger dan nu (nu 225 px).
+11. Zonder `:has` (of zonder JavaScript) is het vakje in elke zichtbare groep te zien en aan te vinken, met dezelfde opmaak.
+12. Visueel: alleen de schermen met het formulier op Contact wijken af van de basis. Op de andere pagina's verandert niets.
+
