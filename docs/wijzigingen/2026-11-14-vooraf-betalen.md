@@ -76,8 +76,8 @@ Geen van deze vragen blokkeert het bouwen.
 |---|---|---|
 | Plannen | website-planner | Brief uit issue #70 (wens Carst 14 nov.). Huidige Zo werkt het-blokken gelezen: overal drie stappen met lijn, pijl en tekenanimatie, getoetst door `controleer.py`. Gekozen: de betaalzin als laatste zin van stap 02 op alle drie de pagina's, geen vierde stap. Babynest beperkt tot één regel vanwege de open herbouwbranch. Korte ontwerprichting van de planner; aanvulling van website-ontwerper volgt. Risico laag |
 | Bouwen | website-bouwer | Stap 02 van Zo werkt het aangevuld: Kraamcadeauboxen "Je betaalt vooraf." (Aanvulling hoofdsessie), Prematuurkleding en Babynest "Je betaalt vooraf; daarna gaat Carien aan de slag." (Babynest alleen die regel). Nieuwe controle `controleer_vooraf_betalen` in `controleer.py` (criteria 1-4, selectors) en `tests/e2e/vooraf-betalen.spec.js` (alle projecten). `npm test` 135/135 groen; `controleer.py` geen fouten; vooraf-betalen + kernpaden op Chromium (desktop, tablet, mobiel) 84 groen, 1 timingflake van de intro-noodrem (desktop), los 3x groen. Volledige `npm run check` (Lighthouse, visueel, rapport) niet lokaal gedraaid; draait in de pull request. Verwacht visueel verschil: Zo werkt het op de drie productpagina's (basis via `visueel-basis.yml`) |
-| Controleren | website-controleur | |
-| Ontwerpgate | website-ontwerper | |
+| Controleren | website-controleur | AKKOORD — zinnen exact en één keer per pagina in stap 02 (Kraamcadeauboxen alleen "Je betaalt vooraf."), stap 01/03 en ritme ongewijzigd, geen bedragen of cijfers, niets versoepeld; npm test 135/135, controleer.py geen fouten, vooraf-betalen + kernpaden Chromium 85 groen |
+| Ontwerpgate | website-ontwerper | ONTWERP AKKOORD — betaalzin rustig in stap 02, nummers en koppen op één lijn, goed leesbaar op 390; criterium 7 aangepast (768 staat onder elkaar, zoals nu) |
 | Preview bekeken | Carst | |
 | Live gezet (merge) | Carst | |
 
