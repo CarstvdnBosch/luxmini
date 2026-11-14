@@ -48,7 +48,7 @@ export const MATEN = {
 // (een verborgen, eerder ingevuld vrij veld gaat dus niet mee naast een vaste maat).
 const ANDERS_BIJ = { prem_maat_anders: 'prem_maat', op_maat_anders: 'op_maat' };
 // Thema's zoals op de site (Kraamcadeauboxen en de keuzelijst in het formulier); andere waarden vallen weg.
-export const THEMAS = ['Giraf', 'Vos', 'Tulp', 'Walvis', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur'];
+export const THEMAS = ['Giraf', 'Vos', 'Tulp', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur'];
 export const EIGEN_STOF = 'Een eigen stof of kleur';
 
 // Eigen stof (wens Carst 11 nov., brief 2026-11-11-c7-stofkeuze): optioneel een foto en/of een link, alleen bij thema = eigen stof.

@@ -30,8 +30,8 @@ Wat het doet:
     004 Instagram; LET OP's (tijdelijke foto's, babynestfoto, douchehandschoen;
     goedgekeurde teksten en formuliervelden juist zonder LET OP, Carst 14 nov.); prijskaarten en contactlinks met ?onderwerp=;
     formulier met groepen per onderwerp; Kraamcadeauboxen (volgorde,
-    negen thema's als raster 3/2/2, binnen twee schermen, statementfoto direct
-    na de intro); Prematuurkleding en Babynest (kop, foto, 002 Prijs: zin
+    acht thema's twee kolommen breed in sets van vier/twee, statementfoto direct
+    na de intro; geen "walvis" meer in public/ en src/); Prematuurkleding en Babynest (kop, foto, 002 Prijs: zin
     (Babynest met LET OP) en pijl-link naar het formulier, oud prijsblok als commentaar met
     LET OP, Zo werkt het, contact; foto na hooguit één keer scrollen);
     navigatie met zes items op één regel vanaf 1280 px (daaronder de burger),
@@ -1080,9 +1080,9 @@ def controleer_werkwijze(browser):
     ctx.close()
 
 THEMA_KLEUREN_VERBODEN = {"rgb(188, 133, 101)"}  # terracotta
-THEMAS = ["Giraf", "Vos", "Tulp", "Walvis", "Wilde blaadjes", "Framboos", "Regenboog", "Wilgentakjes", "Blaadjes en bloemen"]
+THEMAS = ["Giraf", "Vos", "Tulp", "Wilde blaadjes", "Framboos", "Regenboog", "Wilgentakjes", "Blaadjes en bloemen"]
 # volgorde van de pagina (feedback Carst 6 nov. 14:28, F4): kop, statementfoto, 001 formaten (salie), 002 wat er in de box kan
-# (producten en stoffen), 003 thema's (groot, sets van drie), 004 zo werkt het, 005 contact
+# (producten en stoffen), 003 thema's (twee kolommen breed: desktop sets van vier, tablet sets van twee; brief 2026-11-14), 004 zo werkt het, 005 contact
 BOX_SECTIES = [["", "— Kraamcadeauboxen"], ["", "— Met naam"], ["formaten", "001 — Kies je formaat"], ["in-de-box", "002 — Wat er in de box kan"],
                ["themas", "003 — Thema's"], ["werkwijze", "004 — Zo werkt het"], ["contact", "005 — Contact"]]
 LEES_THEMAS = """() => { const s = document.querySelector('#themas'); const kaarten = [...s.querySelectorAll('.themacarrousel li')];
@@ -1113,10 +1113,30 @@ def controleer_productrij():
     if [n.replace("&shy;", "") for n in namen] != ["Knuffel", "Swaddle", "Broekje", "Sjaaltje", "Shirtje", "Douchehandschoen", "Bijtring", "Speenkoord"]:
         fouten.append(f"kraamcadeauboxen.html: de productrij heeft niet de acht producten in de goede volgorde ({namen})")
 
+# Brief 2026-11-14-walvis-uit-assortiment: Walvis is uit het assortiment. Nergens in public/ (HTML, JS, CSS, bestandsnamen van
+# assets/img) of src/ mag "walvis" nog voorkomen; enige uitzondering is exact de alt-tekst van de sfeerfoto pers-stoffen.jpg.
+WALVIS_UITZONDERING = 'alt="Vier stoffen met prints van vosjes, walvissen en blaadjes"'
+
+def controleer_walvis():
+    for f in sorted((ROOT / "assets" / "img").rglob("*")):
+        if "walvis" in f.name.lower():
+            fouten.append(f"{f.relative_to(PROJECT)}: bestandsnaam met 'walvis' (Walvis is uit het assortiment)")
+    for map_ in (ROOT, PROJECT / "src"):
+        for f in sorted(map_.rglob("*")):
+            if not f.is_file() or f.suffix not in (".html", ".js", ".mjs", ".css", ".json", ".txt", ".xml"):
+                continue
+            for nr, regel in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+                rest = regel
+                if f.parent == ROOT and f.suffix == ".html":
+                    rest = re.sub(r'<img [^>]*src="assets/img/pers-stoffen\.jpg"[^>]*>', lambda m: m.group(0).replace(WALVIS_UITZONDERING, ""), rest)
+                if "walvis" in rest.lower():
+                    fouten.append(f"{f.relative_to(PROJECT)}:{nr}: 'walvis' komt nog voor (Walvis is uit het assortiment)")
+
 def controleer_themas(browser):
     """F4 (feedback Carst 6 nov. 14:28): volgorde kop, statementfoto, formaten (lichte kleur, geen terracotta, buren verschillend),
-    wat er in de box kan, thema's groot in sets van drie (scroll-snap, knoppen met een muis, mobiel één per keer), zo werkt het, contact.
-    Vervangt de controle van het 3 x 3-raster en "negen thema's binnen twee schermen" (vervallen, testaanpassing ter beoordeling door Carst)."""
+    wat er in de box kan, thema's in sets (scroll-snap, knoppen met een muis, mobiel één per keer), zo werkt het, contact.
+    Brief 2026-11-14-walvis-uit-assortiment (besluit Carst 14 nov. 13:31, "Eén raster"): acht thema's, twee kolommen breed;
+    desktop sets van vier, tablet sets van twee, mobiel één per keer (vervangt "sets van drie")."""
     ctx, page = nieuwe_pagina(browser, "kraamcadeauboxen.html", 390, 844, True)
     zicht = page.evaluate("""() => { const p = [...document.querySelectorAll('.pagina-kop p')].find(p => p.textContent.trim() === 'Vier formaten, van € 35 tot € 80.');
       if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom <= innerHeight; }""")
@@ -1133,7 +1153,7 @@ def controleer_themas(browser):
     if not st or abs(st[0]) > 1 or st[1] > 844 * 1.5 or not st[2] or not st[3]:
         fouten.append(f"kraamcadeauboxen.html [mobiel]: de statementfoto staat niet direct na de intro (verschil, top, geladen, tekst: {st})")
     ctx.close()
-    for naam, (b, h, touch, kolommen) in {"desktop": (1440, 900, False, 3), "tablet": (768, 1024, True, 3), "mobiel": (390, 844, True, 1)}.items():
+    for naam, (b, h, touch, kolommen) in {"desktop": (1440, 900, False, 4), "tablet": (768, 1024, True, 2), "mobiel": (390, 844, True, 1)}.items():
         ctx, page = nieuwe_pagina(browser, "kraamcadeauboxen.html", b, h, touch, reduced_motion="reduce")
         tag = f"kraamcadeauboxen.html [{naam}]"
         secties = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()])")
@@ -1165,16 +1185,18 @@ def controleer_themas(browser):
         kleuren = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => s.getAttribute('data-achtergrond') || '')")
         if not kleuren[2] or kleuren[2].upper() == "#FFFFFF" or norm_kleur(page, kleuren[2]) in THEMA_KLEUREN_VERBODEN:
             fouten.append(f"{tag}: 001 formaten staat niet op een lichte paletkleur ({kleuren[2]})")
-        # ontwerpgate ronde 3: binnen de rand (eerste thema onder het label); op desktop en tablet minstens 40 px van het vierde thema in beeld
-        st = page.evaluate("() => { const ts = [...document.querySelectorAll('.themacarrousel li')].map(l => l.getBoundingClientRect()); const l = document.querySelector('#themas .label').getBoundingClientRect(); return [Math.round(ts[0].left - l.left), Math.round(Math.max(0, Math.min(innerWidth, ts[3].right) - ts[3].left))]; }")
-        if abs(st[0]) > 1 or (naam != "mobiel" and st[1] < 40):
-            fouten.append(f"{tag}: themarij niet binnen de rand of geen stukje van de volgende set in beeld (eerste t.o.v. label, zichtbaar deel vierde: {st})")
+        # binnen de rand (eerste thema onder het label, laatste van de set eindigt op de rechterkant van het label); van de eerste
+        # tegel van de volgende set staat alleen een stukje in de rand rechts in beeld (desktop en tablet minstens 40 px)
+        st = page.evaluate(f"""() => {{ const ts = [...document.querySelectorAll('.themacarrousel li')].map(l => l.getBoundingClientRect()); const l = document.querySelector('#themas .label').getBoundingClientRect(); const n = {kolommen};
+          return [Math.round(ts[0].left - l.left), Math.round(ts[n - 1].right - l.right), Math.round(ts[n].left - l.right), Math.round(Math.max(0, Math.min(innerWidth, ts[n].right) - ts[n].left))]; }}""")
+        if abs(st[0]) > 1 or (naam != "mobiel" and (abs(st[1]) > 1 or st[2] <= 0 or st[3] < 40)):
+            fouten.append(f"{tag}: themarij niet binnen de rand of de volgende set kijkt niet alleen in de rand naar binnen (eerste t.o.v. label links, laatste van de set t.o.v. label rechts, begin volgende, zichtbaar deel: {st})")
         if naam == "desktop":
-            # knop "volgende" schuift precies één set (de vierde tegel komt links in beeld)
+            # knop "volgende" schuift precies één set: het vijfde thema komt onder het label en "Volgende" is uit (twee sets)
             page.click(".carrousel-knop[aria-controls='themacarrousel'][data-richting='1']"); page.wait_for_timeout(600)
-            vier = page.evaluate("() => Math.round(document.querySelectorAll('.themacarrousel li')[3].getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left)")
-            if abs(vier) > 2:
-                fouten.append(f"{tag}: na 'Volgende thema's' staat het vierde thema niet onder het label ({vier} px)")
+            vijf = page.evaluate("() => [Math.round(document.querySelectorAll('.themacarrousel li')[4].getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left), document.querySelector(\".carrousel-knop[aria-controls='themacarrousel'][data-richting='1']\").getAttribute('aria-disabled')]")
+            if abs(vijf[0]) > 2 or vijf[1] != "true":
+                fouten.append(f"{tag}: na 'Volgende thema's' staat het vijfde thema niet onder het label of is 'Volgende' niet uit ({vijf})")
         ctx.close()
 
 # Geen scherm zonder inhoud: elk venster langs de pagina toont tekst of een foto
@@ -1363,7 +1385,7 @@ def controleer_balk_labels(browser):
             ctx.close()
 
 # brief 2026-11-06: eerst het onderwerp, dan de groepen; thema als keuzekaarten met het blok eigen stof (brief 2026-11-11-c7-stofkeuze) (alle velden optioneel), bericht, naam, e-mail, telefoon
-FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["input", "box_thema", "radio"]] * 11 + [["input", "stof_foto", "file"], ["input", "stof_link", "text"]] + [["input", "box_naam", "text"], ["input", "box_datum", "text"], ["select", "box_maat", ""],
+FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["input", "box_thema", "radio"]] * 10 + [["input", "stof_foto", "file"], ["input", "stof_link", "text"]] + [["input", "box_naam", "text"], ["input", "box_datum", "text"], ["select", "box_maat", ""],
                     ["select", "prem_maat", ""], ["input", "prem_maat_anders", "text"], ["input", "prem_naam", "text"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"],
                     ["select", "op_maat", ""], ["input", "op_maat_anders", "text"],  # maatkeuzes: brief 2026-11-11-c5-babymaten (besluit Carst)
                     ["textarea", "bericht", ""], ["input", "naam", "text"], ["input", "email", "email"], ["input", "telefoon", "tel"], ["input", "website", "text"]]
@@ -1482,6 +1504,7 @@ def main():
     controleer_headers()
     controleer_bestanden()
     controleer_productrij()
+    controleer_walvis()
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         controleer_navigatie(browser)
