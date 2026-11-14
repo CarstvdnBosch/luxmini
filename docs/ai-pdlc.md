@@ -46,7 +46,7 @@ Elke wens begint als **issue** in GitHub, met het formulier **Wens (user story)*
 
 **Verloop in de brief.** Elke brief eindigt met een tabel Verloop. De bouwer vult de rij "Bouwen". De controleur en de ontwerper passen zelf geen bestanden aan: ze eindigen hun verslag met één vaste regel (`Verloop: AKKOORD — …`, `Verloop: NIET AKKOORD — …`, `Verloop: ONTWERP AKKOORD — …`, `Verloop: ONTWERP NIET AKKOORD — …` of `Verloop: n.v.t. — alleen techniek`). De **hoofdsessie** (orchestrator) zet die tekst letterlijk in de rijen "Controleren" en "Ontwerpgate" en commit dat op de branch. Het validatierapport leest die rijen (AKKOORD zonder NIET AKKOORD, of n.v.t.).
 
-**GO is alleen van Carst**: het label `GO` of een reactie `GO` van zijn account in de pull request (zie `docs/kwaliteit.md`). Agents zetten nooit het label en plaatsen nooit zo'n reactie.
+**GO is alleen van Carst**: het label `GO` of een reactie `GO` van zijn account in de pull request (zie `docs/kwaliteit.md`). Agents plaatsen nooit zo'n reactie. Uitzondering (besluit Carst 7 nov.): zegt Carst in de chat uitdrukkelijk "Go" voor een pull request, dan zet de hoofdsessie van Claude namens hem het label `GO`, legt dat vast in een reactie en merget. De subagents zetten nooit het label.
 
 Starten doe je met één opdracht in Claude Code:
 
@@ -78,7 +78,7 @@ Een wijziging is pas klaar als:
 
 ## Rollen en rechten
 
-- **Agents** mogen lezen, bouwen, testen en een branch pushen. Ze mergen nooit naar `main`, geven nooit GO (geen label `GO`, geen reactie `GO`) en zetten niets live. Dat is technisch afgedwongen: een GitHub-ruleset op `main` staat alleen pull requests met groene gates toe (zonder uitzonderingen), en `.claude/settings.json` verbiedt `wrangler deploy`, `wrangler rollback`, `git merge`, `gh pr merge` en pushen naar `main`. Er bestaat geen Cloudflare-token: alleen Cloudflare Workers Builds kan live zetten, en dat gebeurt pas na een merge.
+- **Agents** mogen lezen, bouwen, testen en een branch pushen. Ze mergen nooit naar `main`, geven nooit uit zichzelf GO (geen reactie `GO`; het label `GO` alleen door de hoofdsessie na "Go" van Carst in de chat) en zetten niets live. Dat is technisch afgedwongen: een GitHub-ruleset op `main` staat alleen pull requests met groene gates toe (zonder uitzonderingen), en `.claude/settings.json` verbiedt `wrangler deploy`, `wrangler rollback`, `git merge`, `gh pr merge` en pushen naar `main`. Er bestaat geen Cloudflare-token: alleen Cloudflare Workers Builds kan live zetten, en dat gebeurt pas na een merge.
 - **De controleur** en **de ontwerper** kunnen alleen lezen; ze beoordelen hun eigen werk dus nooit. De controleur kijkt of het werkt en klopt, de ontwerper of het duidelijk, leesbaar en mooi is voor de bezoeker.
 - **Ontwerpkaders:** `CLAUDE.md` (stijl) en `docs/ontwerp/principes.md` (UX). Een volledige nulmeting staat in `docs/ontwerp/review-2026-11-02.md`; die dient als ontwerpbacklog.
 - **Een mens** (jij of Carien) bekijkt de preview en merget. Inhoud zoals quotes, prijzen en teksten over Carien wordt pas live gezet na haar akkoord.
