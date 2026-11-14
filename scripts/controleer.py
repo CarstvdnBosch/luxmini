@@ -1446,10 +1446,14 @@ def controleer_balk_labels(browser):
                     break
             ctx.close()
 
+# brief 2026-11-14-kleurkeuze: per groep (prematuurkleding, babynest, iets op maat) Hoofdkleur (11 keuzes + vrij veld) en Tweede kleur (12 keuzes met "Geen" + vrij veld)
+def KLEURVELDEN(pre):
+    return [["input", f"{pre}_kleur", "radio"]] * 11 + [["input", f"{pre}_kleur_anders", "text"]] + [["input", f"{pre}_kleur2", "radio"]] * 12 + [["input", f"{pre}_kleur2_anders", "text"]]
+
 # brief 2026-11-06: eerst het onderwerp, dan de groepen; thema als keuzekaarten met het blok eigen stof (brief 2026-11-11-c7-stofkeuze) (alle velden optioneel), bericht, naam, e-mail, telefoon
 FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["input", "box_thema", "radio"]] * 10 + [["input", "stof_foto", "file"], ["input", "stof_link", "text"]] + [["input", "box_naam", "text"], ["input", "box_datum", "text"], ["input", "box_datum_volgt", "checkbox"], ["select", "box_maat", ""],
-                    ["select", "prem_maat", ""], ["input", "prem_maat_anders", "text"], ["input", "prem_naam", "text"], ["input", "prem_datum_volgt", "checkbox"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"], ["input", "nest_datum_volgt", "checkbox"],
-                    ["select", "op_maat", ""], ["input", "op_maat_anders", "text"], ["input", "op_maat_datum_volgt", "checkbox"],  # maatkeuzes: brief 2026-11-11-c5-babymaten (besluit Carst); vakjes "Geboortedatum volgt nog": brief 2026-11-14-geboortedatum-volgt
+                    ["select", "prem_maat", ""], ["input", "prem_maat_anders", "text"], ["input", "prem_naam", "text"]] + KLEURVELDEN("prem") + [["input", "prem_datum_volgt", "checkbox"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"]] + KLEURVELDEN("nest") + [["input", "nest_datum_volgt", "checkbox"],
+                    ["select", "op_maat", ""], ["input", "op_maat_anders", "text"]] + KLEURVELDEN("op") + [["input", "op_maat_datum_volgt", "checkbox"],  # maatkeuzes: brief 2026-11-11-c5-babymaten (besluit Carst); vakjes "Geboortedatum volgt nog": brief 2026-11-14-geboortedatum-volgt
                     ["textarea", "bericht", ""], ["input", "naam", "text"], ["input", "email", "email"], ["input", "telefoon", "tel"], ["input", "website", "text"],
                     ["input", "formtijd", "hidden"]]  # tijdcontrole: main.js zet dit veld bij het laden achteraan (brief 2026-11-14-formulier-botbescherming); niet in de HTML
 

@@ -57,6 +57,24 @@ for (const [onderwerp, vakje] of [['Kraamcadeaubox', 'box_datum_volgt'], ['Prema
   });
 }
 
+// Brief 2026-11-14-kleurkeuze (ontwerpcriterium 14): het formulier met elk van de drie onderwerpen, een hoofdkleur gekozen
+// (Tweede kleur zichtbaar) en bij Tweede kleur "Anders" (vrij veld zichtbaar), heeft 0 fouten
+for (const onderwerp of ['Prematuurkleding', 'Babynest', 'Iets op maat laten maken']) {
+  test(`toegankelijkheid formulier met kleurkeuze (${onderwerp}, Tweede kleur zichtbaar)`, async ({ page }) => {
+    await page.goto('/contact#formulier');
+    await wachtOpRust(page);
+    await page.locator('select[name="onderwerp"]').selectOption(onderwerp);
+    await page.waitForTimeout(400);
+    const groep = page.locator(`.groep[data-groep="${onderwerp}"]`);
+    await groep.locator('.kleur-hoofd .kleur-kaart:has(input[value="Salie"])').click();
+    await groep.locator('.kleur-tweede .kleur-kaart:has(input[value="anders"])').click();
+    await expect(groep.locator('.kleur-tweede')).toBeVisible();
+    await page.waitForTimeout(400);
+    const uitslag = await new AxeBuilder({ page }).include('#formulier').withTags(REGELS).analyze();
+    expect(uitslag.violations, `WCAG-overtredingen in het formulier (${onderwerp}, kleurkeuze):\n${samenvatting(uitslag.violations)}`).toEqual([]);
+  });
+}
+
 // Brief 2026-11-11: de contactpagina met elk van beide foutmeldingen (ongeldig en versturen) heeft 0 fouten
 for (const [soort, pad] of [['ongeldig', '/contact?verzonden=fout#formulier'], ['versturen', '/contact?verzonden=fout&reden=versturen#formulier']]) {
   test(`toegankelijkheid contact met melding ${soort}`, async ({ page }) => {
