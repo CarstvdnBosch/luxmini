@@ -1106,7 +1106,11 @@
     var m = toonFout(redenUit(location.search));
     if (m) {
       // contact.html?verzonden=fout#formulier: zorg dat de melding zonder scrollen in beeld staat
-      var toonMelding = function () { setTimeout(function () { meldingInBeeld(m); }, 60); };
+      // Direct springen (main.js is defer: het formulier staat er al), bij 'load' zelf nog eens (de browser kan dan nog naar
+      // #formulier springen; foto's en lettertypes kunnen de plek verschuiven) en 60 ms later als nameting. Alleen de sprong
+      // op 'load' + 60 ms gaf een race: direct na het laden stond de melding soms nog 1800 px lager (CI 14 nov.).
+      meldingInBeeld(m);
+      var toonMelding = function () { meldingInBeeld(m); setTimeout(function () { meldingInBeeld(m); }, 60); };
       if (document.readyState === 'complete') toonMelding(); else window.addEventListener('load', toonMelding);
     }
   }

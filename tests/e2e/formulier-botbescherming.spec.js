@@ -3,7 +3,7 @@
 // (x-testmail, x-testlimiet, x-testturnstile). Het script van Turnstile wordt in deze tests vervangen door een klein nep-object
 // (page.route) dat bijhoudt of render en reset worden aangeroepen; alleen de test met de zichtbare uitdaging (testsleutel
 // "interactie") laadt het echte script van challenges.cloudflare.com.
-import { test, expect, wachtOpRust } from './hulp.js';
+import { test, expect, wachtOpRust, turnstileIframe } from './hulp.js';
 
 const INVOER = { bericht: 'Graag een box met een giraf', naam: 'Test Persoon', email: 'test@voorbeeld.test' };
 const TS_HOST = 'challenges.cloudflare.com';
@@ -315,15 +315,16 @@ test.describe('zichtbare uitdaging (echt script, testsleutel interactie)', () =>
       const vak = page.locator('.turnstile-vak');
       await expect(vak).toHaveClass(/zichtbaar/, { timeout: 30000 });
       await vak.scrollIntoViewIfNeeded();
-      await expect(vak.locator('iframe')).toBeVisible({ timeout: 30000 });
-      const m = await page.evaluate(() => {
+      // het iframe zit in een gesloten shadow root van Cloudflare: via de frames van de pagina (hulp.js)
+      const iframe = await turnstileIframe(page);
+      const m = await page.evaluate((iframeEl) => {
         const v = document.querySelector('.turnstile-vak').getBoundingClientRect();
-        const i = document.querySelector('.turnstile-vak iframe').getBoundingClientRect();
+        const i = iframeEl.getBoundingClientRect();
         const k = document.querySelector('.formulier button.verstuur').getBoundingClientRect();
         const p = document.querySelector('.formulier .melding:not(.fout)').getBoundingClientRect();
         return { midden: Math.abs((i.left + i.right) / 2 - (k.left + k.right) / 2), vakOnder: v.bottom, knopBoven: k.top, privacyOnder: p.bottom, vakBoven: v.top,
           links: i.left, rechts: i.right, knopHoogte: k.height, breed: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1, vw: innerWidth };
-      });
+      }, iframe);
       expect(m.midden, 'vak gecentreerd boven de knop').toBeLessThanOrEqual(2);
       expect(m.vakOnder, 'vak boven de knop').toBeLessThanOrEqual(m.knopBoven);
       expect(m.vakBoven, 'vak onder de privacyzin').toBeGreaterThanOrEqual(m.privacyOnder);
