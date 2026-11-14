@@ -154,6 +154,12 @@
 <section id="formulier" class="op-kleur formulier-sectie" data-label="<span>002 —</span> Stuur een bericht">
   <div class="wrap sectie contact-sectie">
     <p class="label"><span>002 —</span> Stuur een bericht</p>
+    <!-- Zonder JavaScript (brief 2026-11-14-formulier-botbescherming, criterium 13): deze regel is pas waar als Turnstile aanstaat.
+         Haal de markeringen TURNSTILE-NOSCRIPT weg in dezelfde commit waarin data-sitekey hieronder wordt ingevuld
+         (docs/formulier-beveiliging.md); scripts/controleer.py bewaakt dat die twee samengaan. -->
+    <!--TURNSTILE-NOSCRIPT
+    <noscript><p class="noscript-melding">Zonder JavaScript kan dit formulier je bericht niet versturen. Stuur Carien een <a href="https://wa.me/31643791618">WhatsApp</a>, <a href="tel:+31643791618">bel</a> of <a href="mailto:info.LUXmini@gmail.com">mail</a> haar, of zet JavaScript aan.</p></noscript>
+    TURNSTILE-NOSCRIPT-->
     <div class="contact-formulier">
       <p class="klein contact-inleiding">Liever schrijven? Laat hier een bericht achter, Carien reageert persoonlijk.</p>
       <!-- Eerst het onderwerp, dan alleen de vragen die erbij horen (brief 2026-11-06). Zonder JavaScript via CSS :has;
@@ -275,6 +281,9 @@
         <label>Telefoon (optioneel)<input type="tel" name="telefoon" autocomplete="tel"></label>
         <label class="val" aria-hidden="true">Laat dit veld leeg<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
         <p class="melding">Je gegevens gebruiken we alleen om je vraag te beantwoorden. Zie de <a href="privacy.html">privacyverklaring</a>.</p>
+        <!-- Turnstile (brief 2026-11-14-formulier-botbescherming): leeg data-sitekey = uit (main.js laadt dan niets).
+             De site key is publiek en gelijk aan TURNSTILE_SITEKEY in wrangler.jsonc (docs/formulier-beveiliging.md). -->
+        <div class="turnstile-vak" data-sitekey=""></div>
         <button class="verstuur" type="submit"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Verstuur bericht</button>
       </form>
     </div>

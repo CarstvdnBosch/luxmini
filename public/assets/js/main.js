@@ -1033,9 +1033,13 @@
     versturen: '<strong>Je bericht is niet verstuurd.</strong> Dat ligt niet aan jou: er ging iets mis bij het versturen. Probeer het later nog eens, of stuur Carien een <a href="https://wa.me/31643791618">WhatsApp</a> of <a href="mailto:info.LUXmini@gmail.com">mail</a>.',
     // eigen stof (brief 2026-11-11-c7-stofkeuze): de Worker weigert een foto die te groot of geen foto is, of een link zonder https://
     foto: '<strong>Je bericht is niet verstuurd.</strong> De foto van je stof kon niet mee. Kies een JPG, PNG of HEIC van hooguit 5 MB, of verstuur je bericht zonder foto.',
-    link: '<strong>Je bericht is niet verstuurd.</strong> De link naar je stof klopt niet. Begin de link met https://, of laat het veld leeg.'
+    link: '<strong>Je bericht is niet verstuurd.</strong> De link naar je stof klopt niet. Begin de link met https://, of laat het veld leeg.',
+    // botbescherming (brief 2026-11-14-formulier-botbescherming): Turnstile, rate limit (5 per 60 s) en tijdcontrole
+    controle: '<strong>Je bericht is niet verstuurd.</strong> De controle tegen spam lukte niet. Probeer het nog eens, of stuur Carien een <a href="https://wa.me/31643791618">WhatsApp</a> of <a href="mailto:info.LUXmini@gmail.com">mail</a>.',
+    'te-veel': '<strong>Je bericht is niet verstuurd.</strong> Er zijn in korte tijd veel berichten verstuurd. Probeer het over een minuut nog eens, of stuur Carien een <a href="https://wa.me/31643791618">WhatsApp</a> of <a href="mailto:info.LUXmini@gmail.com">mail</a>.',
+    'te-snel': '<strong>Je bericht is niet verstuurd.</strong> Dat ging sneller dan we verwachten. Wacht een paar tellen en verstuur het nog eens.'
   };
-  var redenUit = function (search) { var r = /[?&]reden=(versturen|foto|link)(&|$)/.exec(search); return r ? r[1] : 'ongeldig'; };
+  var redenUit = function (search) { var r = /[?&]reden=(versturen|foto|link|controle|te-veel|te-snel)(&|$)/.exec(search); return r ? r[1] : 'ongeldig'; };
   // De foutmelding staat in een eigen element boven de privacyzin (die blijft staan, met de link naar privacy.html);
   // bij opnieuw versturen wordt hetzelfde element hergebruikt, dus nooit twee meldingen.
   var toonFout = function (soort) {
@@ -1102,7 +1106,11 @@
     var m = toonFout(redenUit(location.search));
     if (m) {
       // contact.html?verzonden=fout#formulier: zorg dat de melding zonder scrollen in beeld staat
-      var toonMelding = function () { setTimeout(function () { meldingInBeeld(m); }, 60); };
+      // Direct springen (main.js is defer: het formulier staat er al), bij 'load' zelf nog eens (de browser kan dan nog naar
+      // #formulier springen; foto's en lettertypes kunnen de plek verschuiven) en 60 ms later als nameting. Alleen de sprong
+      // op 'load' + 60 ms gaf een race: direct na het laden stond de melding soms nog 1800 px lager (CI 14 nov.).
+      meldingInBeeld(m);
+      var toonMelding = function () { meldingInBeeld(m); setTimeout(function () { meldingInBeeld(m); }, 60); };
       if (document.readyState === 'complete') toonMelding(); else window.addEventListener('load', toonMelding);
     }
   }
@@ -1114,12 +1122,75 @@
     var knop = verzendForm.querySelector('button[type="submit"]');
     var knopTekst = knop ? knop.lastChild : null;
     var bezigMet = false;
+    // Tijdcontrole (brief 2026-11-14-formulier-botbescherming): het veld formtijd bestaat vanaf het laden (bewijst dat JavaScript
+    // draaide); bij versturen staat erin hoeveel ms er sinds het laden voorbij zijn (performance.now(), niet de klok van het apparaat).
+    // Is de bezoeker binnen 3 s klaar, dan wacht het formulier zelf de rest af (knop aria-busy); nooit stil naar /bedankt.
+    var MIN_TIJD = 3000;
+    var sindsLaden = function () { return window.performance && performance.now ? performance.now() : Date.now() - geladenOp; };
+    var geladenOp = Date.now();
+    var tijdVeld = document.createElement('input');
+    tijdVeld.type = 'hidden';
+    tijdVeld.name = 'formtijd';
+    tijdVeld.value = '';
+    verzendForm.appendChild(tijdVeld);
+    var wachtOpTijd = function () {
+      var rest = MIN_TIJD + 100 - sindsLaden();
+      return new Promise(function (klaar) { setTimeout(klaar, Math.max(0, rest)); });
+    };
+    // Turnstile (Managed, interaction-only): alleen als data-sitekey gevuld is; anders laadt de pagina niets van Cloudflare.
+    var tsVak = verzendForm.querySelector('.turnstile-vak');
+    var tsSleutel = tsVak ? (tsVak.getAttribute('data-sitekey') || '').trim() : '';
+    var tsId = null, tsToken = '', tsWachters = [];
+    var tsGeef = function (token) {
+      tsToken = token || '';
+      if (!tsToken) return;
+      var w = tsWachters; tsWachters = [];
+      w.forEach(function (f) { f(tsToken); });
+    };
+    var tsReset = function () {
+      tsToken = '';
+      if (window.turnstile && tsId !== null) { try { window.turnstile.reset(tsId); } catch (e) { /* widget weg */ } }
+    };
+    // wacht op een token, max. 15 s (de controle loopt nog of wacht op een klik); zonder Turnstile direct door
+    var wachtOpToken = function () {
+      if (!tsSleutel) return Promise.resolve(true);
+      if (tsToken) return Promise.resolve(true);
+      return new Promise(function (klaar) {
+        var t = setTimeout(function () { tsWachters = tsWachters.filter(function (f) { return f !== door; }); klaar(false); }, 15000);
+        var door = function () { clearTimeout(t); klaar(true); };
+        tsWachters.push(door);
+      });
+    };
+    if (tsSleutel) {
+      var tsTekenen = function () {
+        if (!window.turnstile || tsId !== null) return;
+        tsId = window.turnstile.render(tsVak, {
+          sitekey: tsSleutel,
+          appearance: 'interaction-only',
+          theme: 'light',
+          language: 'nl',
+          size: window.matchMedia && window.matchMedia('(min-width: 360px)').matches ? 'normal' : 'compact',
+          'refresh-expired': 'auto',
+          callback: tsGeef,
+          'expired-callback': function () { tsToken = ''; },
+          'error-callback': function () { tsToken = ''; tsVak.classList.add('zichtbaar'); },
+          'before-interactive-callback': function () { tsVak.classList.add('zichtbaar'); },
+          'after-interactive-callback': function () { tsVak.classList.remove('zichtbaar'); }
+        });
+      };
+      var tsScript = document.createElement('script');
+      tsScript.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      tsScript.async = true;
+      tsScript.onload = tsTekenen;
+      document.head.appendChild(tsScript);
+    }
     var klaar = function () {
       bezigMet = false;
       if (knop) { knop.disabled = false; knop.removeAttribute('aria-busy'); if (knopTekst) knopTekst.textContent = 'Verstuur bericht'; }
     };
     var mislukt = function (soort) {
       klaar();
+      tsReset(); // een token is maar één keer geldig: na elke fout een nieuw
       var m = toonFout(soort);
       if (!m) return;
       var veld = null;
@@ -1144,9 +1215,17 @@
       if (bezigMet) return;
       bezigMet = true;
       if (knop) { knop.disabled = true; knop.setAttribute('aria-busy', 'true'); if (knopTekst) knopTekst.textContent = 'Bezig met versturen…'; }
-      // multipart/form-data, zoals het formulier zonder JavaScript (enctype): de foto van een eigen stof gaat mee
-      fetch(verzendForm.action, { method: 'POST', body: new FormData(verzendForm), credentials: 'same-origin' })
+      // eerst de resttijd van de tijdcontrole, dan (als Turnstile aanstaat) het token; daarna pas versturen
+      wachtOpTijd()
+        .then(wachtOpToken)
+        .then(function (heeftToken) {
+          if (!heeftToken) { mislukt('controle'); return null; }
+          tijdVeld.value = String(Math.round(sindsLaden()));
+          // multipart/form-data, zoals het formulier zonder JavaScript (enctype): de foto van een eigen stof gaat mee
+          return fetch(verzendForm.action, { method: 'POST', body: new FormData(verzendForm), credentials: 'same-origin' });
+        })
         .then(function (res) {
+          if (!res) return;
           var pad = new URL(res.url, location.href);
           if (/^\/bedankt(\.html)?$/.test(pad.pathname)) { location.assign(pad.pathname); return; }
           if (/^\/contact(\.html)?$/.test(pad.pathname) && /[?&]verzonden=fout/.test(pad.search)) {

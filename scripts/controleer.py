@@ -781,6 +781,19 @@ def controleer_bestanden():
             for oud in ("Door dezelfde handen", "genaaid, geborduurd en beletterd"):
                 if oud in t:
                     fouten.append(f"{f.relative_to(ROOT)}: '{oud}' komt nog voor")
+    # brief 2026-11-14-formulier-botbescherming, criterium 13: data-sitekey gevuld als en alleen als de <noscript>-regel actief is
+    vakken = re.findall(r'class="turnstile-vak" data-sitekey="([^"]*)"', contact)
+    noscript_actief = '<noscript><p class="noscript-melding">' in re.sub(r"<!--.*?-->", "", contact, flags=re.S)
+    if len(vakken) != 1:
+        fouten.append(f"contact.html: verwacht precies één Turnstile-vak met data-sitekey, gevonden {len(vakken)}")
+    elif bool(vakken[0]) != noscript_actief:
+        fouten.append("contact.html: data-sitekey en de <noscript>-regel horen samen te gaan (site key ingevuld ⇔ markeringen TURNSTILE-NOSCRIPT weg; docs/formulier-beveiliging.md)")
+    elif not vakken[0] and not re.search(r"<!--TURNSTILE-NOSCRIPT\s*<noscript><p class=\"noscript-melding\">.*?</noscript>\s*TURNSTILE-NOSCRIPT-->", contact, re.S):
+        fouten.append("contact.html: de <noscript>-regel voor Turnstile staat er niet (in commentaar met de markeringen TURNSTILE-NOSCRIPT)")
+    if "noscript-melding" in contact:
+        kop = contact.find('<p class="label"><span>002 —</span> Stuur een bericht</p>')
+        if not (0 <= kop < contact.find("noscript-melding") < contact.find("<form")):
+            fouten.append("contact.html: de <noscript>-regel staat niet direct onder de kop van 002, vóór het formulier")
 
 LEES_HEADER = """() => { const l = document.querySelector('.site-header .logo').getBoundingClientRect();
   return [[...document.querySelectorAll('.site-header .menu a')].map(a => { const r = a.getBoundingClientRect();
@@ -1388,7 +1401,8 @@ def controleer_balk_labels(browser):
 FORMULIER_VELDEN = [["select", "onderwerp", ""]] + [["input", "box_formaat", "radio"]] * 4 + [["input", "box_thema", "radio"]] * 10 + [["input", "stof_foto", "file"], ["input", "stof_link", "text"]] + [["input", "box_naam", "text"], ["input", "box_datum", "text"], ["select", "box_maat", ""],
                     ["select", "prem_maat", ""], ["input", "prem_maat_anders", "text"], ["input", "prem_naam", "text"], ["input", "nest_stof", "text"], ["input", "nest_naam", "text"],
                     ["select", "op_maat", ""], ["input", "op_maat_anders", "text"],  # maatkeuzes: brief 2026-11-11-c5-babymaten (besluit Carst)
-                    ["textarea", "bericht", ""], ["input", "naam", "text"], ["input", "email", "email"], ["input", "telefoon", "tel"], ["input", "website", "text"]]
+                    ["textarea", "bericht", ""], ["input", "naam", "text"], ["input", "email", "email"], ["input", "telefoon", "tel"], ["input", "website", "text"],
+                    ["input", "formtijd", "hidden"]]  # tijdcontrole: main.js zet dit veld bij het laden achteraan (brief 2026-11-14-formulier-botbescherming); niet in de HTML
 
 def controleer_contactpagina(browser):
     """Criteria 20-23 en 30."""
