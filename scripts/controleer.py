@@ -752,8 +752,9 @@ def controleer_bestanden():
         fouten.append("prematuurkleding.html: de prijszin 'De prijs hangt af van de maat en de stof.' ontbreekt")
     elif prijszin.group(1) and "wacht op akkoord" in prijszin.group(1):
         fouten.append("prematuurkleding.html: boven de prijszin staat nog 'wacht op akkoord' (goedgekeurd door Carst, 14 nov.)")
-    if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"categorie-foto\"><img src=\"assets/img/p-broekje-kleur", prem):
-        fouten.append("prematuurkleding.html: de tijdelijke foto p-broekje-kleur heeft geen LET OP-opmerking")
+    # brief 2026-11-14-prematuur-fotos (criterium 5): de tijdelijke foto (het broekje) en zijn LET OP zijn weg; 001 toont een echte prematuurfoto
+    if "p-broekje-kleur" in prem or re.search(r"LET OP:[^>]*tijdelijke foto", prem):
+        fouten.append("prematuurkleding.html: de tijdelijke foto p-broekje-kleur of zijn LET OP staat er nog (vervangen door prematuur-regenboog-setje, brief 2026-11-14-prematuur-fotos)")
     nest = (ROOT / "babynest.html").read_text(encoding="utf-8")
     # brief 2026-11-07 (A2, A3): het oude prijsblok staat als commentaar met LET OP (terugzetten als Carien een prijs geeft);
     # de neutrale zin heeft "wacht op akkoord Carien"
@@ -1266,9 +1267,10 @@ LEEG_SCHERM = """() => { const els = [...document.querySelectorAll('main h1, mai
 
 # Prematuurkleding en Babynest (criterium 2): kop -> voorbeeldfoto -> prijsrichtlijn -> Zo werkt het -> contact
 PRODUCTPAGINAS = {
-    "prematuurkleding.html": {"formulier": "contact.html?onderwerp=prematuurkleding#formulier", "h1": "Prematuurkleding", "foto_id": "maatwerk", "kleur": "#C3CFBC", "foto": "p-broekje-kleur.jpg", "max_b": 480,
-                              "secties": [["", "— Prematuurkleding"], ["maatwerk", "001 — Maatwerk"], ["prijs", "002 — Prijs"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
-    "babynest.html": {"formulier": "contact.html?onderwerp=babynest#formulier", "h1": "Babynest", "foto_id": "babynest", "kleur": "#B5969E", "foto": "ig-babynest.jpg", "max_b": 324,
+    "prematuurkleding.html": {"formulier": "contact.html?onderwerp=prematuurkleding#formulier", "h1": "Prematuurkleding", "foto_id": "maatwerk", "kleur": "#C3CFBC", "foto": "prematuur-regenboog-setje.jpg", "max_b": 480, "alt_prematuur": True,
+                              # brief 2026-11-14-prematuur-fotos: 003 Voorbeelden erbij, Zo werkt het en Contact schuiven door
+                              "secties": [["", "— Prematuurkleding"], ["maatwerk", "001 — Maatwerk"], ["prijs", "002 — Prijs"], ["voorbeelden", "003 — Voorbeelden"], ["zo-werkt-het", "004 — Zo werkt het"], ["contact", "005 — Contact"]]},
+    "babynest.html": {"formulier": "contact.html?onderwerp=babynest#formulier", "h1": "Babynest", "foto_id": "babynest", "kleur": "#B5969E", "foto": "ig-babynest.jpg", "max_b": 324, "alt_prematuur": False,
                       "secties": [["", "— Babynest"], ["babynest", "001 — Babynest"], ["prijs", "002 — Prijs"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
 }
 
@@ -1312,8 +1314,10 @@ def controleer_productpagina(browser, pagina):
                  !!ps.querySelector('.prijs')] : null]; }""", v["foto_id"])
         if st[0] != [["Bespreek je idee", v["formulier"]]] or st[1] != ["Samen kiezen", "Persoonlijk maken", "Met zorg gemaakt"] or st[2] != ["werkwijze.html#hoe-ik-werk"]:
             fouten.append(f"{tag}: fotosectie of Zo werkt het klopt niet ({st[:3]})")
-        if v["foto"] not in st[3] or st[4]:
-            fouten.append(f"{tag}: voorbeeldfoto {v['foto']} ontbreekt of de alt-tekst noemt het prematuurkleding")
+        # brief 2026-11-14-prematuur-fotos (besluit Carst): op Prematuurkleding is de foto echte prematuurkleding en noemt de alt dat;
+        # op Babynest noemt de alt geen prematuurkleding
+        if v["foto"] not in st[3] or st[4] != v["alt_prematuur"]:
+            fouten.append(f"{tag}: voorbeeldfoto {v['foto']} ontbreekt of de alt-tekst noemt prematuurkleding {'niet' if v['alt_prematuur'] else 'wel'}")
         breedte = bestandsbreedte(st[3])
         if str(breedte) != str(st[6]) or st[5] > min(breedte, v["max_b"]) + 0.5 or st[7] != "high" or st[8] == "lazy":
             fouten.append(f"{tag}: voorbeeldfoto {st[5]:.0f} px breed (max. {v['max_b']}, bestand {breedte}, width={st[6]}) of niet de LCP-foto (fetchpriority={st[7]}, loading={st[8]})")
