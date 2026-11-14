@@ -233,14 +233,15 @@ test('aria-label en tikdoel van 44 px; het grote beeld voegt geen tweede naam to
   expect(await page.$$eval('.site-header .logo-groot img', i => i.map(x => x.getAttribute('alt')))).toEqual(['', '']);
 });
 
-test('na het krimpen scrolt "LUX mini" op elke pagina mee weg en ligt het nooit op tekst; daarna neemt de balk over', async ({ page }) => {
-  await beweging(page);
-  for (const pad of OPENBAAR) {
+// per pagina een eigen test (stappen van 10 px: zo blijft elke test ruim binnen de tijdgrens, ook op WebKit in CI)
+for (const pad of OPENBAAR) {
+  test(`${pad}: na het krimpen scrolt "LUX mini" mee weg en ligt het nooit op tekst; daarna neemt de balk over`, async ({ page }) => {
+    await beweging(page);
     await page.goto(pad);
     await rust(page);
     const [vh, max, eind] = await page.evaluate(() => [innerHeight, document.documentElement.scrollHeight - innerHeight,
       parseFloat(getComputedStyle(document.querySelector('.site-header .logo')).getPropertyValue('--logo-eind'))]);
-    if (eind >= max) continue; // de pagina scrolt niet verder dan het eindpunt: niets om te toetsen
+    if (eind >= max) return; // de pagina scrolt niet verder dan het eindpunt: niets om te toetsen
     await scrolNaar(page, eind);
     const bij = await page.evaluate(LEES);
     // een stukje verder staat het precies zoveel hoger (het scrolt mee)
@@ -263,13 +264,64 @@ test('na het krimpen scrolt "LUX mini" op elke pagina mee weg en ligt het nooit 
       });
       expect(m.op, `${pad} bij ${Math.round(y)}: LUX mini op tekst (${m.wat})`).toBe(false);
     }
-    // ver voorbij het eindpunt (het kleine logo staat op ca. 13–17 px en is 30–44 px hoog, dus na 80 px weg): niets meer in beeld.
-    // Een korte pagina die vlak na het eindpunt ophoudt (404 op desktop), laat het logo in de header-strook staan, boven de tekst.
+    // ver voorbij het eindpunt (het kleine logo staat op ca. 13–17 px en is 30–44 px hoog, dus na 80 px weg): niets meer in beeld
+    // (een korte pagina die daarvoor ophoudt, toetst de 404-test hieronder: daar vervaagt het)
     for (const y of [eind + 80, eind + 200, eind + vh, max]) {
       if (y > max || y < eind + 80) continue;
       await scrolNaar(page, y);
       const m = await page.evaluate(LEES);
       expect([m.groot, m.vast], `${pad} bij ${Math.round(y)}: geen vast logo in beeld`).toEqual([false, false]);
+    }
+  });
+}
+
+// het vaste "LUX mini" zoals het in beeld staat: zichtbare kopie (wit of donker), dekking en plek
+const VAST = () => {
+  const v = document.querySelector('.site-header .logo-vast'), c = getComputedStyle(v);
+  const img = [...v.querySelectorAll('img')].find(i => i.offsetWidth && parseFloat(getComputedStyle(i).opacity) > 0.05);
+  const r = img ? img.getBoundingClientRect() : null;
+  return { o: c.visibility === 'hidden' || !img ? 0 : parseFloat(c.opacity), t: r ? r.top : 0, b: r ? r.bottom : 0 };
+};
+
+test('404 op een korte pagina (1165–1215 × 768): onderaan nooit een half "LUX mini"', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'alleen desktop');
+  await beweging(page);
+  for (const w of [1165, 1180, 1190, 1200, 1215]) {
+    await page.setViewportSize({ width: w, height: 768 });
+    await page.goto('/bestaat-niet-meer');
+    await rust(page);
+    const max = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+    for (let y = Math.max(0, max - 30); y <= max; y += 2) {
+      await scrolNaar(page, Math.min(y, max));
+      const m = await page.evaluate(VAST);
+      // zichtbaar is alleen het hele logo; een deel boven de bovenrand mag alleen als het (bijna) weg is of aan het vervagen
+      if (Math.min(y, max) === max) expect(m.o <= 0.05 || m.b <= 0 || m.t >= 0, `404 op ${w} px onderaan: half logo (top ${m.t.toFixed(1)}, dekking ${m.o})`).toBe(true);
+    }
+  }
+});
+
+test('homepage: het logo (groot en klein) ligt op geen enkele scrollpositie over een hero-foto', async ({ page }, info) => {
+  const maten = { desktop: [[1440, 900], [1920, 1080]], tablet: [[768, 1024]], mobiel: [[390, 844]], iphone: [] }[info.project.name];
+  test.skip(!maten.length, 'iPhone: zelfde als mobiel');
+  await beweging(page);
+  for (const [w, h] of maten) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto('/');
+    await rust(page);
+    const eind = (await page.evaluate(LEES)).eind;
+    for (let y = 0; y <= eind + 120; y += 5) {
+      await scrolNaar(page, y);
+      const m = await page.evaluate(() => {
+        const zicht = sel => [...document.querySelectorAll(sel)].filter(i => {
+          const c = getComputedStyle(i.closest('.logo-groot, .logo-vast'));
+          return i.offsetWidth && c.visibility !== 'hidden' && parseFloat(c.opacity) > 0.05 && parseFloat(getComputedStyle(i).opacity) > 0.05;
+        }).map(i => i.getBoundingClientRect());
+        const logos = [...zicht('.site-header .logo-groot img'), ...zicht('.site-header .logo-vast img')].filter(r => r.bottom > 0);
+        const tegels = [...document.querySelectorAll('.hero .tegel')].filter(t => t.offsetWidth).map(t => t.getBoundingClientRect());
+        const raak = logos.find(a => tegels.some(b => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top));
+        return raak ? `logo ${Math.round(raak.left)},${Math.round(raak.top)}–${Math.round(raak.right)},${Math.round(raak.bottom)}` : '';
+      });
+      expect(m, `${w} px bij ${y}: logo over een hero-foto`).toBe('');
     }
   }
 });
@@ -287,7 +339,7 @@ test('bij het verschijnen van de balk is "LUX mini" al weggescrold (nooit twee l
     expect((await page.evaluate(LEES)).balk, `${pad}: de balk verschijnt`).toBe(true);
     // tijdens het inschuiven van de balk (0,4 s) staat het vaste "LUX mini" al helemaal boven de bovenrand
     const onder = await page.evaluate(async () => { let m = -Infinity; const t0 = performance.now();
-      while (performance.now() - t0 < 500) { await new Promise(r => requestAnimationFrame(r)); m = Math.max(m, document.querySelector('.site-header .logo-vast img').getBoundingClientRect().bottom); }
+      while (performance.now() - t0 < 500) { await new Promise(r => requestAnimationFrame(r)); const i = [...document.querySelectorAll('.site-header .logo-vast img')].find(x => x.offsetWidth && parseFloat(getComputedStyle(x).opacity) > 0.05); if (i) m = Math.max(m, i.getBoundingClientRect().bottom); }
       return m; });
     expect(onder, `${pad}: LUX mini is weg als de balk komt`).toBeLessThanOrEqual(0);
     await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('.site-header .logo-vast')).visibility), { timeout: 2000 }).toBe('hidden');

@@ -330,7 +330,7 @@
       for (var i = 0; i < imgs.length; i++) if (imgs[i].offsetWidth) return imgs[i];
       return null;
     };
-    var logoStand = '', logoMaat = -1, logoBegin = null, logoTekst = null;
+    var logoStand = '', logoMaat = -1, logoBegin = null, logoTekst = null, logoBeeld = null;
     var kopHeader = document.querySelector('.site-header'), kopMain = document.querySelector('main');
     // verschuiving door intro of pagina-overgang (header en main staan dan even verschoven): eruit rekenen, anders meet je
     // een plek die na de intro niet meer klopt en springt het grote "LUX" (CLS, controle ronde 4)
@@ -346,7 +346,7 @@
       logoGroot.style.transform = '';
       var v = verschoven(kopHeader);
       logoBegin = { x: r.left - v.x, y: r.top - v.y + window.scrollY };
-      logoTekst = null;
+      logoTekst = null; logoBeeld = null;
       logoEl.style.setProperty('--groot-x', logoBegin.x + 'px');
       logoEl.style.setProperty('--groot-y', logoBegin.y + 'px');
       logoEl.classList.add('vast-klaar');
@@ -363,6 +363,21 @@
           var t = q.top + window.scrollY - (inMain ? mv : 0);
           if (t < boven) boven = t;
         });
+      });
+      return boven;
+    };
+    // de bovenkant (documentmaat, zonder transform: ook als de hero-foto's met de muis meebewegen) van de eerste hero-foto onder
+    // de strook x0–x1 (ontwerpgate ronde 2: het witte logo krimpt nooit over de lichte hero-foto's). Alleen de hero: de
+    // contactkop is een donkere foto met sluier en de kopfoto van Werkwijze blijft zoals hij is (ontwerpgate ronde 2)
+    var BEELD = '.hero .tegel';
+    var eersteBeeld = function (x0, x1) {
+      var boven = Infinity;
+      Array.prototype.forEach.call(document.querySelectorAll(BEELD), function (el) {
+        if (!el.offsetWidth || !el.offsetHeight) return;
+        var l = 0, t = 0;
+        for (var e = el; e; e = e.offsetParent) { l += e.offsetLeft; t += e.offsetTop; }
+        if (l + el.offsetWidth <= x0 || l >= x1) return;
+        if (t < boven) boven = t;
       });
       return boven;
     };
@@ -403,13 +418,24 @@
       // en zo vroeg dat "LUX mini" op het eindpunt boven de eerste tekst ligt (8 px vrij): het scrolt daarna mee, dus het
       // komt nooit meer op tekst te liggen
       if (logoTekst === null) logoTekst = eersteTekst(bx, bx + bw);
-      eind = Math.max(1, Math.min(eind, logoTekst - 8 - by - bh));
+      // en het hele logo (groot én klein) blijft 8 px boven de eerste hero-foto in zijn strook. De onderkant van het krimpende
+      // logo en de bovenkant van de foto bewegen allebei lineair met de scroll; is er bovenaan ruimte, dan is het eindpunt de
+      // krapste plek: de foto staat dan 8 px onder de onderkant van het geheel (groot "LUX" op eindmaat of "LUX mini")
+      if (logoBeeld === null) logoBeeld = eersteBeeld(Math.min(x0, bx), Math.max(x0 + grootImg.offsetWidth, bx + bw));
+      eind = Math.max(1, Math.min(eind, logoTekst - 8 - by - bh, logoBeeld - 8 - Math.max(y1 + hGroot * s1, by + bh)));
       var p = Math.max(0, Math.min(1, window.scrollY / eind));
       var s = 1 + (s1 - 1) * p;
       var dx = (x1 - x0) * p, dy = (y1 - y0) * p;
       var vaag = Math.max(0, Math.min(1, (p - 0.7) / 0.3)); // de laatste 30%: "LUX mini" komt op, het grote "LUX" gaat weg
       var weg = Math.max(0, window.scrollY - eind); // na het eindpunt mee omhoog (transform, dus geen verschuiving: CLS 0)
-      var stand = [x0.toFixed(1), x1.toFixed(1), y1.toFixed(1), by.toFixed(1), bh, s.toFixed(4), dx.toFixed(2), dy.toFixed(2), vaag.toFixed(3), weg.toFixed(1), eind.toFixed(1)].join('|');
+      // korte pagina (404 op ca. 1165–1215 × 768): kan het logo niet helemaal wegscrollen, dan vervaagt het in de laatste 20 px
+      // van de scroll, zodat er onderaan nooit een half logo blijft staan
+      var maxS = document.documentElement.scrollHeight - window.innerHeight, rest = 1;
+      if (maxS > eind && maxS < eind + by + bh) {
+        var vanaf = Math.max(eind, maxS - 20);
+        rest = 1 - Math.max(0, Math.min(1, (window.scrollY - vanaf) / Math.max(1, maxS - vanaf)));
+      }
+      var stand = [x0.toFixed(1), x1.toFixed(1), y1.toFixed(1), by.toFixed(1), bh, s.toFixed(4), dx.toFixed(2), dy.toFixed(2), vaag.toFixed(3), weg.toFixed(1), eind.toFixed(1), rest.toFixed(3)].join('|');
       if (stand === logoStand) return;
       logoStand = stand;
       logoEl.style.setProperty('--logo-eind', eind.toFixed(1));
@@ -421,7 +447,7 @@
       logoEl.style.setProperty('--logo-dx', dx.toFixed(2) + 'px');
       logoEl.style.setProperty('--logo-dy', (dy - weg).toFixed(2) + 'px');
       logoEl.style.setProperty('--logo-groot-o', (1 - vaag).toFixed(3));
-      logoEl.style.setProperty('--logo-klein-o', vaag.toFixed(3));
+      logoEl.style.setProperty('--logo-klein-o', (vaag * rest).toFixed(3));
     };
     // zodra de balk zichtbaar is, neemt het balklogo het over
     var balkEl = document.querySelector('.balk');

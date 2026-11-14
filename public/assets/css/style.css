@@ -1600,6 +1600,8 @@ html:not(.js) img[data-src] { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .tablet-strook, .tablet-puntjes span { transition: none; }
 }
+/* 004–006 op dezelfde linkerlijn als de tekst van de drie blokken (kolom van 8,333% van het ontwerpvak; .wrap gebruikt 8,2%) */
+@media (min-width: 1025px) { .media ~ section > .wrap { padding-left: calc(var(--B) / 12); padding-right: calc(var(--B) / 12); } }
 
 /* ---------- Logo groot → klein (brief 2026-11-14-babynest-media-en-logo, B; wens Carst 14 nov., optie A; ontwerpgate ronde 1) ----------
    Bovenaan staat alleen "LUX" (scherp bestand van 880 px, wit en donker; de wissel volgt dezelfde regels als het gewone
