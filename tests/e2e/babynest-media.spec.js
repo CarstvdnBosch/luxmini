@@ -150,15 +150,15 @@ test('geen horizontaal scrollen, ook halverwege het openslaan van een kaft', asy
       expect(w[0], `${id} bij ${f}`).toBe(w[1]);
     }
   }
-  // halverwege: de kaft staat echt half open. Neem de eerste kaft waarvoor die stand bestaat
-  // (op 768 × 1024 staat het boek van 001 bovenaan al ver in beeld; dan het magazine van 002).
+  // halverwege: de kaft staat echt half open. De kaft begint open te slaan vanaf de plek van het object bij binnenkomst
+  // (hooguit 3/4 scherm, ontwerpgate 14 nov.) en is na een half scherm open: scrol een kwart scherm voorbij dat begin.
   const blok = await page.evaluate(() => [...document.querySelectorAll('main .media')].filter(s => s.querySelector('.kaft'))
-    .map(s => [s.id, s.querySelector('.media-object').getBoundingClientRect().top + scrollY])
-    .find(([, t]) => t - innerHeight * 0.6 > 0 && t - innerHeight * 0.6 < document.documentElement.scrollHeight - innerHeight));
+    .map(s => { const t = s.querySelector('.media-object').getBoundingClientRect().top + scrollY; return [s.id, t - Math.min(innerHeight * 0.75, t) + innerHeight * 0.25]; })
+    .find(([, y]) => y > 0 && y < document.documentElement.scrollHeight - innerHeight));
   expect(blok, 'een kaft waarvoor halverwege openslaan bestaat').toBeTruthy();
   await scrolNaar(page, 0); // eerst terug naar boven: de kaft gaat dicht
-  const [id, t] = blok;
-  await scrolNaar(page, t - (await page.evaluate(() => innerHeight)) * 0.6);
+  const [id, y] = blok;
+  await scrolNaar(page, y);
   const s = page.locator(`#${id}`);
   await expect(s).toHaveClass(/\bbinnen\b/);
   await expect.poll(() => s.evaluate(e => parseFloat(e.style.getPropertyValue('--open'))), { message: `${id}: --open halverwege` }).toBeGreaterThan(0);
@@ -187,7 +187,8 @@ test('met beweging: het object schuift in, de regels komen op en de kaft slaat o
     expect(m[0] - m[1]).toBeLessThanOrEqual(m[1]);
     await s.evaluate(e => window.scrollTo(0, e.getBoundingClientRect().top + scrollY + e.offsetHeight - innerHeight));
   } else {
-    await s.evaluate(e => { const o = e.querySelector('.media-object').getBoundingClientRect(); window.scrollTo(0, o.top + scrollY - innerHeight * 0.1); });
+    // de kaft begint pas bij scrollen open te slaan (ontwerpgate 14 nov.): helemaal open als het object iets boven de rand staat
+    await s.evaluate(e => { const o = e.querySelector('.media-object').getBoundingClientRect(); window.scrollTo(0, o.top + scrollY + innerHeight * 0.2); });
   }
   await expect.poll(() => s.evaluate(e => parseFloat(e.style.getPropertyValue('--open')))).toBe(1);
   if (isTouch(info)) expect(await s.locator('.kaft').evaluate(e => getComputedStyle(e).opacity)).toBe('0'); // kaft weg bij 90°
@@ -275,4 +276,44 @@ test('"Bekijk de stoffen" landt met de kop "De stoffen" onder de vaste balk', as
   expect(m[0]).toBe('De stoffen');
   expect(m[1]).toBeGreaterThanOrEqual(m[2]);
   expect(m[1]).toBeLessThan(m[3] / 2);
+});
+
+test('tablet en mobiel: bij binnenkomst is de kaft dicht; tijdens het openslaan blijft hij minstens 12 px onder het label', async ({ page }, info) => {
+  test.skip(!isTouch(info) || info.project.name === 'iphone', 'op 768 × 1024 en 390 × 844 (Chromium)');
+  await beweging(page);
+  await page.goto('/babynest');
+  await page.waitForLoadState('load');
+  const s = page.locator('#babynest');
+  await expect(s).toHaveClass(/\bbinnen\b/); // het eerste blok staat bij binnenkomst (deels) in beeld
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  expect(await s.evaluate(e => e.style.getPropertyValue('--open')), 'kaft dicht bij scrollY 0').toBe('0.000');
+  let min = Infinity, gezien = 0;
+  for (let y = 0; y <= 2400; y += 30) {
+    await page.evaluate(y => window.scrollTo({ top: y, behavior: 'instant' }), y);
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const r = await page.evaluate(() => [...document.querySelectorAll('main .media')].filter(e => e.querySelector('.kaft') && e.classList.contains('binnen')).map(e => ({
+      open: parseFloat(e.style.getPropertyValue('--open')), zicht: e.style.getPropertyValue('--kaft-o') === '1',
+      vrij: e.querySelector('.kaft-voor').getBoundingClientRect().top - e.querySelector('.media-rij > .label').getBoundingClientRect().bottom })));
+    for (const x of r) if (x.zicht && x.open > 0 && x.open < 1) { gezien++; min = Math.min(min, x.vrij); }
+  }
+  expect(gezien, 'de kaft draait tijdens het scrollen').toBeGreaterThan(3);
+  expect(min, 'bovenkant van de draaiende kaft onder het label').toBeGreaterThanOrEqual(12);
+});
+
+test('tablet: de kolom (hooguit 560 px) staat in het midden', async ({ page }, info) => {
+  test.skip(info.project.name !== 'tablet', 'alleen tablet');
+  for (const w of [768, 1024]) {
+    await page.setViewportSize({ width: w, height: 1024 });
+    await page.goto('/babynest');
+    const m = await page.evaluate(() => [...document.querySelectorAll('main .media')].map(e => {
+      const o = e.querySelector('.media-object').getBoundingClientRect(), l = e.querySelector('.media-rij > .label').getBoundingClientRect();
+      return { links: o.left, rechts: innerWidth - o.right, label: l.left, breed: o.width };
+    }));
+    for (const b of m) {
+      expect(Math.abs(b.links - b.rechts), `object in het midden op ${w} px`).toBeLessThanOrEqual(1);
+      expect(b.breed).toBeLessThanOrEqual(560);
+      expect(Math.abs(b.label - b.links), `label links in de kolom op ${w} px`).toBeLessThanOrEqual(1);
+    }
+  }
 });

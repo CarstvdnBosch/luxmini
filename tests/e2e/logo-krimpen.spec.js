@@ -4,13 +4,22 @@ import { test, expect } from './hulp.js';
 
 const OPENBAAR = ['/', '/werkwijze', '/kraamcadeauboxen', '/prematuurkleding', '/babynest', '/inspiratie', '/contact', '/privacy', '/bedankt', '/bestaat-niet-meer'];
 const beweging = page => page.emulateMedia({ reducedMotion: 'no-preference' });
+// groot: het vaste grote "LUX"; klein: "LUX mini" zichtbaar (het gewone logo in beeld, het vaste "LUX mini" op het eindpunt
+// of het balklogo); vast: het vaste "LUX mini" zelf. Zichtbaar = getoond, niet verborgen, dekking boven 0,5 en in beeld.
 const LEES = () => {
-  const g = document.querySelector('.site-header .logo-groot'), k = document.querySelector('.site-header .logo-klein');
-  const zicht = e => e && getComputedStyle(e).display !== 'none' && parseFloat(getComputedStyle(e).opacity) > 0.5;
-  const gi = g ? [...g.querySelectorAll('img')].find(i => parseFloat(getComputedStyle(i).opacity) > 0.5) : null;
-  const ki = [...k.querySelectorAll('img')].find(i => parseFloat(getComputedStyle(i).opacity) > 0.5);
+  const g = document.querySelector('.site-header .logo-groot'), k = document.querySelector('.site-header .logo-klein'), v = document.querySelector('.site-header .logo-vast');
+  const zicht = e => { if (!e) return false; const c = getComputedStyle(e), r = e.getBoundingClientRect();
+    return c.display !== 'none' && c.visibility !== 'hidden' && parseFloat(c.opacity) > 0.5 && r.bottom > 0 && r.height > 0; };
+  const zichtImg = e => e ? [...e.querySelectorAll('img')].find(i => parseFloat(getComputedStyle(i).opacity) > 0.5 && i.offsetWidth) : null;
   const r = e => { const x = e.getBoundingClientRect(); return { l: x.left, t: x.top, r: x.right, b: x.bottom, h: x.height }; };
-  return { groot: !!(g && zicht(g)), klein: zicht(k), gi: gi ? { ...r(gi), cls: gi.className, src: gi.getAttribute('src') } : null, ki: ki ? { ...r(ki), cls: ki.className } : null };
+  const balk = document.querySelector('.balk');
+  const balkZicht = !!balk && balk.classList.contains('zichtbaar');
+  const bi = balk ? [...balk.querySelectorAll('.links img')].find(i => i.offsetWidth) : null;
+  const gi = zichtImg(g), ki = zichtImg(k), vi = zichtImg(v);
+  return { groot: zicht(g), vast: zicht(v), kleinHeader: zicht(k), balk: balkZicht, klein: zicht(k) || zicht(v) || balkZicht,
+    gi: gi ? { ...r(gi), cls: gi.className, src: gi.getAttribute('src') } : null, ki: ki ? { ...r(ki), cls: ki.className } : null,
+    vi: vi ? { ...r(vi), cls: vi.className } : null, bi: bi ? { l: bi.getBoundingClientRect().left, h: bi.offsetHeight } : null, // de balk schuift alleen verticaal
+    s: parseFloat(getComputedStyle(document.querySelector('.site-header .logo')).getPropertyValue('--logo-s')) || 1 };
 };
 
 // Wacht op de echte toestand in plaats van een vaste tijd: pagina geladen, letters binnen (de menubreedte bepaalt de maat
@@ -47,17 +56,40 @@ for (const pad of OPENBAAR) {
     // klaar binnen ca. 40% van een schermhoogte (korte pagina's: onderaan) en vóór de balk verschijnt
     const [vh, max] = await page.evaluate(() => [innerHeight, document.documentElement.scrollHeight - innerHeight]);
     const eind = Math.min(vh * 0.4, max);
+    const hBegin = boven.gi.h;
     for (let y = 0; y <= eind + 1; y += Math.max(1, eind / 4)) {
       await scrolNaar(page, y);
-      const balk = await page.evaluate(() => { const b = document.querySelector('.balk'); return !!b && b.classList.contains('zichtbaar'); });
-      if (balk) { const s = await page.evaluate(LEES); expect(s.klein, `gewone maat vóór de balk (y ${y})`).toBe(true); }
+      const st = await page.evaluate(LEES);
+      // het grote logo blijft in beeld terwijl het krimpt (vast, zoals de burger)
+      if (st.groot) expect(st.gi.t, `groot logo in beeld (y ${y})`).toBeGreaterThanOrEqual(0);
+      // nooit twee logo's: staat de balk er, dan zijn het vaste "LUX" en "LUX mini" weg
+      if (st.balk) expect([st.groot, st.vast], `alleen het balklogo (y ${y})`).toEqual([false, false]);
+    }
+    // bij 20% van een schermhoogte (of eerder klaar): in beeld en tussen begin- en eindmaat
+    if (vh * 0.2 < eind * 0.8) {
+      await scrolNaar(page, vh * 0.2);
+      const t = await page.evaluate(LEES);
+      expect(t.groot).toBe(true);
+      expect(t.gi.t).toBeGreaterThanOrEqual(0);
+      expect(t.s).toBeLessThan(1);
+      expect(t.gi.h).toBeLessThan(hBegin);
+      expect(t.gi.h).toBeGreaterThan(30 * 82 / 93);
     }
     expect(max, 'de pagina scrolt (anders kan het logo niet krimpen)').toBeGreaterThan(40);
     await scrolNaar(page, eind);
     const na = await page.evaluate(LEES);
     expect(na.klein).toBe(true);
     expect(na.groot).toBe(false);
-    expect(Math.round(na.ki.h)).toBe(['mobiel', 'iphone'].includes(info.project.name) ? 36 : 44);
+    // "LUX mini" staat op plek en maat van het balklogo (pagina's zonder balk: het gewone logo, 44 px, mobiel 36 px)
+    if (!na.balk) {
+      expect(na.vast, 'LUX mini op het eindpunt').toBe(true);
+      if (na.bi) {
+        expect(Math.round(na.vi.h)).toBe(na.bi.h);
+        expect(Math.abs(na.vi.l - na.bi.l)).toBeLessThanOrEqual(1);
+      } else {
+        expect(Math.round(na.vi.h)).toBe(['mobiel', 'iphone'].includes(info.project.name) ? 36 : 44);
+      }
+    }
     // terugscrollen: groeit weer
     await scrolNaar(page, 0);
     expect((await page.evaluate(LEES)).groot).toBe(true);
@@ -74,22 +106,36 @@ test('wit of donker volgt html.hero-licht', async ({ page }) => {
   expect((await page.evaluate(LEES)).gi.cls).toBe('logo-donker');
 });
 
-test('desktop: op 1280, 1440 en 1920 px 24 px vrij van het menu en het menu op één regel', async ({ page }, info) => {
+test('desktop: menu rechts tegen de burger; op 1440 en 1920 px het grote logo (min. 70 px, 1920 px: 110 px) 24 px vrij van het menu, op 1280 px het gewone logo', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'alleen desktop');
   await beweging(page);
   for (const [w, h] of [[1280, 800], [1440, 900], [1920, 1080]]) {
     await page.setViewportSize({ width: w, height: h });
     for (const pad of ['/', '/babynest', '/contact']) {
       await page.goto(pad);
-      await page.evaluate(() => document.fonts.ready);
-      await page.waitForTimeout(200);
+      await rust(page);
       const m = await page.evaluate(() => {
         const links = [...document.querySelectorAll('.site-header .menu a')];
-        const g = [...document.querySelectorAll('.site-header .logo-groot img')].find(i => parseFloat(getComputedStyle(i).opacity) > 0.5);
-        return { rechts: g.getBoundingClientRect().right, eerste: links[0].getBoundingClientRect().left, regels: new Set(links.map(a => Math.round(a.getBoundingClientRect().top))).size };
+        const groot = document.querySelector('.site-header .logo-groot');
+        const g = [...groot.querySelectorAll('img')].find(i => parseFloat(getComputedStyle(i).opacity) > 0.5);
+        const klein = document.querySelector('.site-header .logo-klein');
+        return { groot: getComputedStyle(groot).display !== 'none', h: g ? g.getBoundingClientRect().height : 0, rechts: g ? g.getBoundingClientRect().right : 0,
+          klein: parseFloat(getComputedStyle(klein).opacity), eerste: links[0].getBoundingClientRect().left,
+          menuRechts: links[links.length - 1].getBoundingClientRect().right, burger: document.querySelector('.burger').getBoundingClientRect().left,
+          regels: new Set(links.map(a => Math.round(a.getBoundingClientRect().top))).size };
       });
-      expect(m.eerste - m.rechts, `${pad} op ${w} px`).toBeGreaterThanOrEqual(24);
-      expect(m.regels).toBe(1);
+      expect(m.regels, `${pad} op ${w} px: menu op één regel`).toBe(1);
+      const vrijBurger = m.burger - m.menuRechts;
+      expect(vrijBurger, `${pad} op ${w} px: menu rechts tegen de burger`).toBeGreaterThanOrEqual(12);
+      expect(vrijBurger).toBeLessThanOrEqual(32);
+      if (w === 1280) {
+        expect([m.groot, m.klein], `${pad} op 1280 px: alleen het gewone logo`).toEqual([false, 1]);
+      } else {
+        expect(m.groot, `${pad} op ${w} px: groot logo`).toBe(true);
+        expect(m.h).toBeGreaterThanOrEqual(70);
+        if (w === 1920) expect(Math.round(m.h)).toBe(110);
+        expect(m.eerste - m.rechts, `${pad} op ${w} px`).toBeGreaterThanOrEqual(24);
+      }
     }
   }
 });
@@ -110,9 +156,13 @@ test('op 1024, 768 en 390 px: geen overlap met de burger, en 12 px vrij van de e
         const burger = r(document.querySelector('.burger'));
         const fotos = [...document.querySelectorAll('.hero .tegel')].filter(t => t.offsetWidth).map(r);
         const h1 = document.querySelector('main h1');
-        return { burger: raakt(g, burger, 0), foto: fotos.some(f => raakt(g, f, 12)), h1: h1 ? raakt(g, r(h1), 12) : false };
+        return { burger: raakt(g, burger, 0), foto: fotos.some(f => raakt(g, f, 12)), h1: h1 ? raakt(g, r(h1), 12) : false,
+          h1vrij: h1 && r(h1).left < g.right ? r(h1).top - g.bottom : null };
       });
-      expect(m, `${pad} op ${w} px`).toEqual({ burger: false, foto: false, h1: false });
+      const { h1vrij, ...overlap } = m;
+      expect(overlap, `${pad} op ${w} px`).toEqual({ burger: false, foto: false, h1: false });
+      // 761–1279 px: minstens 28 px tussen het grote "LUX" en het label (h1) van de subpagina's (ontwerpgate 14 nov.)
+      if (w > 760 && h1vrij !== null && h1vrij >= 0) expect(h1vrij, `${pad} op ${w} px: ruimte tot het label`).toBeGreaterThanOrEqual(28);
     }
   }
 });
@@ -140,9 +190,9 @@ test('binnenkomen halverwege (anker): meteen de maat van die plek', async ({ pag
   await page.goto('/babynest#prijs');
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(500); // de browser springt naar het anker
   await page.waitForTimeout(50);
-  const m = await page.evaluate(() => [getComputedStyle(document.querySelector('.site-header .logo-klein')).opacity, getComputedStyle(document.querySelector('.site-header .logo-groot')).transitionDuration]);
-  expect(m[0]).toBe('1');
-  expect(m[1], 'geen animatie vanaf groot').toBe('0s');
+  const m = await page.evaluate(LEES);
+  expect([m.klein, m.groot], 'meteen "LUX mini" (balk), geen groot logo').toEqual([true, false]);
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('.site-header .logo-groot')).transitionDuration), 'geen animatie vanaf groot').toBe('0s');
 });
 
 test('geen verspringing van de header tijdens het krimpen (CLS 0)', async ({ page }) => {

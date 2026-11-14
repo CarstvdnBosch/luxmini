@@ -301,50 +301,111 @@
   }
 
   /* ---------------------------------------------------------------
-     2c. Logo groot → klein (brief 2026-11-14-babynest-media-en-logo, B): bovenaan het grote "LUX"; bij scrollen
-         schaalt het (transform, linksboven) naar de maat van "LUX" in het gewone logo en komt "LUX mini" erin op.
-         Op de scrollwaarde zelf (met een muis is die al afgevlakt door het zachte scrollen, wiel 0,05), dus
-         zonder eigen animatie: wie halverwege binnenkomt, ziet meteen de juiste maat. Klaar binnen 40% van een
-         schermhoogte en vóór de balk verschijnt; terug omhoog groeit het weer. Niet bij "minder beweging" (CSS).
+     2c. Logo groot → klein (brief 2026-11-14-babynest-media-en-logo, B; ontwerpgate ronde 1): bovenaan het grote "LUX",
+         vast in beeld (position: fixed, zoals de burger). Bij scrollen schuift en schaalt het (transform, linksboven) naar
+         plek en maat van "LUX" in het balklogo; op dat eindpunt komt "LUX mini" (een vaste kopie van het gewone logo) op.
+         Zodra de balk zichtbaar is, neemt het balklogo het over en zijn beide vaste logo's verborgen (nooit twee logo's).
+         Op de scrollwaarde zelf (met een muis al afgevlakt door het zachte scrollen), dus zonder eigen animatie: wie
+         halverwege binnenkomt, ziet meteen de juiste stand. Klaar binnen 40% van een schermhoogte en vóór de balk;
+         terug omhoog groeit het weer. Is er naast het menu (vanaf 1280 px) minder dan 70 px hoogte voor het grote logo,
+         dan alleen het gewone logo. Niet bij "minder beweging" (CSS).
      --------------------------------------------------------------- */
   var logoEl = document.querySelector('.site-header .logo');
   var logoGroot = logoEl && logoEl.querySelector('.logo-groot');
   if (logoGroot && !stil) {
-    var logoKlein = logoEl.querySelector('.logo-klein img');
+    var logoKleinBox = logoEl.querySelector('.logo-klein');
+    var logoKlein = logoKleinBox.querySelector('img');
     var grootImg = logoGroot.querySelector('img');
-    var logoStand = '', logoMaat = -1;
+    // "LUX mini" op het eindpunt: kopie van het gewone logo (wit en donker, dezelfde kleurregels), zonder tweede naam
+    var logoVast = document.createElement('span');
+    logoVast.className = 'logo-vast';
+    logoVast.setAttribute('aria-hidden', 'true');
+    Array.prototype.forEach.call(logoKleinBox.querySelectorAll('img'), function (img) {
+      var k = img.cloneNode(false); k.alt = ''; k.removeAttribute('fetchpriority'); logoVast.appendChild(k);
+    });
+    logoEl.appendChild(logoVast);
+    var balkLogo = function () {
+      var imgs = document.querySelectorAll('.balk .links img');
+      for (var i = 0; i < imgs.length; i++) if (imgs[i].offsetWidth) return imgs[i];
+      return null;
+    };
+    var logoStand = '', logoMaat = -1, logoBegin = null;
+    var logoBeginMeten = function () { // zonder transform en zonder .vast-klaar: de plek in de header, in documentmaat
+      logoEl.classList.remove('vast-klaar');
+      logoGroot.style.transform = 'none';
+      var r = logoGroot.getBoundingClientRect();
+      logoGroot.style.transform = '';
+      logoBegin = { x: r.left, y: r.top + window.scrollY };
+      logoEl.style.setProperty('--groot-x', r.left + 'px');
+      logoEl.style.setProperty('--groot-y', logoBegin.y + 'px');
+      logoEl.classList.add('vast-klaar');
+    };
     var logoBijwerken = function () {
-      if (getComputedStyle(logoGroot).display === 'none') return;
-      // vanaf 1280 px staat het menu op één regel ernaast: het grote logo wordt hooguit zo breed dat de rechterrand
-      // 24 px links van de eerste link blijft (CSS begint daar op de gewone maat)
+      // vanaf 1280 px staat het menu op één regel ernaast (rechts tegen de burger): het grote logo wordt hooguit zo breed
+      // dat de rechterrand 24 px links van de eerste link blijft; past minder dan 70 px hoogte, dan geen groot logo
+      var kleinR = logoKlein.getBoundingClientRect();
       var menuA = document.querySelector('.site-header .menu a');
       var naastMenu = !!(menuA && menuA.offsetWidth && window.innerWidth >= 1280);
-      var ruimte = naastMenu ? menuA.getBoundingClientRect().left - 24 - logoGroot.getBoundingClientRect().left : 0;
+      var ruimte = naastMenu ? menuA.getBoundingClientRect().left - 24 - (kleinR.left + kleinR.width * 0.024) : 0;
       var maatNu = naastMenu ? Math.max(0, Math.min(110, Math.floor(ruimte / (880 / 334) - 1))) : 0;
-      if (maatNu !== logoMaat) { logoMaat = maatNu; if (maatNu) logoEl.style.setProperty('--groot-h', maatNu + 'px'); else logoEl.style.removeProperty('--groot-h'); }
+      logoEl.classList.toggle('zonder-groot', naastMenu && maatNu < 70);
+      if (maatNu !== logoMaat) { logoMaat = maatNu; logoBegin = null; if (maatNu >= 70) logoEl.style.setProperty('--groot-h', maatNu + 'px'); else logoEl.style.removeProperty('--groot-h'); }
+      if (getComputedStyle(logoGroot).display === 'none') { logoStand = ''; return; }
       var hGroot = grootImg.offsetHeight, hKlein = logoKlein.offsetHeight;
       if (!hGroot || !hKlein) return;
+      // begin: de plek van het grote logo in de header bij scrollY 0 (CSS zet het daar eerst absoluut neer: boven ca. 32 px,
+      // mobiel ca. 18 px, zoals de burger); daarna staat het op precies die plek vast in beeld (.vast-klaar), zonder verspringen
+      if (!logoBegin) logoBeginMeten();
+      var x0 = logoBegin.x, y0 = logoBegin.y;
+      // eind: "LUX" in het balklogo (offset binnen de vaste balk, los van het in- en uitschuiven); pagina's zonder balk
+      // (privacy, bedankt, 404): het gewone logo op zijn eigen plek bovenaan
+      var b = balkLogo(), bx, by, bw, bh;
+      if (b) {
+        bx = b.offsetLeft; by = b.offsetTop; bw = b.offsetWidth; bh = b.offsetHeight;
+        for (var op = b.offsetParent; op && op !== document.body && !op.classList.contains('balk'); op = op.offsetParent) { bx += op.offsetLeft; by += op.offsetTop; }
+      } else {
+        bx = kleinR.left; by = kleinR.top + window.scrollY; bw = kleinR.width; bh = hKlein;
+      }
+      var x1 = bx + bw * 0.024, y1 = by + bh * 0.054;
+      var s1 = bh * 82 / 93 / hGroot; // 82/93: hoogte van "LUX" in het gewone logo (bestand 248 x 93)
       // de balk verschijnt als de onderkant van de kop 40 px onder de bovenrand komt; het logo is ruim daarvoor klein
       var eind = window.innerHeight * 0.4;
       if (kopEl) eind = Math.min(eind, Math.max(1, (kopEl.offsetTop + kopEl.offsetHeight - 40) * 0.8));
       eind = Math.min(eind, Math.max(1, document.documentElement.scrollHeight - window.innerHeight)); // korte pagina (privacy, bedankt, 404): onderaan klein
       var p = Math.max(0, Math.min(1, window.scrollY / eind));
-      var s = 1 + (hKlein * 82 / 93 / hGroot - 1) * p; // 82/93: hoogte van "LUX" in het gewone logo (bestand 248 x 93)
+      var s = 1 + (s1 - 1) * p;
+      var dx = (x1 - x0) * p, dy = (y1 - y0) * p;
       var vaag = Math.max(0, Math.min(1, (p - 0.7) / 0.3)); // de laatste 30%: "LUX mini" komt op, het grote "LUX" gaat weg
-      var stand = s.toFixed(4) + '|' + vaag.toFixed(3);
+      var stand = [x0.toFixed(1), x1.toFixed(1), y1.toFixed(1), bh, s.toFixed(4), dx.toFixed(2), dy.toFixed(2), vaag.toFixed(3)].join('|');
       if (stand === logoStand) return;
       logoStand = stand;
+      logoEl.style.setProperty('--vast-x', bx + 'px');
+      logoEl.style.setProperty('--vast-y', by + 'px');
+      logoEl.style.setProperty('--vast-h', bh + 'px');
       logoEl.style.setProperty('--logo-s', s.toFixed(4));
+      logoEl.style.setProperty('--logo-dx', dx.toFixed(2) + 'px');
+      logoEl.style.setProperty('--logo-dy', dy.toFixed(2) + 'px');
       logoEl.style.setProperty('--logo-groot-o', (1 - vaag).toFixed(3));
       logoEl.style.setProperty('--logo-klein-o', vaag.toFixed(3));
     };
+    // zodra de balk zichtbaar is, neemt het balklogo het over
+    var balkEl = document.querySelector('.balk');
+    if (balkEl) {
+      var overnemen = function () { logoEl.classList.toggle('overgenomen', balkEl.classList.contains('zichtbaar')); };
+      new MutationObserver(overnemen).observe(balkEl, { attributes: true, attributeFilter: ['class'] });
+      overnemen();
+    }
     var logoGepland = false;
     window.addEventListener('scroll', function () {
       if (!logoGepland) { logoGepland = true; requestAnimationFrame(function () { logoGepland = false; logoBijwerken(); }); }
     }, { passive: true });
-    window.addEventListener('resize', function () { logoStand = ''; logoBijwerken(); });
-    window.addEventListener('load', function () { logoStand = ''; logoBijwerken(); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { logoStand = ''; logoBijwerken(); }); // de menubreedte hangt af van de letter
+    var logoOpnieuw = function () { logoStand = ''; logoBegin = null; logoBijwerken(); };
+    window.addEventListener('resize', logoOpnieuw);
+    window.addEventListener('load', logoOpnieuw);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(logoOpnieuw); // de menubreedte hangt af van de letter
+    // ook als de letter later binnenkomt (fonts.ready kan al klaar zijn voordat de letter gevraagd is): menu meten bij elke maatwissel
+    var logoMenu = document.querySelector('.site-header .menu');
+    if (logoMenu && 'ResizeObserver' in window) new ResizeObserver(function () { logoOpnieuw(); }).observe(logoMenu);
     logoBijwerken();
   }
 
@@ -760,6 +821,10 @@
     mediaBlokken.forEach(function (sec) {
       if (!stil) { sec.classList.add('anim'); if (sec.querySelector('.kaft')) { sec.style.setProperty('--open', '0'); sec.style.setProperty('--kaft-o', '1'); } }
     });
+    var mediaStartZetten = function (sec) { // bovenkant van het object bij scrollY 0 (in documentmaat), hooguit 3/4 scherm
+      sec.mediaStart = Math.min(window.innerHeight * 0.75, sec.querySelector('.media-object').getBoundingClientRect().top + window.scrollY);
+    };
+    var mediaStartOpnieuw = function () { mediaBlokken.forEach(mediaStartZetten); };
     var mediaBijwerken = function () {
       var vh = window.innerHeight;
       mediaBlokken.forEach(function (sec) {
@@ -769,8 +834,11 @@
         if (!stil && mediaBreed.matches && r.height > vh + 1) {
           p = beperk01(-r.top / (r.height - vh)); // vastgezet: 0 bij het begin, 1 aan het eind
         } else {
+          // tablet en mobiel: de kaft begint pas open te slaan als je scrolt; staat het object bij binnenkomst al hoger
+          // dan 3/4 van het scherm, dan begint het op die plek (anders staat de kaft bij binnenkomst al half open)
           var o = sec.querySelector('.media-object').getBoundingClientRect();
-          p = beperk01((vh * 0.75 - o.top) / (vh * 0.5));
+          if (sec.mediaStart == null) mediaStartZetten(sec);
+          p = beperk01((sec.mediaStart - o.top) / (vh * 0.5));
         }
         if (!stil && sec.querySelector('.kaft')) {
           var open = sec.classList.contains('binnen') ? beperk01((p - 0.1) / 0.7) : 0;
@@ -804,7 +872,9 @@
     var mediaGepland = false;
     var mediaPlan = function () { if (!mediaGepland) { mediaGepland = true; requestAnimationFrame(function () { mediaGepland = false; mediaBijwerken(); }); } };
     window.addEventListener('scroll', mediaPlan, { passive: true });
-    window.addEventListener('resize', mediaPlan);
+    window.addEventListener('resize', function () { mediaStartOpnieuw(); mediaPlan(); });
+    window.addEventListener('load', function () { mediaStartOpnieuw(); mediaPlan(); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { mediaStartOpnieuw(); mediaPlan(); });
     mediaBijwerken();
   }
 
