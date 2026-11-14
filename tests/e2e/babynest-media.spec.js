@@ -124,6 +124,19 @@ test('mobiel en tablet: label, object, kop, zin, pijl-link onder elkaar; op 390 
   }
 });
 
+// Scrol zonder zacht scrollen (html heeft scroll-behavior: smooth) en wacht tot de pagina echt op die plek staat
+// en main.js de stand heeft bijgewerkt (twee frames na de scroll), zodat er op de bedoelde plek gemeten wordt.
+async function scrolNaar(page, y) {
+  const doel = await page.evaluate(y => {
+    const max = document.documentElement.scrollHeight - innerHeight, d = Math.round(Math.max(0, Math.min(max, y)));
+    window.scrollTo({ top: d, behavior: 'instant' });
+    return d;
+  }, y);
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY)), { timeout: 5000 }).toBe(doel);
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+  return doel;
+}
+
 test('geen horizontaal scrollen, ook halverwege het openslaan van een kaft', async ({ page }, info) => {
   test.skip(info.project.name === 'desktop', 'op 390 en 768 px (Chromium en WebKit)');
   await beweging(page);
@@ -131,18 +144,29 @@ test('geen horizontaal scrollen, ook halverwege het openslaan van een kaft', asy
   for (const id of ['babynest', 'stof', 'dekentje']) {
     const top = await page.evaluate(i => document.querySelector(`#${i} .media-object`).getBoundingClientRect().top + scrollY, id);
     for (const f of [0.75, 0.55, 0.4, 0.2]) { // van dicht via half open naar open
-      await page.evaluate(([t, f]) => window.scrollTo(0, t - innerHeight * f), [top, f]);
-      await page.waitForTimeout(250);
+      const vh = await page.evaluate(() => innerHeight);
+      await scrolNaar(page, top - vh * f);
       const w = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
       expect(w[0], `${id} bij ${f}`).toBe(w[1]);
     }
   }
-  // halverwege: de kaft staat echt half open
-  await page.evaluate(() => { const o = document.querySelector('#babynest .media-object').getBoundingClientRect(); window.scrollTo(0, o.top + scrollY - innerHeight * 0.6); });
-  await page.waitForTimeout(400);
-  const open = await page.locator('#babynest').evaluate(s => parseFloat(s.style.getPropertyValue('--open')));
-  expect(open).toBeGreaterThan(0);
-  expect(open).toBeLessThan(1);
+  // halverwege: de kaft staat echt half open. Neem de eerste kaft waarvoor die stand bestaat
+  // (op 768 × 1024 staat het boek van 001 bovenaan al ver in beeld; dan het magazine van 002).
+  const blok = await page.evaluate(() => [...document.querySelectorAll('main .media')].filter(s => s.querySelector('.kaft'))
+    .map(s => [s.id, s.querySelector('.media-object').getBoundingClientRect().top + scrollY])
+    .find(([, t]) => t - innerHeight * 0.6 > 0 && t - innerHeight * 0.6 < document.documentElement.scrollHeight - innerHeight));
+  expect(blok, 'een kaft waarvoor halverwege openslaan bestaat').toBeTruthy();
+  await scrolNaar(page, 0); // eerst terug naar boven: de kaft gaat dicht
+  const [id, t] = blok;
+  await scrolNaar(page, t - (await page.evaluate(() => innerHeight)) * 0.6);
+  const s = page.locator(`#${id}`);
+  await expect(s).toHaveClass(/\bbinnen\b/);
+  await expect.poll(() => s.evaluate(e => parseFloat(e.style.getPropertyValue('--open'))), { message: `${id}: --open halverwege` }).toBeGreaterThan(0);
+  const open = await s.evaluate(e => parseFloat(e.style.getPropertyValue('--open')));
+  expect(open, `${id}: kaft half open`).toBeGreaterThan(0);
+  expect(open, `${id}: kaft half open`).toBeLessThan(1);
+  const w = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
+  expect(w[0], `${id} halverwege`).toBe(w[1]);
 });
 
 test('met beweging: het object schuift in, de regels komen op en de kaft slaat open bij scrollen', async ({ page }, info) => {

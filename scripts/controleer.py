@@ -1311,14 +1311,19 @@ def controleer_babynest(browser):
         # 004 Prijs: richtprijs als eigen regel (kop-m, ca. 32 px), de zin in inkt (Source Sans 3, min. 16 px) en "Vraag naar de prijs"
         p = page.evaluate("""() => { const s = document.querySelector('#prijs'), r = s.querySelector('.prijs-richt'), z = s.querySelector('.prijs-zin'), a = s.querySelector('a.pijl');
           return [r ? r.textContent.replace(/\\s+/g, ' ').trim() : null, r ? parseFloat(getComputedStyle(r).fontSize) : 0, z ? z.textContent.trim() : null, z ? getComputedStyle(z).color : null,
-            z ? parseFloat(getComputedStyle(z).fontSize) : 0, a ? [a.textContent.trim(), a.getAttribute('href')] : null, s.querySelector('.label').textContent.trim()]; }""")
+            z ? parseFloat(getComputedStyle(z).fontSize) : 0, a ? [a.textContent.trim(), a.getAttribute('href')] : null, s.querySelector('.label').textContent.trim(),
+            s.getBoundingClientRect().height, innerHeight]; }""")
         if p[0] != "Richtprijs € 95" or not 30 <= p[1] <= 34 or p[2] != "De prijs kan iets wijzigen, afhankelijk van de stof en extra wensen." or p[3] != INKT or p[4] < 16 \
                 or p[5] != ["Vraag naar de prijs", v["formulier"]] or p[6] != "004 — Prijs":
             fouten.append(f"{tag}: #prijs heeft niet de richtprijs (ca. 32 px), de zin in inkt en 'Vraag naar de prijs' ({p})")
+        elif naam == "mobiel" and p[7] > 0.5 * p[8]:
+            fouten.append(f"{tag}: #prijs is {p[7]:.0f} px hoog, meer dan een halve schermhoogte ({0.5 * p[8]:.0f} px)")
         st = page.evaluate("""() => [[...document.querySelectorAll('main .stappen > li h2')].map(h => { const k = h.cloneNode(true); k.querySelectorAll('br').forEach(b => b.replaceWith(' ')); return k.textContent.replace(/\\s+/g, ' ').trim(); }),
-          [...document.querySelectorAll('#contact img')].map(i => [i.getAttribute('src'), i.alt])]""")
-        if st[0] != ["Samen kiezen", "Persoonlijk maken", "Met zorg gemaakt"] or len(st[1]) != 1 or "babynest-voorkant.jpg" not in st[1][0][0] or not st[1][0][1]:
-            fouten.append(f"{tag}: Zo werkt het of de contactfoto (babynest-voorkant.jpg met alt) klopt niet ({st})")
+          [...document.querySelectorAll('#contact img')].map(i => [i.getAttribute('src'), i.alt]),
+          [...document.querySelectorAll('main a.pijl')].filter(a => a.textContent.trim() === 'Meer over de werkwijze').map(a => a.getAttribute('href'))]""")
+        if st[0] != ["Samen kiezen", "Persoonlijk maken", "Met zorg gemaakt"] or len(st[1]) != 1 or "babynest-voorkant.jpg" not in st[1][0][0] or not st[1][0][1] \
+                or st[2] != ["werkwijze.html#hoe-ik-werk"]:
+            fouten.append(f"{tag}: Zo werkt het (met 'Meer over de werkwijze' naar werkwijze.html#hoe-ik-werk) of de contactfoto (babynest-voorkant.jpg met alt) klopt niet ({st})")
         alts = page.evaluate("() => [...document.querySelectorAll('main img')].map(i => i.alt).filter(Boolean)")
         if len(alts) != len(set(alts)):
             fouten.append(f"{tag}: dezelfde alt-tekst wordt meer dan eens voorgelezen ({[a for a in alts if alts.count(a) > 1]})")

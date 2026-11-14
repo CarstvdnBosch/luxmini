@@ -13,11 +13,31 @@ const LEES = () => {
   return { groot: !!(g && zicht(g)), klein: zicht(k), gi: gi ? { ...r(gi), cls: gi.className, src: gi.getAttribute('src') } : null, ki: ki ? { ...r(ki), cls: ki.className } : null };
 };
 
+// Wacht op de echte toestand in plaats van een vaste tijd: pagina geladen, letters binnen (de menubreedte bepaalt de maat
+// van het grote logo), geen intro meer en geen lopende overgangen in de header.
+async function rust(page) {
+  await page.waitForLoadState('load');
+  await page.evaluate(async () => { if (document.fonts && document.fonts.ready) await document.fonts.ready; });
+  await expect(page.locator('html')).not.toHaveClass(/\bintro-aan\b/);
+  await expect.poll(() => page.evaluate(() => document.querySelector('.site-header').getAnimations({ subtree: true }).filter(a => a.playState === 'running').length)).toBe(0);
+}
+// Scrol zonder zacht scrollen (html heeft scroll-behavior: smooth), wacht tot de pagina echt op die plek staat en
+// main.js het logo heeft bijgewerkt (requestAnimationFrame na de scroll: twee frames).
+async function scrolNaar(page, y) {
+  const doel = await page.evaluate(y => {
+    const d = Math.round(Math.max(0, Math.min(document.documentElement.scrollHeight - innerHeight, y)));
+    window.scrollTo({ top: d, behavior: 'instant' });
+    return d;
+  }, y);
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(doel);
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+}
+
 for (const pad of OPENBAAR) {
   test(`${pad}: bovenaan het grote "LUX", na scrollen het gewone logo`, async ({ page }, info) => {
     await beweging(page);
     await page.goto(pad);
-    await page.waitForTimeout(300);
+    await rust(page);
     const boven = await page.evaluate(LEES);
     expect(boven.groot, 'groot logo zichtbaar').toBe(true);
     expect(boven.klein, 'gewone logo nog niet zichtbaar').toBe(false);
@@ -28,21 +48,18 @@ for (const pad of OPENBAAR) {
     const [vh, max] = await page.evaluate(() => [innerHeight, document.documentElement.scrollHeight - innerHeight]);
     const eind = Math.min(vh * 0.4, max);
     for (let y = 0; y <= eind + 1; y += Math.max(1, eind / 4)) {
-      await page.evaluate(y => window.scrollTo(0, y), y);
-      await page.waitForTimeout(60);
+      await scrolNaar(page, y);
       const balk = await page.evaluate(() => { const b = document.querySelector('.balk'); return !!b && b.classList.contains('zichtbaar'); });
       if (balk) { const s = await page.evaluate(LEES); expect(s.klein, `gewone maat vóór de balk (y ${y})`).toBe(true); }
     }
-    await page.evaluate(y => window.scrollTo(0, y), eind);
     expect(max, 'de pagina scrolt (anders kan het logo niet krimpen)').toBeGreaterThan(40);
-    await page.waitForTimeout(100);
+    await scrolNaar(page, eind);
     const na = await page.evaluate(LEES);
     expect(na.klein).toBe(true);
     expect(na.groot).toBe(false);
     expect(Math.round(na.ki.h)).toBe(['mobiel', 'iphone'].includes(info.project.name) ? 36 : 44);
     // terugscrollen: groeit weer
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForTimeout(150);
+    await scrolNaar(page, 0);
     expect((await page.evaluate(LEES)).groot).toBe(true);
   });
 }
@@ -50,9 +67,10 @@ for (const pad of OPENBAAR) {
 test('wit of donker volgt html.hero-licht', async ({ page }) => {
   await beweging(page);
   await page.goto('/');
+  await rust(page);
   expect((await page.evaluate(LEES)).gi.cls).toBe('logo-wit');
   await page.evaluate(() => document.documentElement.classList.add('hero-licht'));
-  await page.waitForTimeout(1400); // de wissel duurt 1,2 s
+  await rust(page); // de wissel duurt 1,2 s
   expect((await page.evaluate(LEES)).gi.cls).toBe('logo-donker');
 });
 
@@ -130,10 +148,11 @@ test('binnenkomen halverwege (anker): meteen de maat van die plek', async ({ pag
 test('geen verspringing van de header tijdens het krimpen (CLS 0)', async ({ page }) => {
   await beweging(page);
   await page.goto('/');
+  await rust(page);
   await page.evaluate(() => { window.__verschuiving = 0; new PerformanceObserver(l => { for (const e of l.getEntries()) {
     if (!e.hadRecentInput && e.sources.some(s => s.node && s.node.closest && s.node.closest('.site-header'))) window.__verschuiving += e.value; } }).observe({ type: 'layout-shift', buffered: true }); });
-  for (let y = 0; y <= 600; y += 40) { await page.evaluate(y => window.scrollTo(0, y), y); await page.waitForTimeout(30); }
-  await page.waitForTimeout(200);
+  for (let y = 0; y <= 600; y += 40) await scrolNaar(page, y);
+  await rust(page); // ook de laatste stand is helemaal verwerkt
   expect(await page.evaluate(() => window.__verschuiving)).toBe(0);
 });
 
