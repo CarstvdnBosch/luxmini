@@ -60,10 +60,10 @@ test('formulier: maatkeuzes per onderwerp en het vrije veld alleen bij anders', 
   const keuzes = naam => page.locator(`select[name="${naam}"] option`).evaluateAll(os => os.map(o => [o.value, o.textContent.trim()]));
   const onderwerp = page.locator('select[name="onderwerp"]');
   await onderwerp.selectOption('Kraamcadeaubox');
-  expect(await keuzes('box_maat')).toEqual([['', 'Weet ik nog niet'], ...['44', '46', '48', '50', '56', '62', '68', '74'].map(m => [m, `Maat ${m}`])]);
+  expect(await keuzes('box_maat')).toEqual([['', 'Weet ik nog niet'], ...['50', '56', '62', '68', '74'].map(m => [m, `Maat ${m}`])]);
   await expect(page.locator('select[name="box_maat"]')).toBeVisible();
   for (const [o, naam, maten, anders, vrij] of [
-    ['Prematuurkleding', 'prem_maat', ['32', '38', '44', '46', '48', '50'], 'Anders / gewicht', 'prem_maat_anders'],
+    ['Prematuurkleding', 'prem_maat', ['32', '34', '36', '38', '44', '46', '48', '50'], 'Anders / gewicht', 'prem_maat_anders'],
     ['Iets op maat laten maken', 'op_maat', ['32', '38', '44', '46', '48', '50', '56', '62', '68', '74', '80', '86'], 'Anders', 'op_maat_anders'],
   ]) {
     await onderwerp.selectOption(o);
@@ -83,17 +83,17 @@ test('formulier: maatkeuzes per onderwerp en het vrije veld alleen bij anders', 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'niet horizontaal scrollen').toBe(true);
 });
 
-// Story 16 (Carst 12 nov., brief 2026-11-12-productrij-carrousel-en-maten): maat 46 komt echt in de mail aan Carien.
+// Story 16 (Carst 12 nov.); maat 44–48 bij de box weer weg (Carst 14 nov., brief 2026-11-14-goedkeuringen-teksten): een boxmaat komt echt in de mail aan Carien.
 // De testserver bouwt de mail met src/contact.js en laat het versturen mislukken als de regel er niet in staat (x-testmail-bevat).
-test('formulier: kraamcadeaubox met maat 46 geeft "Kledingmaat: maat 46" in de mail', async ({ page }) => {
-  await page.setExtraHTTPHeaders({ 'x-testmail': 'ok', 'x-testmail-bevat': encodeURIComponent('\nKledingmaat: maat 46\n') });
+test('formulier: kraamcadeaubox met maat 50 geeft "Kledingmaat: maat 50" in de mail', async ({ page }) => {
+  await page.setExtraHTTPHeaders({ 'x-testmail': 'ok', 'x-testmail-bevat': encodeURIComponent('\nKledingmaat: maat 50\n') });
   await page.goto('/contact?onderwerp=kraamcadeaubox#formulier');
   const maat = page.locator('select[name="box_maat"]');
   await expect(maat).toBeVisible();
   const opmaak = await maat.evaluate(s => [parseFloat(getComputedStyle(s).fontSize), s.getBoundingClientRect().height]);
   expect(opmaak[0], 'select 16 px').toBeGreaterThanOrEqual(16);
   expect(Math.round(opmaak[1]), 'select minstens 44 px hoog').toBeGreaterThanOrEqual(44);
-  await maat.selectOption('46');
+  await maat.selectOption('50');
   await page.locator('textarea[name="bericht"]').fill('Graag een box');
   await page.locator('input[name="naam"]').fill('Test');
   await page.locator('input[name="email"]').fill('test@example.nl');

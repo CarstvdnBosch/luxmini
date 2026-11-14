@@ -27,12 +27,12 @@ Wat het doet:
     de foto, babynest max. 324 px, koppen binnen de kolom op 1025/1280/1440),
     002 Technieken (vier links, diepe tint bij aanwijzen, kaarten op touch),
     003 Inspiratie (grote foto, witte tekst 4,5:1 op de sluier, #contact),
-    004 Instagram; LET OP's (Borduren, babynestfoto, douchehandschoen,
-    formuliervelden); prijskaarten en contactlinks met ?onderwerp=;
+    004 Instagram; LET OP's (tijdelijke foto's, babynestfoto, douchehandschoen;
+    goedgekeurde teksten en formuliervelden juist zonder LET OP, Carst 14 nov.); prijskaarten en contactlinks met ?onderwerp=;
     formulier met groepen per onderwerp; Kraamcadeauboxen (volgorde,
     negen thema's als raster 3/2/2, binnen twee schermen, statementfoto direct
-    na de intro); Prematuurkleding en Babynest (kop, foto, 002 Prijs: zin met
-    LET OP en pijl-link naar het formulier, oud prijsblok als commentaar met
+    na de intro); Prematuurkleding en Babynest (kop, foto, 002 Prijs: zin
+    (Babynest met LET OP) en pijl-link naar het formulier, oud prijsblok als commentaar met
     LET OP, Zo werkt het, contact; foto na hooguit één keer scrollen);
     navigatie met zes items op één regel vanaf 1280 px (daaronder de burger),
     aria-current, menu met subitems, tikdoelen 44 px op touch; _redirects
@@ -698,11 +698,15 @@ def controleer_bestanden():
     # criterium 9 en 24: LET OP bij de prijs en bij de tijdelijke foto op Prematuurkleding
     prem = (ROOT / "prematuurkleding.html").read_text(encoding="utf-8")
     # brief 2026-11-07 (A2, A3): het oude prijsblok staat als commentaar met LET OP (terugzetten als Carien een prijs geeft);
-    # de neutrale zin heeft "wacht op akkoord Carien"
+    # brief 2026-11-14-goedkeuringen-teksten (criterium 18): de neutrale zin is goedgekeurd (Carst 14 nov.) en staat er zonder
+    # "wacht op akkoord" direct erboven
     if not re.search(r"<!--\s*LET OP:[^>]*prijsrichtlijn[^>]*nog niet bekend[^>]*terugzetten[^>]*-->\s*<!--\s*<p class=\"prijs\">Prijsrichtlijn: \[prijs\]</p>\s*-->", prem):
         fouten.append("prematuurkleding.html: het oude prijsblok staat er niet als commentaar met een LET OP-opmerking (terugzetten als Carien een prijs geeft)")
-    if not re.search(r"<!--\s*LET OP: wacht op akkoord Carien\s*-->\s*<p class=\"klein prijs-zin\">[^<\[]+</p>", prem):
-        fouten.append("prematuurkleding.html: de zin bij de prijs heeft geen LET OP 'wacht op akkoord Carien'")
+    prijszin = re.search(r"(<!--(?:(?!-->).)*-->\s*)?<p class=\"klein prijs-zin\">De prijs hangt af van de maat en de stof\.[^<\[]*</p>", prem, re.S)
+    if not prijszin:
+        fouten.append("prematuurkleding.html: de prijszin 'De prijs hangt af van de maat en de stof.' ontbreekt")
+    elif prijszin.group(1) and "wacht op akkoord" in prijszin.group(1):
+        fouten.append("prematuurkleding.html: boven de prijszin staat nog 'wacht op akkoord' (goedgekeurd door Carst, 14 nov.)")
     if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"categorie-foto\"><img src=\"assets/img/p-broekje-kleur", prem):
         fouten.append("prematuurkleding.html: de tijdelijke foto p-broekje-kleur heeft geen LET OP-opmerking")
     nest = (ROOT / "babynest.html").read_text(encoding="utf-8")
@@ -717,14 +721,25 @@ def controleer_bestanden():
     home = (ROOT / "index.html").read_text(encoding="utf-8")
     if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"kern-beeld\"><div class=\"kern-masker\"><img src=\"assets/img/p-broekje-kleur", home):
         fouten.append("index.html: de tijdelijke foto p-broekje-kleur bij Prematuurkleding heeft geen LET OP-opmerking")
-    # brief 2026-11-06, criterium 14: LET OP bij nieuwe teksten (drieluik, Technieken met Borduren, Inspiratie), de babynestfoto,
-    # de douchehandschoen en de nieuwe formuliervelden; het label "001 — Producten" is goedgekeurd (Carst, 6 nov.)
-    for id_ in ["kraamcadeauboxen", "prematuurkleding", "babynest", "technieken", "inspiratie"]:
+    # brief 2026-11-14-goedkeuringen-teksten (criterium 18): de teksten van het drieluik en Handwerk zijn goedgekeurd (Carst 14 nov.)
+    # en hebben geen "wacht op akkoord" meer; bij Handwerk blijft een smallere LET OP over de foto's. Ook de herotabjes, de
+    # pijl-link "Zo personaliseert Carien" en de linkteksten bij Inspiratie zijn goedgekeurd (Carst 14 nov., open vraag 1)
+    for id_ in ["kraamcadeauboxen", "prematuurkleding", "babynest", "technieken"]:
         blok = re.search(r'<section id="' + id_ + r'".*?</section>', home, re.S)
-        if not blok or "LET OP" not in blok.group(0):
-            fouten.append(f"index.html: sectie #{id_} zonder LET OP-opmerking")
-    if not re.search(r"<!--\s*LET OP:[^>]*Speels en levendig[^>]*Borduren", home, re.S):
-        fouten.append("index.html: bij Handwerk ontbreekt de LET OP over 'Speels en levendig' (Borduren)")
+        if not blok:
+            fouten.append(f"index.html: sectie #{id_} ontbreekt")
+        elif "wacht op akkoord" in blok.group(0):
+            fouten.append(f"index.html: sectie #{id_} heeft nog 'wacht op akkoord' (goedgekeurd door Carst, 14 nov.)")
+    blok = re.search(r'<section id="inspiratie".*?</section>', home, re.S)
+    if not blok or "LET OP" in blok.group(0):
+        fouten.append("index.html: sectie #inspiratie ontbreekt of heeft nog een LET OP (linkteksten goedgekeurd door Carst, 14 nov.)")
+    if re.search(r"<!--\s*LET OP:[^>]*(nieuwe linktekst|wacht op akkoord)", home):
+        fouten.append("index.html: er staat nog een LET OP over een goedgekeurde tekst of linktekst (Carst, 14 nov.)")
+    handwerk = re.search(r'<section id="technieken".*?</section>', home, re.S)
+    if not handwerk or not re.search(r"<!--\s*LET OP:[^>]*foto's[^>]*belettering op kleding[^>]*tijdelijke foto[^>]*-->", handwerk.group(0)):
+        fouten.append("index.html: bij Handwerk ontbreekt de LET OP over de foto's (belettering op kleding, tijdelijke prematuurfoto)")
+    if 'Speels en levendig' not in home or '"Borduren"' not in home and '>Borduren<' not in home:
+        fouten.append("index.html: 'Speels en levendig — Borduren' staat niet meer bij Handwerk")
     drie = re.search(r'<section id="producten".*?\n</section>', home, re.S)
     if not drie or re.search(r'<img(?![^>]*loading="lazy")[^>]*>', drie.group(0)):
         fouten.append("index.html: niet alle foto's in het drieluik hebben loading=\"lazy\"")
@@ -736,10 +751,36 @@ def controleer_bestanden():
     if "Douchehandschoen" not in (PROJECT / "docs" / "fotolijst.md").read_text(encoding="utf-8"):
         fouten.append("docs/fotolijst.md: de opname 'Douchehandschoen' ontbreekt")
     contact = (ROOT / "contact.html").read_text(encoding="utf-8")
-    # de kledingmaat is sinds 11 nov. een keuze van Carst (brief 2026-11-11-c5-babymaten) en heeft geen LET OP meer nodig
-    for stuk in ["prematuurkleding", "babynest"]:
-        if not re.search(r"<!--\s*LET OP:[^>]*" + stuk, contact, re.I):
-            fouten.append(f"contact.html: de formuliervelden voor {stuk} hebben geen LET OP-opmerking")
+    # brief 2026-11-14-goedkeuringen-teksten (criterium 18): de formuliervelden voor prematuurkleding en babynest zijn
+    # goedgekeurd (Carst 14 nov.) en hebben geen LET OP meer; de velden zelf staan er nog
+    for stuk, veld in [("prematuurkleding", "prem_maat"), ("babynest", "nest_stof")]:
+        if re.search(r"<!--\s*LET OP:[^>]*" + stuk, contact, re.I):
+            fouten.append(f"contact.html: de formuliervelden voor {stuk} hebben nog een LET OP-opmerking (goedgekeurd door Carst, 14 nov.)")
+        if f'name="{veld}"' not in contact:
+            fouten.append(f"contact.html: het veld {veld} ({stuk}) ontbreekt")
+    # criterium 8: "wacht op akkoord Carien" alleen nog bij de douchehandschoen (herotabjes goedgekeurd: Carst 14 nov., open vraag 1)
+    for pagina in ["index.html", "werkwijze.html", "prematuurkleding.html", "kraamcadeauboxen.html", "inspiratie.html", "contact.html", "privacy.html"]:
+        html = (ROOT / pagina).read_text(encoding="utf-8")
+        for m in re.finditer(r"<!--(?:(?!-->).)*?wacht op akkoord Carien(?:(?!-->).)*-->\s*(<[^>]*>)?", html, re.S):
+            toegestaan = pagina == "kraamcadeauboxen.html" and "douchehandschoen" in m.group(0)
+            if not toegestaan:
+                regel = html[:m.start()].count("\n") + 1
+                fouten.append(f"{pagina} r. {regel}: 'wacht op akkoord Carien' staat er nog (goedgekeurd door Carst, 14 nov.)")
+        if pagina != "kraamcadeauboxen.html" and "wacht op akkoord Carien" in html:
+            fouten.append(f"{pagina}: 'wacht op akkoord Carien' staat er nog (goedgekeurd door Carst, 14 nov.)")
+    # criterium 10 en 11: de quote op Inspiratie is Cariens zin van de oude site; de oude quote is overal weg
+    insp = (ROOT / "inspiratie.html").read_text(encoding="utf-8")
+    st = re.search(r'<section class="statement[^"]*".*?</section>', insp, re.S)
+    if not st or not re.search(r'<p class="quote">“Hoe bijzonder is het om één van de eerste pakjes voor iemand te mogen maken\.”</p>\s*<span class="caps">Carien Geurts —</span>\s*<a class="pijl" href="werkwijze\.html#atelier">', st.group(0)):
+        fouten.append("inspiratie.html: het atelierstatement heeft niet de quote 'Hoe bijzonder is het om één van de eerste pakjes voor iemand te mogen maken.' met Carien Geurts en de pijl-link")
+    elif "LET OP" in st.group(0):
+        fouten.append("inspiratie.html: bij het atelierstatement staat nog een LET OP")
+    for f in ROOT.rglob("*"):
+        if f.is_file() and f.suffix in (".html", ".js", ".css", ".txt", ".xml"):
+            t = f.read_text(encoding="utf-8", errors="ignore")
+            for oud in ("Door dezelfde handen", "genaaid, geborduurd en beletterd"):
+                if oud in t:
+                    fouten.append(f"{f.relative_to(ROOT)}: '{oud}' komt nog voor")
 
 LEES_HEADER = """() => { const l = document.querySelector('.site-header .logo').getBoundingClientRect();
   return [[...document.querySelectorAll('.site-header .menu a')].map(a => { const r = a.getBoundingClientRect();

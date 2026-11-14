@@ -18,7 +18,7 @@
 //                 header  x-testmail-bijlage: ja | nee  (optioneel: de nep-verzending mislukt als er wel/geen foto als bijlage
 //                         in de mail zit; zo toetst e2e dat een foto van een eigen stof echt aankomt, brief 2026-11-11-c7-stofkeuze)
 //                 header  x-testmail-bevat: <tekst, URL-gecodeerd>  (optioneel: de nep-verzending mislukt als de tekst van de
-//                         opgebouwde mail die regel niet bevat; zo toetst e2e bijv. "Kledingmaat: maat 46", brief 2026-11-12-productrij-carrousel-en-maten)
+//                         opgebouwde mail die regel niet bevat; zo toetst e2e bijv. "Kledingmaat: maat 50", brief 2026-11-12-productrij-carrousel-en-maten)
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
