@@ -278,12 +278,16 @@ test('drieluik: aanwijzen van Babynest laat kolom 1 en 2 exact staan (±1 px)', 
     await page.waitForTimeout(400);
     const tijdens = await plek();
     voor.forEach((v, i) => v.forEach((x, n) => expect(Math.abs(tijdens[i][n] - x), `${b} px: ${['kop kolom 1', 'kop kolom 2', 'drieluik'][i]} verschuift`).toBeLessThanOrEqual(1)));
-    // de ingelijste babynestfoto valt binnen de kolom en is hooguit 324 px breed
+    // wens Carst 14 nov.: de babynestfoto vult de kolom net als de andere twee (geen ingelijste kleine foto meer), tekst wit,
+    // en wordt nooit breder getoond dan het bestand (768 px)
     await page.waitForTimeout(800);
-    const nest = await page.evaluate(() => { const f = document.querySelector('#babynest .nest-lijst').getBoundingClientRect(), k = document.querySelector('#babynest').getBoundingClientRect(), t = document.querySelector('#babynest .pijl').getBoundingClientRect();
-      return { binnen: f.top >= k.top - 1 && t.bottom <= k.bottom + 1, breed: f.width }; });
-    expect(nest.binnen, `${b} px: babynestfoto en tekst binnen de kolom`).toBe(true);
-    expect(nest.breed).toBeLessThanOrEqual(324.5);
+    const nest = await page.evaluate(() => { const f = document.querySelector('#babynest .kern-beeld').getBoundingClientRect(), k = document.querySelector('#babynest').getBoundingClientRect(), i = document.querySelector('#babynest .kern-beeld img');
+      return { vult: Math.abs(f.top - k.top) + Math.abs(f.bottom - k.bottom) + Math.abs(f.left - k.left) + Math.abs(f.right - k.right), breed: Math.max(f.width, f.height * i.naturalWidth / i.naturalHeight),
+        bestand: i.naturalWidth, kleur: getComputedStyle(document.querySelector('#babynest .kern-tekst h2')).color, lijst: document.querySelectorAll('#babynest .nest-lijst').length }; });
+    expect(nest.vult, `${b} px: babynestfoto vult de kolom`).toBeLessThanOrEqual(2);
+    expect(nest.breed).toBeLessThanOrEqual(nest.bestand + 0.5);
+    expect(nest.kleur).toBe('rgb(255, 255, 255)');
+    expect(nest.lijst).toBe(0);
   }
 });
 

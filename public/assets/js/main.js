@@ -743,6 +743,71 @@
       e.preventDefault(); tabs[doel].focus();
     });
     if (breed.addEventListener) breed.addEventListener('change', stand);
+  /* ---------------------------------------------------------------
+     5f. Babynest (brief 2026-11-14-babynest-media-en-logo, A): boek, magazine en tablet zoals het Media-overzicht van Stock.
+         Komt een blok in beeld, dan schuift het object in (x 150% met een draai → 0, 1,5 s; mobiel van onder) en komen
+         de regels één voor één op (CSS .anim.binnen). Daarna slaat de kaft open op de scrollpositie: op desktop terwijl het
+         blok vaststaat (hooguit één scherm, CSS sticky), op tablet en mobiel terwijl het object door het beeld gaat (touch native).
+         De tablet wisselt van foto op de scrollpositie. Bij "minder beweging": alles open en direct, de tablet wisselt zonder schuiven.
+     --------------------------------------------------------------- */
+  var mediaBlokken = Array.prototype.slice.call(document.querySelectorAll('main .media'));
+  if (mediaBlokken.length) {
+    var mediaBreed = window.matchMedia('(min-width: 1025px)');
+    var beperk01 = function (x) { return Math.max(0, Math.min(1, x)); };
+    var mediaLaden = function (sec) { // foto's verderop in het blok (tablet, achterkant van de kaft) liggen buiten beeld: alvast in de cache
+      sec.querySelectorAll('.media-object img').forEach(function (img) { var v = new Image(); v.decoding = 'async'; v.src = img.currentSrc || img.src; });
+    };
+    mediaBlokken.forEach(function (sec) {
+      if (!stil) { sec.classList.add('anim'); if (sec.querySelector('.kaft')) { sec.style.setProperty('--open', '0'); sec.style.setProperty('--kaft-o', '1'); } }
+    });
+    var mediaBijwerken = function () {
+      var vh = window.innerHeight;
+      mediaBlokken.forEach(function (sec) {
+        var r = sec.getBoundingClientRect();
+        if (r.bottom < -vh || r.top > 2 * vh) return;
+        var p;
+        if (!stil && mediaBreed.matches && r.height > vh + 1) {
+          p = beperk01(-r.top / (r.height - vh)); // vastgezet: 0 bij het begin, 1 aan het eind
+        } else {
+          var o = sec.querySelector('.media-object').getBoundingClientRect();
+          p = beperk01((vh * 0.75 - o.top) / (vh * 0.5));
+        }
+        if (!stil && sec.querySelector('.kaft')) {
+          var open = sec.classList.contains('binnen') ? beperk01((p - 0.1) / 0.7) : 0;
+          sec.style.setProperty('--open', open.toFixed(3));
+          sec.style.setProperty('--kaft-o', open > 0.995 ? '0' : '1');
+        }
+        var strook = sec.querySelector('.tablet-strook');
+        if (strook) {
+          var stap = Math.min(2, Math.floor(p * 3));
+          strook.style.setProperty('--stap', stap);
+          sec.querySelectorAll('.tablet-puntjes span').forEach(function (s, i) { s.classList.toggle('aan', i === stap); });
+        }
+      });
+    };
+    if ('IntersectionObserver' in window) {
+      var mediaIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) {
+          if (!it.isIntersecting) return;
+          it.target.classList.add('binnen');
+          mediaIo.unobserve(it.target);
+          mediaBijwerken();
+        });
+      }, { rootMargin: '0px 0px -15% 0px' });
+      var laadIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) { if (it.isIntersecting) { mediaLaden(it.target); laadIo.unobserve(it.target); } });
+      }, { rootMargin: '100% 0px 100% 0px' });
+      mediaBlokken.forEach(function (sec) { mediaIo.observe(sec); laadIo.observe(sec); });
+    } else {
+      mediaBlokken.forEach(function (sec) { sec.classList.add('binnen'); mediaLaden(sec); });
+    }
+    var mediaGepland = false;
+    var mediaPlan = function () { if (!mediaGepland) { mediaGepland = true; requestAnimationFrame(function () { mediaGepland = false; mediaBijwerken(); }); } };
+    window.addEventListener('scroll', mediaPlan, { passive: true });
+    window.addEventListener('resize', mediaPlan);
+    mediaBijwerken();
+  }
+
     stand();
   });
 
@@ -859,7 +924,7 @@
     }, { rootMargin: '0px 0px -8% 0px' });
     document.querySelectorAll('main .label, main .quote, main .stap .klein, main .formaat, main .formaten-voet, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier').forEach(function (el, i) {
       // niet in de hero, het statement of de paginakop: wat bij het openen al in beeld staat, staat er meteen (snellere LCP)
-      if (el.closest('.hero') || el.closest('.statement') || el.closest('.pagina-kop, .over-kop, .contact-kop')) return;
+      if (el.closest('.hero') || el.closest('.statement') || el.closest('.pagina-kop, .over-kop, .contact-kop') || el.closest('.media')) return; // Babynest-blokken: eigen regels (5f)
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';
       io.observe(el);

@@ -24,7 +24,7 @@ Wat het doet:
   - brief homepage zoals Stock (2026-11-06): homepage hero, 001 Producten
     (drieluik: drie kolommen, producttekst, één pijl-link en één tabstop per
     kolom, foto boven de tekst op touch, bij aanwijzen witte tekst met 4,5:1 op
-    de foto, babynest max. 324 px, koppen binnen de kolom op 1025/1280/1440),
+    de foto (Babynest net zo vol als de andere twee), koppen binnen de kolom op 1025/1280/1440),
     002 Technieken (vier links, diepe tint bij aanwijzen, kaarten op touch),
     003 Inspiratie (grote foto, witte tekst 4,5:1 op de sluier, #contact),
     004 Instagram; LET OP's (Borduren, babynestfoto, douchehandschoen,
@@ -298,12 +298,12 @@ LEES_DRIELUIK = r"""() => { const s = document.querySelector('#producten'); if (
   const schoon = t => t.replace(/\u00ad/g, '').replace(/\s+/g, ' ').trim();
   return { label: s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim(), kleur: s.getAttribute('data-achtergrond'), hoogte: s.getBoundingClientRect().height,
     kolommen: [...s.querySelectorAll('.kern-kolom')].map(k => { const r = k.getBoundingClientRect(), h = k.querySelector('h2'), hr = h.getBoundingClientRect();
-      const img = k.querySelector('.kern-beeld img, .nest-lijst img'), ir = img ? img.getBoundingClientRect() : null;
+      const img = k.querySelector('.kern-beeld img'), ir = img ? img.getBoundingClientRect() : null;
       const woorden = (() => { const rg = document.createRange(); rg.selectNodeContents(h); return [...rg.getClientRects()].some(x => x.width && (x.right > r.right + 1 || x.left < r.left - 1)); })();
       return { id: k.id, kop: schoon(h.textContent), tekst: [...k.querySelectorAll('p.klein')].map(p => schoon(p.textContent)),
         pijlen: [...k.querySelectorAll('a')].map(a => [a.getAttribute('href'), a.getBoundingClientRect().height, getComputedStyle(a).visibility, parseFloat(getComputedStyle(a).opacity)]),
         breedte: r.width, kleur: getComputedStyle(k).backgroundColor, buiten: woorden,
-        img: img ? [img.getAttribute('src'), img.getAttribute('loading'), ir.width, ir.height, ir.bottom <= hr.top + 1, img.naturalWidth || 0, getComputedStyle(img.closest('.kern-beeld, .nest-lijst')).display] : null,
+        img: img ? [img.getAttribute('src'), img.getAttribute('loading'), ir.width, ir.height, ir.bottom <= hr.top + 1, img.naturalWidth || 0, getComputedStyle(img.closest('.kern-beeld')).display] : null,
         tabstops: [...k.querySelectorAll('a, button, [tabindex]')].filter(e => e.tabIndex >= 0).length + (k.tabIndex >= 0 ? 1 : 0) }; }) }; }"""
 
 def controleer_home(page, tag, naam):
@@ -336,8 +336,9 @@ def controleer_home(page, tag, naam):
                 fouten.append(f"{ktag}: op touch staat de foto niet boven de tekst ({k['img']})")
             if nat and b > nat + 0.5:
                 fouten.append(f"{ktag}: foto {src} groter getoond ({b:.0f} px) dan het bestand ({nat} px)")
-            if id_ == "babynest" and b > 324.5:
-                fouten.append(f"{ktag}: babynestfoto breder dan 324 px ({b:.0f})")
+            # wens Carst 14 nov.: de babynestkolom is gelijk aan de andere twee (nieuwe foto in .kern-beeld, geen ingelijste kleine foto)
+            if id_ == "babynest" and ("babynest-boven.jpg" not in src or b > 768.5):
+                fouten.append(f"{ktag}: babynestkolom niet zoals de andere kolommen (foto {src}, {b:.0f} px, max. 768)")
     if naam == "desktop":
         breedtes = [round(k["breedte"]) for k in d["kolommen"]]
         if max(breedtes) - min(breedtes) > 1 or d["hoogte"] > 900.5:
@@ -424,7 +425,7 @@ def controleer_witte_lijn(browser):
         ctx.close()
 
 def controleer_home_interactie(browser):
-    """Desktop (muis): drieluik bij aanwijzen (foto in, witte tekst min. 4,5:1 op de lichtste plek; babynest max. 324 px en inkt),
+    """Desktop (muis): drieluik bij aanwijzen (foto in, witte tekst min. 4,5:1 op de lichtste plek, ook bij Babynest: wens Carst 14 nov.),
     Technieken bij aanwijzen (diepe tint, namen wit, terug na het verlaten), koppen binnen de kolommen op 1025/1280/1440,
     Inspiratie met witte tekst op de sluier (min. 4,5:1)."""
     for b, h in [(1025, 800), (1280, 720), (1440, 900)]:
@@ -440,11 +441,13 @@ def controleer_home_interactie(browser):
         r = page.evaluate("id => { const r = document.getElementById(id).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }", id_)
         page.mouse.move(r[0], r[1], steps=3); page.wait_for_timeout(1500)
         kleur = page.evaluate("id => [...document.querySelectorAll('#' + id + ' .kern-tekst h2, #' + id + ' .kern-tekst p, #' + id + ' .kern-tekst a')].map(e => getComputedStyle(e).color)", id_)
-        if id_ == "babynest":
-            w = page.evaluate("() => document.querySelector('#babynest .nest-lijst img').getBoundingClientRect().width")
-            if w > 324.5 or any(k != INKT for k in kleur):
-                fouten.append(f"{tag}: babynest: foto {w:.0f} px (max. 324) of tekst niet inkt ({kleur})")
-            continue
+        # de foto vult de kolom (kern-beeld = kolom) en wordt nooit breder getoond dan het bestand (object-fit: cover)
+        m = page.evaluate("""id => { const k = document.getElementById(id).getBoundingClientRect(), f = document.querySelector('#' + id + ' .kern-beeld').getBoundingClientRect(), i = document.querySelector('#' + id + ' .kern-beeld img');
+          return [Math.abs(k.top - f.top) + Math.abs(k.bottom - f.bottom) + Math.abs(k.left - f.left) + Math.abs(k.right - f.right), Math.max(f.width, f.height * i.naturalWidth / i.naturalHeight), i.naturalWidth]; }""", id_)
+        if m[0] > 2:
+            fouten.append(f"{tag}: kolom {i}: de foto vult de kolom niet ({m[0]:.0f} px verschil)")
+        if id_ == "babynest" and m[1] > m[2] + 0.5:
+            fouten.append(f"{tag}: babynest: foto {m[1]:.0f} px breed getoond, breder dan het bestand ({m[2]} px)")
         if any(k != WIT for k in kleur):
             fouten.append(f"{tag}: kolom {i}: tekst niet wit bij aanwijzen ({kleur})")
         for sel in ["h2", "p.klein", "a.pijl"]:
@@ -706,14 +709,12 @@ def controleer_bestanden():
     if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"categorie-foto\"><img src=\"assets/img/p-broekje-kleur", prem):
         fouten.append("prematuurkleding.html: de tijdelijke foto p-broekje-kleur heeft geen LET OP-opmerking")
     nest = (ROOT / "babynest.html").read_text(encoding="utf-8")
-    # brief 2026-11-07 (A2, A3): het oude prijsblok staat als commentaar met LET OP (terugzetten als Carien een prijs geeft);
-    # de neutrale zin heeft "wacht op akkoord Carien"
-    if not re.search(r"<!--\s*LET OP:[^>]*prijsrichtlijn[^>]*nog niet bekend[^>]*terugzetten[^>]*-->\s*<!--\s*<p class=\"prijs\">Prijsrichtlijn: \[prijs\]</p>\s*-->", nest):
-        fouten.append("babynest.html: het oude prijsblok staat er niet als commentaar met een LET OP-opmerking (terugzetten als Carien een prijs geeft)")
-    if not re.search(r"<!--\s*LET OP: wacht op akkoord Carien\s*-->\s*<p class=\"klein prijs-zin\">[^<\[]+</p>", nest):
-        fouten.append("babynest.html: de zin bij de prijs heeft geen LET OP 'wacht op akkoord Carien'")
-    if not re.search(r"<!--\s*LET OP:[^>]*-->\s*<p class=\"quote pagina-quote\">Een babynest in de stof en kleur die jij kiest\.</p>", nest):
-        fouten.append("babynest.html: de kop 'Een babynest in de stof en kleur die jij kiest.' heeft geen LET OP-opmerking")
+    # besluit Carst 14 nov. (brief 2026-11-14-babynest-media-en-logo): titel, beschrijving, quote, werkwijzestappen en de richtprijs
+    # zijn goedgekeurd (geen LET OP meer); de koppen en zinnen van 001–003 wachten nog op Carien
+    if "[prijs]" in nest or re.search(r"LET OP:[^>]*(prijsrichtlijn|titel en beschrijving|werkwijzeteksten|producttekst van de homepage)", nest):
+        fouten.append("babynest.html: er staat nog een plaatshouder of een LET OP bij goedgekeurde tekst (titel, quote, prijs, werkwijze)")
+    if not re.search(r"LET OP: wacht op akkoord Carien \(koppen en zinnen van 001–003\)", nest):
+        fouten.append("babynest.html: de teksten van 001–003 hebben geen LET OP 'wacht op akkoord Carien'")
     home = (ROOT / "index.html").read_text(encoding="utf-8")
     if not re.search(r"<!--\s*LET OP:[^>]*tijdelijke foto[^>]*-->\s*<div class=\"kern-beeld\"><div class=\"kern-masker\"><img src=\"assets/img/p-broekje-kleur", home):
         fouten.append("index.html: de tijdelijke foto p-broekje-kleur bij Prematuurkleding heeft geen LET OP-opmerking")
@@ -728,8 +729,8 @@ def controleer_bestanden():
     drie = re.search(r'<section id="producten".*?\n</section>', home, re.S)
     if not drie or re.search(r'<img(?![^>]*loading="lazy")[^>]*>', drie.group(0)):
         fouten.append("index.html: niet alle foto's in het drieluik hebben loading=\"lazy\"")
-    if not re.search(r"<!--\s*LET OP:[^>]*-->\s*<div class=\"nest-lijst\">", home):
-        fouten.append("index.html: de babynestfoto in het drieluik heeft geen LET OP-opmerking")
+    if "nest-lijst" in home or "ig-babynest.jpg" in (drie.group(0) if drie else ""):
+        fouten.append("index.html: het drieluik heeft nog de kleine ingelijste babynestfoto (wens Carst 14 nov.: net zo vol als de andere kolommen)")
     box = (ROOT / "kraamcadeauboxen.html").read_text(encoding="utf-8")
     if not re.search(r"<!--\s*LET OP:[^>]*douchehandschoen[^>]*-->\s*<li class=\"product\"><div class=\"product-tekening\">", box):
         fouten.append("kraamcadeauboxen.html: de douchehandschoen (lijntekening) heeft geen LET OP-opmerking")
@@ -1147,8 +1148,14 @@ LEEG_SCHERM = """() => { const els = [...document.querySelectorAll('main h1, mai
 PRODUCTPAGINAS = {
     "prematuurkleding.html": {"formulier": "contact.html?onderwerp=prematuurkleding#formulier", "h1": "Prematuurkleding", "foto_id": "maatwerk", "kleur": "#C3CFBC", "foto": "p-broekje-kleur.jpg", "max_b": 480,
                               "secties": [["", "— Prematuurkleding"], ["maatwerk", "001 — Maatwerk"], ["prijs", "002 — Prijs"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
-    "babynest.html": {"formulier": "contact.html?onderwerp=babynest#formulier", "h1": "Babynest", "foto_id": "babynest", "kleur": "#B5969E", "foto": "ig-babynest.jpg", "max_b": 324,
-                      "secties": [["", "— Babynest"], ["babynest", "001 — Babynest"], ["prijs", "002 — Prijs"], ["zo-werkt-het", "003 — Zo werkt het"], ["contact", "004 — Contact"]]},
+    # brief 2026-11-14-babynest-media-en-logo (A): drie blokken zoals het Media-overzicht van Stock; eigen controle hieronder
+    "babynest.html": {"formulier": "contact.html?onderwerp=babynest#formulier", "h1": "Babynest", "foto_id": "babynest", "kleur": "#B5969E", "max_b": 384,
+                      "fotos": ["babynest-boven.jpg", "babynest-dekentje.jpg", "babynest-stof-rits.jpg", "babynest-voorkant.jpg"], "media": True,
+                      "blokken": [["babynest", "001 — Het nest", "#B5969E", "Het nest", "Bespreek je idee", "contact.html?onderwerp=babynest#formulier"],
+                                  ["stof", "002 — De stof", "#C3CFBC", "De stof", "Bekijk de stoffen", "kraamcadeauboxen.html#stoffen"],
+                                  ["dekentje", "003 — Het dekentje", "#DEB799", "Het dekentje", "Vraag ernaar", "contact.html?onderwerp=babynest#formulier"]],
+                      "secties": [["", "— Babynest"], ["babynest", "001 — Het nest"], ["stof", "002 — De stof"], ["dekentje", "003 — Het dekentje"],
+                                  ["prijs", "004 — Prijs"], ["zo-werkt-het", "005 — Zo werkt het"], ["contact", "006 — Contact"]]},
 }
 
 def controleer_productpagina(browser, pagina):
@@ -1212,7 +1219,10 @@ def controleer_productpagina(browser, pagina):
 
 def controleer_prematuur(browser):
     for pagina in PRODUCTPAGINAS:
-        controleer_productpagina(browser, pagina)
+        if PRODUCTPAGINAS[pagina].get("media"):
+            controleer_babynest(browser)
+        else:
+            controleer_productpagina(browser, pagina)
 
 # Inspiratie (was Portfolio): vier groepen (criteria 10, 11 en 12 van navigatie-v2; criterium 5 van homepage per product)
 GROEPEN = [("kleding", "#C3CFBC", "#839C75"), ("textiel", "#B5969E", "#AE8C94"), ("siliconen", "#B4B19A", "#999575"), ("boxen", "#DEB799", "#C88654")]
@@ -1234,6 +1244,92 @@ def controleer_portfoliopagina(browser):
     for naam, (b, h, touch, kolommen) in {"desktop": (1440, 900, False, 4), "tablet": (768, 1024, True, 3), "mobiel": (390, 844, True, 2)}.items():
         ctx, page = nieuwe_pagina(browser, "inspiratie.html", b, h, touch, reduced_motion="reduce")
         tag = f"inspiratie.html [{naam}]"
+LEES_MEDIA = """() => { const b = [...document.querySelectorAll('main > section.media')];
+  return b.map(s => { const z = s.querySelector('.media-zin'), cs = getComputedStyle(z), a = [...s.querySelectorAll('a.pijl')];
+    const imgs = [...s.querySelectorAll('.media-object img')].map(i => { const r = i.getBoundingClientRect(); return [i.getAttribute('src'), r.width, i.getAttribute('width'), i.getAttribute('height'), i.getAttribute('loading'), i.alt]; });
+    const pag = [...s.querySelectorAll('.blad, .kaft-voor')].filter(e => e.offsetWidth).map(e => e.getBoundingClientRect().width);
+    const tekst = [...s.querySelectorAll('.media-rij > .label, .media-rij > h2, .media-zin, .media-rij > .pijl')].map(e => getComputedStyle(e).color);
+    return { id: s.id, kleur: s.getAttribute('data-achtergrond'), label: s.querySelector('.media-rij > .label').textContent.trim(),
+      h2: [...s.querySelectorAll('h2')].map(h => [h.textContent.trim(), getComputedStyle(h).fontFamily.split(',')[0].replace(/"/g, '')]),
+      zin: [z.textContent.trim(), parseFloat(cs.fontSize), cs.fontFamily.split(',')[0].replace(/"/g, ''), z.getBoundingClientRect().width / parseFloat(cs.fontSize)],
+      pijl: a.map(x => [x.textContent.trim(), x.getAttribute('href'), x.getBoundingClientRect().height]), knoppen: s.querySelectorAll('button').length,
+      imgs, pag, tekst, obj: s.querySelector('.media-object').getBoundingClientRect().width, vak: document.querySelector('main').clientWidth }; }); }"""
+
+def controleer_babynest(browser):
+    """Brief 2026-11-14-babynest-media-en-logo (A, criterium 29): kop, 001–003 als boek, magazine en tablet, 004 Prijs (richtprijs,
+    besluit Carst 14 nov.), 005 Zo werkt het, 006 Contact; maten, inkt, één h2/zin/pijl-link per blok, geen leeg scherm."""
+    pagina = "babynest.html"
+    v = PRODUCTPAGINAS[pagina]
+    # 390 x 844: h1, quote en 'Stuur Carien een bericht' in het eerste scherm; het object van 001 na hooguit één keer scrollen in beeld
+    ctx, page = nieuwe_pagina(browser, pagina, 390, 844, True)
+    st = page.evaluate("""() => { const z = e => { if (!e) return false; const r = e.getBoundingClientRect(); return r.height > 0 && r.top >= 0 && r.bottom <= innerHeight; };
+      const a = [...document.querySelectorAll('.pagina-kop a.pijl')].map(a => [a.textContent.trim(), a.getAttribute('href'), z(a)]);
+      const q = document.querySelector('.pagina-kop .quote');
+      return [document.querySelector('h1').textContent.trim(), z(q), a, getComputedStyle(q).color, parseFloat(getComputedStyle(q).fontSize)]; }""")
+    if st[0] != v["h1"] or not st[1] or st[2] != [["Stuur Carien een bericht", v["formulier"], True]]:
+        fouten.append(f"{pagina} [mobiel]: h1, quote of 'Stuur Carien een bericht' (naar het formulier) staan niet in het eerste scherm ({st[:3]})")
+    if st[3] != WIT or st[4] < 24:
+        fouten.append(f"{pagina} [mobiel]: de quote in de kop hoort wit vanaf 24 px ({st[3:]})")
+    delen = []
+    for y in [0, 844]:
+        page.evaluate(f"window.scrollTo(0, {y})"); page.wait_for_timeout(300)
+        delen.append(page.evaluate("""() => { const r = document.querySelector('#babynest .media-object').getBoundingClientRect();
+          return Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) / r.height; }"""))
+    if max(delen) < .5:
+        fouten.append(f"{pagina} [mobiel]: het boek van 001 is in het eerste scherm en na één keer scrollen maar voor {max(delen):.0%} in beeld (min. 50%)")
+    ctx.close()
+    for naam, (b, h, touch) in {"desktop": (1440, 900, False), "tablet": (768, 1024, True), "mobiel": (390, 844, True)}.items():
+        ctx, page = nieuwe_pagina(browser, pagina, b, h, touch, reduced_motion="reduce")
+        tag = f"{pagina} [{naam}]"
+        secties = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()])")
+        if secties != v["secties"]:
+            fouten.append(f"{tag}: volgorde van de secties is {secties}, verwacht {v['secties']}")
+        blokken = page.evaluate(LEES_MEDIA)
+        for blok, (id_, label, kleur, kop, pijl, href) in zip(blokken, v["blokken"]):
+            btag = f"{tag} #{id_}"
+            if [blok["id"], blok["label"], blok["kleur"]] != [id_, label, kleur]:
+                fouten.append(f"{btag}: id, label of kleur klopt niet ({blok['id']}, {blok['label']}, {blok['kleur']})")
+            if blok["h2"] != [[kop, "Libre Caslon Display"]] or blok["knoppen"]:
+                fouten.append(f"{btag}: niet precies één kop '{kop}' in Libre Caslon Display, of er staan knoppen in ({blok['h2']}, {blok['knoppen']})")
+            z = blok["zin"]
+            if z[1] < 16 or z[2] != "Source Sans 3" or z[3] > 75 * .55:
+                fouten.append(f"{btag}: de zin is niet Source Sans 3 vanaf 16 px met regels van hooguit 75 tekens ({z})")
+            if [x[:2] for x in blok["pijl"]] != [[pijl, href]] or any(x[2] < 44 for x in blok["pijl"]):
+                fouten.append(f"{btag}: pijl-link is niet '{pijl}' naar {href} met een tikdoel van 44 px ({blok['pijl']})")
+            if any(c != INKT for c in blok["tekst"]):
+                fouten.append(f"{btag}: tekst op de lichte tint is niet inkt ({blok['tekst']})")
+            for src, br, w, hh, lazy, alt in blok["imgs"]:
+                if not any(f in src for f in v["fotos"]) or (w, hh) != ("768", "960") or lazy != "lazy" or not alt:
+                    fouten.append(f"{btag}: foto {src} zonder width/height 768 x 960, loading=lazy of alt")
+                if br > 768.5:
+                    fouten.append(f"{btag}: foto {src} {br:.0f} px breed, breder dan het bestand (768)")
+            if naam == "desktop" and (any(x > v["max_b"] + .5 for x in blok["pag"]) or blok["obj"] > blok["vak"] * .41):
+                fouten.append(f"{btag}: pagina breder dan {v['max_b']} px of objectvak breder dan 40% ({blok['pag']}, {blok['obj']:.0f} van {blok['vak']})")
+            if naam == "mobiel" and abs(blok["obj"] - 326) > 1:
+                fouten.append(f"{btag}: object op 390 px is {blok['obj']:.0f} px breed (verwacht 326)")
+            if naam == "tablet" and blok["obj"] > 560.5:
+                fouten.append(f"{btag}: object op tablet is {blok['obj']:.0f} px breed (max. 560)")
+        if len(blokken) != 3:
+            fouten.append(f"{tag}: {len(blokken)} Media-blokken in plaats van 3")
+        # 004 Prijs: richtprijs als eigen regel (kop-m, ca. 32 px), de zin in inkt (Source Sans 3, min. 16 px) en "Vraag naar de prijs"
+        p = page.evaluate("""() => { const s = document.querySelector('#prijs'), r = s.querySelector('.prijs-richt'), z = s.querySelector('.prijs-zin'), a = s.querySelector('a.pijl');
+          return [r ? r.textContent.replace(/\\s+/g, ' ').trim() : null, r ? parseFloat(getComputedStyle(r).fontSize) : 0, z ? z.textContent.trim() : null, z ? getComputedStyle(z).color : null,
+            z ? parseFloat(getComputedStyle(z).fontSize) : 0, a ? [a.textContent.trim(), a.getAttribute('href')] : null, s.querySelector('.label').textContent.trim()]; }""")
+        if p[0] != "Richtprijs € 95" or not 30 <= p[1] <= 34 or p[2] != "De prijs kan iets wijzigen, afhankelijk van de stof en extra wensen." or p[3] != INKT or p[4] < 16 \
+                or p[5] != ["Vraag naar de prijs", v["formulier"]] or p[6] != "004 — Prijs":
+            fouten.append(f"{tag}: #prijs heeft niet de richtprijs (ca. 32 px), de zin in inkt en 'Vraag naar de prijs' ({p})")
+        st = page.evaluate("""() => [[...document.querySelectorAll('main .stappen > li h2')].map(h => { const k = h.cloneNode(true); k.querySelectorAll('br').forEach(b => b.replaceWith(' ')); return k.textContent.replace(/\\s+/g, ' ').trim(); }),
+          [...document.querySelectorAll('#contact img')].map(i => [i.getAttribute('src'), i.alt])]""")
+        if st[0] != ["Samen kiezen", "Persoonlijk maken", "Met zorg gemaakt"] or len(st[1]) != 1 or "babynest-voorkant.jpg" not in st[1][0][0] or not st[1][0][1]:
+            fouten.append(f"{tag}: Zo werkt het of de contactfoto (babynest-voorkant.jpg met alt) klopt niet ({st})")
+        alts = page.evaluate("() => [...document.querySelectorAll('main img')].map(i => i.alt).filter(Boolean)")
+        if len(alts) != len(set(alts)):
+            fouten.append(f"{tag}: dezelfde alt-tekst wordt meer dan eens voorgelezen ({[a for a in alts if alts.count(a) > 1]})")
+        leeg = page.evaluate(LEEG_SCHERM)
+        if leeg:
+            fouten.append(f"{tag}: scherm zonder inhoud vanaf y = {leeg}")
+        ctx.close()
+
         kop = page.evaluate("() => [document.querySelector('h1').textContent.trim(), document.title, [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()])]")
         if kop[0] != "Inspiratie" or not kop[1].startswith("Inspiratie") or kop[2] != [["", "— Inspiratie"], ["kleding", "001 — Kleding"], ["textiel", "002 — Knuffels en babynest"], ["siliconen", "003 — Siliconen en hangers"], ["boxen", "004 — Kraamcadeauboxen"], ["", "— Het atelier"], ["contact", "005 — Contact"]]:
             fouten.append(f"{tag}: h1, titel of secties kloppen niet ({kop})")

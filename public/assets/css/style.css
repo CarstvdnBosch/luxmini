@@ -569,8 +569,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .kolom-link::after { content: ""; position: absolute; inset: -200vh -200vw; z-index: 3; } /* groter dan de kolom en afgesneden door de kolom (overflow): ook als het tekstblok verschuift is de hele kolom klikbaar */
 .kolom-link:hover { opacity: 1; }
 .kern-beeld { display: none; }
-.kern-masker img, .nest-lijst img { width: 100%; height: 100%; object-fit: cover; }
-.nest-lijst { display: none; }
+.kern-masker img { width: 100%; height: 100%; object-fit: cover; }
 
 /* Met een muis (vanaf 761 px): één scherm hoog, foto schuift in bij aanwijzen of focus */
 @media (hover: hover) and (pointer: fine) and (min-width: 761px) {
@@ -585,25 +584,13 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .kern-kolom:hover .kern-beeld, .kern-kolom:hover .kern-masker, .kern-kolom:focus-within .kern-beeld, .kern-kolom:focus-within .kern-masker { transform: none; }
   .kern-kolom:hover .kern-masker img, .kern-kolom:focus-within .kern-masker img { transform: none; }
   .kern-tekst, .kern-tekst .kop-m { transition: color .6s var(--rustig); }
-  .kolom-box:hover .kern-tekst, .kolom-box:focus-within .kern-tekst, .kolom-prem:hover .kern-tekst, .kolom-prem:focus-within .kern-tekst { color: var(--wit); }
-  /* babynest: alleen het kleine bestand (324 x 436); een ingelijste foto boven de tekst op diep mauve, de tekst blijft inkt.
-     De lijst staat absoluut boven het tekstblok en neemt geen ruimte in; bij aanwijzen schuift het tekstblok (transform,
-     dus zonder dat een kolom hoger wordt) de halve lijsthoogte omlaag. Kolom 1 en 2 blijven exact staan (controle ronde 1). */
-  .kolom-nest { --nest-h: min(436px, calc(clamp(600px, 100svh, 900px) - 400px)); transition: background-color .6s var(--rustig); }
-  .kolom-nest .kern-tekst { position: relative; transition: color .6s var(--rustig), transform 1s cubic-bezier(.215,.61,.355,1); }
-  .nest-lijst { display: block; position: absolute; left: 0; bottom: calc(100% + 24px); height: var(--nest-h); aspect-ratio: 324 / 436; max-width: 100%; overflow: hidden; clip-path: inset(0 0 100% 0); transition: clip-path 1s cubic-bezier(.215,.61,.355,1); }
-  .nest-lijst img { transform: scale(1.3); transition: transform 1s cubic-bezier(.215,.61,.355,1); }
-  .kolom-nest:hover, .kolom-nest:focus-within { background-color: #AE8C94; }
-  .kolom-nest:hover .kern-tekst, .kolom-nest:focus-within .kern-tekst { transform: translateY(calc((var(--nest-h) + 24px) / 2)); }
-  .kolom-nest:hover .nest-lijst, .kolom-nest:focus-within .nest-lijst { clip-path: inset(0); }
-  .kolom-nest:hover .nest-lijst img, .kolom-nest:focus-within .nest-lijst img { transform: none; }
+  .kolom-box:hover .kern-tekst, .kolom-box:focus-within .kern-tekst, .kolom-prem:hover .kern-tekst, .kolom-prem:focus-within .kern-tekst, .kolom-nest:hover .kern-tekst, .kolom-nest:focus-within .kern-tekst { color: var(--wit); }
 }
 /* Touch (tablet en mobiel) en smalle schermen: foto boven de tekst, alles altijd zichtbaar */
 @media (hover: none), (pointer: coarse), (max-width: 760px) {
   .kern-kolom { justify-content: flex-start; padding: calc(var(--ritme) + 48px) 24px var(--ritme); }
   .kern-beeld { display: block; position: relative; overflow: hidden; margin-bottom: 28px; aspect-ratio: 4 / 5; }
   .kern-masker { position: absolute; inset: 0; }
-  .nest-lijst { display: block; width: min(100%, 324px); aspect-ratio: 324 / 436; margin-bottom: 8px; }
   .kern-tekst .kop-m { font-size: 34px; }
 }
 @media (max-width: 760px) {
@@ -612,13 +599,12 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .kern-kolom { padding: 40px var(--rand) 48px; }
   .kolom-box { padding-top: 32px; }
   .kern-beeld { aspect-ratio: 4 / 3; margin-bottom: 24px; }
-  .nest-lijst { align-self: center; margin-bottom: 16px; }
   .kern-tekst { width: 100%; }
   .kern-tekst .kop-m { font-size: 40px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .achtergrond, .achtergrond.traag, .js .hero-kleur, .js .balk { transition: none; } /* laag, bovenkant en balk wisselen direct (stond hier vóór het drieluik) */
-  .kern-beeld, .kern-masker, .kern-masker img, .kern-tekst, .kern-tekst .kop-m, .kolom-nest, .nest-lijst, .nest-lijst img { transition: none !important; }
+  .kern-beeld, .kern-masker, .kern-masker img, .kern-tekst, .kern-tekst .kop-m { transition: none !important; }
 }
 
 /* =====================================================================
@@ -753,7 +739,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .contact-tekst { grid-column: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
 .contact-lijst { display: flex; flex-direction: column; align-items: flex-start; }
 .contact-lijst .pijl { min-height: 44px; }
-.contact-foto { grid-column: 4; width: 100%; max-width: 480px; aspect-ratio: 1; object-fit: cover; }
+.contact-foto { grid-column: 4; width: 100%; height: auto; max-width: 480px; aspect-ratio: 1; object-fit: cover; } /* height: auto: een foto met width/height (Babynest) houdt de verhouding van de CSS */
 .contact-formulier { padding: 0 calc(var(--B) * .16667); display: flex; flex-direction: column; gap: 24px; }
 .contact-formulier .formulier { max-width: 960px; margin: 0; }
 .contact-inleiding { max-width: none; color: var(--inkt); }
@@ -1131,6 +1117,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 /* ---------- Prematuurkleding en Babynest: prijsrichtlijn als eigen, compact blok ---------- */
 .prijs-sectie .sectie { gap: 24px; }
 .prijs-sectie .prijs { margin: 0; }
+.prijs-sectie .prijs-richt { font-size: 32px; } /* Babynest: richtprijs als eigen regel (besluit Carst 14 nov.; kop-m, ca. 32 px) */
 /* zolang er geen prijs is: een korte zin in lopende tekst met de pijl-link eronder (brief 2026-11-07, A) */
 .prijs-sectie .prijs-zin + .pijl { margin-top: -16px; }
 /* anker voor oude adressen (/producten#prematuur, #kraamcadeaubox): bovenaan het blok, neemt geen ruimte in */
@@ -1505,4 +1492,101 @@ html:not(.js) img[data-src] { display: none; }
 @media (min-width: 761px) and (hover: none) and (pointer: coarse) and (max-height: 500px) {
   .hero { padding-top: 136px; }
   .hero-fotos { width: min(100%, 70vh * 390 / 352); } /* fotogroep ca. 70 % van de schermhoogte, zodat de kop dichter bij het eerste scherm komt */
+}
+
+/* ---------- Babynest: drie blokken zoals het Media-overzicht van Stock (brief 2026-11-14-babynest-media-en-logo, A) ----------
+   001 boek, 002 magazine (gespiegeld), 003 tablet. Tekst inkt op mauve, salie en perzik. Zonder JavaScript en bij
+   "minder beweging" staan boek en magazine open (--open: 1) en toont de tablet de eerste foto (--stap: 0).
+   main.js zet .anim (inschuiven, regels, openslaan op de scrollpositie) en op desktop het vastzetten (hooguit één scherm). */
+.media { overflow-x: hidden; overflow: clip; }
+.media-vast { display: flex; align-items: center; }
+@media (min-width: 1025px) { .media-vast { min-height: min(100svh, 940px); } }
+.media-rij { width: var(--B); margin-left: calc(50% - var(--B) / 2); padding: var(--ritme) 0; display: grid;
+  grid-template-columns: 8.333% 33.333% minmax(0, 1fr) 40% 8.333%; grid-template-rows: 1fr auto auto auto auto 1fr; align-items: start; }
+.media-rij > .label { grid-column: 2; grid-row: 2; margin-bottom: 28px; }
+.media-rij > .kop-cat { grid-column: 2; grid-row: 3; }
+.media-zin { grid-column: 2; grid-row: 4; margin: 24px 0 0; font-size: 19px; line-height: 1.6; max-width: 26em; }
+.media-rij > .pijl { grid-column: 2; grid-row: 5; margin-top: 16px; justify-self: start; }
+.media-object { grid-column: 4; grid-row: 1 / -1; align-self: center; width: 100%; max-width: 768px; } /* spread: twee pagina's van hooguit 384 px */
+.media.gespiegeld .media-rij { grid-template-columns: 8.333% 40% minmax(0, 1fr) 33.333% 8.333%; }
+.media.gespiegeld .media-rij > .label, .media.gespiegeld .media-rij > .kop-cat, .media.gespiegeld .media-zin, .media.gespiegeld .media-rij > .pijl { grid-column: 4; }
+.media.gespiegeld .media-object { grid-column: 2; }
+
+/* boek en magazine: rechterpagina met daarop de kaft, die om de rug (midden van het objectvak) naar links draait */
+.papier { position: relative; width: 100%; aspect-ratio: 8 / 5; perspective: 2200px; }
+.blad { position: absolute; top: 0; left: 50%; width: 50%; height: 100%; margin: 0; background: #FBF8F3; box-shadow: 0 30px 50px rgba(32, 32, 32, .28); }
+.blad img { position: absolute; left: 7%; top: 6%; width: 86%; height: calc(94% - 46px); object-fit: cover; }
+.blad figcaption { position: absolute; left: 7%; bottom: 14px; font-family: var(--serif); font-size: 13px; line-height: 1.3; color: var(--inkt); }
+.blad-rechts::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 12%; background: linear-gradient(to right, rgba(32, 32, 32, .2), rgba(32, 32, 32, 0)); pointer-events: none; }
+.kaft { position: absolute; top: 0; left: 50%; width: 50%; height: 100%; transform-origin: 0 50%; transform-style: preserve-3d;
+  transform: rotateY(calc(var(--open, 1) * -180deg)); }
+.kaft-voor, .kaft .kaft-achter { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.kaft-voor { container-type: inline-size; box-shadow: 0 30px 50px rgba(32, 32, 32, .3); }
+.kaft-voor::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5%; background: linear-gradient(to right, rgba(32, 32, 32, .25), rgba(32, 32, 32, 0)); pointer-events: none; }
+.kaft .kaft-achter { transform: rotateY(180deg); }
+.kaft-achter::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 12%; background: linear-gradient(to left, rgba(32, 32, 32, .2), rgba(32, 32, 32, 0)); pointer-events: none; }
+.boek-kaft { background: #FBF8F3; }
+.boek-kaft img { position: absolute; left: 7%; top: 6%; width: 86%; height: calc(94% - 50px); object-fit: cover; }
+/* kleine tekst op de kaft: inkt op een lichte strook (15,6:1) */
+.kaft-strook { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 15px 7%; background: #FBF8F3; font-family: var(--serif); font-size: 13px; line-height: 1.3; letter-spacing: .2em; text-transform: uppercase; color: var(--inkt); }
+.magazine-kaft { background: var(--inkt); }
+.magazine-kaft img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* masthead: wit op een donkere sluier van 72% (ook op de lichtste plek van de foto minstens 4,5:1) */
+.masthead { position: absolute; left: 0; right: 0; top: 0; padding: 7cqw 7cqw 16cqw; color: var(--wit);
+  background: linear-gradient(to bottom, rgba(32, 32, 32, .72) 0, rgba(32, 32, 32, .72) 72%, rgba(32, 32, 32, 0) 100%); }
+.masthead p { margin: 0; }
+.masthead-naam { font-family: var(--display); font-size: max(28px, 17cqw); line-height: .9; }
+.masthead-sub { margin-top: 10px !important; font-family: var(--serif); font-size: 13px; letter-spacing: .22em; text-transform: uppercase; }
+
+/* tablet: neutraal kader zonder merk, knoppen of camera; drie foto's die doorschuiven */
+.tablet { position: relative; width: 100%; aspect-ratio: 4 / 3; padding: 22px; background: var(--inkt); border-radius: 30px; box-shadow: 0 30px 60px rgba(32, 32, 32, .35); }
+.tablet-scherm { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 8px; background: #FBF8F3; }
+.tablet-strook { display: flex; height: 100%; transform: translateX(calc(var(--stap, 0) * -100%)); transition: transform .5s cubic-bezier(.65, 0, .35, 1); }
+.tablet-strook img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; }
+.tablet-puntjes { position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; gap: 8px; pointer-events: none; }
+.tablet-puntjes span { width: 8px; height: 8px; border-radius: 50%; background: var(--wit); opacity: .5; box-shadow: 0 0 0 1px rgba(32, 32, 32, .3); transition: opacity .5s ease; }
+.tablet-puntjes span.aan { opacity: 1; }
+
+/* tablet en mobiel: onder elkaar (label, object, kop, zin, pijl-link); één pagina binnen de rand, hooguit 560 px */
+@media (max-width: 1024px) {
+  .media-rij, .media.gespiegeld .media-rij { width: auto; margin-left: 0; padding: var(--ritme) var(--rand); display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+  .media-rij > .label { margin-bottom: 0; }
+  .media-object { align-self: center; max-width: 560px; }
+  .media-zin { margin: 0; font-size: 17px; max-width: 34em; }
+  .media-rij > .pijl { margin-top: -4px; }
+  .papier { aspect-ratio: 4 / 5; perspective-origin: 0 50%; perspective: 2600px; }
+  .blad, .kaft { left: 0; width: 100%; }
+  .kaft .kaft-achter { display: none; } /* één pagina: alleen de binnenpagina (het nest van boven of het dekentje) */
+  /* de kaft draait tot 90° en verdwijnt dan (anders komt hij links buiten het scherm) */
+  .kaft { transform: rotateY(calc(var(--open, 1) * -90deg)); opacity: var(--kaft-o, 0); }
+  .tablet { aspect-ratio: 4 / 5; padding: 14px; border-radius: 26px; }
+}
+@media (max-width: 760px) {
+  .media-object { max-width: none; }
+}
+
+/* beweging (alleen met JavaScript en zonder "minder beweging"; main.js zet .anim en .binnen) */
+@media (prefers-reduced-motion: no-preference) {
+  .js .media.anim .obj { transform: translateX(150%) rotate(14deg); transition: transform 1.5s cubic-bezier(.65, 0, .35, 1); }
+  .js .media.anim.gespiegeld:not(.binnen) .obj { transform: translateX(-150%) rotate(-14deg); }
+  .js .media.anim .regel { opacity: 0; transform: translateY(50px); transition: opacity 1s cubic-bezier(.65, 0, .35, 1), transform 1s cubic-bezier(.65, 0, .35, 1); }
+  .js .media.anim .regel:nth-child(1) { transition-delay: .2s; }
+  .js .media.anim .kop-cat.regel { transition-delay: .3s; }
+  .js .media.anim .media-zin.regel { transition-delay: .4s; }
+  .js .media.anim .pijl.regel { transition-delay: .5s; }
+  .js .media.anim.binnen .obj, .js .media.anim.binnen .regel { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 1024px) {
+  /* de kaft glijdt van onder in */
+  .js .media.anim .obj { transition: transform 1.5s cubic-bezier(.65, 0, .35, 1), opacity 1s ease; }
+  .js .media.anim:not(.binnen) .obj, .js .media.anim.gespiegeld:not(.binnen) .obj { opacity: 0; transform: translateY(80px); }
+}
+/* desktop: het blok staat hooguit één schermhoogte (hier 0,7) vast terwijl de kaft openslaat; daarna scrolt het door */
+@media (prefers-reduced-motion: no-preference) and (min-width: 1025px) {
+  .js .media.anim { height: 170vh; }
+  .js .media.anim .media-vast { position: sticky; top: 0; height: 100vh; min-height: 0; }
+  .js .media.anim + .media.anim { margin-top: -22vh; } /* de lege randen van twee vastgezette blokken overlappen: geen lege strook tussen de blokken */
+}
+@media (prefers-reduced-motion: reduce) {
+  .tablet-strook, .tablet-puntjes span { transition: none; }
 }
