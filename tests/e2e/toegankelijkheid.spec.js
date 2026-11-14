@@ -44,6 +44,19 @@ for (const onderwerp of ['Kraamcadeaubox', 'Prematuurkleding', 'Babynest']) {
   });
 }
 
+// Brief 2026-11-14-geboortedatum-volgt (issue #69): het formulier met het vakje "Geboortedatum volgt nog" aangevinkt, per onderwerp 0 fouten
+for (const [onderwerp, vakje] of [['Kraamcadeaubox', 'box_datum_volgt'], ['Prematuurkleding', 'prem_datum_volgt'], ['Babynest', 'nest_datum_volgt'], ['Iets op maat laten maken', 'op_maat_datum_volgt']]) {
+  test(`toegankelijkheid formulier met het vakje geboortedatum volgt nog aan (${onderwerp})`, async ({ page }) => {
+    await page.goto('/contact#formulier');
+    await wachtOpRust(page);
+    await page.locator('select[name="onderwerp"]').selectOption(onderwerp);
+    await page.waitForTimeout(400);
+    await page.locator(`input[name="${vakje}"]`).check();
+    const uitslag = await new AxeBuilder({ page }).include('#formulier').withTags(REGELS).analyze();
+    expect(uitslag.violations, `WCAG-overtredingen in het formulier (${onderwerp}, vakje aan):\n${samenvatting(uitslag.violations)}`).toEqual([]);
+  });
+}
+
 // Brief 2026-11-11: de contactpagina met elk van beide foutmeldingen (ongeldig en versturen) heeft 0 fouten
 for (const [soort, pad] of [['ongeldig', '/contact?verzonden=fout#formulier'], ['versturen', '/contact?verzonden=fout&reden=versturen#formulier']]) {
   test(`toegankelijkheid contact met melding ${soort}`, async ({ page }) => {

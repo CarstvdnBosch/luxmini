@@ -17,23 +17,31 @@ export const EXTRA_VELDEN = {
     ['box_thema', 'Thema', 80],
     ['box_naam', 'Naam op het product', 120],
     ['box_datum', 'Geboortedatum of uitgerekende datum', 60],
+    ['box_datum_volgt', 'Geboortedatum', 3],
     ['box_maat', 'Kledingmaat', 20],
   ],
   Prematuurkleding: [
     ['prem_maat', 'Maat van de baby', 20],
     ['prem_maat_anders', 'Andere maat of gewicht', 80],
     ['prem_naam', 'Naam op het kledingstuk', 120],
+    ['prem_datum_volgt', 'Geboortedatum', 3],
   ],
   Babynest: [
     ['nest_stof', 'Stof of kleur', 120],
     ['nest_naam', 'Naam op het babynest', 120],
+    ['nest_datum_volgt', 'Geboortedatum', 3],
   ],
   'Iets op maat laten maken': [
     ['op_maat', 'Maat', 20],
     ['op_maat_anders', 'Andere maat', 80],
+    ['op_maat_datum_volgt', 'Geboortedatum', 3],
   ],
 };
 export const FORMATEN = ['35', '50', '65', '80'];
+// "Geboortedatum volgt nog" (issue #69, brief 2026-11-14-geboortedatum-volgt; teksten goedgekeurd door Carst 14 nov.):
+// alleen precies de waarde "ja" van het vakje van het gekozen onderwerp geeft deze vaste regel; nooit tekst uit het veld zelf.
+export const DATUM_VOLGT = ['box_datum_volgt', 'prem_datum_volgt', 'nest_datum_volgt', 'op_maat_datum_volgt'];
+export const DATUM_VOLGT_REGEL = 'volgt nog (Carien neemt eerst contact op)';
 // Maatkeuzes per veld (besluit Carst 11 nov., brief 2026-11-11-c5-babymaten; 44, 46 en 48 erbij: Story 16, 12 nov.,
 // brief 2026-11-12-productrij-carrousel-en-maten; bij de box weer weg en 34 en 36 erbij bij prematuurkleding:
 // Carst 14 nov., brief 2026-11-14-goedkeuringen-teksten).
@@ -137,6 +145,7 @@ export function controleer(form) {
   velden.extra = [];
   for (const [naam, kop, max] of EXTRA_VELDEN[velden.onderwerp] || []) {
     let waarde = schoon(get(naam), max);
+    if (DATUM_VOLGT.includes(naam)) waarde = get(naam) === 'ja' ? DATUM_VOLGT_REGEL : '';
     if (naam === 'box_formaat') waarde = FORMATEN.includes(waarde) ? `€ ${waarde}` : '';
     if (naam === 'box_thema' && !THEMAS.includes(waarde)) waarde = '';
     if (MATEN[naam]) waarde = MATEN[naam].includes(waarde) && waarde !== 'anders' ? `maat ${waarde}` : '';

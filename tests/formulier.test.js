@@ -160,3 +160,52 @@ test('iets op maat: maat 32 t/m 86 of anders met een vrij veld', () => {
   assert.deepEqual(maatIn('Iets anders', { op_maat: '62', box_maat: '56', prem_maat: '44' }), []);
   assert.deepEqual(maatIn('Kraamcadeaubox', { op_maat: '62', prem_maat: '44' }), []);
 });
+
+// Brief 2026-11-14-geboortedatum-volgt (issue #69): vakje "Geboortedatum volgt nog" bij vier onderwerpen; alleen "ja" telt
+const VOLGT = { Kraamcadeaubox: 'box_datum_volgt', Prematuurkleding: 'prem_datum_volgt', Babynest: 'nest_datum_volgt', 'Iets op maat laten maken': 'op_maat_datum_volgt' };
+const REGEL = 'Geboortedatum: volgt nog (Carien neemt eerst contact op)';
+const volgtRegel = (velden) => controleer({ ...geldig, ...velden }).velden.extra.filter(([k]) => k === 'Geboortedatum');
+
+test('geboortedatum volgt nog: "ja" geeft per onderwerp de regel in de mail', () => {
+  for (const [onderwerp, veld] of Object.entries(VOLGT)) {
+    const r = controleer({ ...geldig, onderwerp, [veld]: 'ja' });
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.velden.extra, [['Geboortedatum', 'volgt nog (Carien neemt eerst contact op)']], onderwerp);
+    assert.ok(leesTekst(mail(r.velden)).includes(`\n${REGEL}\n`), onderwerp);
+  }
+});
+
+test('geboortedatum volgt nog: andere waarden, leeg of het vakje van een ander onderwerp geven geen regel', () => {
+  for (const [onderwerp, veld] of Object.entries(VOLGT)) {
+    for (const w of ['nee', '1', 'JA', 'ja ', 'JA \r\nBcc: x@y.nl', 'ja\n', 'on', 'true', '', '<b>ja</b>']) {
+      assert.deepEqual(volgtRegel({ onderwerp, [veld]: w }), [], `${onderwerp} ${JSON.stringify(w)}`);
+    }
+    assert.deepEqual(volgtRegel({ onderwerp }), [], `${onderwerp} zonder vakje`);
+    // de vakjes van de andere onderwerpen tellen niet
+    const anderen = Object.fromEntries(Object.values(VOLGT).filter((v) => v !== veld).map((v) => [v, 'ja']));
+    assert.deepEqual(volgtRegel({ onderwerp, ...anderen }), [], `${onderwerp} met vakjes van andere onderwerpen`);
+  }
+  assert.deepEqual(volgtRegel({ onderwerp: 'Kraamcadeaubox', nest_datum_volgt: 'ja' }), []);
+  // bij "Iets anders" (en een onbekend onderwerp) nooit een regel
+  const alle = Object.fromEntries(Object.values(VOLGT).map((v) => [v, 'ja']));
+  for (const onderwerp of ['Iets anders', 'hack']) {
+    const r = controleer({ ...geldig, onderwerp, ...alle });
+    assert.deepEqual(r.velden.extra, []);
+    assert.doesNotMatch(leesTekst(mail(r.velden)), /Geboortedatum/);
+  }
+});
+
+test('geboortedatum volgt nog: bij de box gaan vakje en ingevulde datum allebei mee, de rest blijft gelijk', () => {
+  const r = controleer({ ...geldig, box_naam: 'Sem', box_datum: 'uitgerekend 3 maart', box_datum_volgt: 'ja', box_maat: '56' });
+  assert.deepEqual(r.velden.extra, [['Naam op het product', 'Sem'], ['Geboortedatum of uitgerekende datum', 'uitgerekend 3 maart'],
+    ['Geboortedatum', 'volgt nog (Carien neemt eerst contact op)'], ['Kledingmaat', 'maat 56']]);
+  const raw = mail(r.velden);
+  const tekst = leesTekst(raw);
+  assert.match(tekst, /\nGeboortedatum of uitgerekende datum: uitgerekend 3 maart\nGeboortedatum: volgt nog \(Carien neemt eerst contact op\)\n/);
+  // onderwerpregel en mailvorm veranderen niet
+  const onderwerp = raw.match(/\r\nSubject: =\?UTF-8\?B\?(.+)\?=\r\n/)[1];
+  assert.equal(new TextDecoder().decode(Uint8Array.from(atob(onderwerp), (c) => c.charCodeAt(0))), 'Website: Kraamcadeaubox – Zoë de Vries');
+  assert.match(raw, /\r\nContent-Type: text\/plain; charset=UTF-8\r\n/);
+  // zonder vakje precies zoals voorheen
+  assert.deepEqual(controleer({ ...geldig, box_datum: '3 maart' }).velden.extra, [['Geboortedatum of uitgerekende datum', '3 maart']]);
+});
