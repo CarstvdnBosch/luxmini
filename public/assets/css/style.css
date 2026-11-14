@@ -194,6 +194,44 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .formaat-regel { min-height: 0; }
 }
 
+/* ---------- Iconen op de prijskaarten (brief 2026-11-14-prijskaart-iconen, issue #71) ----------
+   Zeven eigen lijntekeningen (24 × 24, lijn 1,3, currentColor): doorgetrokken = in de box, gestippeld op dekking 0,5 = komt erbij.
+   Gedeeld door het formulier (.keuze-iconen) en 001 Kies je formaat (.formaat-iconen). Raster 4 + 3 (120 × 56 px);
+   alleen de compacte mobiele kaarten van Kraamcadeauboxen hebben één rij van zeven (216 × 24 px).
+   Met een muis verschijnen ze één voor één (0,4 s, 0,05 s ertussen) en verdwijnen ze samen in 0,2 s; op touch staan ze er altijd. */
+.keuze-iconen, .formaat-iconen { display: grid; grid-template-columns: repeat(4, 24px); grid-auto-rows: 24px; gap: 8px; width: 120px; pointer-events: none; color: var(--inkt); }
+.keuze-iconen .icoon, .formaat-iconen .icoon { display: block; width: 24px; height: 24px; }
+.iconen-legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; margin: 0; font-family: var(--sans); font-size: 16px; line-height: 1.35; color: var(--inkt); }
+.iconen-legenda span { display: inline-flex; align-items: center; gap: 8px; }
+.iconen-legenda .icoon { flex: none; width: 24px; height: 24px; }
+/* Kraamcadeauboxen vanaf 761 px: de iconen liggen op de plek van het takje (48 + 28 px), dus de kaart groeit niet */
+.formaat { position: relative; }
+.formaat .takje { transition: opacity .4s var(--rustig); }
+.formaat-iconen { position: absolute; top: 32px; left: 28px; }
+@media (hover: hover) {
+  .keuze-iconen .icoon, .formaat-iconen .icoon { opacity: 0; transform: translateY(4px); transition: opacity .2s var(--rustig), transform .2s var(--rustig); }
+  .keuze-kaart:hover .keuze-iconen .icoon, .keuze-kaart input:focus-visible ~ .keuze-iconen .icoon, .keuze-kaart input:checked ~ .keuze-iconen .icoon,
+  .formaat:hover .formaat-iconen .icoon, .formaat:focus-within .formaat-iconen .icoon { opacity: 1; transform: none; transition-duration: .4s; }
+  .keuze-kaart:hover .keuze-iconen .icoon:nth-child(2), .keuze-kaart input:focus-visible ~ .keuze-iconen .icoon:nth-child(2), .keuze-kaart input:checked ~ .keuze-iconen .icoon:nth-child(2), .formaat:hover .formaat-iconen .icoon:nth-child(2), .formaat:focus-within .formaat-iconen .icoon:nth-child(2) { transition-delay: .05s; }
+  .keuze-kaart:hover .keuze-iconen .icoon:nth-child(3), .keuze-kaart input:focus-visible ~ .keuze-iconen .icoon:nth-child(3), .keuze-kaart input:checked ~ .keuze-iconen .icoon:nth-child(3), .formaat:hover .formaat-iconen .icoon:nth-child(3), .formaat:focus-within .formaat-iconen .icoon:nth-child(3) { transition-delay: .1s; }
+  .keuze-kaart:hover .keuze-iconen .icoon:nth-child(4), .keuze-kaart input:focus-visible ~ .keuze-iconen .icoon:nth-child(4), .keuze-kaart input:checked ~ .keuze-iconen .icoon:nth-child(4), .formaat:hover .formaat-iconen .icoon:nth-child(4), .formaat:focus-within .formaat-iconen .icoon:nth-child(4) { transition-delay: .15s; }
+  .keuze-kaart:hover .keuze-iconen .icoon:nth-child(5), .keuze-kaart input:focus-visible ~ .keuze-iconen .icoon:nth-child(5), .keuze-kaart input:checked ~ .keuze-iconen .icoon:nth-child(5), .formaat:hover .formaat-iconen .icoon:nth-child(5), .formaat:focus-within .formaat-iconen .icoon:nth-child(5) { transition-delay: .2s; }
+  .keuze-kaart:hover .keuze-iconen .icoon:nth-child(6), .keuze-kaart input:focus-visible ~ .keuze-iconen .icoon:nth-child(6), .keuze-kaart input:checked ~ .keuze-iconen .icoon:nth-child(6), .formaat:hover .formaat-iconen .icoon:nth-child(6), .formaat:focus-within .formaat-iconen .icoon:nth-child(6) { transition-delay: .25s; }
+  .keuze-kaart:hover .keuze-iconen .icoon:nth-child(7), .keuze-kaart input:focus-visible ~ .keuze-iconen .icoon:nth-child(7), .keuze-kaart input:checked ~ .keuze-iconen .icoon:nth-child(7), .formaat:hover .formaat-iconen .icoon:nth-child(7), .formaat:focus-within .formaat-iconen .icoon:nth-child(7) { transition-delay: .3s; }
+  .formaat:hover .takje, .formaat:focus-within .takje { opacity: 0; }
+}
+/* touch: geen aanwijzen, dus de iconen staan er altijd; vanaf 761 px is het takje verborgen (de plek blijft gelijk) */
+@media (hover: none) and (min-width: 761px) { .formaat .takje { visibility: hidden; } }
+@media (max-width: 760px) {
+  /* compact: prijs + aantal, één iconenrij, de producten op één regel, de pijl-link; altijd zichtbaar */
+  .formaat-iconen { position: static; grid-column: 1 / -1; grid-row: 2; grid-template-columns: repeat(7, 24px); width: 216px; margin-top: 8px; }
+  .formaat .formaat-iconen .icoon { opacity: 1; transform: none; transition: none; }
+  .formaat-inhoud { grid-row: 3; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .keuze-iconen .icoon, .formaat-iconen .icoon, .formaat .takje { transition: none !important; transform: none !important; }
+}
+
 /* ---------- Hover-lijst (portfolio / thema's) ---------- */
 .hoverlijst-sectie { transition: background .5s ease; }
 .hoverlijst { position: relative; }
@@ -1214,6 +1252,13 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .keuze-kaart input:checked ~ .keuze-vink { opacity: 1; }
 .keuze-prijs { font-family: var(--display); font-size: 24px; line-height: 1.1; }
 .keuze-regel { font-size: 16px; }
+.keuze-kaarten .keuze-iconen { margin-top: 8px; } /* ruimte altijd gereserveerd: verschijnen alleen via opacity, geen sprong */
+.keuzes .iconen-legenda { margin-top: 12px; }
+@media (max-width: 760px) { /* het raster van 120 px past ook op 360 px; de groep Kraamcadeaubox groeit hooguit 180 px */
+  .formulier .keuze-kaarten .keuze-kaart { padding: 14px; }
+  .keuze-kaarten .keuze-iconen { margin-top: 6px; }
+  .keuzes .iconen-legenda { margin-top: 8px; row-gap: 0; }
+}
 .groep-alleen { font-weight: 700; }
 @supports selector(:has(a)) {
   .groep-alleen { display: none; }
@@ -1611,7 +1656,7 @@ html:not(.js) img[data-src] { display: none; }
   .formaat-inhoud { grid-column: 1 / -1; margin-top: 10px; font-size: 16px; line-height: 1.5; }
   .formaat-kop, .formaat-lijst, .formaat-lijst li { display: inline; margin: 0; padding: 0; border: 0; font-weight: 400; }
   .formaat-lijst li + li::before { content: ", "; }
-  .formaat .pijl { grid-column: 1 / -1; grid-row: 3; margin-top: 2px; justify-self: start; }
+  .formaat .pijl { grid-column: 1 / -1; grid-row: 4; margin-top: 2px; justify-self: start; } /* rij 2: de iconen (brief 2026-11-14-prijskaart-iconen) */
 }
 
 /* ---------- Hero op tablet (761–1024 px): zes foto's in de eigen indeling, de kop overlapt nooit een foto ----------
