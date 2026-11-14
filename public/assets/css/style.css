@@ -1606,7 +1606,8 @@ html:not(.js) img[data-src] { display: none; }
    logo: html.hero-licht donker, html.kop-donker wit). Het staat vast in beeld (position: fixed, boven op 32 px, mobiel 18 px,
    zoals de burger), zodat je het ziet krimpen: main.js schuift en schaalt het bij scrollen met transform vanuit linksboven
    naar plek en maat van "LUX" in het balklogo; op dat eindpunt komt "LUX mini" (.logo-vast) op. Zodra de balk zichtbaar is
-   (.overgenomen) neemt het balklogo het over. Het gewone logo in de header houdt alleen de plek (en de focusrand) vast.
+   (.overgenomen) neemt het balklogo het over; daarvoor is "LUX mini" al met de pagina mee weggescrold (besluit Carst ronde 5,
+   main.js: --logo-weg, met transform). Het gewone logo in de header houdt alleen de plek (en de focusrand) vast.
    Transform verschuift niets (CLS 0); op mobiel is de ruimte in de header vast gereserveerd.
    Zonder JavaScript en bij "minder beweging" alleen het gewone logo. */
 .logo-klein { position: relative; display: inline-flex; }
@@ -1622,7 +1623,8 @@ html:not(.js) img[data-src] { display: none; }
     transform: translate(var(--logo-dx, 0px), var(--logo-dy, 0px)) scale(var(--logo-s, 1)); opacity: var(--logo-groot-o, 1); }
   .js .site-header .logo.vast-klaar .logo-groot { position: fixed; left: var(--groot-x); top: var(--groot-y); }
   .js .site-header .logo-groot img { height: var(--groot-h); width: auto; max-width: none; }
-  .js .site-header .logo-vast { display: block; position: fixed; left: var(--vast-x, var(--rand)); top: var(--vast-y, 17px); opacity: var(--logo-klein-o, 0); }
+  .js .site-header .logo-vast { display: block; position: fixed; left: var(--vast-x, var(--rand)); top: var(--vast-y, 17px); opacity: var(--logo-klein-o, 0);
+    transform: translateY(calc(-1 * var(--logo-weg, 0px))); } /* wegscrollen met transform: geen verschuiving (CLS 0) */
   .js .site-header .logo-vast img { height: var(--vast-h, 30px); width: auto; }
   .js .site-header .logo-klein { opacity: 0; }
   /* de balk schuift in 0,4 s in (over het vaste logo heen, z-index 40): pas daarna verdwijnt het vaste logo, zodat er

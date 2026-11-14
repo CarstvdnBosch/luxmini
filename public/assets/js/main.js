@@ -304,7 +304,8 @@
      2c. Logo groot → klein (brief 2026-11-14-babynest-media-en-logo, B; ontwerpgate ronde 1): bovenaan het grote "LUX",
          vast in beeld (position: fixed, zoals de burger). Bij scrollen schuift en schaalt het (transform, linksboven) naar
          plek en maat van "LUX" in het balklogo; op dat eindpunt komt "LUX mini" (een vaste kopie van het gewone logo) op.
-         Zodra de balk zichtbaar is, neemt het balklogo het over en zijn beide vaste logo's verborgen (nooit twee logo's).
+         Na het eindpunt scrolt "LUX mini" met de pagina mee weg (besluit Carst ronde 5); het eindpunt ligt boven de eerste
+         tekst, dus het ligt na het krimpen nooit op tekst. Daarna neemt het balklogo het over (nooit twee logo's).
          Op de scrollwaarde zelf (met een muis al afgevlakt door het zachte scrollen), dus zonder eigen animatie: wie
          halverwege binnenkomt, ziet meteen de juiste stand. Klaar binnen 40% van een schermhoogte en vóór de balk;
          terug omhoog groeit het weer. Is er naast het menu (vanaf 1280 px) minder dan 70 px hoogte voor het grote logo,
@@ -329,16 +330,41 @@
       for (var i = 0; i < imgs.length; i++) if (imgs[i].offsetWidth) return imgs[i];
       return null;
     };
-    var logoStand = '', logoMaat = -1, logoBegin = null;
+    var logoStand = '', logoMaat = -1, logoBegin = null, logoTekst = null;
+    var kopHeader = document.querySelector('.site-header'), kopMain = document.querySelector('main');
+    // verschuiving door intro of pagina-overgang (header en main staan dan even verschoven): eruit rekenen, anders meet je
+    // een plek die na de intro niet meer klopt en springt het grote "LUX" (CLS, controle ronde 4)
+    var verschoven = function (el) {
+      var t = el ? getComputedStyle(el).transform : 'none';
+      if (!t || t === 'none') return { x: 0, y: 0 };
+      try { var m = new DOMMatrix(t); return { x: m.m41 || 0, y: m.m42 || 0 }; } catch (e) { return { x: 0, y: 0 }; }
+    };
     var logoBeginMeten = function () { // zonder transform en zonder .vast-klaar: de plek in de header, in documentmaat
       logoEl.classList.remove('vast-klaar');
       logoGroot.style.transform = 'none';
       var r = logoGroot.getBoundingClientRect();
       logoGroot.style.transform = '';
-      logoBegin = { x: r.left, y: r.top + window.scrollY };
-      logoEl.style.setProperty('--groot-x', r.left + 'px');
+      var v = verschoven(kopHeader);
+      logoBegin = { x: r.left - v.x, y: r.top - v.y + window.scrollY };
+      logoTekst = null;
+      logoEl.style.setProperty('--groot-x', logoBegin.x + 'px');
       logoEl.style.setProperty('--groot-y', logoBegin.y + 'px');
       logoEl.classList.add('vast-klaar');
+    };
+    // de bovenkant (documentmaat) van de eerste tekst onder de strook x0–x1: het kleine logo mag na het krimpen nooit op tekst
+    // liggen (besluit Carst ronde 5: het scrolt daarna mee weg, dus het eindpunt ligt boven de eerste tekst)
+    var TEKST = 'main p, main h1, main h2, main h3, main li, main dd, main dt, main blockquote, main label, main .caps, main .pijl, footer p, footer a';
+    var eersteTekst = function (x0, x1) {
+      var mv = verschoven(kopMain).y, boven = Infinity;
+      Array.prototype.forEach.call(document.querySelectorAll(TEKST), function (el) {
+        var inMain = kopMain && kopMain.contains(el);
+        Array.prototype.forEach.call(el.getClientRects(), function (q) {
+          if (q.width <= 0 || q.height <= 0 || q.right <= x0 || q.left >= x1) return;
+          var t = q.top + window.scrollY - (inMain ? mv : 0);
+          if (t < boven) boven = t;
+        });
+      });
+      return boven;
     };
     var logoBijwerken = function () {
       // vanaf 1280 px staat het menu op één regel ernaast (rechts tegen de burger): het grote logo wordt hooguit zo breed
@@ -358,35 +384,42 @@
       if (!logoBegin) logoBeginMeten();
       var x0 = logoBegin.x, y0 = logoBegin.y;
       // eind: "LUX" in het balklogo (offset binnen de vaste balk, los van het in- en uitschuiven). Pagina's zonder balk
-      // (privacy, bedankt, 404): de maat en plek van het gewone logo bovenaan; na het krimpen scrolt "LUX mini" gewoon met
-      // de pagina mee naar boven weg (er komt geen balk die het overneemt), dus het blijft nooit boven de tekst zweven
+      // (privacy, bedankt, 404): de maat en plek van het gewone logo bovenaan. Na het eindpunt scrolt "LUX mini" op alle
+      // pagina's met de pagina mee naar boven weg (besluit Carst ronde 5, "meescrollen tot de balk"); daarna neemt de balk over
       var b = balkLogo(), bx, by, bw, bh;
       if (b) {
         bx = b.offsetLeft; by = b.offsetTop; bw = b.offsetWidth; bh = b.offsetHeight;
         for (var op = b.offsetParent; op && op !== document.body && !op.classList.contains('balk'); op = op.offsetParent) { bx += op.offsetLeft; by += op.offsetTop; }
       } else {
-        bx = kleinR.left; by = kleinR.top + window.scrollY; bw = kleinR.width; bh = hKlein;
+        var hv = verschoven(kopHeader);
+        bx = kleinR.left - hv.x; by = kleinR.top - hv.y + window.scrollY; bw = kleinR.width; bh = hKlein;
       }
       var x1 = bx + bw * 0.024, y1 = by + bh * 0.054;
       var s1 = bh * 82 / 93 / hGroot; // 82/93: hoogte van "LUX" in het gewone logo (bestand 248 x 93)
-      // de balk verschijnt als de onderkant van de kop 40 px onder de bovenrand komt; het logo is ruim daarvoor klein
+      // klaar binnen 40% van een schermhoogte, ruim voordat de balk verschijnt (onderkant van de kop 40 px onder de bovenrand)
       var eind = window.innerHeight * 0.4;
       if (kopEl) eind = Math.min(eind, Math.max(1, (kopEl.offsetTop + kopEl.offsetHeight - 40) * 0.8));
       eind = Math.min(eind, Math.max(1, document.documentElement.scrollHeight - window.innerHeight)); // korte pagina (privacy, bedankt, 404): onderaan klein
+      // en zo vroeg dat "LUX mini" op het eindpunt boven de eerste tekst ligt (8 px vrij): het scrolt daarna mee, dus het
+      // komt nooit meer op tekst te liggen
+      if (logoTekst === null) logoTekst = eersteTekst(bx, bx + bw);
+      eind = Math.max(1, Math.min(eind, logoTekst - 8 - by - bh));
       var p = Math.max(0, Math.min(1, window.scrollY / eind));
       var s = 1 + (s1 - 1) * p;
       var dx = (x1 - x0) * p, dy = (y1 - y0) * p;
       var vaag = Math.max(0, Math.min(1, (p - 0.7) / 0.3)); // de laatste 30%: "LUX mini" komt op, het grote "LUX" gaat weg
-      var weg = b ? 0 : Math.max(0, window.scrollY - eind); // zonder balk: na het eindpunt mee omhoog
-      var stand = [x0.toFixed(1), x1.toFixed(1), y1.toFixed(1), (by - weg).toFixed(1), bh, s.toFixed(4), dx.toFixed(2), dy.toFixed(2), vaag.toFixed(3)].join('|');
+      var weg = Math.max(0, window.scrollY - eind); // na het eindpunt mee omhoog (transform, dus geen verschuiving: CLS 0)
+      var stand = [x0.toFixed(1), x1.toFixed(1), y1.toFixed(1), by.toFixed(1), bh, s.toFixed(4), dx.toFixed(2), dy.toFixed(2), vaag.toFixed(3), weg.toFixed(1), eind.toFixed(1)].join('|');
       if (stand === logoStand) return;
       logoStand = stand;
+      logoEl.style.setProperty('--logo-eind', eind.toFixed(1));
       logoEl.style.setProperty('--vast-x', bx + 'px');
-      logoEl.style.setProperty('--vast-y', (by - weg) + 'px');
+      logoEl.style.setProperty('--vast-y', by + 'px');
       logoEl.style.setProperty('--vast-h', bh + 'px');
+      logoEl.style.setProperty('--logo-weg', weg.toFixed(1) + 'px');
       logoEl.style.setProperty('--logo-s', s.toFixed(4));
       logoEl.style.setProperty('--logo-dx', dx.toFixed(2) + 'px');
-      logoEl.style.setProperty('--logo-dy', dy.toFixed(2) + 'px');
+      logoEl.style.setProperty('--logo-dy', (dy - weg).toFixed(2) + 'px');
       logoEl.style.setProperty('--logo-groot-o', (1 - vaag).toFixed(3));
       logoEl.style.setProperty('--logo-klein-o', vaag.toFixed(3));
     };
