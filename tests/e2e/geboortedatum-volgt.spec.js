@@ -114,11 +114,12 @@ test('toetsenbord: Tab na het datumveld bereikt het vakje, spatie zet het aan en
   await expect(vakje).toBeChecked();
   await page.keyboard.press('Space');
   await expect(vakje).not.toBeChecked();
-  // de andere drie: het vakje komt direct na het laatste veld van de groep
-  for (const [onderwerp, laatste, naam] of [['Prematuurkleding', 'prem_naam', 'prem_datum_volgt'], ['Babynest', 'nest_naam', 'nest_datum_volgt'], ['Iets op maat laten maken', 'op_maat', 'op_maat_datum_volgt']]) {
+  // de andere drie: het vakje komt direct na het laatste veld van de groep. Sinds brief 2026-11-14-kleurkeuze is dat de kleurkeuze
+  // Hoofdkleur (gekozen keuze "Weet ik nog niet"; Tweede kleur is dan nog verborgen), daarvoor de naam of de maat.
+  for (const [onderwerp, laatste, naam] of [['Prematuurkleding', 'prem_kleur', 'prem_datum_volgt'], ['Babynest', 'nest_kleur', 'nest_datum_volgt'], ['Iets op maat laten maken', 'op_kleur', 'op_maat_datum_volgt']]) {
     await page.locator('select[name="onderwerp"]').selectOption(onderwerp);
     await page.waitForTimeout(350);
-    await page.locator(`[name="${laatste}"]`).focus();
+    await page.locator(`input[name="${laatste}"]:checked`).focus();
     await page.keyboard.press('Tab');
     await expect(page.locator(`input[name="${naam}"]`), `${onderwerp}: Tab na ${laatste}`).toBeFocused();
   }
@@ -134,8 +135,11 @@ test('toelichting: hooguit twee regels (box en mobiel), één regel in een volle
   }
   if (info.project.name === 'mobiel') {
     await naarFormulier(page, 'Babynest');
-    const h = await page.locator('.groep[data-groep="Babynest"]').evaluate(g => g.getBoundingClientRect().height);
-    expect(h, 'groep Babynest (was 225 px)').toBeLessThanOrEqual(345);
+    // zonder de kleurkeuzes van brief 2026-11-14-kleurkeuze (eigen grens in kleurkeuze.spec.js): die tellen hier niet mee,
+    // de grens voor het vakje (hooguit 120 px erbij) blijft gelijk
+    const h = await page.locator('.groep[data-groep="Babynest"]').evaluate(g => g.getBoundingClientRect().height -
+      [...g.querySelectorAll(':scope > .kleurkeuze')].filter(f => f.offsetParent !== null).reduce((s, f) => s + f.getBoundingClientRect().height + parseFloat(getComputedStyle(g).rowGap), 0));
+    expect(h, 'groep Babynest zonder kleurkeuzes (was 225 px)').toBeLessThanOrEqual(345);
   }
 });
 

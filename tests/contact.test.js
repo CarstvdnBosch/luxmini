@@ -71,7 +71,7 @@ test('extra velden van een ander onderwerp gaan niet mee naar de mail', async ()
   const res = await verwerkContact(post({ ...geldig, onderwerp: 'Babynest', nest_stof: 'teddy', box_formaat: '50', box_naam: 'Sem' }), async (v) => { verstuurd = v; });
   assert.equal(doel(res), '/bedankt');
   assert.equal(verstuurd.onderwerp, 'Babynest');
-  assert.deepEqual(verstuurd.extra, [['Stof of kleur', 'teddy']]);
+  assert.deepEqual(verstuurd.extra, [['Stof', 'teddy']]);
 });
 
 // ---------- Botbescherming (brief 2026-11-14-formulier-botbescherming, criterium 18) ----------
