@@ -180,3 +180,140 @@ Bronmappen in de scratchpad: `/tmp/claude-0/-home-claude/d4af4dd4-d393-563f-96ff
 
 ## Besluit Carst (14 nov., keuzevraag in de chat, met contactvel A–K)
 Alle geselecteerde foto's A–K zijn prematuur-/couveusekleding en mogen op de pagina Prematuurkleding: A web/prematuur-hangers.jpg, B kleding-2, C kleding-3, D kleding-6, E kleding-9, F kleding-10, G plat-1, H plat-10, I plat-20, J plat-30, K plat-65. Alt-teksten mogen "couveuse-" of "prematuurkleding" noemen (zonder verzonnen maat). Open vraag 2 is daarmee beantwoord.
+
+
+## Ontwerprichting (website-ontwerper, 14 nov.; vervangt de lege sectie hierboven)
+
+
+**Over "zoals Stock".** Stockdutchdesign.com was niet bereikbaar, dus er is geen nieuwe meting gedaan. Het inschuiven is gebaseerd op twee metingen die al in `docs/ontwerp/bron/` staan:
+- het masker uit het drieluik: masker −101 % → 0, foto zoomt van 1,3 naar 1, 1 s, `cubic-bezier(.215,.61,.355,1)` (`stock-analyse-2026-11-06.md` §2, op de site al als `.kern-beeld`);
+- de verspringende fotolijst van Projecten, met een ritme in posities (`stock-analyse-paginas-2026-11-02.md`, Projecten).
+
+De parallax die blijft meelopen in de foto (top −25 %, hoogte 120 %) nemen we niet over. Die heeft een scroll-listener nodig, en criterium 12 sluit dat uit. Wil Carst het precies zoals Stock, dan is dat een aparte meting en een aparte wijziging.
+
+1. **Foto's en volgorde: 9 van de 11 bevestigde foto's.**
+   - **001 Maatwerk:** G (`plat-1`, het regenboogsetje met de bordeauxrode broek). Dit vervangt het broekje. De foto is staand **2:3**, met een eigen variant van `.categorie-foto`, alleen op deze pagina. Bovenaan valt ca. 2 % weg, onderaan ca. 6 %. Mutsje en broekspijpen blijven helemaal in beeld. In 3:4 zouden ze worden afgesneden. G schuift niet in (LCP, criterium 15).
+   - **Nieuwe sectie `003 — Voorbeelden`** (`id="voorbeelden"`), in deze volgorde:
+     1. B `kleding-2`, rek recht van voren, liggend 4:3, hele beeld;
+     2. K `plat-65`, staand 3:4: de donkere rand links en boven wegsnijden, de lege ruimte onder de legging inkorten;
+     3. A `web/prematuur-hangers`, liggend 16:9 zoals hij is;
+     4. I `plat-20`, vierkant 1:1: mutsje, shirt, strik en sticker helemaal in beeld;
+     5. H `plat-10`, vierkant 1:1;
+     6. J `plat-30`, staand 3:4, met de korenaar;
+     7. F `kleding-10`, liggend 4:3;
+     8. C `kleding-3`, liggend 4:3: snijden rond de strik en het LUX-label.
+   - **Weg:** D `kleding-6` is bijna dezelfde opname als A (zelfde setjes, zelfde hoek). E `kleding-9` is bijna dezelfde opname als F (zelfde lichtblauwe mutsje met label). Beide mogen volgens het besluit van Carst, maar ze laten hetzelfde kledingstuk dan twee keer zien in één blik.
+   - **B en A mogen allebei.** B toont vier verschillende setjes aan het rek, A is een close-up van wikkelshirtjes met mutsjes. Ze staan niet naast elkaar.
+   - A en C laten hetzelfde wilgenkatjesshirt zien. Ze staan in verschillende rijen, nooit naast elkaar.
+
+2. **Opbouw.** Volgorde van de pagina:
+   - paginakop;
+   - 001 Maatwerk (foto G);
+   - 002 Prijs (ongewijzigd, blijft 002);
+   - **003 Voorbeelden** (nieuw);
+   - 004 Zo werkt het (was 003);
+   - 005 Contact (was 004).
+
+   Zo blijft "wat is het en wat kost het" bovenaan. Wie meer wil zien, scrolt door naar de voorbeelden. De ankers veranderen niet.
+
+   003 is een **vast, verspringend fotoraster (optie b/c), geen carrousel.** Foto's achter een veegrij verstoppen past niet bij "meer foto's die inschuiven". Daarom geldt criterium 10 niet.
+
+   Opbouw van de sectie:
+   - het label `003 — Voorbeelden` in inkt;
+   - de acht foto's als `figure` (zonder bijschrift, geen links, geen lightbox, niets dat alleen bij aanwijzen verschijnt);
+   - één pijl-link "Bespreek je idee" → `contact.html?onderwerp=prematuurkleding#formulier`. Dit is bestaande tekst; die link komt op via de bestaande `.opkomen`.
+   - `data-label="<span>003 —</span> Voorbeelden"`.
+   - Er komt geen nieuwe tekst bij.
+
+   **Vanaf 761 px:** een raster van 12 kolommen binnen `.wrap`, met een kolomgat van 16 px (tablet 12 px) en een rijgat van 96 px (tablet 56 px):
+
+   | Rij | Foto | Kolommen | Verschuiving omlaag |
+   |---|---|---|---|
+   | 1 | B | 1–7 | – |
+   | 1 | K | 9–12 | 96 px (tablet 48 px) |
+   | 2 | A | 1–5 | – |
+   | 2 | I | 7–9 | 64 px (tablet 32 px) |
+   | 2 | H | 10–12 | – |
+   | 3 | J | 1–3 | – |
+   | 3 | F | 5–9 | – |
+   | 3 | C | 10–12 | 128 px (tablet 64 px) |
+
+   De verschuivingen zijn `margin-top` en liggen vast, dus geen CLS. Elke `figure` krijgt `aspect-ratio`, `overflow: hidden` en een foto met `object-fit: cover`.
+
+3. **Inschuiven: een nieuwe klasse, de bestaande blijven zoals ze zijn.**
+   - Op elke `figure` in 003 komt `.inschuif`. Deze wordt toegevoegd aan de lijst van de bestaande observer `io` (zelfde `in-beeld`, zelfde rootMargin −8 %, één keer, daarna `unobserve`). Er komt geen nieuwe observer of listener. `.opkomen` en `img.zoom` blijven ongewijzigd.
+   - **Begin:** de `figure` heeft `clip-path: inset(100% 0 0 0)`; de `img` heeft `transform: translateY(10%) scale(1.12)`.
+   - **Eind** (`.in-beeld`): `clip-path: inset(0)`; de `img` heeft `transform: none`.
+   - **Beweging:** beide in **1,2 s**, `cubic-bezier(.215,.61,.355,1)`, dezelfde curve als het drieluik. Het masker gaat van onder naar boven open, mee met de scrollrichting, en de foto glijdt binnen het kader omhoog op zijn plek.
+   - **Vertraging** naar plek in de rij: 0 / 0,15 / 0,3 s. Op mobiel krijgt de rechterfoto van een paar 0,15 s.
+   - Er komt geen opacity-vervaging: het perzik vlak is het "lege" begin.
+   - **Bij `prefers-reduced-motion: reduce` en zonder `.js`:** geen clip-path, geen transform, geen transition. Alles staat er direct. De noodrem in de kop (na 3 s `js` weg) laat de foto's dus ook zien.
+
+4. **Mobiel (≤ 760 px).**
+   - Eén kolom binnen de rand van 32 px.
+   - B en A over de hele breedte (326 px).
+   - De andere foto's in paren van twee kolommen (gat 12 px, elk ca. 157 px): K + I, J + H, F + C. De rechterfoto van elk paar staat 24 px lager.
+   - Volgorde: B, K+I, A, J+H, F+C. Rijgat 24 px.
+   - Het fotoblok is daarmee ca. 1 080 px hoog, zo'n 1,3 scherm.
+   - Op touch schuiven de foto's net zo in. Dat hangt aan het scrollen, niet aan aanwijzen.
+   - `srcset` met een `-600`-variant voor de halve tegels en een `-800`-variant voor de hele breedte.
+
+5. **Achtergrond en kleur.**
+   - 003 krijgt `data-achtergrond="#DEB799"` (perzik), alle tekst in inkt. De kleuren lopen dan: salie (001) → wit (002) → perzik (003) → grijs (004) → terracotta (005). Geen twee keer dezelfde kleur na elkaar. Op wit zouden de platte foto's tegen de achtergrond wegvallen.
+   - Thema's staan nooit op terracotta, en dat geldt hier ook.
+   - **Kleur van de foto's:** alleen kleurcorrectie, geen vlak eromheen. Alle negen krijgen de lichte warme correctie van de site.
+   - De platte telefoonfoto's (G, H, I, J, K) gaan van koel of puur wit naar gebroken wit. K is grijs en moet ook iets lichter.
+   - De rekfoto's (A, B, C, F) worden een paar graden warmer, zonder dat ze lichter worden.
+   - `p-broekje-kleur.jpg` is zelf koel. Gebruik die foto niet als voorbeeld.
+
+6. **Maatsticker "38": laten staan, niet wegsnijden of wegretoucheren.** Het is echt en het laat de bezoeker zien hoe klein het is.
+   - Bij I is "38" leesbaar. Daar mag "maat 38" in de alt.
+   - Bij J is de sticker op webformaat niet leesbaar. Daar komt geen maat in de alt.
+   - De uitsnede snijdt de sticker nooit half af.
+
+7. **Ontwerpcriteria:** zie de lijst hieronder (OC1–OC12).
+
+### Ontwerpcriteria (toetsbaar)
+
+- **OC1.** Op 390 × 844 staat foto G (001) na hooguit één keer scrollen helemaal in beeld: onderkant ≤ 1 688 px vanaf de bovenkant van de pagina, hoogte ≤ 844 px. Verwacht: boven ca. 522, onder ca. 1 011. G heeft `fetchpriority="high"`, geen `loading="lazy"` en geen `.inschuif`.
+- **OC2.** G toont op 2:3 het hele setje: mutsje, shirt en broek zijn nergens afgesneden. Op 1440 is de foto hooguit 480 × 720 px en past het blok 001 binnen 900 px schermhoogte.
+- **OC3.** Op de pagina staan precies negen nieuwe prematuurfoto's (G plus acht in 003), in de volgorde van punt 1. D en E staan niet op de pagina. A en C staan niet naast elkaar.
+- **OC4.** Hoogte van het fotoblok in 003 (van de eerste tot de laatste `figure`):
+  - ≤ 1 650 px op 1440 × 900;
+  - ≤ 950 px op 768 × 1024;
+  - ≤ 1 150 px op 390 × 844.
+
+  Geen leeg vlak hoger dan 50 % van het scherm, ook niet tijdens het inschuiven (de kaders hebben hun hoogte vooraf).
+- **OC5.** Plaats in het raster:
+  - vanaf 761 px de kolommen en verschuivingen uit de tabel in punt 2;
+  - op ≤ 760 px B en A even breed als `.wrap` min de randen (326 px op 390), de paren elk (wrap − 12 px) / 2;
+  - geen enkele foto smaller dan 150 px op 768;
+  - de linkerrand van de eerste kolom valt samen met de linkerrand van het label `003 —` (verschil ≤ 1 px).
+- **OC6.** Inschuiven met `.js` en zonder "minder beweging":
+  - vóór `in-beeld` heeft de `figure` `clip-path: inset(100% 0 0 0)`;
+  - na `in-beeld` heeft hij `inset(0)` en heeft de `img` de transform `none`;
+  - de transition-duration is 1,2 s met `cubic-bezier(.215,.61,.355,1)`;
+  - de vertraging is 0 / 0,15 / 0,3 s per plek in de rij;
+  - bij omhoog scrollen gebeurt er niets (de klasse blijft staan).
+- **OC7.** Bij `reducedMotion: 'reduce'` en zonder JavaScript zijn alle acht foto's van 003 direct zichtbaar: clip-path `none` of `inset(0)`, transform `none`, opacity 1.
+- **OC8.** Er is geen horizontale scroll op 360, 390, 768 en 1024 px, ook niet tijdens het inschuiven: de `img` met `scale(1.12)` blijft binnen de `figure` met `overflow: hidden`. CLS ≤ 0,1.
+- **OC9.** Geen enkele foto wordt groter getoond dan het bestand. De weergavebreedte × DPR 2 is ≤ de breedte van het gekozen `srcset`-bestand. Een `-600`-variant mag op mobiel bij DPR 3 krap zijn, maar wordt dan nooit vergroot boven 1:1 van de grote versie.
+- **OC10.** Kleur, gemeten als het gemiddelde van de buitenste 3 % rand van elke webversie:
+  - R − B tussen +8 en +20; de huidige site-foto's zitten op +10 tot +30;
+  - het verschil in R − B tussen de foto's in 003 is ≤ 12;
+  - de achtergrond van de platte foto's (G, H, I, J, K) heeft een helderheid tussen 230 en 246, dus geen puur wit 255 en geen grijs onder 225.
+- **OC11.** Het label `003 — Voorbeelden` en de balk tonen hetzelfde nummer en dezelfde naam. Op perzik is alle tekst inkt; wit is daar nergens toegestaan. De pijl-link onder het raster is minstens 44 px hoog en 16 px groot.
+- **OC12.** Alt-teksten:
+  - ze noemen soort kledingstuk, print en kleur, met "couveuse-" of "prematuurkleding" (besluit Carst);
+  - alleen bij I staat "maat 38";
+  - nergens een gewicht, een naam van een kind of een andere maat.
+
+---
+
+## Voor de planner (niet in de Ontwerprichting zetten)
+
+- **Volgorde en nummering wijken af van wat de brief verwacht.** Prijs blijft 002, Voorbeelden wordt 003, Zo werkt het 004 en Contact 005. Dat past bij criterium 7. Werk wel de Mappen-regel in `CLAUDE.md` bij, en de verwachte labels in bestaande specs, als die op "003 — Zo werkt het" of "004 — Contact" controleren.
+- **De visuele basisschermen moeten met "minder beweging" worden gemaakt** (of na `in-beeld`). Een schermafdruk van de hele pagina zonder scrollen toont anders acht lege perzik kaders. Dat risico bestaat nu ook al bij `img.zoom`.
+- **Open vraag 3 van de brief is daarmee opgelost.** Ik heb aan de negen foto's genoeg; de rest van de bronmappen hoeft niet bekeken te worden.
+
+Mijn eigen contactvellen staan in `/tmp/claude-0/-home-claude/d4af4dd4-d393-563f-96ff-bcef27cbdbce/scratchpad/ontwerp-blik/` (`rek.jpg`, `plat.jpg`). Ze zijn alleen ter vergelijking; de originelen staan op de plek die de brief noemt.
