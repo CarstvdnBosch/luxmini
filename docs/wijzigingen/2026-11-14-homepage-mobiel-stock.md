@@ -221,3 +221,155 @@ Alleen op mobiel: ≤ 760 px, en telefoons liggend volgens de bestaande mobiele 
 3. **Dubbel label (balk + sectielabel):** oplossen voor de hele site in een eigen wijziging; niet in deze brief (criterium "label niet dubbel" vervalt hier).
 4. Pijl-link per Handwerk-item: voorstel planner overgenomen (de naam is de link, "Zo personaliseert Carien" blijft eronder).
 5. Eén brief, aparte commits per onderdeel (A/B en C); Instagram eerst alleen mobiel.
+
+
+## Ontwerprichting (website-ontwerper, 14 nov.; vervangt de lege sectie hierboven)
+
+
+**Geldt alleen op mobiel:** ≤ 760 px, en telefoons liggend (touch met hoogte ≤ 500 px). Touch-tablets van 761–1024 px houden het huidige gedrag: drieluik met de foto boven de tekst en Handwerk als kaarten. Desktop verandert niet.
+
+### A · 001 Producten
+
+1. **Opbouw.**
+   - Het label "001 — Producten" blijft op de eigen perzik strook (`data-achtergrond="#DEB799"`, doet niet mee met de kleurlaag). Daaronder staan drie blokken over de volle breedte.
+   - Elk blok heeft als ondergrond warm donker `#2A1C14`, de bestaande kleur van `.kern-masker`. Zo is de witte tekst ook leesbaar zolang de foto nog laadt.
+   - De foto vult het blok (`object-fit: cover`) en staat stil: niet inschuiven, niet schalen en geen `opacity .6`.
+   - De bestaande inschuif bij aanwijzen werkt hier niet, ook niet met een muis in een smal venster. De perzik, oker en mauve per kolom zie je op mobiel niet meer.
+   - De balk is boven deze blokken effen perzik, met het donkere logo en het label in inkt. Dat gaat vanzelf via `style.backgroundColor` van de sectie.
+2. **Hoogte.**
+   - Blokhoogte: `height: clamp(520px, calc(100svh - 96px), 720px)`. Dat is 720 px op 390 × 844, 568 px op de iPhone (390 × 664) en 644 px op 360 × 740.
+   - Zo past een blok altijd onder de balk van 56 px. Na een ankerlink staan de kop en de pijl-link dus helemaal in beeld.
+   - Geen enkele foto wordt in CSS-pixels groter dan het bestand. Op 390 × 720 is de schaal bij de box 0,51, bij het broekje 0,60 en bij het nest 0,75.
+   - `sizes` volgt de echte getoonde breedte, niet `90vw`:
+     - box: `(max-width: 760px) 720px`;
+     - broekje: `(max-width: 760px) 540px`;
+     - nest: geen srcset.
+   - Zo laadt ook een scherm met pixelverhouding 1× geen te klein bestand. De foto's blijven `loading="lazy"`.
+3. **Tekst en sluier.**
+   - De tekst staat **onderaan** het blok, in deze volgorde: nr (Libre Caslon Text, 16 px), kop (Libre Caslon Display, 40 px, regelafstand 1,08, de bestaande `&shy;`), zin (16 px / 1,7, max. 300 px breed) en pijl-link (16 px, 44 px hoog).
+   - Alles is wit en links uitgelijnd op de rand van 32 px. Ruimte tussen de onderdelen: 20 px; onderaan 48 px.
+   - De sluier is een verloop: `linear-gradient(to top, rgba(42,28,20,.66) 0, rgba(42,28,20,.66) 380px, rgba(42,28,20,.28) 100%)`.
+   - Daarmee halen de zin, het nr en de pijl-link minstens 4,5:1 op de lichtste plek. Ze worden dus niet groter gemaakt. De kop haalt ruim 3:1.
+   - Uitsnede per foto (`object-position`):
+     - box `30% 50%` (het zakje "Sem" blijft boven de tekst);
+     - broekje `50% 50%`;
+     - nest `50% 50%`.
+   - Vervang in "Vanaf € 35" de spaties door `&nbsp;`, zodat "€ 35" niet alleen op een regel valt. De tekst zelf verandert niet.
+4. **Telefoon liggend (touch, hoogte ≤ 500 px).**
+   - Het blok is 100svh hoog en heeft twee helften. Links (45 %) staat de tekst op effen `#2A1C14`: wit, 16,5:1.
+   - Rechts staat de foto, 55 % breed (`inset: 0 0 0 auto`), met een verloop van `#2A1C14` (1) naar 0,28. Zo blijft het nest onder 768 px breed.
+   - Kop 34–40 px, dezelfde volgorde als staand.
+
+### B · 002 Handwerk
+
+1. **Object: een eigen LUX mini-lookbook, opengeslagen**, zoals het open magazine bij Stock.
+   - Een spread van twee pagina's (`aspect-ratio: 8 / 5`, breedte `min(100vw - 32px, 400px)`, op 390 px 358 × 224).
+   - Hergebruik de papierstijl van de babynest-PR: `.blad` (papier `#FBF8F3`, schaduw `0 30px 50px rgba(32,32,32,.28)`, foto ingezet op 7 %) en de rugschaduw van `.blad-rechts::after`.
+   - Maak een nieuwe variant `.papier.spread` met een linker- en een rechterblad van 50 %, zonder kaft en zonder draaien. Een omslag of masthead hoort er niet bij, dus niets wat op persaandacht lijkt.
+   - Links staat de grote foto van het item, rechts de kleine. Het zijn de bestaande `.sfeer`-foto's met srcset 600w.
+   - Onder op elke pagina een regel van 13 px in Libre Caslon Text, in spatiekapitalen: links "LUX mini", rechts de productregel.
+   - Het object is decoratief: `aria-hidden="true"` en `alt=""`.
+2. **Kleurvlak per item (lichte paletkleur, alle tekst inkt):**
+   - Belettering: perzik `#DEB799` (8,8:1);
+   - Siliconen items: salie `#C3CFBC` (10,1:1);
+   - Prematuurkleding: olijf `#B4B19A` (7,5:1);
+   - Borduren: mauve `#B5969E` (6,1:1).
+
+   Elk paneel heeft zijn eigen kleur over de volle breedte. Tijdens het vegen zie je dus twee kleuren naast elkaar, zoals bladzijden.
+   - Na elke wissel zet main.js `style.backgroundColor` en `data-achtergrond` van `#technieken` op de kleur van het actieve item (0,75 s `var(--rustig)`) en roept `balkBijwerken(true)` aan. Label, tabjes, pijl-link en balk staan dan op dezelfde kleur. Het vlak doet niet mee met de kleurlaag.
+   - Geen witte tekst in dit blok.
+3. **Inhoud van het paneel (gecentreerd).**
+   - Bovenaan het object. Daarna, op 44 px afstand, de naam als `h3`: Libre Caslon Display, 40 px, regelafstand 1,08, hooguit twee regels.
+   - Daaronder de productregel: Source Sans 3, 16 px, gewicht 600, spatiekapitalen (0,2em), met de pijl erachter.
+   - Object, naam en productregel vormen samen één link (`<a>` om het hele paneel) naar dezelfde `href` als nu. De naam is de link, volgens besluit 4.
+   - Onder de rij volgen de tabjes. Daaronder blijft "Zo personaliseert Carien" als gewone `.pijl`, gecentreerd, zonder kader. Story 5 regelt het kader los.
+4. **Tabjes.**
+   - Er zijn vier tabjes met de nummers **01 02 03 04**: Libre Caslon Text, 16 px, inkt, elk 48 × 44 px, 8 px ertussen, samen 216 px. Dat past op 360 px en sluit aan op de nummers van het drieluik.
+   - De woorden in spatiekapitalen passen niet: "PREMATUURKLEDING" is op 16 px al ±205 px breed.
+   - Elke tab heeft als naam "01 Belettering" enzovoort, met de productregel als `sr-only`.
+   - Gebruik `role="tablist"` (`aria-label="Handwerk"`), `role="tab"` met `aria-selected`, `aria-controls` en roving tabindex, en per paneel `role="tabpanel"` met `aria-labelledby`.
+   - Het actieve tabje is onderstreept (1 px, 6 px onder de letters, zoals `aria-current` in het menu). De niet-actieve tabjes blijven volle inkt; inkt op 60 % haalt op mauve maar 2,9:1.
+   - Pijl links/rechts wisselt meteen en verplaatst de focus. Home en End werken ook.
+5. **Wisselen.**
+   - De rij is een native veegrij met `scroll-snap-type: x mandatory`. Elk paneel is 100 % breed, er kijkt geen buurpaneel mee en er is geen scrollbalk. Er wisselt niets vanzelf.
+   - Een tik op een tab scrollt naar het paneel (`behavior: smooth`, bij minder beweging `auto`).
+   - Het actieve paneel volgt uit een IntersectionObserver op de panelen (drempel 0,6), niet uit `scrollend`: Safari ondersteunt dat niet overal.
+   - Niet-actieve panelen krijgen `inert`. De rij zelf is geen tabstop, want de tabjes zijn de bediening. Er komen geen pijlknoppen.
+   - Bij minder beweging springt de rij direct en wisselt de kleur zonder overgang.
+   - Zonder JavaScript krijgt de tablist `hidden` (main.js haalt die weg). Dan is de rij gewoon veegbaar met scroll-snap, met een dunne scrollbalk voor een muis. Alle namen en links zijn bereikbaar en niets is `inert`.
+6. Het nieuwe blok bestaat alleen op mobiel. Op 761 px en breder is het `display: none` en blijven de hover-lijst en de touch-kaarten zoals ze zijn. Op mobiel krijgt `.sfeer-kaarten` `display: none`.
+
+### C · 004 Instagram
+
+1. **Kaart.**
+   - Het label "004 — Instagram" blijft boven de kaart, op de rand.
+   - De kaart is wit `#FFFFFF` op grijsblauw, met rechte hoeken, zonder rand en zonder schaduw. Breedte 100 % binnen de rand: 326 px op 390, hooguit 400 px en gecentreerd als je liggend kijkt.
+2. **Profielregel** (binnenmarge 12 px × 14 px).
+   - Een rond avatar van 40 px op terracotta `#BC8565` met `logo-lux-groot-wit.png` erin (26 px breed, `alt=""`). Eromheen een dunne ring: `box-shadow: 0 0 0 2px #fff, 0 0 0 3px #BC8565`.
+   - Daarnaast "luxmini2020" in Source Sans 3, 16 px, gewicht 600, inkt.
+   - De profielregel is **geen** link. Het profiel wordt zo maar één keer voorgelezen, en er staan al twee links naar Instagram (de foto en de pijl-link).
+3. **Foto.**
+   - Staand **4:5**, niet vierkant: `aspect-ratio: 4 / 5; object-fit: cover; object-position: 50% 40%`. Dit is een gewone Instagram-maat. Bij vierkant valt het broekje half weg.
+   - De foto loopt van rand tot rand in de kaart en blijft de bestaande link met dezelfde alt-tekst.
+   - Op 390 px wordt hij 326 × 408 getoond, dat is schaal 0,68 en dus niet vergroot.
+4. **Iconen.**
+   - Drie eigen lijntekeningen (hartje, reactie, delen) van 24 × 24 px, lijn 1,5 px in inkt, 18 px ertussen, binnenmarge 14 px.
+   - Ze staan in een gewone `div` met `aria-hidden="true"` en `pointer-events: none`, met `focusable="false"` op de svg's. Ze hebben geen hover en geen tellers.
+   - Geen Instagram-logo, geen kleurverloop en geen "…"-menu.
+5. **Bijschrift** (binnenmarge 10 px 14 px 16 px).
+   - De bestaande `h2` "Volg het atelier op Instagram" in Libre Caslon Display, 28 px, regelafstand 1,12, de `<br>`'s verborgen op mobiel.
+   - Daaronder de zin (16 px / 1,6) en de pijl-link "@luxmini2020" (16 px, 44 px hoog).
+   - Op desktop verandert niets (besluit 5).
+
+### D · Dubbel label
+Valt buiten deze brief (besluit 3 van Carst). Criterium 17 vervalt.
+
+---
+
+## Ontwerpcriteria (toetsbaar)
+
+Gemeten op 360 × 740, 390 × 844, 390 × 664 (WebKit/iPhone), 430 × 932 en 844 × 390.
+
+1. **Hoogte drieluikblok.** Elk drieluikblok is ≤ `innerHeight − 56` hoog (staand) en heeft `background-color` `rgb(42, 28, 20)`. Na `#kraamcadeauboxen`, `#prematuurkleding` en `#babynest` staan de kop en de pijl-link helemaal tussen de onderrand van de balk en de onderkant van het scherm.
+2. **Contrast in het drieluik.** Dit wordt gemeten met de tekst verborgen (`color: transparent`): schermafdruk per tekstvak, 99,5e percentiel van de luminantie. De zin, het nr en de pijl-link halen ≥ 4,5:1 tegen wit, de kop ≥ 3:1, op alle drie de foto's.
+3. **Geen vergroting in het drieluik.** Voor elke drieluikfoto geldt op pixelverhouding 1×: `naturalWidth` van `currentSrc` ≥ de getoonde breedte bij cover. Op 3× wordt het grootste beschikbare bestand geladen.
+4. **Stilstaande foto's.** Op mobiel heeft `.kern-beeld` of `.kern-masker` geen transform en heeft de img `opacity: 1`, ook na `hover()`. De kop is wit.
+5. **Balk boven het drieluik.** Boven de drieluikblokken heeft de balk achtergrond `#DEB799`, het donkere logo en het label in inkt.
+6. **Eén paneel in beeld.** Bij Handwerk staat precies één paneel volledig in beeld. Het object is ≥ 290 px breed en ≤ 400 px. Van het label "002 — Handwerk" tot de onderkant van "Zo personaliseert Carien" is het op 390 × 844 ≤ 788 px.
+7. **Tabjes.** Op 360 px staan de vier tabjes op één regel, elk ≥ 44 × 44 px. De pagina scrolt niet horizontaal. Het actieve tabje heeft een onderstreping van 1 px. Elk tabje haalt ≥ 4,5:1 (inkt, volle dekking).
+8. **Tabs en vegen werken samen.** Na een tik op tab 03 of na één keer vegen zijn `aria-selected` en de achtergrond van `#technieken` en van de balk binnen 1 s gelijk aan het actieve paneel, en zijn de andere panelen `inert`. Pijl rechts, Home en End werken. Bij `reducedMotion: 'reduce'` is de wissel direct (geen `transition-duration` > 0).
+9. **Zonder JavaScript.** De vier namen en hun links zijn bereikbaar door te vegen of te tabben, en er is geen tablist in beeld.
+10. **Instagram-kaart.** Een witte kaart met daarin, van boven naar beneden: profielregel (avatar 40 × 40, rond), foto in 4:5, iconenrij, `h2` van ≥ 24 px, zin en pijl-link. De iconen zijn niet focusbaar en hebben `aria-hidden`. Er staan geen cijfers in de kaart. De kaart bevat precies twee links, allebei naar `https://www.instagram.com/Luxmini2020/`.
+11. **Desktop en tablet gelijk.** Op ≥ 761 px wijken drieluik, Handwerk en Instagram niet af van de visuele basis.
+
+---
+
+## Tekst voor `CLAUDE.md`
+
+Op te nemen door de bouwer. Deze tekst vervangt het stuk tussen haakjes "(op mobiel blijft het drieluik … besluit 7 nov.)" en wordt samengevoegd met de regel "Homepage, drieluik (wens Carst 14 nov.)":
+
+> Homepage op mobiel (≤ 760 px en telefoons liggend; wens Carst 14 nov., brief 2026-11-14-homepage-mobiel-stock; touch-tablets houden foto boven tekst en kaarten):
+>
+> **001 Producten:** drie blokken over de volle breedte (hoogte `clamp(520px, 100svh − 96px, 720px)`, ondergrond `#2A1C14`). De foto staat stil als achtergrond, met de sluier `rgba(42,28,20)` van .66 (onderste 380 px) naar .28. De tekst staat onderaan en is wit: nr, kop 40 px, zin en pijl-link van 16 px, alles ≥ 4,5:1. Liggend: tekst links op `#2A1C14`, foto rechts (55 %). De balk is daar perzik.
+>
+> **002 Handwerk:** per item een opengeslagen LUX mini-lookbook (`.papier.spread`, papier van de babynestpagina) op een lichte paletkleur (perzik, salie, olijf, mauve), met de naam (40 px) en de productregel als één link. Daaronder tabjes 01–04 (tablist), veegrij met scroll-snap. Sectie en balk volgen de kleur van het actieve item. Er wisselt niets vanzelf.
+>
+> **004 Instagram:** een eigen post op een witte kaart: avatar met "LUX" op terracotta, "luxmini2020", foto 4:5, drie eigen lijniconen (decoratief), kop 28 px als bijschrift, zin en "@luxmini2020". Geen Instagram-logo of tellers.
+
+Aanvulling op de regel **Witte tekst**, bij "Uitzondering": `…, de mobiele drieluikblokken op de homepage (wit op foto met warme sluier ≥ .66 onder de tekst: kop 40 px en 16 px voor nr, zin en pijl-link, gemeten ≥ 4,5:1)`.
+
+## Voorstel voor `docs/ontwerp/principes.md`, Mobiel-regel 10
+
+Te beslissen door de hoofdsessie, want dit volgt uit het besluit van Carst:
+
+> 10. **Eén duidelijke volgende stap per productblok.** De foto staat boven de tekst, of (homepage-drieluik, besluit Carst 14 nov.) de tekst staat op de foto met een sluier die voor kleine tekst 4,5:1 haalt. Een scherm is nooit leeg.
+
+`scripts/controleer.py` toetst die regel en moet dus mee veranderen.
+
+---
+
+
+## Aanvulling hoofdsessie (14 nov.)
+- Criterium 5 (balk) volgt de ontwerper: boven de drieluikblokken effen perzik met donker logo.
+- Mobiel-regel 10 in docs/ontwerp/principes.md en de bijbehorende toets in scripts/controleer.py worden aangepast volgens het voorstel van de ontwerper (besluit Carst 14 nov.).
+- Bouwen pas na merge van PR #84 (babynest + logo).
