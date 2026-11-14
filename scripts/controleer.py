@@ -265,6 +265,51 @@ def controleer_stappen(browser):
         if breedte > b:
             fouten.append(f"{tag}: pagina scrollt horizontaal (scrollWidth {breedte} > {b})")
 
+# Zo werkt het: je betaalt vooraf (brief 2026-11-14-vooraf-betalen, issue #70). Selectors, geen regelnummers.
+VOORAF_ZIN = "Je betaalt vooraf; daarna gaat Carien aan de slag."
+VOORAF = {
+    "kraamcadeauboxen.html": [
+        "Vertel voor wie de box is en wanneer de baby verwacht wordt.",
+        "Kies het thema, het formaat en de kledingmaat. Met naam en geboortedatum maak je de box helemaal persoonlijk. Je betaalt vooraf.",
+        "Binnen ongeveer 7 werkdagen is je box klaar om op te halen of te versturen."],
+    "prematuurkleding.html": [
+        "Samen kies je wat het wordt, en in welke stof, kleur en maat.",
+        "Altijd met naam of eigen detail. " + VOORAF_ZIN,
+        "Carien maakt elk stuk met de hand in haar atelier in Ospel."],
+    "babynest.html": [
+        "Samen kies je wat het wordt, en in welke stof, kleur en maat.",
+        "Altijd met naam of eigen detail. " + VOORAF_ZIN,
+        "Carien maakt elk stuk met de hand in haar atelier in Ospel."],
+}
+LEES_VOORAF = r"""() => { const schoon = t => t.replace(/\u00ad/g, '').replace(/\s+/g, ' ').trim();
+  const s = [...document.querySelectorAll('main section[data-label]')].find(x => /Zo werkt het/.test(x.getAttribute('data-label')));
+  if (!s) return null;
+  const items = [...s.querySelectorAll('ol.stappen > li')].map(li => { const p = li.querySelector('p.klein'); return p ? schoon(p.textContent) : ''; });
+  const main = document.querySelector('main'), treffers = (schoon(main.textContent).match(/Je betaalt vooraf/g) || []).length;
+  const tweede = s.querySelector('ol.stappen > li:nth-child(2) p.klein');
+  const opPlek = [...main.querySelectorAll('*')].filter(el => [...el.childNodes].some(n => n.nodeType === 3 && /Je betaalt vooraf/.test(n.textContent)));
+  return { items, treffers, alleenInStap2: opPlek.length === 1 && opPlek[0] === tweede }; }"""
+
+def controleer_vooraf_betalen(browser):
+    """Brief vooraf-betalen, criteria 1-4: de betaalzin sluit stap 02 af, één keer, stap 01 en 03 ongewijzigd."""
+    ctx = browser.new_context(viewport={"width": 1440, "height": 900})
+    ctx.add_init_script("try { sessionStorage.setItem('lux-intro-gezien', '1'); } catch (e) {}")
+    for pagina, verwacht in VOORAF.items():
+        page = ctx.new_page()
+        page.goto(url(pagina), wait_until="load")
+        stand = page.evaluate(LEES_VOORAF)
+        page.close()
+        tag = f"{pagina} [Zo werkt het, vooraf betalen]"
+        if stand is None:
+            fouten.append(f"{tag}: sectie met data-label Zo werkt het ontbreekt"); continue
+        if stand["items"] != verwacht:
+            fouten.append(f"{tag}: stappen zijn {stand['items']}, verwacht {verwacht}")
+        if stand["treffers"] != 1:
+            fouten.append(f"{tag}: 'Je betaalt vooraf' staat {stand['treffers']} keer in main, verwacht 1")
+        if not stand["alleenInStap2"]:
+            fouten.append(f"{tag}: 'Je betaalt vooraf' staat niet (alleen) in .stappen > li:nth-child(2) p.klein")
+    ctx.close()
+
 # Homepage zoals Stock (brief 2026-11-06): hero, 001 Producten (drieluik), 002 Technieken, 003 Inspiratie, 004 Instagram.
 # Vervangt de controle van de vijf productblokken (brief 2026-11-05); de teksten van Babykleding en Siliconen staan
 # niet meer letterlijk op de homepage (testaanpassing ter beoordeling door Carst).
@@ -1520,6 +1565,7 @@ def main():
         controleer_zonder_js(browser)
         controleer_prijstabel(browser)
         controleer_stappen(browser)
+        controleer_vooraf_betalen(browser)
         controleer_contact(browser)
         controleer_tablet(browser)
         controleer_hero_mobiel(browser)
