@@ -301,6 +301,54 @@
   }
 
   /* ---------------------------------------------------------------
+     2c. Logo groot → klein (brief 2026-11-14-babynest-media-en-logo, B): bovenaan het grote "LUX"; bij scrollen
+         schaalt het (transform, linksboven) naar de maat van "LUX" in het gewone logo en komt "LUX mini" erin op.
+         Op de scrollwaarde zelf (met een muis is die al afgevlakt door het zachte scrollen, wiel 0,05), dus
+         zonder eigen animatie: wie halverwege binnenkomt, ziet meteen de juiste maat. Klaar binnen 40% van een
+         schermhoogte en vóór de balk verschijnt; terug omhoog groeit het weer. Niet bij "minder beweging" (CSS).
+     --------------------------------------------------------------- */
+  var logoEl = document.querySelector('.site-header .logo');
+  var logoGroot = logoEl && logoEl.querySelector('.logo-groot');
+  if (logoGroot && !stil) {
+    var logoKlein = logoEl.querySelector('.logo-klein img');
+    var grootImg = logoGroot.querySelector('img');
+    var logoStand = '', logoMaat = -1;
+    var logoBijwerken = function () {
+      if (getComputedStyle(logoGroot).display === 'none') return;
+      // vanaf 1280 px staat het menu op één regel ernaast: het grote logo wordt hooguit zo breed dat de rechterrand
+      // 24 px links van de eerste link blijft (CSS begint daar op de gewone maat)
+      var menuA = document.querySelector('.site-header .menu a');
+      var naastMenu = !!(menuA && menuA.offsetWidth && window.innerWidth >= 1280);
+      var ruimte = naastMenu ? menuA.getBoundingClientRect().left - 24 - logoGroot.getBoundingClientRect().left : 0;
+      var maatNu = naastMenu ? Math.max(0, Math.min(110, Math.floor(ruimte / (880 / 334) - 1))) : 0;
+      if (maatNu !== logoMaat) { logoMaat = maatNu; if (maatNu) logoEl.style.setProperty('--groot-h', maatNu + 'px'); else logoEl.style.removeProperty('--groot-h'); }
+      var hGroot = grootImg.offsetHeight, hKlein = logoKlein.offsetHeight;
+      if (!hGroot || !hKlein) return;
+      // de balk verschijnt als de onderkant van de kop 40 px onder de bovenrand komt; het logo is ruim daarvoor klein
+      var eind = window.innerHeight * 0.4;
+      if (kopEl) eind = Math.min(eind, Math.max(1, (kopEl.offsetTop + kopEl.offsetHeight - 40) * 0.8));
+      eind = Math.min(eind, Math.max(1, document.documentElement.scrollHeight - window.innerHeight)); // korte pagina (privacy, bedankt, 404): onderaan klein
+      var p = Math.max(0, Math.min(1, window.scrollY / eind));
+      var s = 1 + (hKlein * 82 / 93 / hGroot - 1) * p; // 82/93: hoogte van "LUX" in het gewone logo (bestand 248 x 93)
+      var vaag = Math.max(0, Math.min(1, (p - 0.7) / 0.3)); // de laatste 30%: "LUX mini" komt op, het grote "LUX" gaat weg
+      var stand = s.toFixed(4) + '|' + vaag.toFixed(3);
+      if (stand === logoStand) return;
+      logoStand = stand;
+      logoEl.style.setProperty('--logo-s', s.toFixed(4));
+      logoEl.style.setProperty('--logo-groot-o', (1 - vaag).toFixed(3));
+      logoEl.style.setProperty('--logo-klein-o', vaag.toFixed(3));
+    };
+    var logoGepland = false;
+    window.addEventListener('scroll', function () {
+      if (!logoGepland) { logoGepland = true; requestAnimationFrame(function () { logoGepland = false; logoBijwerken(); }); }
+    }, { passive: true });
+    window.addEventListener('resize', function () { logoStand = ''; logoBijwerken(); });
+    window.addEventListener('load', function () { logoStand = ''; logoBijwerken(); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { logoStand = ''; logoBijwerken(); }); // de menubreedte hangt af van de letter
+    logoBijwerken();
+  }
+
+  /* ---------------------------------------------------------------
      3. Collage: meebewegen en licht kantelen met de muis; de foto's wisselen
         samen per schermhelft (set A "Het atelier" op terracotta, set B
         "Het cadeau" op salie). Op touch en met het toetsenbord via de
@@ -696,54 +744,6 @@
   }
 
   /* ---------------------------------------------------------------
-     5d. Over, "Hoe ik werk": vanaf 761 px een menu met drie stappen.
-         Alleen een klik, Enter of Spatie wisselt (aanwijzen en focus niet);
-         de tekst wisselt met een crossfade van 0,4 s (CSS). Mobiel en zonder
-         JavaScript staan de stappen onder elkaar.
-     --------------------------------------------------------------- */
-  document.querySelectorAll('.hoe').forEach(function (sec) {
-    var lijst = sec.querySelector('.hoe-tabs');
-    var paneel = sec.querySelector('.hoe-stappen');
-    var tabs = Array.prototype.slice.call(sec.querySelectorAll('.hoe-tab'));
-    var stappen = Array.prototype.slice.call(sec.querySelectorAll('.hoe-stap'));
-    if (!lijst || !paneel || !tabs.length) return;
-    var breed = window.matchMedia('(min-width: 761px)');
-    var huidig = 0;
-    function zetTabs() {
-      tabs.forEach(function (t, n) { t.setAttribute('aria-selected', n === huidig ? 'true' : 'false'); t.tabIndex = n === huidig ? 0 : -1; });
-      stappen.forEach(function (s, n) { s.classList.toggle('aan', n === huidig); s.setAttribute('aria-hidden', n === huidig ? 'false' : 'true'); });
-      paneel.setAttribute('aria-labelledby', tabs[huidig].id);
-    }
-    function stand() {
-      var aan = breed.matches;
-      sec.classList.toggle('tabs-aan', aan);
-      lijst.hidden = !aan;
-      // altijd terracotta: zo staat het witte balklogo nooit op een witte balk (ontwerpgate navigatie, punt 1)
-      sec.setAttribute('data-achtergrond', '#BC8565');
-      laagBijwerken(true);
-      if (aan) {
-        lijst.setAttribute('role', 'tablist'); lijst.setAttribute('aria-label', 'Hoe ik werk');
-        paneel.setAttribute('role', 'tabpanel');
-        tabs.forEach(function (t) { t.setAttribute('role', 'tab'); t.setAttribute('aria-controls', paneel.id); });
-        zetTabs();
-      } else { // onder elkaar: alles leesbaar, geen tab-rollen
-        paneel.removeAttribute('role'); paneel.removeAttribute('aria-labelledby');
-        stappen.forEach(function (s) { s.removeAttribute('aria-hidden'); });
-      }
-    }
-    tabs.forEach(function (t, n) { t.addEventListener('click', function () { huidig = n; zetTabs(); }); });
-    lijst.addEventListener('keydown', function (e) { // pijltoetsen verplaatsen alleen de focus
-      var n = tabs.indexOf(document.activeElement), doel = null;
-      if (n < 0) return;
-      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') doel = (n + 1) % tabs.length;
-      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') doel = (n - 1 + tabs.length) % tabs.length;
-      else if (e.key === 'Home') doel = 0;
-      else if (e.key === 'End') doel = tabs.length - 1;
-      if (doel === null) return;
-      e.preventDefault(); tabs[doel].focus();
-    });
-    if (breed.addEventListener) breed.addEventListener('change', stand);
-  /* ---------------------------------------------------------------
      5f. Babynest (brief 2026-11-14-babynest-media-en-logo, A): boek, magazine en tablet zoals het Media-overzicht van Stock.
          Komt een blok in beeld, dan schuift het object in (x 150% met een draai → 0, 1,5 s; mobiel van onder) en komen
          de regels één voor één op (CSS .anim.binnen). Daarna slaat de kaft open op de scrollpositie: op desktop terwijl het
@@ -808,6 +808,54 @@
     mediaBijwerken();
   }
 
+  /* ---------------------------------------------------------------
+     5d. Over, "Hoe ik werk": vanaf 761 px een menu met drie stappen.
+         Alleen een klik, Enter of Spatie wisselt (aanwijzen en focus niet);
+         de tekst wisselt met een crossfade van 0,4 s (CSS). Mobiel en zonder
+         JavaScript staan de stappen onder elkaar.
+     --------------------------------------------------------------- */
+  document.querySelectorAll('.hoe').forEach(function (sec) {
+    var lijst = sec.querySelector('.hoe-tabs');
+    var paneel = sec.querySelector('.hoe-stappen');
+    var tabs = Array.prototype.slice.call(sec.querySelectorAll('.hoe-tab'));
+    var stappen = Array.prototype.slice.call(sec.querySelectorAll('.hoe-stap'));
+    if (!lijst || !paneel || !tabs.length) return;
+    var breed = window.matchMedia('(min-width: 761px)');
+    var huidig = 0;
+    function zetTabs() {
+      tabs.forEach(function (t, n) { t.setAttribute('aria-selected', n === huidig ? 'true' : 'false'); t.tabIndex = n === huidig ? 0 : -1; });
+      stappen.forEach(function (s, n) { s.classList.toggle('aan', n === huidig); s.setAttribute('aria-hidden', n === huidig ? 'false' : 'true'); });
+      paneel.setAttribute('aria-labelledby', tabs[huidig].id);
+    }
+    function stand() {
+      var aan = breed.matches;
+      sec.classList.toggle('tabs-aan', aan);
+      lijst.hidden = !aan;
+      // altijd terracotta: zo staat het witte balklogo nooit op een witte balk (ontwerpgate navigatie, punt 1)
+      sec.setAttribute('data-achtergrond', '#BC8565');
+      laagBijwerken(true);
+      if (aan) {
+        lijst.setAttribute('role', 'tablist'); lijst.setAttribute('aria-label', 'Hoe ik werk');
+        paneel.setAttribute('role', 'tabpanel');
+        tabs.forEach(function (t) { t.setAttribute('role', 'tab'); t.setAttribute('aria-controls', paneel.id); });
+        zetTabs();
+      } else { // onder elkaar: alles leesbaar, geen tab-rollen
+        paneel.removeAttribute('role'); paneel.removeAttribute('aria-labelledby');
+        stappen.forEach(function (s) { s.removeAttribute('aria-hidden'); });
+      }
+    }
+    tabs.forEach(function (t, n) { t.addEventListener('click', function () { huidig = n; zetTabs(); }); });
+    lijst.addEventListener('keydown', function (e) { // pijltoetsen verplaatsen alleen de focus
+      var n = tabs.indexOf(document.activeElement), doel = null;
+      if (n < 0) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') doel = (n + 1) % tabs.length;
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') doel = (n - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home') doel = 0;
+      else if (e.key === 'End') doel = tabs.length - 1;
+      if (doel === null) return;
+      e.preventDefault(); tabs[doel].focus();
+    });
+    if (breed.addEventListener) breed.addEventListener('change', stand);
     stand();
   });
 

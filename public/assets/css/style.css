@@ -1590,3 +1590,33 @@ html:not(.js) img[data-src] { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .tablet-strook, .tablet-puntjes span { transition: none; }
 }
+
+/* ---------- Logo groot → klein (brief 2026-11-14-babynest-media-en-logo, B; wens Carst 14 nov., optie A) ----------
+   Bovenaan staat alleen "LUX" (scherp bestand van 880 px, wit en donker; de wissel volgt dezelfde regels als het gewone
+   logo: html.hero-licht donker, html.kop-donker wit). main.js schaalt het bij scrollen met transform vanuit linksboven
+   naar de maat van "LUX" in het gewone logo en laat het gewone logo "LUX mini" erin opkomen; klaar binnen ca. 40% van een
+   schermhoogte en vóór de balk. Transform verschuift niets (CLS 0); op mobiel is de ruimte in de header vast gereserveerd.
+   Zonder JavaScript en bij "minder beweging" alleen het gewone logo. */
+.logo-klein { position: relative; display: inline-flex; }
+.logo-groot { display: none; }
+:root { --groot-h: 92px; } /* 761–1279 px: 2,5 × zou 110 px zijn, maar dan raakt het de kop van de subpagina's (h1 op 140 px); 92 px laat 16 px vrij */
+/* vanaf 1280 px staat het menu op één regel naast het logo: daar past 2,5 x nergens (gemeten: ruimte voor ca. 44 px op 1280,
+   85 px op 1440 en 50 px op 1920). main.js maakt het grote logo zo groot als past (rechterrand min. 24 px links van de
+   eerste link, ook na het laden van de letters); tot dan de gewone maat, zodat het menu nooit wordt overlapt. */
+@media (min-width: 1280px) { :root { --groot-h: 39px; } }
+@media (max-width: 760px) { :root { --groot-h: min(90px, calc((100vw - 2 * var(--rand) - 68px) / 2.635)); } }
+@media (prefers-reduced-motion: no-preference) {
+  .js .site-header .logo-groot { display: block; position: absolute; left: 2.4%; top: 5.4%; width: max-content; transform-origin: 0 0; transform: scale(var(--logo-s, 1)); opacity: var(--logo-groot-o, 1); }
+  .js .site-header .logo-groot img { height: var(--groot-h); width: auto; max-width: none; }
+  .js .site-header .logo-klein { opacity: var(--logo-klein-o, 0); }
+}
+/* met een muis van 1240 tot 1279 px verschijnt de linkrij naast de burger ook bovenaan; daar is geen ruimte voor meer dan
+   het gewone logo (gemeten: de eerste link staat ca. 100 px rechts van de linkerrand van het logo), dus geen groot logo */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) and (min-width: 1240px) and (max-width: 1279px) {
+  .js .site-header .logo-groot { display: none; }
+  .js .site-header .logo-klein { opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 760px) {
+  /* de header scrolt mee op mobiel: ruimte voor het grote logo vast gereserveerd (geen verspringing bij het krimpen) */
+  .js .site-header .wrap { padding-bottom: max(12px, calc(var(--groot-h) + 2px + 12px - 44px)); }
+}

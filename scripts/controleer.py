@@ -742,6 +742,30 @@ def controleer_bestanden():
         if not re.search(r"<!--\s*LET OP:[^>]*" + stuk, contact, re.I):
             fouten.append(f"contact.html: de formuliervelden voor {stuk} hebben geen LET OP-opmerking")
 
+def controleer_logo_groot():
+    """Brief 2026-11-14-babynest-media-en-logo (B, criterium 29): de header van elke openbare pagina heeft het gewone logo
+    (alt "LUX mini") en de grote versies "LUX" (wit en donker, alt=""), de aria-label blijft; het bestand is minstens 2 x zo breed als de weergave."""
+    for pagina in PAGINAS:
+        tekst = (ROOT / pagina).read_text(encoding="utf-8")
+        kop = re.search(r'<header class="site-header[^"]*">.*?</header>', tekst, re.S)
+        logo = re.search(r'<a class="logo" href="[^"]+" aria-label="LUX mini, naar de homepage">(.*?)</a>', kop.group(0) if kop else "", re.S)
+        if not logo:
+            fouten.append(f"{pagina}: header-logo zonder aria-label 'LUX mini, naar de homepage'")
+            continue
+        binnen = logo.group(1)
+        groot = re.search(r'<span class="logo-groot">(.*?)</span>', binnen, re.S)
+        if 'alt="LUX mini"' not in binnen or not groot:
+            fouten.append(f"{pagina}: header-logo mist het gewone logo (alt 'LUX mini') of de grote versie (.logo-groot)")
+            continue
+        imgs = re.findall(r'<img [^>]*>', groot.group(1))
+        srcs = sorted(re.search(r'src="[^"]*?([^/"]+)"', i).group(1) for i in imgs)
+        if srcs != ["logo-lux-groot-donker.png", "logo-lux-groot-wit.png"] or any('alt=""' not in i for i in imgs):
+            fouten.append(f"{pagina}: de grote logoversies (wit en donker, alt=\"\") ontbreken ({srcs})")
+    for naam in ["logo-lux-groot-wit.png", "logo-lux-groot-donker.png"]:
+        breedte = bestandsbreedte("assets/img/" + naam)
+        if not breedte or breedte < 2 * 110 * 880 / 334:  # weergave hooguit 110 px hoog (ca. 290 px breed): in 2x scherp
+            fouten.append(f"{naam}: {breedte} px breed, minder dan 2 x de grootste weergave")
+
 LEES_HEADER = """() => { const l = document.querySelector('.site-header .logo').getBoundingClientRect();
   return [[...document.querySelectorAll('.site-header .menu a')].map(a => { const r = a.getBoundingClientRect();
     return [a.textContent.trim(), a.getAttribute('href'), a.getAttribute('aria-current'), getComputedStyle(a).display !== 'none' && r.height > 0, Math.round(r.top), Math.round(r.left)]; }), Math.round(l.right)]; }"""
@@ -1217,33 +1241,6 @@ def controleer_productpagina(browser, pagina):
             fouten.append(f"{tag}: scherm zonder inhoud vanaf y = {leeg}")
         ctx.close()
 
-def controleer_prematuur(browser):
-    for pagina in PRODUCTPAGINAS:
-        if PRODUCTPAGINAS[pagina].get("media"):
-            controleer_babynest(browser)
-        else:
-            controleer_productpagina(browser, pagina)
-
-# Inspiratie (was Portfolio): vier groepen (criteria 10, 11 en 12 van navigatie-v2; criterium 5 van homepage per product)
-GROEPEN = [("kleding", "#C3CFBC", "#839C75"), ("textiel", "#B5969E", "#AE8C94"), ("siliconen", "#B4B19A", "#999575"), ("boxen", "#DEB799", "#C88654")]
-LEES_GROEPEN = """() => [...document.querySelectorAll('main > section.portfolio-groep')].map(s => [s.id, s.getAttribute('data-achtergrond'), s.getAttribute('data-diep'),
-  [...s.querySelectorAll('.werk')].length, [...s.querySelectorAll('a.pijl')].map(a => [a.textContent.trim(), a.getAttribute('href')])])"""
-LEES_WERKEN = """async () => {
-  const uit = [];
-  for (const i of document.querySelectorAll('main .werk img')) {
-    const r = i.getBoundingClientRect(); const bron = new Image(); bron.src = i.getAttribute('src');
-    try { await bron.decode(); } catch (e) { /* telt hieronder als 0 */ }
-    const f = i.closest('figure');
-    uit.push({ src: i.getAttribute('src'), srcset: i.getAttribute('srcset') || '', b: r.width, top: r.top + scrollY, links: Math.round(r.left), bestand: bron.naturalWidth,
-      w: i.getAttribute('width'), h: i.getAttribute('height'), alt: i.getAttribute('alt') || '', lazy: i.getAttribute('loading'), dec: i.getAttribute('decoding'),
-      fig: !!f && !!f.querySelector('figcaption'), tab: i.tabIndex >= 0 || !!i.closest('a, button, [tabindex]') });
-  }
-  return uit; }"""
-
-def controleer_portfoliopagina(browser):
-    for naam, (b, h, touch, kolommen) in {"desktop": (1440, 900, False, 4), "tablet": (768, 1024, True, 3), "mobiel": (390, 844, True, 2)}.items():
-        ctx, page = nieuwe_pagina(browser, "inspiratie.html", b, h, touch, reduced_motion="reduce")
-        tag = f"inspiratie.html [{naam}]"
 LEES_MEDIA = """() => { const b = [...document.querySelectorAll('main > section.media')];
   return b.map(s => { const z = s.querySelector('.media-zin'), cs = getComputedStyle(z), a = [...s.querySelectorAll('a.pijl')];
     const imgs = [...s.querySelectorAll('.media-object img')].map(i => { const r = i.getBoundingClientRect(); return [i.getAttribute('src'), r.width, i.getAttribute('width'), i.getAttribute('height'), i.getAttribute('loading'), i.alt]; });
@@ -1330,6 +1327,33 @@ def controleer_babynest(browser):
             fouten.append(f"{tag}: scherm zonder inhoud vanaf y = {leeg}")
         ctx.close()
 
+def controleer_prematuur(browser):
+    for pagina in PRODUCTPAGINAS:
+        if PRODUCTPAGINAS[pagina].get("media"):
+            controleer_babynest(browser)
+        else:
+            controleer_productpagina(browser, pagina)
+
+# Inspiratie (was Portfolio): vier groepen (criteria 10, 11 en 12 van navigatie-v2; criterium 5 van homepage per product)
+GROEPEN = [("kleding", "#C3CFBC", "#839C75"), ("textiel", "#B5969E", "#AE8C94"), ("siliconen", "#B4B19A", "#999575"), ("boxen", "#DEB799", "#C88654")]
+LEES_GROEPEN = """() => [...document.querySelectorAll('main > section.portfolio-groep')].map(s => [s.id, s.getAttribute('data-achtergrond'), s.getAttribute('data-diep'),
+  [...s.querySelectorAll('.werk')].length, [...s.querySelectorAll('a.pijl')].map(a => [a.textContent.trim(), a.getAttribute('href')])])"""
+LEES_WERKEN = """async () => {
+  const uit = [];
+  for (const i of document.querySelectorAll('main .werk img')) {
+    const r = i.getBoundingClientRect(); const bron = new Image(); bron.src = i.getAttribute('src');
+    try { await bron.decode(); } catch (e) { /* telt hieronder als 0 */ }
+    const f = i.closest('figure');
+    uit.push({ src: i.getAttribute('src'), srcset: i.getAttribute('srcset') || '', b: r.width, top: r.top + scrollY, links: Math.round(r.left), bestand: bron.naturalWidth,
+      w: i.getAttribute('width'), h: i.getAttribute('height'), alt: i.getAttribute('alt') || '', lazy: i.getAttribute('loading'), dec: i.getAttribute('decoding'),
+      fig: !!f && !!f.querySelector('figcaption'), tab: i.tabIndex >= 0 || !!i.closest('a, button, [tabindex]') });
+  }
+  return uit; }"""
+
+def controleer_portfoliopagina(browser):
+    for naam, (b, h, touch, kolommen) in {"desktop": (1440, 900, False, 4), "tablet": (768, 1024, True, 3), "mobiel": (390, 844, True, 2)}.items():
+        ctx, page = nieuwe_pagina(browser, "inspiratie.html", b, h, touch, reduced_motion="reduce")
+        tag = f"inspiratie.html [{naam}]"
         kop = page.evaluate("() => [document.querySelector('h1').textContent.trim(), document.title, [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()])]")
         if kop[0] != "Inspiratie" or not kop[1].startswith("Inspiratie") or kop[2] != [["", "— Inspiratie"], ["kleding", "001 — Kleding"], ["textiel", "002 — Knuffels en babynest"], ["siliconen", "003 — Siliconen en hangers"], ["boxen", "004 — Kraamcadeauboxen"], ["", "— Het atelier"], ["contact", "005 — Contact"]]:
             fouten.append(f"{tag}: h1, titel of secties kloppen niet ({kop})")
@@ -1537,6 +1561,7 @@ def main():
     controleer_headers()
     controleer_bestanden()
     controleer_productrij()
+    controleer_logo_groot()
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         controleer_navigatie(browser)
