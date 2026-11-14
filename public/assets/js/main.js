@@ -680,9 +680,12 @@
     // de lijn onderaan de pagina in de footer valt (bijv. na End of #contact).
     // Secties met witte tekst (terracotta, .op-kleur) wisselen al op 88%, zodat wit nooit op een lichte laag staat;
     // secties met alleen inkt pas op de helft, zodat een compact blok in rust zijn eigen kleur houdt (ontwerpgate homepage).
+    // Uitzondering: een sectie mag een eigen lijn hebben via data-laag-lijn (getal tussen 0 en 1), maar alleen als er
+    // geen witte tekst in die sectie staat. Nu alleen contact.html #formulier op 0,6 (brief 2026-11-14-contact-ruimte-en-kleur).
     var vh = window.innerHeight, kies = null;
     lagen.forEach(function (sec) {
-      var lijn = vh * (sec.classList.contains('op-kleur') ? 0.88 : 0.5);
+      var eigen = parseFloat(sec.getAttribute('data-laag-lijn'));
+      var lijn = vh * (eigen > 0 && eigen < 1 ? eigen : (sec.classList.contains('op-kleur') ? 0.88 : 0.5));
       if (sec.getBoundingClientRect().top <= lijn) kies = sec;
     });
     if (kies && (forceer || kies !== laatsteLaag)) { laatsteLaag = kies; zetLaag(kies.getAttribute('data-achtergrond')); }
@@ -809,8 +812,10 @@
       if (laatste) {
         var omg = laatste.closest('.op-kleur, .op-wit, .op-grijs') || laatste;
         balk.style.backgroundColor = omg.classList.contains('met-laag') ? laagKleur : (omg.style.backgroundColor || '');
-        // diepe portfoliotint onder de balk: wit logo; label en burger blijven inkt
-        diep = omg.classList.contains('met-laag') && DIEPE_TINTEN.indexOf((laagKleur || '').toUpperCase()) >= 0;
+        // diepe portfoliotint of terracotta laag onder de balk: wit logo; label en burger blijven inkt
+        // (terracotta: de laag kan al omslaan terwijl een witte sectie nog onder de balk ligt, brief 2026-11-14-contact-ruimte-en-kleur)
+        var lk = (laagKleur || '').toUpperCase().replace(/\s/g, '');
+        diep = omg.classList.contains('met-laag') && (DIEPE_TINTEN.indexOf(lk) >= 0 || lk === '#BC8565' || lk === 'RGB(188,133,101)');
       }
       balk.classList.toggle('diep', diep);
       // boven een lichte bovenkant (salie, perzik ...) zijn balklogo en burger donker
