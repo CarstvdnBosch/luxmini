@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { controleer, bouwMail } from '../src/formulier.js';
+import { controleer, bouwMail, THEMAS } from '../src/formulier.js';
 
 const geldig = {
   naam: 'Zoë de Vries', email: 'zoe@example.nl', telefoon: '0612345678',
@@ -99,11 +99,22 @@ test('geen regeleinden en een maximumlengte in extra velden (geen kopinjectie)',
   assert.equal(new TextDecoder().decode(Uint8Array.from(atob(onderwerp), (c) => c.charCodeAt(0))), 'Website: Kraamcadeaubox – Zoë de Vries');
 });
 
-test('thema geldt alleen als het een van de negen thema\'s of "Een eigen stof of kleur" is', () => {
+test('thema geldt alleen als het een van de acht thema\'s of "Een eigen stof of kleur" is', () => {
   const thema = (t) => (controleer({ ...geldig, box_thema: t }).velden.extra.find(([k]) => k === 'Thema') || [])[1];
   assert.equal(thema('Wilde blaadjes'), 'Wilde blaadjes');
   assert.equal(thema('Een eigen stof of kleur'), 'Een eigen stof of kleur');
   for (const t of ['giraf', 'Olifant', '<script>', 'Giraf\r\nBcc: x@y.nl', '']) assert.equal(thema(t), undefined, `thema ${JSON.stringify(t)}`);
+});
+
+// Brief 2026-11-14-walvis-uit-assortiment: Walvis is uit het assortiment; de verzending slaagt, alleen het thema valt weg
+test('Walvis is geen geldig thema meer; de verzending slaagt wel', () => {
+  assert.ok(!THEMAS.includes('Walvis'));
+  assert.deepEqual(THEMAS, ['Giraf', 'Vos', 'Tulp', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur']);
+  for (const t of ['Walvis', 'walvis']) {
+    const r = controleer({ ...geldig, box_thema: t });
+    assert.equal(r.ok, true, `verzending met box_thema ${t}`);
+    assert.equal(r.velden.extra.find(([k]) => k === 'Thema'), undefined, `thema ${t}`);
+  }
 });
 
 // Brief 2026-11-11-c5-babymaten: maatkeuzes per onderwerp (besluit Carst 11 nov.); maat 44, 46 en 48 erbij (Story 16, 12 nov.), bij de box weer weg, 34 en 36 erbij bij prematuurkleding (Carst 14 nov.)

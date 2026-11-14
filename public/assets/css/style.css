@@ -861,7 +861,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .kop-cat { font-size: 40px; }
 }
 
-/* ---------- Kraamcadeaubox: negen thema's in het ritme van Stock /projecten ----------
+/* ---------- Kraamcadeaubox: thema's in het ritme van Stock /projecten ----------
    Foto 58,33% breed (840 x 480 op 1440), lopende regel met de themanaam erachter. */
 .thema { overflow-x: clip; padding-bottom: calc(var(--u) * 10.41); }
 .thema-vak { position: relative; width: var(--B); margin-left: calc(50% - var(--B) / 2); --l: 33.333%; --r: 8.333%; }
@@ -1178,8 +1178,9 @@ html.zacht-scrollen { scroll-behavior: auto; }
 @media (prefers-reduced-motion: reduce) { .formulier .groep { animation: none !important; } }
 
 /* ---------- Contactformulier: thema als keuzekaarten met de stoffoto's (wens Carst 11 nov., brief 2026-11-11-c7-stofkeuze) ----------
-   Raster zonder scrollbalk: vanaf 761 px 5 kolommen (9 stoffen + "Een eigen stof" = 2 rijen); op mobiel 3 × 3 en de eigen stof
-   liggend over de volle breedte. Daaronder het blok "Je eigen stof" (alleen bij een eigen stof) en "Nog niet gekozen". */
+   Raster zonder scrollbalk (indeling a, brief 2026-11-14, De stoffen: één raster): vanaf 761 px 5 kolommen, rij 1 vijf stoffen,
+   rij 2 drie stoffen en "Een eigen stof" liggend over twee kolommen; op mobiel 3 × 3 met de eigen stof als negende tegel.
+   Daaronder het blok "Je eigen stof" (alleen bij een eigen stof) en "Nog niet gekozen". */
 .stof-kaarten { clear: both; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; padding-top: 8px; }
 .formulier .stof-kaart { gap: 8px; padding: 8px 8px 12px; }
 .stof-kaart img, .stof-eigen-tekening { display: block; width: 100%; max-width: 240px; height: auto; aspect-ratio: 1; object-fit: cover; }
@@ -1222,46 +1223,57 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .js .formulier .eigen-stof { animation: groep-in .3s ease both; }
 }
 @media (prefers-reduced-motion: reduce) { .formulier .eigen-stof { animation: none !important; } }
+@media (min-width: 761px) {
+  /* "Een eigen stof" liggend over twee kolommen: de tekening links even breed als een stoffoto in die rij
+     (kaart 2 × kolom + 12 px, padding 8 px links en 44 px rechts: 50% + 4 px = kolom − 16 px), de tekst rechts en verticaal
+     gecentreerd (afbreken alleen tussen woorden), de vink rechts in het midden */
+  .formulier .stof-eigen { grid-column: span 2; flex-direction: row; align-items: center; gap: 12px; padding: 8px 44px 8px 8px; }
+  .stof-eigen .stof-eigen-tekening { width: calc(50% + 4px); flex: none; align-self: flex-start; }
+  .stof-eigen .stof-kaart-naam { hyphens: manual; -webkit-hyphens: manual; overflow-wrap: normal; }
+  .stofkeuze .stof-eigen .keuze-vink { top: 50%; margin-top: -12px; }
+}
 @media (max-width: 760px) {
   .stof-kaarten { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .formulier .stof-kaart { padding: 6px 6px 10px; gap: 6px; }
   .stofkeuze .keuze-vink { top: 10px; right: 10px; }
-  .formulier .stof-eigen { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 14px; padding: 6px 52px 6px 6px; }
-  .stof-eigen .stof-eigen-tekening { width: 88px; flex: none; }
-  .stofkeuze .stof-eigen .keuze-vink { top: 50%; margin-top: -12px; }
 }
 
 /* ---------- Kraamcadeauboxen: wat er in de box kan (acht producten) en de stoffen (brief 2026-11-06) ----------
-   Desktop: acht tegels naast elkaar in een raster binnen de rand (de rij scrolt niet: geen knoppen, geen tabstop);
-   tablet en mobiel een veegbare rij tot de schermrand in het carrouselpatroon, zoals de stoffen (Story 1, issue #63, brief 2026-11-12).
-   De stoffen: één rij in het patroon van de thema's (.carrousel, feedback Carst 11 nov.: geen scrollbalk), tegels 200 px
-   (mobiel 128 px), nooit groter dan het bestand (240 px). */
-.producten-kop { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 24px; line-height: 1.3; }
-.formaten-blok .producten-kop { margin-top: 24px; }
-.producten { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 16px; }
-.productenrij { align-self: stretch; }
-.product { margin: 0; min-width: 0; }
-.product img, .product-tekening { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
-.product-tekening { display: flex; align-items: center; justify-content: center; background: var(--grijsblauw); color: var(--inkt); }
-.product-tekening svg { width: 58%; height: auto; }
-.product-naam { margin: 12px 0 0; font-family: var(--display); font-size: 20px; line-height: 1.15; }
-.product-regel { margin: 4px 0 0; font-size: 16px; line-height: 1.4; }
-.stoffen { --stof: 200px; --gat: 16px; align-self: stretch; --rand-px: calc(var(--B) * .082); width: var(--B); margin-left: calc(50% - var(--B) / 2); scroll-padding-inline: var(--rand-px); }
-.stoffen ul { list-style: none; margin: 0; padding: 0 var(--rand-px); display: grid; grid-auto-flow: column; grid-auto-columns: var(--stof); gap: var(--gat); width: max-content; }
-.stof { margin: 0; scroll-snap-align: start; }
-.stof img { width: var(--stof); height: var(--stof); max-width: 240px; object-fit: cover; }
-.stof-naam { margin: 10px 0 0; font-family: var(--serif); font-size: 16px; line-height: 1.3; }
-@media (max-width: 1024px) {
-  /* scrollen, snap en knoppen: .carrousel; rand en scroll-padding zoals .stoffen */
-  .productenrij { --rand-px: calc(var(--B) * .082); width: var(--B); margin-left: calc(50% - var(--B) / 2); scroll-padding-inline: var(--rand-px); }
-  .producten { --product: 160px; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: var(--product); gap: 12px; width: max-content; padding: 0 var(--rand-px); }
-  .product { scroll-snap-align: start; }
+   002 en 003 delen één raster (brief 2026-11-14, De stoffen: één raster): de rand van .wrap (--rand-px), kolom --kol en gat --gat.
+   Desktop (vanaf 1025 px) acht kolommen (gat 16 px): de acht producten en de acht stoffen staan elk op één rij binnen de rand
+   (de rij scrolt niet: geen knoppen, geen tabstop); tablet vier kolommen per beeld (gat 12 px) en mobiel kolom
+   min((80% − 12 px) / 2, 160 px): veegbaar tot de schermrand in het carrouselpatroon, de knoppen schuiven één set.
+   Producten en stoffen zijn één kolom breed met een vierkante foto, nooit groter dan het bestand (stoffen 240 px). */
+#in-de-box, #themas {
+  --rand-px: calc(100cqw * .082); /* precies de rand van .wrap (8,2% van de schermbreedte), ook boven 1440 px */
+  --gat: 16px;
+  --W: calc(var(--B) - 2 * var(--rand-px)); /* binnenbreedte: valt samen met het label "002 —" */
+  --kol: calc((var(--W) - 7 * var(--gat)) / 8);
+}
+@media (min-width: 761px) and (max-width: 1024px) {
+  #in-de-box, #themas { --gat: 12px; --kol: calc((var(--W) - 3 * var(--gat)) / 4); }
 }
 @media (max-width: 760px) {
-  .producten { --product: 136px; }
-  .productenrij { --rand-px: var(--rand); width: auto; margin-left: calc(-1 * var(--rand)); margin-right: calc(-1 * var(--rand)); }
-  .product-naam { font-size: 20px; }
-  .stoffen { --stof: 128px; --gat: 12px; --rand-px: var(--rand); width: auto; margin-left: calc(-1 * var(--rand)); margin-right: calc(-1 * var(--rand)); }
+  #in-de-box, #themas { --rand-px: var(--rand); --gat: 12px; --kol: min(calc((80cqw - 12px) / 2), 160px); }
+}
+.producten-kop { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 24px; line-height: 1.3; }
+.formaten-blok .producten-kop { margin-top: 24px; }
+/* de drie rijen op dezelfde manier: zo breed als het ontwerpvak, rand als padding en scroll-padding (scrollen en knoppen: .carrousel) */
+.productenrij, .stoffen, .themacarrousel { align-self: stretch; width: var(--B); margin-left: calc(50% - var(--B) / 2); scroll-padding-inline: var(--rand-px); }
+.producten, .stoffen ul, .themacarrousel ul { list-style: none; margin: 0; padding: 0 var(--rand-px); width: max-content; display: grid; grid-auto-flow: column; grid-auto-columns: var(--kol); gap: var(--gat); }
+.product { margin: 0; min-width: 0; scroll-snap-align: start; }
+.product img, .product-tekening { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; }
+.product img.p-knuffel-naam { object-position: 50% 40%; } /* oren met naam en datum, knoopje en label LUX in beeld */
+.product img.p-speenkoord-hond { object-position: 50% 0; } /* clip, kralen en hondje in beeld; alleen het koord onderaan valt weg */
+.product-tekening { display: flex; align-items: center; justify-content: center; background: var(--grijsblauw); color: var(--inkt); }
+.product-tekening svg { height: 70%; width: auto; }
+.product-naam { margin: 12px 0 0; font-family: var(--display); font-size: 20px; line-height: 1.15; hyphens: manual; }
+.product-regel { margin: 4px 0 0; font-size: 16px; line-height: 1.4; }
+.stof { margin: 0; min-width: 0; scroll-snap-align: start; }
+.stof img { width: 100%; height: auto; max-width: 240px; aspect-ratio: 1; object-fit: cover; }
+.stof-naam { margin: 10px 0 0; font-family: var(--serif); font-size: 16px; line-height: 1.3; hyphens: auto; overflow-wrap: break-word; }
+@media (max-width: 760px) {
+  .productenrij, .stoffen, .themacarrousel { width: auto; margin-left: calc(-1 * var(--rand)); margin-right: calc(-1 * var(--rand)); }
 }
 
 /* ---------- Homepage 002 Technieken: de namen zijn links (zelfde opmaak als de knoppen in de hoverlijst) ---------- */
@@ -1390,8 +1402,8 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 /* Handwerk (002): de pijl-link "Zo personaliseert Carien" ligt boven de foto's die bij aanwijzen verschijnen */
 #technieken .sectie > .pijl { position: relative; z-index: 2; }
 
-/* ---------- Kraamcadeauboxen (feedback Carst 6 nov. 14:28, F4) ----------
-   001 formaten op salie, 002 producten en stoffen samen, 003 de thema's groot in sets van drie (scroll-snap per set,
+/* ---------- Kraamcadeauboxen (feedback Carst 6 nov. 14:28, F4; raster brief 2026-11-14) ----------
+   001 formaten op salie, 002 producten en stoffen samen, 003 de thema's twee kolommen breed in sets (scroll-snap per set,
    pijlknoppen met een muis, vegen op touch; mobiel één thema per keer met een stukje van de volgende). */
 .in-de-box { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
 .in-de-box .producten-kop { margin-top: 24px; }
@@ -1402,11 +1414,12 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 .carrousel::-webkit-scrollbar { display: none; }
 .carrousel:focus-visible { outline-offset: -3px; }
 @media (hover: hover) and (pointer: fine) { html:not(.js) .carrousel { scrollbar-width: thin; } html:not(.js) .carrousel::-webkit-scrollbar { display: initial; } }
-.themacarrousel { --gat: 16px; --rand-px: calc(var(--B) * .082); width: var(--B); margin-left: calc(50% - var(--B) / 2); scroll-padding-inline: var(--rand-px); }
-.themacarrousel ul { list-style: none; margin: 0; padding: 0 var(--rand-px); width: max-content; display: grid; grid-auto-flow: column; grid-auto-columns: calc((var(--B) - 2 * var(--rand-px) - 2 * var(--gat)) / 3); gap: var(--gat); }
-/* ontwerpgate ronde 3: binnen de rand (eerste naam onder het label), rechts een stukje van de volgende set in beeld */
+/* 003: een thema is twee kolommen breed (brief 2026-11-14): desktop sets van vier (precies twee sets), tablet sets van twee,
+   mobiel één per keer; de volgende set kijkt alleen in de rand rechts naar binnen. Rij en rand: zie 002 hierboven. */
+.themacarrousel ul { grid-auto-columns: calc(2 * var(--kol) + var(--gat)); }
 .thema-tegel { margin: 0; min-width: 0; }
-.thema-tegel:nth-child(3n + 1) { scroll-snap-align: start; scroll-snap-stop: always; }
+@media (min-width: 1025px) { .thema-tegel:nth-child(4n + 1) { scroll-snap-align: start; scroll-snap-stop: always; } }
+@media (min-width: 761px) and (max-width: 1024px) { .thema-tegel:nth-child(2n + 1) { scroll-snap-align: start; scroll-snap-stop: always; } }
 .thema-tegel figure { margin: 0; }
 .thema-tegel img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
 .thema-tegel figcaption { margin: 14px 0 0; font-family: var(--display); font-size: clamp(24px, 2vw, 30px); line-height: 1.15; }
@@ -1420,8 +1433,6 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
 @media (hover: hover) and (pointer: fine) { .js .carrousel-knoppen { display: inline-flex; } }
 @media (max-width: 1024px) { .thema-tegel figcaption { font-size: 22px; } }
 @media (max-width: 760px) {
-  .themacarrousel { --rand-px: var(--rand); width: auto; margin-left: calc(-1 * var(--rand)); margin-right: calc(-1 * var(--rand)); }
-  .themacarrousel ul { grid-auto-columns: 80vw; gap: 12px; }
   .thema-tegel { scroll-snap-align: start; scroll-snap-stop: normal; }
   .thema-tegel figcaption { font-size: 22px; }
 }

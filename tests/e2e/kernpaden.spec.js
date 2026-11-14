@@ -118,13 +118,15 @@ test('homepage: hero, 001 Producten, 002 Handwerk, 003 Inspiratie, 004 Instagram
   for (const id of ['kraamcadeaubox', 'prematuur', 'babynest', 'babykleding', 'siliconen', 'inspiratie', 'contact']) await expect(page.locator(`#${id}`)).toHaveCount(1);
 });
 
-// Feedback Carst 6 nov. 14:28 (F4): de negen thema's groot in sets van drie (vervangt "negen thema's binnen twee schermen")
-test('kraamcadeauboxen: volgorde en thema\'s groot in sets van drie met scroll-snap', async ({ page }, info) => {
+// Feedback Carst 6 nov. 14:28 (F4): de thema's groot in sets met scroll-snap. Brief 2026-11-14-walvis-uit-assortiment (besluit Carst
+// 14 nov. 13:31 "Eén raster"): acht thema's (Walvis weg), twee kolommen breed: desktop sets van vier, tablet sets van twee, mobiel één
+// (vervangt "sets van drie")
+test('kraamcadeauboxen: volgorde en thema\'s twee kolommen breed in sets met scroll-snap', async ({ page }, info) => {
   await page.goto('/kraamcadeauboxen');
   const labels = await page.locator('main > section').evaluateAll(s => s.map(x => x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()));
   expect(labels).toEqual(['— Kraamcadeauboxen', '— Met naam', '001 — Kies je formaat', '002 — Wat er in de box kan', '003 — Thema\'s', '004 — Zo werkt het', '005 — Contact']);
   const rij = page.locator('#themas .themacarrousel');
-  await expect(rij.locator('li')).toHaveCount(9);
+  await expect(rij.locator('li')).toHaveCount(8);
   // de foto's laden pas als de sectie in de buurt komt (ronde 8)
   await page.locator('#themas').evaluate(e => e.scrollIntoView({ block: 'start', behavior: 'instant' }));
   await expect(rij.locator('img[data-src]')).toHaveCount(0);
@@ -133,15 +135,17 @@ test('kraamcadeauboxen: volgorde en thema\'s groot in sets van drie met scroll-s
     const foto = [];
     for (const i of [...r.querySelectorAll('img')].slice(0, 4)) { i.loading = 'eager'; await i.decode().catch(() => {}); const b = new Image(); b.src = i.currentSrc || i.src; await b.decode().catch(() => {});
       foto.push([i.getBoundingClientRect().width, i.getBoundingClientRect().height, b.naturalWidth, b.naturalHeight]); }
+    const n = innerWidth <= 760 ? 1 : innerWidth <= 1024 ? 2 : 4; // eerste tegel van de volgende set
     return { scrollt: r.scrollWidth > r.clientWidth, snap: getComputedStyle(r).scrollSnapType, inBeeld: ts.filter(t => t.left >= -1 && t.right <= innerWidth + 1).length,
-      eerste: ts[0].left, label: label.left, vierde: Math.max(0, Math.min(innerWidth, ts[3].right) - ts[3].left), foto }; });
+      eerste: ts[0].left, label: label.left, volgende: Math.max(0, Math.min(innerWidth, ts[n].right) - ts[n].left), foto }; });
   expect(m.scrollt).toBe(true);
   expect(m.snap).toMatch(/x mandatory/);
   const smal = ['mobiel', 'iphone'].includes(info.project.name); // beide 390 px breed: één thema per keer
-  expect(m.inBeeld, 'één set in beeld').toBe(smal ? 1 : 3);
+  expect(m.inBeeld, 'één set in beeld').toBe(smal ? 1 : info.project.name === 'tablet' ? 2 : 4);
   // ontwerpgate ronde 3: binnen de rand (eerste thema onder het label) en een stukje van de volgende set in beeld
   expect(Math.abs(m.eerste - m.label), 'eerste thema begint onder het label').toBeLessThanOrEqual(1);
-  expect(m.vierde, 'zichtbaar deel van het vierde thema (signaal dat er meer is)').toBeGreaterThanOrEqual(smal ? 0 : 40);
+  expect(m.volgende, 'zichtbaar deel van de volgende set (signaal dat er meer is)').toBeGreaterThanOrEqual(smal ? 25 : 40);
+  if (smal) expect(m.volgende, 'mobiel: 25–40 px van het volgende thema (ontwerpcriterium 7)').toBeLessThanOrEqual(40);
   // de foto's worden nooit groter getoond dan het gekozen bestand (echte pixelmaat; met de bijsnede van 2% tegen het donkere randje)
   for (const [b, h, fb, fh] of m.foto) expect(Math.max(b / fb, h / fh), 'themafoto vergroot').toBeLessThanOrEqual(1.01);
   await expect(page.locator('#themas a.pijl')).toHaveText(['Vraag je thema aan']);
@@ -305,7 +309,9 @@ test('Story 1: productrij als carrousel, zonder scrollbalk, met knoppen (muis), 
     if (w <= 430) {
       expect(m.links[0], 'eerste product op 32 px').toBe(32);
       expect(m.volledig, '2 producten volledig').toBe(2);
-      expect(m.derde, 'minstens 24 px van het derde').toBeGreaterThanOrEqual(24);
+      // brief 2026-11-14 (ontwerpcriterium 7): 25–40 px van het derde (was: minstens 24 px)
+      expect(m.derde, '25–40 px van het derde').toBeGreaterThanOrEqual(25);
+      expect(m.derde, '25–40 px van het derde').toBeLessThanOrEqual(40);
       // ook op 460 px geen scrollbalk en niets horizontaal
       await page.setViewportSize({ width: 460, height: 900 });
       await geenBalk(460);

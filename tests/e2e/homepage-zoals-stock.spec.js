@@ -33,13 +33,13 @@ test('formulier: per onderwerp alleen de eigen groep zichtbaar', async ({ page }
     await page.locator('select[name="onderwerp"]').selectOption(o);
     expect(await zichtbareGroepen(page), `zichtbare groepen bij ${o}`).toEqual(GROEPEN.includes(o) ? [o] : []);
   }
-  // kraamcadeaubox: vier formaten (keuzekaartjes van minstens 44 px), negen thema's plus een eigen stof
+  // kraamcadeaubox: vier formaten (keuzekaartjes van minstens 44 px), acht thema's plus een eigen stof (Walvis is uit het assortiment, brief 2026-11-14)
   await page.locator('select[name="onderwerp"]').selectOption('Kraamcadeaubox');
   const kaarten = await page.locator('.keuze-kaart:has(input[name="box_formaat"])').evaluateAll(ks => ks.map(k => [k.querySelector('input').value, Math.round(k.getBoundingClientRect().height), Math.round(k.querySelector('input').getBoundingClientRect().height)]));
   expect(kaarten.map(k => k[0])).toEqual(['35', '50', '65', '80']);
   for (const [, h, ih] of kaarten) { expect(h).toBeGreaterThanOrEqual(44); expect(ih).toBeGreaterThanOrEqual(44); }
   const themas = await page.locator('input[name="box_thema"]').evaluateAll(os => os.map(o => o.value).filter(Boolean));
-  expect(themas).toEqual(['Giraf', 'Vos', 'Tulp', 'Walvis', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur']);
+  expect(themas).toEqual(['Giraf', 'Vos', 'Tulp', 'Wilde blaadjes', 'Framboos', 'Regenboog', 'Wilgentakjes', 'Blaadjes en bloemen', 'Een eigen stof of kleur']);
   // alle groepsvelden zijn optioneel; verplicht blijven naam, e-mail en bericht
   expect(await page.locator('form .groep [required]').count()).toBe(0);
   expect(await page.locator('form [required]').evaluateAll(es => es.map(e => e.name))).toEqual(['bericht', 'naam', 'email']);
@@ -144,24 +144,27 @@ test('kraamcadeauboxen: acht producten met de juiste prijsregels', async ({ page
   expect(links).toEqual(['35', '50', '65', '80'].map(f => `contact.html?onderwerp=kraamcadeaubox&formaat=${f}#formulier`));
 });
 
-test('kraamcadeauboxen: stoffenrij met de negen namen van het raster, scrollbaar en met het toetsenbord bereikbaar', async ({ page }, info) => {
+// Brief 2026-11-14-walvis-uit-assortiment: acht stoffen (Walvis weg); op desktop één rij van acht binnen de rand (scrolt niet:
+// geen tabstop, besluit Carst 14 nov. 13:31 "Eén raster"); op tablet en mobiel scrollbaar en met het toetsenbord bereikbaar
+test('kraamcadeauboxen: stoffenrij met de acht namen van het raster; scrollbaar en bereikbaar waar hij niet past', async ({ page }, info) => {
   await page.goto('/kraamcadeauboxen');
   const rij = page.locator('#in-de-box .stoffen');
   await expect(rij).toHaveAttribute('role', 'region');
   await expect(rij).toHaveAttribute('aria-label', 'Stoffen');
-  await expect(rij).toHaveAttribute('tabindex', '0');
   const raster = await page.locator('#themas .themacarrousel figcaption').allTextContents();
   const stoffen = await rij.locator('.stof-naam').allTextContents();
   expect(stoffen).toEqual(raster);
-  expect(stoffen).toHaveLength(9);
+  expect(stoffen).toHaveLength(8);
   const maten = await rij.locator('img').evaluateAll(is => is.map(i => Math.max(i.getBoundingClientRect().width, i.getBoundingClientRect().height)));
   for (const m of maten) expect(m, 'tegel hooguit 240 px').toBeLessThanOrEqual(240);
-  expect(await rij.evaluate(r => r.scrollWidth > r.clientWidth), 'de rij scrolt horizontaal').toBe(true);
-  await rij.focus();
-  await expect(rij).toBeFocused();
   if (info.project.name === 'desktop') {
-    await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight');
-    await expect.poll(() => rij.evaluate(r => r.scrollLeft), { message: 'pijltoetsen scrollen de rij' }).toBeGreaterThan(0);
+    expect(await rij.evaluate(r => r.scrollWidth <= r.clientWidth + 1), 'desktop: de acht stoffen passen op één rij').toBe(true);
+    await expect(rij).not.toHaveAttribute('tabindex', /.*/);
+  } else {
+    await expect(rij).toHaveAttribute('tabindex', '0');
+    expect(await rij.evaluate(r => r.scrollWidth > r.clientWidth), 'de rij scrolt horizontaal').toBe(true);
+    await rij.focus();
+    await expect(rij).toBeFocused();
   }
   const breed = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(breed, 'de pagina zelf scrolt niet horizontaal').toBeLessThanOrEqual(0);
@@ -392,16 +395,16 @@ test('F4: de thema-knoppen schuiven één set; aan het begin staat "vorige" uit'
   test.skip(info.project.name !== 'desktop', 'knoppen alleen met een muis');
   await page.goto('/kraamcadeauboxen#themas');
   const vorige = page.locator('.carrousel-knop[aria-controls="themacarrousel"][data-richting="-1"]'), volgende = page.locator('.carrousel-knop[aria-controls="themacarrousel"][data-richting="1"]');
-  const links = () => page.locator('.themacarrousel li').nth(3).evaluate(l => Math.abs(Math.round(l.getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left)));
+  // brief 2026-11-14 (besluit Carst 14 nov. 13:31): op desktop twee sets van vier (was: drie sets van drie)
+  const links = (i) => () => page.locator('.themacarrousel li').nth(i).evaluate(l => Math.abs(Math.round(l.getBoundingClientRect().left - document.querySelector('#themas .label').getBoundingClientRect().left)));
   await expect(vorige).toHaveAttribute('aria-disabled', 'true'); // aria-disabled: de focus blijft op de knop
-  await volgende.click();
-  await expect.poll(links).toBeLessThanOrEqual(1);
   await volgende.focus();
   await volgende.click();
+  await expect.poll(links(4)).toBeLessThanOrEqual(1);
   await expect(volgende).toHaveAttribute('aria-disabled', 'true');
   await expect(volgende, 'focus blijft op de knop').toBeFocused();
   await vorige.click();
-  await expect.poll(links).toBeLessThanOrEqual(1);
+  await expect.poll(links(0)).toBeLessThanOrEqual(1);
   // Home en End in de rij: eerste en laatste set
   const rij = page.locator('.themacarrousel');
   await rij.focus();
@@ -412,9 +415,17 @@ test('F4: de thema-knoppen schuiven één set; aan het begin staat "vorige" uit'
 });
 
 /* ---------- C6 (feedback Carst 11 nov.): de stoffenrij volgt het themapatroon, zonder scrollbalk ---------- */
+// Brief 2026-11-14 (besluit Carst 14 nov. 13:31 "Eén raster"): vanaf 1025 px passen de acht stoffen op één rij (geen knoppen,
+// geen tabstop); de knoppen met een muis worden daarom op 1024 px getoetst (was: 1440 px)
 test('C6: stoffenrij zonder scrollbalk, met knoppen (muis), aria-disabled en Home/End', async ({ page }, info) => {
-  await page.goto('/kraamcadeauboxen#in-de-box');
   const rij = page.locator('#stoffenrij');
+  if (info.project.name === 'desktop') {
+    await page.goto('/kraamcadeauboxen#in-de-box');
+    await expect.poll(() => rij.getAttribute('tabindex'), '1440: geen tabstop, de rij scrolt niet').toBe(null);
+    await expect(page.locator('.carrousel-knop[aria-controls="stoffenrij"]').first(), '1440: geen knoppen').toBeHidden();
+    await page.setViewportSize({ width: 1024, height: 900 });
+  }
+  await page.goto('/kraamcadeauboxen#in-de-box');
   await expect(rij).toHaveClass(/\bcarrousel\b/);
   await expect(rij).toHaveAttribute('role', 'region');
   await expect(rij).toHaveAttribute('aria-label', 'Stoffen');
@@ -526,5 +537,5 @@ test('afdrukken: na beforeprint staan alle foto\'s in 002 en 003 klaar (geen dat
   await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
   const open = await page.locator('#in-de-box img, #themas img').evaluateAll(is => is.filter(i => i.hasAttribute('data-src') || !i.getAttribute('src')).length);
   expect(open, 'foto\'s zonder src bij afdrukken').toBe(0);
-  await expect(page.locator('#in-de-box img, #themas img')).toHaveCount(25); // 7 productfoto's (speenkoord erbij, brief 2026-11-11-c2) + 9 stoffen + 9 thema's
+  await expect(page.locator('#in-de-box img, #themas img')).toHaveCount(23); // 7 productfoto's (speenkoord erbij, brief 2026-11-11-c2) + 8 stoffen + 8 thema's (Walvis weg, brief 2026-11-14)
 });
