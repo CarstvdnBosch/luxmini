@@ -226,6 +226,31 @@ def controleer_prijstabel(browser):
         if k[3] != verwacht_link:
             fouten.append(f"{tag}: kaart {i} linkt naar {k[3]!r}, verwacht {verwacht_link} (brief 2026-11-06: formulier vooraf ingevuld)")
 
+# Iconen op de prijskaarten (brief 2026-11-14-prijskaart-iconen): elke formaatkaart in het formulier en op Kraamcadeauboxen
+# heeft zeven iconen in vaste volgorde; 3/4/6/7 doorgetrokken (in de box), de rest gestippeld (komt erbij)
+ICONEN = ["knuffel", "swaddle", "broekje", "sjaaltje", "shirtje", "douchehandschoen", "bijtring-of-speenkoord"]
+LEES_ICONEN = """(sel) => [...document.querySelectorAll(sel)].map(k => [...k.querySelectorAll('svg.icoon')].map(s =>
+  [([...s.classList].find(c => c.startsWith('icoon-')) || '').slice(6), s.getAttribute('stroke-dasharray') ? 1 : 0, s.closest('[aria-hidden="true"]') ? 1 : 0]))"""
+
+def controleer_prijskaart_iconen(browser):
+    """Meldt als een formaatkaart iconen mist of de verkeerde iconen toont."""
+    page = browser.new_page()
+    for pagina, sel in (("contact.html", '.keuze-kaart:has(input[name="box_formaat"])'), ("kraamcadeauboxen.html", "#formaten .formaten > li.formaat")):
+        tag = f"{pagina} [iconen op de prijskaarten]"
+        page.goto(url(pagina), wait_until="load")
+        kaarten = page.evaluate(LEES_ICONEN, sel)
+        if len(kaarten) != 4:
+            fouten.append(f"{tag}: {len(kaarten)} formaatkaarten gevonden, verwacht 4"); continue
+        for i, iconen in enumerate(kaarten):
+            if [x[0] for x in iconen] != ICONEN:
+                fouten.append(f"{tag}: {PRIJZEN[i]} mist iconen of de volgorde klopt niet ({[x[0] for x in iconen]}, verwacht {ICONEN})"); continue
+            verwacht = [0 if PRODUCTEN[n] <= i + 1 else 1 for n in PRODUCTEN]
+            if [x[1] for x in iconen] != verwacht:
+                fouten.append(f"{tag}: {PRIJZEN[i]} toont 'in de box' en 'komt erbij' verkeerd (gestippeld {[x[1] for x in iconen]}, verwacht {verwacht})")
+            if not all(x[2] for x in iconen):
+                fouten.append(f"{tag}: {PRIJZEN[i]} heeft iconen zonder aria-hidden")
+    page.close()
+
 # 003 Zo werkt het: één genummerde reeks met deze koppen (brief processtappen, criterium 4)
 STAP_KOPPEN = ["Neem contact op", "Kies samen thema en maat", "Carien gaat aan de slag"]
 STAPPEN_SCHERMEN = {"desktop": (1440, 900, False), "tablet": (768, 1024, True), "mobiel": (390, 844, True)}
@@ -1586,6 +1611,7 @@ def main():
         controleer_contactpagina(browser)
         controleer_zonder_js(browser)
         controleer_prijstabel(browser)
+        controleer_prijskaart_iconen(browser)
         controleer_stappen(browser)
         controleer_vooraf_betalen(browser)
         controleer_contact(browser)
