@@ -106,21 +106,21 @@ test('thema geldt alleen als het een van de negen thema\'s of "Een eigen stof of
   for (const t of ['giraf', 'Olifant', '<script>', 'Giraf\r\nBcc: x@y.nl', '']) assert.equal(thema(t), undefined, `thema ${JSON.stringify(t)}`);
 });
 
-// Brief 2026-11-11-c5-babymaten: maatkeuzes per onderwerp (besluit Carst 11 nov.); maat 44, 46 en 48 erbij (Story 16, 12 nov.)
+// Brief 2026-11-11-c5-babymaten: maatkeuzes per onderwerp (besluit Carst 11 nov.); maat 44, 46 en 48 erbij (Story 16, 12 nov.), bij de box weer weg, 34 en 36 erbij bij prematuurkleding (Carst 14 nov.)
 const maatIn = (onderwerp, velden) => controleer({ ...geldig, onderwerp, ...velden }).velden.extra;
 
-test('kraamcadeaubox: alleen maat 44 t/m 74, als "maat 50" in de mail', () => {
-  for (const m of ['44', '46', '48', '50', '56', '62', '68', '74']) assert.deepEqual(maatIn('Kraamcadeaubox', { box_maat: m }), [['Kledingmaat', `maat ${m}`]]);
-  for (const m of ['', '32', '42', '47', '80', '92', 'anders', 'Weet ik nog niet', '56cm', '46cm', '<b>56</b>', '<b>46</b>', '5'.repeat(500)]) {
+test('kraamcadeaubox: alleen maat 50 t/m 74, als "maat 50" in de mail', () => {
+  for (const m of ['50', '56', '62', '68', '74']) assert.deepEqual(maatIn('Kraamcadeaubox', { box_maat: m }), [['Kledingmaat', `maat ${m}`]]);
+  for (const m of ['', '32', '42', '44', '46', '47', '48', '80', '92', 'anders', 'Weet ik nog niet', '56cm', '46cm', '<b>56</b>', '<b>46</b>', '5'.repeat(500)]) {
     assert.deepEqual(maatIn('Kraamcadeaubox', { box_maat: m }), [], `box_maat ${JSON.stringify(m)}`);
   }
   assert.match(leesTekst(mail(controleer({ ...geldig, box_maat: '62' }).velden)), /\nKledingmaat: maat 62\n/);
-  assert.match(leesTekst(mail(controleer({ ...geldig, box_maat: '46' }).velden)), /\nKledingmaat: maat 46\n/);
+  assert.match(leesTekst(mail(controleer({ ...geldig, box_maat: '50' }).velden)), /\nKledingmaat: maat 50\n/);
 });
 
 test('prematuurkleding: maat 32 t/m 50 of anders met een vrij veld', () => {
-  for (const m of ['32', '38', '44', '46', '48', '50']) assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: m }), [['Maat van de baby', `maat ${m}`]]);
-  for (const m of ['56', '42', '47', '92', '0', 'hack', '<script>', '<b>46</b>', '46cm', '4'.repeat(500)]) assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: m }), [], `prem_maat ${JSON.stringify(m)}`);
+  for (const m of ['32', '34', '36', '38', '44', '46', '48', '50']) assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: m }), [['Maat van de baby', `maat ${m}`]]);
+  for (const m of ['56', '33', '35', '37', '42', '47', '92', '0', 'hack', '<script>', '<b>46</b>', '46cm', '4'.repeat(500)]) assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: m }), [], `prem_maat ${JSON.stringify(m)}`);
   // anders: alleen het vrije veld; leeg vrij veld geeft niets
   assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: 'anders', prem_maat_anders: '1450 gram' }), [['Andere maat of gewicht', '1450 gram']]);
   assert.deepEqual(maatIn('Prematuurkleding', { prem_maat: 'anders', prem_maat_anders: '  ' }), []);
@@ -131,6 +131,7 @@ test('prematuurkleding: maat 32 t/m 50 of anders met een vrij veld', () => {
   const tekst = leesTekst(mail(controleer({ ...geldig, onderwerp: 'Prematuurkleding', prem_maat: 'anders', prem_maat_anders: '1450 gram' }).velden));
   assert.match(tekst, /\nAndere maat of gewicht: 1450 gram\n/);
   assert.match(leesTekst(mail(controleer({ ...geldig, onderwerp: 'Prematuurkleding', prem_maat: '48' }).velden)), /\nMaat van de baby: maat 48\n/);
+  assert.match(leesTekst(mail(controleer({ ...geldig, onderwerp: 'Prematuurkleding', prem_maat: '34' }).velden)), /\nMaat van de baby: maat 34\n/);
   assert.doesNotMatch(tekst, /anders\n|Maat van de baby/);
 });
 
