@@ -255,6 +255,14 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 /* foutmelding (ontwerpgate 11 nov.): rustige regellengte, gecentreerd, zonder los woord; 10 px extra lucht boven de privacyzin */
 .formulier .melding.fout { justify-self: center; max-width: 60ch; text-wrap: balance; margin-bottom: 10px; }
 .formulier .verstuur[aria-busy="true"] { cursor: progress; }
+/* Turnstile (brief 2026-11-14-formulier-botbescherming): in rust buiten de grid (absoluut, 0 × 0), dus geen lege strook en
+   geen extra rijafstand; pas als Cloudflare een klik vraagt (main.js: .zichtbaar) staat het vak gecentreerd boven de knop. */
+.formulier .turnstile-vak { position: absolute; width: 0; height: 0; overflow: hidden; }
+.formulier .turnstile-vak[data-sitekey=""] { display: none; }
+.formulier .turnstile-vak.zichtbaar { position: static; grid-column: 1 / -1; justify-self: center; width: auto; height: auto; max-width: 100%; overflow: visible; display: flex; justify-content: center; }
+/* Zonder JavaScript (alleen als Turnstile aanstaat): zoals .melding, inkt, 16 px, gecentreerd; links met tikdoel van 44 px */
+.noscript-melding { max-width: 60ch; margin: 0 auto 28px; text-align: center; font-size: 16px; color: var(--inkt); text-wrap: balance; }
+.noscript-melding a { color: inherit; padding: 12px 2px; }
 
 /* ---------- Footer ---------- */
 .site-footer { background: var(--inkt); color: #E0E0E0; font-size: 16px; line-height: 1.7; } /* min. 16 px (mobiele regel 2) */

@@ -5,9 +5,12 @@
 // Het formulier staat op /contact; na ongeldige invoer komt de bezoeker terug op /contact?verzonden=fout#formulier,
 // als het versturen mislukt op /contact?verzonden=fout&reden=versturen#formulier, bij een ongeldige foto of link van de
 // eigen stof op &reden=foto of &reden=link (src/contact.js).
+// Botbescherming (brief 2026-11-14-formulier-botbescherming, docs/formulier-beveiliging.md): rate limit (binding
+// CONTACT_RATELIMIT, 5 per 60 s per IP; ontbreekt hij, dan gaat het bericht door), tijdcontrole (formtijd) en Turnstile
+// (alleen als de var TURNSTILE_SITEKEY én het secret TURNSTILE_SECRET zijn ingesteld; het secret staat nooit in de repo).
 import { EmailMessage } from 'cloudflare:email';
 import { bouwMail } from './formulier.js';
-import { verwerkContact } from './contact.js';
+import { verwerkContact, maakSiteverify } from './contact.js';
 import { behandelBeheer, isBeheerPad } from './beheer/api.js';
 import { identiteitUitAccess } from './beheer/toegang.js';
 import { maakD1Opslag } from './beheer/opslag.js';
@@ -21,6 +24,10 @@ export default {
         // foto (eigen stof) alleen als bijlage in de mail; nergens opgeslagen (brief 2026-11-11-c7-stofkeuze)
         const raw = bouwMail({ velden, foto, afzender: env.AFZENDER, ontvanger: env.ONTVANGER });
         await env.MAIL.send(new EmailMessage(env.AFZENDER, env.ONTVANGER, raw));
+      }, {
+        // null = binding ontbreekt (lokaal of fout van het platform): verwerkContact laat het bericht door
+        limiet: async (sleutel) => (env.CONTACT_RATELIMIT ? (await env.CONTACT_RATELIMIT.limit({ key: sleutel })).success : null),
+        turnstile: env.TURNSTILE_SITEKEY && env.TURNSTILE_SECRET ? maakSiteverify(env.TURNSTILE_SECRET) : null,
       });
     }
 

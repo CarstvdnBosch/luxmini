@@ -70,3 +70,41 @@ test('toegankelijkheid formulier met eigen stof (blok open, foto en melding)', a
   const uitslag = await new AxeBuilder({ page }).include('#formulier').withTags(REGELS).analyze();
   expect(uitslag.violations, `WCAG-overtredingen in de stofkeuze:\n${samenvatting(uitslag.violations)}`).toEqual([]);
 });
+
+// Brief 2026-11-14-formulier-botbescherming (criterium 21): de drie nieuwe meldingen, het zichtbare Turnstile-vak en zonder JavaScript
+for (const reden of ['controle', 'te-veel', 'te-snel']) {
+  test(`toegankelijkheid contact met melding ${reden}`, async ({ page }) => {
+    const pad = `/contact?verzonden=fout&reden=${reden}#formulier`;
+    await page.goto(pad);
+    await wachtOpRust(page);
+    await expect(page.locator('.formulier .melding[role="alert"]')).toContainText('Je bericht is niet verstuurd.');
+    await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 30)); } window.scrollTo(0, 0); });
+    const uitslag = await new AxeBuilder({ page }).withTags(REGELS).analyze();
+    expect(uitslag.violations, `WCAG-overtredingen op ${pad}:\n${samenvatting(uitslag.violations)}`).toEqual([]);
+  });
+}
+
+test.describe('zonder JavaScript', () => {
+  test.use({ javaScriptEnabled: false });
+  test('toegankelijkheid contact zonder JavaScript met de <noscript>-regel (testsite key)', async ({ page }) => {
+    await page.setExtraHTTPHeaders({ 'x-testturnstile': 'geslaagd' });
+    await page.goto('/contact#formulier');
+    await expect(page.locator('#formulier .noscript-melding')).toBeVisible();
+    const uitslag = await new AxeBuilder({ page }).withTags(REGELS).analyze();
+    expect(uitslag.violations, `WCAG-overtredingen zonder JavaScript:\n${samenvatting(uitslag.violations)}`).toEqual([]);
+  });
+});
+
+// Het zichtbare vak kan alleen met het echte script van Cloudflare (testsleutel "interactie"). In CI altijd; lokaal alleen als
+// challenges.cloudflare.com bereikbaar is.
+test('toegankelijkheid formulier met het zichtbare Turnstile-vak', async ({ page }) => {
+  let bereikbaar = !!process.env.CI;
+  if (!bereikbaar) { try { await fetch('https://challenges.cloudflare.com/turnstile/v0/api.js', { signal: AbortSignal.timeout(3000) }); bereikbaar = true; } catch { bereikbaar = false; } }
+  test.skip(!bereikbaar, 'challenges.cloudflare.com niet bereikbaar (alleen lokaal; in CI draait deze test altijd)');
+  await page.setExtraHTTPHeaders({ 'x-testturnstile': 'interactie' });
+  await page.goto('/contact#formulier');
+  await expect(page.locator('.turnstile-vak')).toHaveClass(/zichtbaar/, { timeout: 30000 });
+  await expect(page.locator('.turnstile-vak iframe')).toBeVisible({ timeout: 30000 });
+  const uitslag = await new AxeBuilder({ page }).include('#formulier').withTags(REGELS).analyze();
+  expect(uitslag.violations, `WCAG-overtredingen met het Turnstile-vak:\n${samenvatting(uitslag.violations)}`).toEqual([]);
+});

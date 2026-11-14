@@ -101,3 +101,62 @@ test('testserver: multipart met een bestand dat geen foto is → reden=foto; lin
   const link = await postMultipart({ ...EIGEN, stof_link: 'http://stof.test' });
   assert.equal(naar(link), '/contact?verzonden=fout&reden=link');
 });
+
+// ---------- Botbescherming (brief 2026-11-14-formulier-botbescherming, criterium 12) ----------
+// De Turnstile-testsleutels en de testheaders staan alleen in scripts/serveer.mjs (en in de tests), nooit in src/, public/ of wrangler.jsonc.
+const TESTSLEUTELS = /[123]x0{20}(AA|BB|AB|FF)|[123]x0{31}AA|x-testturnstile|x-testlimiet|XXXX\.DUMMY\.TOKEN/i;
+
+test('botbescherming: testsleutels en testheaders niet in src/', () => {
+  for (const f of bestandenIn('src').filter((f) => /\.(m?js|json|sql)$/.test(f))) {
+    assert.doesNotMatch(lees('src/' + f), TESTSLEUTELS, `src/${f} bevat een Turnstile-testsleutel of testheader`);
+  }
+});
+
+test('botbescherming: testsleutels en testheaders niet in public/', () => {
+  for (const f of bestandenIn('public').filter((f) => /\.(html|js|css|txt|xml|json)$|^_headers$|^_redirects$/.test(f))) {
+    assert.doesNotMatch(lees('public/' + f), TESTSLEUTELS, `public/${f} bevat een Turnstile-testsleutel of testheader`);
+  }
+});
+
+test('botbescherming: testsleutels en testheaders niet in wrangler.jsonc (ook niet in commentaar)', () => {
+  assert.doesNotMatch(lees('wrangler.jsonc'), TESTSLEUTELS);
+});
+
+test('botbescherming: de testserver kent de testmodus en geeft nepfuncties mee aan verwerkContact', () => {
+  const s = lees('scripts/serveer.mjs');
+  assert.match(s, /x-testturnstile/);
+  assert.match(s, /x-testlimiet/);
+  assert.match(s, /limiet: async/);
+  assert.match(s, /turnstile: secret \?/);
+});
+
+const postBot = (velden, kop = {}) => post(velden, kop);
+test('testserver: x-testlimiet overschreden → reden=te-veel', async () => {
+  const res = await postBot(GOED, { 'x-testlimiet': 'overschreden' });
+  assert.equal(res.status, 303);
+  assert.equal(naar(res), '/contact?verzonden=fout&reden=te-veel');
+});
+
+test('testserver: formtijd 500 → reden=te-snel; 3500 → /bedankt', async () => {
+  assert.equal(naar(await postBot({ ...GOED, formtijd: '500' })), '/contact?verzonden=fout&reden=te-snel');
+  assert.equal(naar(await postBot({ ...GOED, formtijd: '3500' })), '/bedankt');
+});
+
+test('testserver: x-testturnstile geslaagd met token → /bedankt; zonder token of mislukt → reden=controle', async () => {
+  const token = { 'cf-turnstile-response': 'nep-token' };
+  assert.equal(naar(await postBot({ ...GOED, ...token }, { 'x-testturnstile': 'geslaagd' })), '/bedankt');
+  assert.equal(naar(await postBot(GOED, { 'x-testturnstile': 'geslaagd' })), '/contact?verzonden=fout&reden=controle');
+  assert.equal(naar(await postBot({ ...GOED, ...token }, { 'x-testturnstile': 'mislukt' })), '/contact?verzonden=fout&reden=controle');
+  // ongeldige invoer blijft precies de foutpagina zonder reden, ook met Turnstile aan
+  assert.equal(naar(await postBot({ ...GOED, email: 'x', ...token }, { 'x-testturnstile': 'mislukt' })), '/contact?verzonden=fout');
+});
+
+test('testserver: GET /contact met x-testturnstile zet de testsite key en maakt de <noscript>-regel actief', async () => {
+  const gewoon = await (await fetch(`http://127.0.0.1:${POORT}/contact`)).text();
+  assert.match(gewoon, /data-sitekey=""/);
+  assert.match(gewoon, /<!--TURNSTILE-NOSCRIPT\s*<noscript>/);
+  const met = await (await fetch(`http://127.0.0.1:${POORT}/contact`, { headers: { 'x-testturnstile': 'interactie' } })).text();
+  assert.match(met, /data-sitekey="3x0{20}FF"/);
+  assert.doesNotMatch(met, /<!--TURNSTILE-NOSCRIPT/);
+  assert.match(met, /<noscript><p class="noscript-melding">/);
+});
