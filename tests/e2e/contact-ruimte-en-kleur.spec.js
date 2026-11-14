@@ -1,17 +1,17 @@
 // Brief 2026-11-14-contact-ruimte-en-kleur, blokkerend.
-// Contact: geen lege strook tussen 001 (gegevens) en 002 (formulier), en de kleurlaag wisselt bij 002 al op 60 %
-// van de schermhoogte (data-laag-lijn="0.6"), zodat je de overgang naar terracotta ziet terwijl de gegevens nog in beeld zijn.
+// Contact: geen lege strook tussen 001 (gegevens) en 002 (formulier), en de kleurlaag wisselt bij 002 al op 76 %
+// van de schermhoogte (data-laag-lijn="0.76", besluit ontwerper 14 nov.), zodat je de overgang naar terracotta ziet terwijl
+// de gegevens nog in beeld zijn, en vóór het eerste formulierveld helemaal in beeld staat.
 // De balk volgt de laag: wit logo op de terracotta laag, donker logo op de witte laag. Andere pagina's houden 0,88 / 0,5.
 import { test, expect, wachtOpRust } from './hulp.js';
 
 const TERRACOTTA = 'rgb(188, 133, 101)';
 const WIT = 'rgb(255, 255, 255)';
-// criterium 3: afstand laatste tekstregel 001 → letters "002 —" per schermbreedte (± 12 px), zoals de ontwerper die opgaf.
-// De ontwerper mat op main 478 / 396 / 248 / 374 / 149 px; met de meting hieronder (onderkant van het laatste tekstblok →
-// bovenkant van de letters "002 —") is dat op dezelfde code 448 / 365 / 217 / 343 / 118 px: overal precies 31 px minder.
-// Die vaste meetverschuiving trekken we af; de marge van ± 12 px blijft gelijk (niet losser).
-const AFSTAND = { 1440: 162, 1280: 150, 1024: 133, 768: 117, 390: 101 };
-const MEETVERSCHIL = 31;
+const LIJN = 0.76;
+// criterium 3: afstand laatste tekstregel 001 → letters "002 —" per schermbreedte (± 12 px), gemeten nadat het label van 002
+// is opgekomen; de tests draaien met prefers-reduced-motion: reduce (hulp.js), dus zonder opkomen.
+const AFSTAND = { 1440: 131, 1280: 119, 1024: 102, 768: 86, 390: 70 };
+const BREEDTES = { desktop: [[1440, 900], [1280, 800], [1024, 768]] };
 
 const laagKleur = page => page.locator('.achtergrond').evaluate(el => getComputedStyle(el).backgroundColor);
 
@@ -45,7 +45,7 @@ test.describe('Contact: ruimte en kleurovergang (brief 2026-11-14)', () => {
 
   test('criterium 1 en 3: geen min-height en de afstand 001 → 002 volgt het ritme', async ({ page }) => {
     const vp = page.viewportSize();
-    const breedtes = vp.width >= 1024 ? [[1440, 900], [1280, 800], [1024, 768]] : [[vp.width, vp.height]];
+    const breedtes = vp.width >= 1024 ? BREEDTES.desktop : [[vp.width, vp.height]];
     for (const [b, h] of breedtes) {
       await page.setViewportSize({ width: b, height: h });
       await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
@@ -55,34 +55,47 @@ test.describe('Contact: ruimte en kleurovergang (brief 2026-11-14)', () => {
       expect(pb, `padding-bottom van .gegevens op ${b} px`).toBe(b >= 761 ? '16px' : '0px');
       const a = await afstand(page);
       expect(a, `afstand op ${b} px`).toBeLessThanOrEqual(200);
-      if (AFSTAND[b]) expect(Math.abs(a - (AFSTAND[b] - MEETVERSCHIL)), `afstand op ${b} px is ${a} (+${MEETVERSCHIL} = ${a + MEETVERSCHIL}), verwacht ${AFSTAND[b]} ± 12`).toBeLessThanOrEqual(12);
+      if (AFSTAND[b]) expect(Math.abs(a - AFSTAND[b]), `afstand op ${b} px is ${a}, verwacht ${AFSTAND[b]} ± 12`).toBeLessThanOrEqual(12);
     }
   });
 
-  test('criterium 7, 8 en 13: de laag wisselt op 60 % heen en terug, met de gegevens nog in beeld', async ({ page }) => {
-    expect(await page.locator('#formulier').getAttribute('data-laag-lijn')).toBe('0.6');
+  test('criterium 7, 8 en 13: de laag wisselt op 76 % heen en terug, met de gegevens nog in beeld', async ({ page }) => {
+    expect(await page.locator('#formulier').getAttribute('data-laag-lijn')).toBe('0.76');
     expect(await page.locator('.achtergrond').evaluate(el => getComputedStyle(el).transitionDuration)).toBe('0s');
     // net onder de lijn: nog wit
-    await zetBovenkant(page, '#formulier', 0.6, 0.03 * page.viewportSize().height);
-    expect(await laagKleur(page), 'onder de 60 %-lijn blijft de laag wit').toBe(WIT);
+    await zetBovenkant(page, '#formulier', LIJN, 0.03 * page.viewportSize().height);
+    expect(await laagKleur(page), 'onder de 76 %-lijn blijft de laag wit').toBe(WIT);
     // net boven de lijn: terracotta, en de gegevens staan nog (deels) in beeld
-    await zetBovenkant(page, '#formulier', 0.6, -0.03 * page.viewportSize().height);
-    expect(await laagKleur(page), 'boven de 60 %-lijn is de laag terracotta').toBe(TERRACOTTA);
+    await zetBovenkant(page, '#formulier', LIJN, -0.03 * page.viewportSize().height);
+    expect(await laagKleur(page), 'boven de 76 %-lijn is de laag terracotta').toBe(TERRACOTTA);
     const kolOnder = await page.locator('.gegevens-kolommen').evaluate(el => el.getBoundingClientRect().bottom);
     expect(kolOnder, 'de gegevens staan nog in beeld als de laag omslaat').toBeGreaterThan(0);
     // terug omhoog: weer wit op dezelfde lijn
-    await zetBovenkant(page, '#formulier', 0.6, 0.03 * page.viewportSize().height);
+    await zetBovenkant(page, '#formulier', LIJN, 0.03 * page.viewportSize().height);
     expect(await laagKleur(page), 'terug omhoog wordt de laag weer wit').toBe(WIT);
   });
 
   test('criterium 7: met beweging na de overgang van 0,75 s dezelfde lijn', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await zetBovenkant(page, '#formulier', 0.6, -0.03 * page.viewportSize().height);
+    await zetBovenkant(page, '#formulier', LIJN, -0.03 * page.viewportSize().height);
     await page.waitForTimeout(1000);
     expect(await laagKleur(page)).toBe(TERRACOTTA);
-    await zetBovenkant(page, '#formulier', 0.6, 0.03 * page.viewportSize().height);
+    await zetBovenkant(page, '#formulier', LIJN, 0.03 * page.viewportSize().height);
     await page.waitForTimeout(1000);
     expect(await laagKleur(page)).toBe(WIT);
+  });
+
+  test('criterium 9: het onderwerpveld staat nooit helemaal in beeld op de witte laag (1440, 1280, 1024, 768, 390)', async ({ page }) => {
+    const vp = page.viewportSize();
+    const breedtes = vp.width >= 1024 ? BREEDTES.desktop : [[vp.width, vp.height]];
+    for (const [b, h] of breedtes) {
+      await page.setViewportSize({ width: b, height: h });
+      // de laatste stand waarin de laag nog wit is: bovenkant van #formulier 1 px onder de lijn
+      await zetBovenkant(page, '#formulier', LIJN, 1);
+      expect(await laagKleur(page), `op ${b} px is de laag net onder de lijn nog wit`).toBe(WIT);
+      const veld = await page.locator('select[name="onderwerp"]').evaluate(el => ({ boven: el.getBoundingClientRect().top, onder: el.getBoundingClientRect().bottom, vh: window.innerHeight }));
+      expect(veld.onder, `op ${b} px staat het onderwerpveld (onderkant ${Math.round(veld.onder)} px) niet helemaal in beeld op wit (scherm ${veld.vh} px)`).toBeGreaterThan(veld.vh);
+    }
   });
 
   test('criterium 11: het balklogo volgt de laag', async ({ page }) => {
@@ -91,7 +104,7 @@ test.describe('Contact: ruimte en kleurovergang (brief 2026-11-14)', () => {
       return { zichtbaar: b.classList.contains('zichtbaar'), wit: zichtbaar(b.querySelector('.logo-wit')), donker: zichtbaar(b.querySelector('.logo-donker')), label: getComputedStyle(b.querySelector('.sectie-label')).color };
     });
     // terracotta laag terwijl 001 nog onder de balk ligt: wit logo, label inkt
-    await zetBovenkant(page, '#formulier', 0.6, -0.03 * page.viewportSize().height);
+    await zetBovenkant(page, '#formulier', LIJN, -0.03 * page.viewportSize().height);
     let s = await logo();
     if (s.zichtbaar) { expect(s.wit).toBe(true); expect(s.donker).toBe(false); expect(s.label).toBe('rgb(32, 32, 32)'); }
     // verder in het formulier: de balk is zeker zichtbaar, laag terracotta, wit logo
@@ -103,7 +116,7 @@ test.describe('Contact: ruimte en kleurovergang (brief 2026-11-14)', () => {
     expect(s.label).toBe('rgb(32, 32, 32)');
     // terug naar de witte laag met de balk in beeld: donker logo
     await zetBovenkant(page, '.gegevens', 0, 60);
-    await zetBovenkant(page, '#formulier', 0.6, 0.03 * page.viewportSize().height);
+    await zetBovenkant(page, '#formulier', LIJN, 0.03 * page.viewportSize().height);
     s = await logo();
     if (await laagKleur(page) === WIT && s.zichtbaar) { expect(s.donker && !s.wit, 'donker logo op de witte laag').toBe(true); }
   });

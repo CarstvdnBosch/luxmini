@@ -681,7 +681,7 @@
     // Secties met witte tekst (terracotta, .op-kleur) wisselen al op 88%, zodat wit nooit op een lichte laag staat;
     // secties met alleen inkt pas op de helft, zodat een compact blok in rust zijn eigen kleur houdt (ontwerpgate homepage).
     // Uitzondering: een sectie mag een eigen lijn hebben via data-laag-lijn (getal tussen 0 en 1), maar alleen als er
-    // geen witte tekst in die sectie staat. Nu alleen contact.html #formulier op 0,6 (brief 2026-11-14-contact-ruimte-en-kleur).
+    // geen witte tekst in die sectie staat. Nu alleen contact.html #formulier op 0,76 (brief 2026-11-14-contact-ruimte-en-kleur).
     var vh = window.innerHeight, kies = null;
     lagen.forEach(function (sec) {
       var eigen = parseFloat(sec.getAttribute('data-laag-lijn'));
