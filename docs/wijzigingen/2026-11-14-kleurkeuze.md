@@ -137,3 +137,119 @@ Bekeken: `kleding-1`, `kleding-5`, `kleding-hangers-sfeer`, `plat-1`, `plat-10`,
 2. **Oker en Grijs** blijven in de lijst (Carien kan de lijst later aanpassen).
 3. Mailkop bij "Anders": voorstel planner overgenomen ("Hoofdkleur anders: …" en "Tweede kleur anders: …").
 4. Geen issuenummer; de PR krijgt geen `Closes`.
+
+
+## Ontwerprichting (website-ontwerper, 14 nov.; vervangt de lege sectie hierboven)
+
+
+1. **Patroon en vorm.** Elke kleurkeuze is een `fieldset.keuzes.kleurkeuze` met kaarten volgens het bestaande patroon: `label.keuze-kaart.kleur-kaart` met een radio, `.keuze-rand` en `.keuze-vink`. Er zit geen foto in, dus de kaart is liggend en compact:
+   - links een rond staal (`span.kleur-staal`, `aria-hidden="true"`): 32 px vanaf 1025 px, 28 px daaronder;
+   - rechts de kleurnaam in Libre Caslon Text, 16 px, inkt, zoals `.stof-kaart-naam`;
+   - de kaart: min. 48 px hoog, padding 10 px 12 px, gat tussen staal en naam 12 px (mobiel 10 px), achtergrond zoals elke keuzekaart (wit 92 %, op terracotta gemeten `#FAF5F3`).
+
+   De vink staat niet rechtsboven, maar midden op het staal: een wit rondje van 20 px met een inktvink. Daardoor heeft de naam de volle breedte en is de vink op elk staal te zien, ook op Bordeaux, Olijfgroen en Naturel/wit.
+
+   Kolommen:
+   - vanaf 1025 px: 4 kolommen;
+   - 761–1024 px: 3 kolommen;
+   - tot 760 px: 2 kolommen;
+   - gat 12 px (mobiel 10 px).
+
+   Opties zonder kleur hebben ook een staal, zodat het raster gelijk blijft:
+   - "Weet ik nog niet": een lege, gestippelde ring;
+   - "Geen": een ring met een schuine lijn;
+   - "Anders": een ring met een plusje.
+
+   Dit is een raster, geen rij: er komt geen scrollbalk en geen `.carrousel`.
+
+2. **Volgorde en hiërarchie.** In de groepen Prematuurkleding, Babynest en Iets op maat komen de kleurkeuzes over de volle breedte, ná de bestaande velden (maat, anders, naam of stof) en vóór het vakje "Geboortedatum volgt nog". Dat vakje blijft de laatste regel, zoals afgesproken bij #69.
+
+   Eerst komt **Hoofdkleur**: legend "Hoofdkleur". Direct daaronder staat de indicatiezin "De kleuren zijn een indicatie. De echte stof kan iets afwijken." als `p.eigen-uitleg` (16 px, inkt), met een eigen id per groep (`prem-kleur-uitleg`, `nest-kleur-uitleg`, `op-kleur-uitleg`). Daarna het raster.
+
+   Daarna komt **Tweede kleur**: legend "Tweede kleur", met hetzelfde raster plus "Geen" direct na "Weet ik nog niet". Beide fieldsets krijgen `aria-describedby` naar de indicatiezin. De zin staat dus één keer in beeld en hoort bij beide keuzes.
+
+   Het verschil tussen hoofd- en tweede kleur maak je duidelijk met de volgorde en met het moment waarop de tweede verschijnt: de tweede kleur is pas zichtbaar als bij Hoofdkleur iets anders dan "Weet ik nog niet" is gekozen (CSS `:has`, zachte vervaging zoals `groep-in`). Zonder `:has` staat hij er altijd. Er komt geen extra uitleg zoals "bijv. de biesjes": dat is geen goedgekeurde tekst. Wil Carst zo'n regel, dan in een nieuwe brief.
+
+   De legends krijgen dezelfde stijl als de andere keuzes: 11 px in kapitalen op desktop en tablet, 16 px (600) op mobiel.
+
+3. **"Anders" en het vrije veld.** Het vrije veld staat direct onder het raster, in dezelfde fieldset:
+   - label "Andere kleur" (zonder `:has` met de prefix "Alleen bij anders: ");
+   - `maxlength="80"`, `autocomplete="off"`.
+
+   Het veld is alleen zichtbaar als in díé fieldset "Anders" is gekozen: `.kleurkeuze:has(input[value="anders"]:checked) .kleur-anders`. Hoofd- en tweede kleur zijn zusters, niet in elkaar genest. Zo opent "Anders" bij de hoofdkleur nooit het veld van de tweede kleur. De bestaande maatregel `:has(option[value="anders"])` reageert alleen op `option` en wordt niet geraakt.
+
+4. **Rand en contrast.** Elk staal heeft een rand van 1 px `rgba(32,32,32,.6)`. Op de kaart is dat `#777574` tegen `#FAF5F3`, dus 4,2:1. Zo valt geen enkel staal weg, ook Naturel/wit (1,13:1 zonder rand), Grijs, Lichtblauw, Salie, Oud roze en Oker niet.
+
+   De stalen staan op de witte kaart, nooit direct op terracotta. Gekozen ziet er zo uit: de kaartrand wordt 1 px inkt (bestaand), plus de vink op het staal. Met een muis wordt de rand bij aanwijzen 40 % inkt, zoals bij de stofkeuze. De focus is de bestaande outline van 2 px inkt met 3 px afstand.
+
+   Bij geforceerde kleuren (`forced-colors: active`): het staal krijgt `forced-color-adjust: none`, zodat de kleur blijft, en de rand wordt `CanvasText`.
+
+   De kleur is nooit de enige informatie: de naam staat altijd zichtbaar naast het staal, ook op touch. Er zijn geen tooltips.
+
+5. **Mobiel (390 px).** 2 kolommen van 158 px, staal 28 px. Alle namen passen op één regel, behalve "Weet ik nog niet" (twee regels). De namen breken alleen op aangegeven punten: `Naturel/<wbr>wit`, `Licht&shy;blauw`, `Olijf&shy;groen`, met `hyphens: manual`. Zo blijven ze op 320 px heel.
+
+   Standaard staat alleen Hoofdkleur in beeld. Dat is ongeveer 6 rijen, ca. 430 px inclusief legend en indicatiezin. De tweede kleur voegt pas na een keuze ca. 380 px toe. Zo wordt het formulier niet standaard een scherm langer.
+
+6. **Babynest, zonder JS en zonder `:has`.**
+   - `nest_stof` blijft. Het label wordt "Stof" (criterium 11 akkoord), zonder placeholder, want de teksten op babynest zijn nog niet goedgekeurd.
+   - Zonder JavaScript werkt alles via CSS.
+   - Zonder `:has` staan alle groepen, beide kleurkeuzes en de vrije velden er met hun prefix "Alleen bij …".
+   - Bij "minder beweging" zijn er geen overgangen op kaarten of vervaging.
+   - De groep Kraamcadeaubox verandert niet.
+
+## Ontwerpcriteria (toetsbaar)
+
+1. Op 390 × 844 (Chromium) en 390 × 664 (WebKit) staan de kleurkaarten in 2 kolommen. Op 768 × 1024 in 3, op 1440 × 900 in 4.
+2. Elke kleurkaart is minstens 44 × 44 px (doel 48 px hoog). Op 320, 390, 768 en 1440 px is er geen horizontaal scrollen (`scrollWidth ≤ clientWidth` op `html`).
+3. Op 320 en 390 px is elke kleurnaam volledig zichtbaar (naam `scrollWidth ≤ clientWidth`). Afbreken mag alleen bij `&shy;` of `<wbr>`.
+4. Elk staal is rond: 32 px vanaf 1025 px, 28 px daaronder. Het heeft een rand van 1 px `rgba(32,32,32,.6)` en haalt minstens 3:1 tegen de kaart (gemeten 4,2:1). De `background-color` is precies de hex uit de tabel hieronder.
+5. Bij laden is bij Hoofdkleur "Weet ik nog niet" gekozen en is Tweede kleur niet zichtbaar. Na het kiezen van een kleur of "Anders" verschijnt Tweede kleur, met "Weet ik nog niet" gekozen. Terug naar "Weet ik nog niet" verbergt hem weer. Zonder `:has` is hij altijd zichtbaar.
+6. Het vrije veld "Andere kleur" is alleen zichtbaar bij "Anders" in de eigen fieldset. "Anders" bij Hoofdkleur toont het veld van Tweede kleur niet, en omgekeerd ook niet.
+7. Een gekozen kaart heeft een kaartrand van 1 px inkt en een zichtbare vink op het staal (wit rondje van 20 px, inktvink), op alle 12 stalen. De focus is zichtbaar (2 px inkt, 3 px afstand). Tab gaat per fieldset naar één keuze, de pijltjes kiezen binnen de groep.
+8. Kleurnaam en indicatiezin zijn 16 px in inkt. De indicatiezin staat direct onder de legend "Hoofdkleur", één keer per groep, met hooguit ca. 75 tekens per regel. Beide fieldsets verwijzen er met `aria-describedby` naar.
+9. Volgorde in elke groep: bestaande velden, dan Hoofdkleur, dan Tweede kleur, dan het vakje "Geboortedatum volgt nog" als laatste regel.
+10. Op 390 px, met de standaardkeuzes bij Prematuurkleding, is het kleurblok (van legend Hoofdkleur tot en met de laatste kaart) ≤ 460 px hoog.
+11. Bij `prefers-reduced-motion: reduce` zijn er geen overgangen of animaties op kleurkaarten of op het verschijnen van Tweede kleur.
+12. Bij `forced-colors: active` blijft elk staal zijn kleur houden en is de rand `CanvasText`.
+13. De groep Kraamcadeaubox is visueel ongewijzigd. Er staat geen kleurkeuze bij Kraamcadeaubox of bij Iets anders.
+14. axe meldt op contact.html geen fouten, ook niet met elk van de drie onderwerpen gekozen en Tweede kleur zichtbaar.
+
+## Definitieve kleurtabel
+
+Hoe ik heb gemeten:
+- Ik nam de mediaan van een effen vlak (de middelste 40 % van de pixels op helderheid).
+- Bij foto's van een plat gelegd kledingstuk heb ik de witbalans en belichting gecorrigeerd naar het witte papier in dezelfde foto (papier = `#F7F7F7`).
+- De foto's aan het rekje zijn te ongelijk belicht om er rechtstreeks op te meten. Die gebruikte ik alleen als controle.
+- Alleen Naturel/wit heeft de lichte warme correctie van de foto's gekregen. De andere kleuren niet: warmer maken trekt Oud roze, Roest en Oker naar terracotta, en dan zijn ze slechter te onderscheiden.
+- Foto's staan in `carien-plat-12nov/` en `carien-kleding-12nov/` in de scratchpad.
+
+| Waarde | Hex | Bron en meting |
+|---|---|---|
+| Weet ik nog niet | geen staal (gestippelde ring) | n.v.t. |
+| Geen (alleen Tweede kleur) | geen staal (ring met schuine lijn) | n.v.t. |
+| Naturel/wit | `#EEE8DF` | witte stof `plat-30.jpg` (ten opzichte van papier `#E7E2DE`), licht warm gezet; controle `plat-12.jpg` |
+| Oud roze | `#C4939C` | effen broekjes `plat-7.jpg` (ruw `#B2868D`) en `plat-26.jpg` (ruw `#C2949E`); midden tussen ruw en gecorrigeerd. De biesjes in `kleding-5.jpg` zijn meer mauve (`#AD8A8E`) |
+| Bordeaux | `#7A2830` | broekje `plat-1.jpg` (`#742629`), mutsrand `plat-1.jpg` (`#823B3E`), kraag `kleding-5.jpg` (`#76191F`) |
+| Roest | `#A54F33` | mutsband `plat-18.jpg` (`#A2543E`, ruw `#A75740`); controle band `kleding-1.jpg` (`#9A3C12`) |
+| Oker | `#C29043` | **zwak:** geen effen stof. Bladprint `kleding-1.jpg`, `plat-24.jpg` (`#B4976E`) en het gele bloemetje `plat-1.jpg` (`#DFB246`) |
+| Salie | `#9DA88F` | **middel:** alleen de print. Eucalyptusblad `plat-30.jpg` (`#93967C`) en `kleding-1.jpg` (`#7C9AA3`), naar het lichtere waterverf-gemiddelde |
+| Olijfgroen | `#646550` | effen broekje `plat-63.jpg` (`#63604D`) en broekje `kleding-1.jpg` ten opzichte van de muur (`#61634F`); twee bronnen die goed overeenkomen. Het voorstel `#7D8560` was te groen en te licht |
+| Lichtblauw | `#A8BCC6` | broekje `plat-38.jpg` (`#ACBBC5`), kraag `kleding-1.jpg` (`#A8BDC6`); controle `plat-12.jpg` (`#9AA6AD`) |
+| Grijs | `#BBBAB7` | **nu wel een effen bron:** de grijs gemêleerde tailleband `plat-19.jpg` (ruw `#C9CBD4`). Iets donkerder en neutraler gezet, zodat het staal naast Naturel/wit en Lichtblauw te onderscheiden blijft |
+| Anders | geen staal (ring met plus) | vrij veld "Andere kleur" |
+
+Contrast tegen de kaart `#FAF5F3`, zonder rand: Bordeaux 8,9 · Olijfgroen 5,5 · Roest 5,2 · Oker 2,6 · Oud roze 2,4 · Salie 2,3 · Lichtblauw 1,8 · Grijs 1,8 · Naturel/wit 1,1. Met de rand van 1 px haalt elk staal 4,2:1.
+
+## Wat de planner nog moet aanpassen in de brief
+
+- **Criterium 5:** "Geen" gaat door (`value="Geen"`, alleen bij Tweede kleur, direct na "Weet ik nog niet"). In de mail: `Tweede kleur: Geen`.
+- **Nieuw in B (Worker):** de tweede kleur en "Tweede kleur anders" tellen alleen als er een hoofdkleur is, dus een vaste kleur of "Anders" met tekst. Anders valt de tweede kleur weg. Dat voorkomt een oude waarde uit een verborgen Tweede kleur. Er hoort een unit-test bij.
+- **Criteria 6 en 3:** het label van het vrije veld is "Andere kleur". De mailkoppen blijven "Hoofdkleur anders: …" en "Tweede kleur anders: …" (besluit Carst).
+- **Criterium 11:** akkoord met het label "Stof".
+- **Criterium 25 (e2e):** voeg toe dat Tweede kleur verschijnt en weer verdwijnt (ontwerpcriterium 5).
+
+Voor Carien, niet voor deze brief: op haar foto's zie ik ook effen petrol (`plat-19`, `plat-33`), mint (`plat-9`), donkerblauw (`plat-8`, `plat-49`) en donkergrijs/taupe (`plat-15`, `#57524F`). Die kunnen erbij als zij de lijst bijstelt.
+
+
+## Aanvulling hoofdsessie (14 nov.)
+De aanpassingen uit 'Wat de planner nog moet aanpassen in de brief' hierboven gelden als acceptatiecriteria: 'Geen' bij Tweede kleur; Worker neemt Tweede kleur (en 'Tweede kleur anders') alleen over als er een hoofdkleur is (vaste kleur of 'Anders' met tekst), met unit-test; label vrij veld 'Andere kleur'; label nest_stof 'Stof'; e2e toetst dat Tweede kleur verschijnt en verdwijnt. De hex-waarden in de 'Definitieve kleurtabel' vervangen de voorlopige tabel.
