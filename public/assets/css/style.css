@@ -287,6 +287,9 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 @media (max-width: 760px) {
   :root { --rand: min(32px, 8.2vw); } /* zijmarge 32 px zoals Stock (brief 2026-11-07-homepage-mobiel-stock, B5) */
   .site-header { position: relative; background: var(--terracotta); }
+  /* contactpagina: op mobiel ligt de header niet over de donkere foto maar op terracotta; kleine tekst daar in inkt.
+     Alleen zichtbaar zonder JavaScript (dan staan de menulinks in de header; met JavaScript alleen de burger). */
+  html.kop-donker .site-header { color: var(--op-kleur-klein); }
   .site-header .wrap { min-height: 0; padding-top: 16px; padding-bottom: 12px; }
   .menu { gap: 0 18px; letter-spacing: .14em; }
   .menu a { padding: 8px 0; }
