@@ -1733,8 +1733,10 @@ html:not(.js) img[data-src] { display: none; }
 .masthead-sub { margin-top: 10px !important; font-family: var(--serif); font-size: 13px; letter-spacing: .22em; text-transform: uppercase; }
 
 /* tablet: neutraal kader zonder merk, knoppen of camera; drie foto's die doorschuiven */
-.tablet { position: relative; width: 100%; aspect-ratio: 4 / 3; padding: 22px; background: var(--inkt); border-radius: 30px; box-shadow: 0 30px 60px rgba(32, 32, 32, .35); }
-.tablet-scherm { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 8px; background: #FBF8F3; }
+/* het kader zelf heeft geen padding: Safari (WebKit) telt bij aspect-ratio met padding en een kind met height: 100% de padding
+   bovenop de hoogte (op 390 px 436 i.p.v. 408 px, CI iPhone). Het scherm ligt daarom absoluut binnen de rand (--tablet-rand). */
+.tablet { --tablet-rand: 22px; position: relative; width: 100%; aspect-ratio: 4 / 3; background: var(--inkt); border-radius: 30px; box-shadow: 0 30px 60px rgba(32, 32, 32, .35); }
+.tablet-scherm { position: absolute; inset: var(--tablet-rand); overflow: hidden; border-radius: 8px; background: #FBF8F3; }
 .tablet-strook { display: flex; height: 100%; transform: translateX(calc(var(--stap, 0) * -100%)); transition: transform .5s cubic-bezier(.65, 0, .35, 1); }
 .tablet-strook img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; }
 .tablet-puntjes { position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; gap: 8px; pointer-events: none; }
@@ -1753,7 +1755,7 @@ html:not(.js) img[data-src] { display: none; }
   .kaft .kaft-achter { display: none; } /* één pagina: alleen de binnenpagina (het nest van boven of het dekentje) */
   /* de kaft draait tot 90° en verdwijnt dan (anders komt hij links buiten het scherm) */
   .kaft { transform: rotateY(calc(var(--open, 1) * -90deg)); opacity: var(--kaft-o, 0); }
-  .tablet { aspect-ratio: 4 / 5; padding: 14px; border-radius: 26px; }
+  .tablet { --tablet-rand: 14px; aspect-ratio: 4 / 5; border-radius: 26px; }
 }
 /* tablet: de kolom van hooguit 560 px staat in het midden (label, kop en zin links in die kolom) */
 @media (min-width: 761px) and (max-width: 1024px) {
