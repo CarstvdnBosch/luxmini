@@ -814,6 +814,92 @@
     }, { rootMargin: '0px 0px 50% 0px' });
     drieIo.observe(drieluik);
   }
+
+  /* ---------------------------------------------------------------
+     5h. Homepage 001 Producten op mobiel in twee stappen (brief 2026-11-15-homepage-mobiel-tweetraps, A; zoals Stock).
+         Alleen staand t/m 760 px, met beweging: #producten krijgt .stappen. Stap 1: paletkleur met nr en kop in inkt.
+         Stap 2 (.aangekomen), één keer: zodra de bovenrand van het blok 50 % van het scherm passeert (eigen observer,
+         rootMargin -50 % onder, los van drieIo), bij focus in het blok of bij een tik op het blok. Was het blok in stap 1 nog
+         niet in beeld (laden, herladen halverwege, anker, sprong), dan direct stap 2 zonder overgang (.direct).
+         Zonder JavaScript, bij minder beweging en op liggende telefoons geen .stappen: alles staat direct in stap 2.
+     --------------------------------------------------------------- */
+  var stapKolommen = drieluik ? Array.prototype.slice.call(drieluik.querySelectorAll('.kern-kolom')) : [];
+  if (stapKolommen.length && !stil && 'IntersectionObserver' in window) {
+    var stapSmal = window.matchMedia('(max-width: 760px)');
+    var stapLiggend = window.matchMedia('(hover: none) and (pointer: coarse) and (max-height: 500px)');
+    // aan- en uitzetten gebeurt zonder overgang (anders zou een blok bij laden of draaien van stap 2 naar stap 1 vervagen)
+    var stappenZetten = function () {
+      var aan = stapSmal.matches && !stapLiggend.matches;
+      if (aan === drieluik.classList.contains('stappen')) return;
+      drieluik.classList.add('stappen-wissel');
+      drieluik.classList.toggle('stappen', aan);
+      requestAnimationFrame(function () { requestAnimationFrame(function () { drieluik.classList.remove('stappen-wissel'); }); });
+    };
+    var stapLaden = function (k) { var i = k.querySelector('img[loading="lazy"]'); if (i) i.loading = 'eager'; };
+    var stapIo, zichtIo, laadIo;
+    var aankomen = function (k, direct) {
+      if (k.classList.contains('aangekomen')) return;
+      stapLaden(k);
+      if (direct) k.classList.add('direct');
+      k.classList.add('aangekomen');
+      if (stapIo) { stapIo.unobserve(k); zichtIo.unobserve(k); }
+    };
+    // na een anker (bij laden of op de pagina): het doelblok en de blokken erboven direct in stap 2 (alleen t/m 760 px)
+    var stapAnker = function () {
+      if (!stapSmal.matches) return;
+      var id = decodeURIComponent((location.hash || '').slice(1));
+      var doel = id && document.getElementById(id);
+      var k = doel && doel.closest && doel.closest('.kern-kolom');
+      if (!k || !drieluik.contains(k)) return;
+      stapKolommen.forEach(function (x) { if (x === k || (x.compareDocumentPosition(k) & Node.DOCUMENT_POSITION_FOLLOWING)) aankomen(x, true); });
+    };
+    // De observers, focus en tik alleen als het scherm t/m 760 px is (controleur: op desktop en tablet geen .aangekomen en geen
+    // eager foto's). Wordt het venster later smal (resize of draaien), dan komen ze er alsnog bij; één keer opgezet blijven ze.
+    var opgezet = false;
+    var opzetten = function () {
+      if (opgezet || !stapSmal.matches) return;
+      opgezet = true;
+      stapAnker();
+      // foto's klaarzetten: in stap 1 ligt de foto buiten de kolom, dan laadt de browser hem niet vanzelf (lazy)
+      laadIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) { if (it.isIntersecting && stapSmal.matches) { stapLaden(it.target); laadIo.unobserve(it.target); } });
+      }, { rootMargin: '0px 0px 100% 0px' });
+      // "gezien": het blok staat in stap 1 onder de drempel in beeld (de kop is te zien); alleen dan de overgang
+      zichtIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) { if (it.isIntersecting && it.boundingClientRect.top > window.innerHeight * 0.5) it.target.luxGezien = true; });
+      });
+      stapIo = new IntersectionObserver(function (items) {
+        if (!stapSmal.matches) return; // venster intussen breder: niets zetten (bij weer smal meldt de observer zich opnieuw)
+        items.forEach(function (it) {
+          var top = it.boundingClientRect.top;
+          if (!it.isIntersecting && top >= window.innerHeight * 0.5) return; // nog onder de drempel
+          aankomen(it.target, !it.target.luxGezien || it.boundingClientRect.bottom <= 0);
+        });
+      }, { rootMargin: '0px 0px -50% 0px' });
+      stapKolommen.forEach(function (k) {
+        laadIo.observe(k);
+        if (k.classList.contains('aangekomen')) return;
+        zichtIo.observe(k);
+        stapIo.observe(k);
+        k.addEventListener('focusin', function () { if (stapSmal.matches) aankomen(k, false); });
+        // een tik op het blok in stap 1 toont eerst stap 2 en volgt geen (nog onzichtbare) link
+        k.addEventListener('click', function (e) {
+          if (k.classList.contains('aangekomen') || !drieluik.classList.contains('stappen')) return;
+          e.preventDefault();
+          aankomen(k, false);
+        });
+      });
+    };
+    var stapMediaWissel = function () {
+      stappenZetten();
+      opzetten();
+      if (stapIo && stapSmal.matches) stapKolommen.forEach(function (k) { if (!k.classList.contains('aangekomen')) { stapIo.unobserve(k); stapIo.observe(k); } });
+    };
+    stappenZetten();
+    if (stapSmal.addEventListener) { stapSmal.addEventListener('change', stapMediaWissel); stapLiggend.addEventListener('change', stappenZetten); }
+    window.addEventListener('hashchange', stapAnker);
+    opzetten();
+  }
   // Binnen de bovenkant blijft de kleur staan zoals bij Stock; wie de bovenkant
   // verlaat, krijgt weer set A en terracotta. Bij focus alleen als de focus
   // echt naar iets buiten de bovenkant gaat (een tik op een lege plek of op
@@ -948,10 +1034,14 @@
   /* ---------------------------------------------------------------
      5f. Babynest (brief 2026-11-14-babynest-media-en-logo, A): boek, magazine en tablet zoals het Media-overzicht van Stock.
          Ook het atelierboekje op Werkwijze (section.media.boekje, brief 2026-11-14-werkwijze-boekje) gebruikt deze code.
-         Komt een blok in beeld, dan schuift het object in (x 150% met een draai → 0, 1,5 s; mobiel van onder) en komen
-         de regels één voor één op (CSS .anim.binnen). Daarna slaat de kaft open op de scrollpositie: op desktop terwijl het
-         blok vaststaat (hooguit één scherm, CSS sticky), op tablet en mobiel terwijl het object door het beeld gaat (touch native).
-         De tablet wisselt van foto op de scrollpositie. Bij "minder beweging": alles open en direct, de tablet wisselt zonder schuiven.
+         Desktop: komt een blok in beeld, dan schuift het object in (x 150% met een draai → 0, 1,5 s, CSS .binnen) en slaat
+         de kaft open terwijl het blok vaststaat (hooguit één scherm, CSS sticky).
+         Tablet en mobiel (brief 2026-11-15-babynest-mobiel-inschuiven): het object schuift van opzij in (zonder .gespiegeld
+         van links, met van rechts; ∓50vw en ±12° → 0) en loopt mee met de scrollpositie: --in = e = 1 − (1 − s)²,
+         s = (vh − bovenkant vak) / (0,4 × vh). Staat het object bij het laden al in beeld, dan schuift het één keer op tijd in
+         (1,2 s, 0,2 s na de intro of de pagina-overgang) en blijft het daarna staan. Pas als --in 1 is (.ingeschoven), slaat de kaft open op de
+         scrollpositie (touch native). De regels komen op met .binnen. De tablet wisselt van foto op de scrollpositie.
+         Bij "minder beweging": alles open en direct, de tablet wisselt zonder schuiven.
      --------------------------------------------------------------- */
   var mediaBlokken = Array.prototype.slice.call(document.querySelectorAll('main .media'));
   if (mediaBlokken.length) {
@@ -960,30 +1050,101 @@
     var mediaLaden = function (sec) { // foto's verderop in het blok (tablet, achterkant van de kaft) liggen buiten beeld: alvast in de cache
       sec.querySelectorAll('.media-object img').forEach(function (img) { var v = new Image(); v.decoding = 'async'; v.src = img.currentSrc || img.src; });
     };
+    var vakVan = function (sec) { return sec.querySelector('.media-object'); };
+    // bovenkant van het vak in het scherm zonder de verschuiving van de pagina-overgang (main staat dan even -150 px)
+    var mainVerschuiving = function () {
+      var m = document.querySelector('main');
+      if (!m || !html.classList.contains('overgang-binnen')) return 0;
+      try { return new DOMMatrix(getComputedStyle(m).transform).m42 || 0; } catch (e) { return 0; }
+    };
     mediaBlokken.forEach(function (sec) {
       if (!stil) { sec.classList.add('anim'); if (sec.querySelector('.kaft')) { sec.style.setProperty('--open', '0'); sec.style.setProperty('--kaft-o', '1'); } }
     });
-    var mediaStartZetten = function (sec) { // bovenkant van het object bij scrollY 0 (in documentmaat), hooguit 3/4 scherm
-      sec.mediaStart = Math.min(window.innerHeight * 0.75, sec.querySelector('.media-object').getBoundingClientRect().top + window.scrollY);
+    // desktop (en minder beweging): bovenkant van het object bij scrollY 0, hooguit 3/4 scherm (zoals voorheen)
+    // tablet en mobiel: de kaft begint open te slaan op de plek waar het object op zijn plek staat, hooguit 0,6 scherm
+    var mediaStartZetten = function (sec) {
+      var vh = window.innerHeight, docTop = vakVan(sec).getBoundingClientRect().top - mainVerschuiving() + window.scrollY;
+      if (mediaBreed.matches) sec.mediaStart = Math.min(vh * 0.75, docTop);
+      else if (sec.opTijdTop != null) sec.mediaStart = Math.min(vh * 0.6, sec.opTijdTop);
+      else sec.mediaStart = Math.min(vh * 0.6, docTop);
     };
     var mediaStartOpnieuw = function () { mediaBlokken.forEach(mediaStartZetten); };
+
+    // inschuiven op tablet en mobiel
+    var inZetten = function (sec, e) {
+      sec.inWaarde = e;
+      sec.style.setProperty('--in', e.toFixed(3));
+      sec.classList.toggle('ingeschoven', e >= 1);
+    };
+    var introBezig = function () { return html.classList.contains('intro-aan') || html.classList.contains('overgang-binnen'); };
+    var opTijdStarten = function (sec) {
+      var start = function () {
+        setTimeout(function () {
+          sec.classList.add('op-tijd');
+          sec.style.setProperty('--in', '1.000'); // inWaarde blijft 0 tot het object staat: de kaft blijft dicht
+          setTimeout(function () {
+            sec.classList.remove('op-tijd');
+            sec.opTijdTop = vakVan(sec).getBoundingClientRect().top;
+            inZetten(sec, 1);
+            mediaStartZetten(sec);
+            mediaBijwerken();
+          }, 1200);
+        }, 200);
+      };
+      if (!introBezig()) { start(); return; }
+      var mo = new MutationObserver(function () { if (!introBezig()) { mo.disconnect(); start(); } });
+      mo.observe(html, { attributes: true, attributeFilter: ['class'] });
+    };
+    if (!stil) {
+      var vh0 = window.innerHeight, verschuiving0 = mainVerschuiving();
+      mediaBlokken.forEach(function (sec) {
+        var o = vakVan(sec).getBoundingClientRect(), top = o.top - verschuiving0, bottom = o.bottom - verschuiving0;
+        if (top < vh0 && bottom > 0) { // al (deels) in beeld bij het laden: één keer op tijd, daarna blijft het staan
+          sec.opTijd = true;
+          inZetten(sec, 0);
+          opTijdStarten(sec);
+        }
+      });
+    }
+
+    var REGELS_MS = 1250; // label: 0,2 s vertraging + 1 s opkomen (CSS .anim .regel), met een kleine marge
+    var regelsKlaar = function (sec) {
+      if (sec.binnenTijd == null) return false;
+      var rest = REGELS_MS - (performance.now() - sec.binnenTijd);
+      if (rest <= 0) return true;
+      if (!sec.regelsTimer) sec.regelsTimer = setTimeout(function () { sec.regelsTimer = null; mediaPlan(); }, rest + 20);
+      return false;
+    };
     var mediaBijwerken = function () {
       var vh = window.innerHeight;
       mediaBlokken.forEach(function (sec) {
         var r = sec.getBoundingClientRect();
-        if (r.bottom < -vh || r.top > 2 * vh) return;
-        var p;
+        if (r.bottom < -vh || r.top > 2 * vh) {
+          // ver buiten beeld: alleen de inschuifstand bijhouden (boven beeld = op zijn plek, onder beeld = aan het begin)
+          if (!stil && !mediaBreed.matches && !sec.opTijd) inZetten(sec, r.bottom < 0 ? 1 : 0);
+          return;
+        }
+        var o = vakVan(sec).getBoundingClientRect();
+        var p, klaar = true;
         if (!stil && mediaBreed.matches && r.height > vh + 1) {
           p = beperk01(-r.top / (r.height - vh)); // vastgezet: 0 bij het begin, 1 aan het eind
         } else {
-          // tablet en mobiel: de kaft begint pas open te slaan als je scrolt; staat het object bij binnenkomst al hoger
-          // dan 3/4 van het scherm, dan begint het op die plek (anders staat de kaft bij binnenkomst al half open)
-          var o = sec.querySelector('.media-object').getBoundingClientRect();
+          if (!stil && !mediaBreed.matches) {
+            if (!sec.opTijd) {
+              var s = beperk01((vh - o.top) / (vh * 0.4));
+              inZetten(sec, 1 - (1 - s) * (1 - s));
+            }
+            klaar = sec.inWaarde >= 1;
+          }
           if (sec.mediaStart == null) mediaStartZetten(sec);
           p = beperk01((sec.mediaStart - o.top) / (vh * 0.5));
         }
         if (!stil && sec.querySelector('.kaft')) {
-          var open = sec.classList.contains('binnen') ? beperk01((p - 0.1) / 0.7) : 0;
+          // desktop: pas na binnenkomst; tablet en mobiel: pas als het object op zijn plek staat (--open 0 zolang --in < 1)
+          // én het label klaar is met opkomen (y 50 → 0 in 1 s na 0,2 s): anders komt de draaiende kaft bij snel scrollen
+          // tegen het label dat nog omhoog schuift (CI 15 nov.: 6,7 px i.p.v. ≥ 12 px)
+          var magOpen = mediaBreed.matches ? sec.classList.contains('binnen') : (klaar && (stil || regelsKlaar(sec)));
+          var open = magOpen ? beperk01((p - 0.1) / 0.7) : 0;
           sec.style.setProperty('--open', open.toFixed(3));
           sec.style.setProperty('--kaft-o', open > 0.995 ? '0' : '1');
         }
@@ -991,7 +1152,7 @@
         if (strook) {
           var stap = Math.min(2, Math.floor(p * 3));
           strook.style.setProperty('--stap', stap);
-          sec.querySelectorAll('.tablet-puntjes span').forEach(function (s, i) { s.classList.toggle('aan', i === stap); });
+          sec.querySelectorAll('.tablet-puntjes span').forEach(function (sp, i) { sp.classList.toggle('aan', i === stap); });
         }
       });
     };
@@ -999,6 +1160,7 @@
       var mediaIo = new IntersectionObserver(function (items) {
         items.forEach(function (it) {
           if (!it.isIntersecting) return;
+          it.target.binnenTijd = performance.now();
           it.target.classList.add('binnen');
           mediaIo.unobserve(it.target);
           mediaBijwerken();
@@ -1009,7 +1171,7 @@
       }, { rootMargin: '100% 0px 100% 0px' });
       mediaBlokken.forEach(function (sec) { mediaIo.observe(sec); laadIo.observe(sec); });
     } else {
-      mediaBlokken.forEach(function (sec) { sec.classList.add('binnen'); mediaLaden(sec); });
+      mediaBlokken.forEach(function (sec) { sec.binnenTijd = -1e9; sec.classList.add('binnen'); mediaLaden(sec); });
     }
     var mediaGepland = false;
     var mediaPlan = function () { if (!mediaGepland) { mediaGepland = true; requestAnimationFrame(function () { mediaGepland = false; mediaBijwerken(); }); } };
