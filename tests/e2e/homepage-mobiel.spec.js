@@ -128,8 +128,9 @@ test.describe('telefoon', () => {
     });
   }
 
-  // Criterium 4 en ontwerpcriterium 3: geen vergroting; op 3× het grootste bestand
-  for (const [b, h, dpr] of [[390, 844, 1], [360, 740, 1], [430, 932, 1], [844, 390, 1], [390, 844, 3]]) {
+  // Criterium 4 en ontwerpcriterium 3: geen vergroting; op 3× het grootste bestand.
+  // Ook tussen 540 en 760 px bij 1× (controleur ronde 1): daar is de cover-breedte de schermbreedte, niet 540/720 px.
+  for (const [b, h, dpr] of [[390, 844, 1], [360, 740, 1], [430, 932, 1], [844, 390, 1], [390, 844, 3], [600, 900, 1], [700, 900, 1], [760, 900, 1]]) {
     test(`001 Producten ${b} × ${h} @${dpr}×: foto's niet vergroot${dpr === 3 ? ', grootste bestand geladen' : ''} (${BRIEF}, criterium 4)`, async ({ browser }, info) => {
       const ctx = await nieuweTelefoon(browser, info, b, h, { deviceScaleFactor: dpr });
       const page = await ctx.newPage();
