@@ -120,24 +120,32 @@
   </div>
 </section>
 
-<!-- 001 Het atelier: het hele verhaal van Carien en een fotorij die je kunt vegen -->
-<section id="atelier" class="op-wit atelier" data-label="<span>001 —</span> Het atelier">
-  <div class="atelier-vak">
-    <p class="label atelier-label"><span>001 —</span> Het atelier</p>
-    <div class="atelier-tekst">
-      <p class="verhaal">Ik ben Carien Geurts, moeder van twee dochters en oma van vier kleinkinderen. Jarenlang maakte ik kleding voor mezelf en mijn kinderen. Sinds er kleinkinderen zijn, maak ik met veel plezier de babyuitzet en de eerste pakjes, en nu ook voor anderen. Mijn passie is maatwerk in (prematuur)babykleding: net iets anders en persoonlijks.</p>
-      <p class="quote">“Hoe bijzonder is het om één van de eerste pakjes voor iemand te mogen maken.”</p>
-    </div>
-    <div id="fotorij" class="fotorij carrousel" role="region" aria-label="Foto's uit het atelier" tabindex="0">
-        <figure class="fotorij-item"><img src="assets/img/over-werkplek.jpg" alt="Het atelier van Carien met een naaimachine bij het raam en een wand vol garens" loading="lazy"></figure>
-        <figure class="fotorij-item"><img src="assets/img/over-naaimachine.jpg" alt="Borduurmachine met een wand vol garens" loading="lazy"></figure>
-        <figure class="fotorij-item"><img src="assets/img/pers-klaar.jpg" alt="Kast in het atelier met hangende babykleding en gevouwen stoffen" loading="lazy"></figure>
-        <figure class="fotorij-item"><img src="assets/img/pers-stoffen.jpg" alt="Vier stoffen met prints van vosjes, walvissen en blaadjes" loading="lazy"></figure>
-        <figure class="fotorij-item"><img src="assets/img/over-verzending.jpg" alt="Open kast met hangende babykleding en stapels gevouwen kleding en stoffen" loading="lazy"></figure>
-    </div>
-    <div class="carrousel-knoppen">
-      <button type="button" class="carrousel-knop" data-richting="-1" aria-label="Vorige foto's" aria-controls="fotorij"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M28 5H2M6 1L2 5l4 4"/></svg></button>
-      <button type="button" class="carrousel-knop" data-richting="1" aria-label="Volgende foto's" aria-controls="fotorij"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg></button>
+<!-- 001 Het atelier: een klein atelierboekje (brief 2026-11-14-werkwijze-boekje). Hetzelfde boek als 001 op Babynest
+     (.media, .papier, .blad, .kaft; openslaan in main.js §5f): kaft "LUX mini · Atelier", links Carien van bovenaf, rechts de borduurmachine.
+     De tekst staat naast het boek: de bestaande quote als pull-quote en het verhaal met een initiaal (alleen CSS ::first-letter).
+     Zonder JavaScript en bij "minder beweging" staat het boek open. Nooit persaandacht of een bestaand tijdschrift suggereren. -->
+<section id="atelier" class="op-wit media boekje atelier" data-achtergrond="#C3CFBC" data-label="<span>001 —</span> Het atelier">
+  <div class="media-vast">
+    <div class="media-rij">
+      <p class="label regel"><span>001 —</span> Het atelier</p>
+      <div class="media-object">
+        <div class="boek papier obj">
+          <figure class="blad blad-rechts">
+            <img src="assets/img/atelier-borduurmachine-scherm.jpg" alt="Carien bedient het scherm van de borduurmachine in haar atelier" width="768" height="960" loading="lazy" decoding="async">
+          </figure>
+          <div class="kaft">
+            <div class="kaft-voor boek-kaft">
+              <img src="assets/img/atelier-carien-label.jpg" alt="Kaft van het atelierboekje: Carien Geurts aan de lockmachine met een stuk badstof met het LUX-label" width="768" height="960" loading="lazy" decoding="async">
+              <p class="kaft-strook">LUX mini · Atelier</p>
+            </div>
+            <figure class="blad kaft-achter">
+              <img src="assets/img/atelier-carien-detail.jpg" alt="Carien van bovenaf, terwijl ze aan haar werktafel een stuk badstof met de hand afwerkt" width="768" height="960" loading="lazy" decoding="async">
+            </figure>
+          </div>
+        </div>
+      </div>
+      <p class="quote regel">“Hoe bijzonder is het om één van de eerste pakjes voor iemand te mogen maken.”</p>
+      <p class="verhaal regel">Ik ben Carien Geurts, moeder van twee dochters en oma van vier kleinkinderen. Jarenlang maakte ik kleding voor mezelf en mijn kinderen. Sinds er kleinkinderen zijn, maak ik met veel plezier de babyuitzet en de eerste pakjes, en nu ook voor anderen. Mijn passie is maatwerk in (prematuur)babykleding: net iets anders en persoonlijks.</p>
     </div>
   </div>
 </section>

@@ -982,7 +982,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .over-kop-tekst { position: relative; z-index: 2; padding: calc(var(--u) * 40) 16.667% 0 8.333%; /* kop onder het gezicht van Carien (ontwerpgate, kan beter 3) */ display: flex; flex-direction: column; align-items: flex-start; gap: 28px; }
 .over-kop-tekst h1 { margin: 0; color: var(--inkt); } /* klein label op terracotta: inkt (5,2:1); wit haalt daar geen 4,5:1 */
 .over-kop .kop-xl { font-size: clamp(40px, 6.11vw, 88px); line-height: .98; }
-.over-kop .badge { left: auto; top: auto; right: 12.5%; bottom: calc(var(--u) * 12.5); }
+.over-kop .badge { position: absolute; margin: 0; left: auto; top: auto; right: 12.5%; bottom: calc(var(--u) * 12.5); } /* position en margin: de mobiele hero-regel voor .badge (relatief, -116 px) geldt hier niet */
 @media (max-width: 760px) {
   .over-kop-vak { width: auto; margin-left: 0; height: auto; padding: 32px var(--rand) var(--ritme); display: flex; flex-direction: column; }
   .over-kop-foto { position: relative; left: auto; top: auto; width: 72vw; height: auto; aspect-ratio: 3 / 4; align-self: center; }
@@ -993,27 +993,25 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .over-kop .badge { right: 4%; bottom: auto; top: calc(32px + 96vw - 52px); width: 64px; }
 }
 
-/* ---------- Over 001: het verhaal en een fotorij die je kunt vegen ---------- */
-.atelier { padding: var(--ritme) 0; }
-.atelier-vak { width: var(--B); margin-left: calc(50% - var(--B) / 2); display: grid; grid-template-columns: 8.333% 33.333% 8.334% 50%; row-gap: 56px; align-items: center; }
-.atelier-label { grid-column: 2 / -1; grid-row: 1; }
-.atelier-tekst { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 36px; }
+/* ---------- Werkwijze 001: het atelierboekje (brief 2026-11-14-werkwijze-boekje) ----------
+   Het boek, het raster en het openslaan zijn die van Babynest (.media, .papier, .blad, .kaft; main.js §5f).
+   Hier alleen de tekst naast het boek: label → quote (pull-quote tussen twee lijnen) → verhaal met een initiaal. Alles inkt op salie. */
 .verhaal { margin: 0; font-size: 18px; line-height: 1.7; max-width: 60ch; }
 .atelier .quote { color: var(--inkt); }
-.fotorij { grid-column: 4; grid-row: 2; display: grid; grid-auto-flow: column; grid-auto-columns: 360px; gap: 16px; } /* scrollen en knoppen: .carrousel */
-.atelier-vak .carrousel-knoppen { grid-column: 4; grid-row: 3; margin-top: -32px; }
-.fotorij-item { margin: 0; scroll-snap-align: start; min-width: 0; }
-.fotorij-item img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+.boekje .media-rij > .quote { grid-column: 2; grid-row: 3; padding: 20px 0; border-top: 1px solid var(--inkt); border-bottom: 1px solid var(--inkt);
+  font-size: clamp(28px, 2.4vw, 36px); line-height: 1.25; }
+.boekje .media-rij > .verhaal { grid-column: 2; grid-row: 4; margin-top: 28px; }
+/* initiaal: alleen CSS, het woord "Ik" blijft in de HTML één woord; drie regels hoog */
+.boekje .verhaal::first-letter { float: left; margin: .1em 10px 0 0; font-family: var(--display); font-size: 5.2em; line-height: .8; color: var(--inkt); }
+@supports (initial-letter: 3) or (-webkit-initial-letter: 3) {
+  .boekje .verhaal::first-letter { float: none; margin: 0 10px 0 .25em; font-size: inherit; line-height: inherit; -webkit-initial-letter: 3; initial-letter: 3; }
+}
 @media (max-width: 1024px) {
-  .atelier-vak { width: auto; margin-left: 0; padding-left: var(--rand); grid-template-columns: minmax(0, 1fr); row-gap: 40px; }
-  .atelier-label, .atelier-tekst, .fotorij, .atelier-vak .carrousel-knoppen { grid-column: 1; grid-row: auto; }
-  .atelier-vak .carrousel-knoppen { margin-top: -16px; }
-  .atelier-tekst { padding-right: var(--rand); }
-  .fotorij { grid-auto-columns: 300px; scroll-padding-inline: 0; }
+  .boekje .media-rij > .verhaal { margin-top: 8px; } /* met de gap van 20 px: 28 px onder de quote */
 }
 @media (max-width: 760px) {
-  .fotorij { grid-auto-columns: 72vw; gap: 12px; }
   .verhaal { font-size: 17px; }
+  .boekje .media-rij > .quote { font-size: 26px; }
 }
 
 /* ---------- Over 002: Hoe ik werk ----------
@@ -1577,7 +1575,7 @@ html.overgang-binnen.binnen-loopt .site-header, html.overgang-binnen.binnen-loop
    pijlknoppen met een muis, vegen op touch; mobiel één thema per keer met een stukje van de volgende). */
 .in-de-box { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
 .in-de-box .producten-kop { margin-top: 24px; }
-/* Carrousel (gedeeld door de producten, de thema's, de stoffen en de fotorij op Werkwijze; feedback Carst 11 nov.: nooit een scrollbalk):
+/* Carrousel (gedeeld door de producten, de thema's en de stoffen; feedback Carst 11 nov.: nooit een scrollbalk):
    scroll-snap, pijlknoppen vorige/volgende alleen met een muis (main.js), vegen op touch, Home/End in de rij.
    Zonder JavaScript zijn er geen knoppen; dan krijgt een muis een dunne scrollbalk zodat de rij bruikbaar blijft. */
 .carrousel { overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; scroll-behavior: smooth; }
@@ -1710,6 +1708,7 @@ html:not(.js) img[data-src] { display: none; }
 .papier { position: relative; width: 100%; aspect-ratio: 8 / 5; perspective: 2200px; }
 .blad { position: absolute; top: 0; left: 50%; width: 50%; height: 100%; margin: 0; background: #FBF8F3; box-shadow: 0 30px 50px rgba(32, 32, 32, .28); }
 .blad img { position: absolute; left: 7%; top: 6%; width: 86%; height: calc(94% - 46px); object-fit: cover; }
+.blad:not(:has(figcaption)) img { height: 88%; } /* zonder onderschrift (atelierboekje): boven en onder even ver van de rand */
 .blad figcaption { position: absolute; left: 7%; bottom: 14px; font-family: var(--serif); font-size: 13px; line-height: 1.3; color: var(--inkt); }
 .blad-rechts::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 12%; background: linear-gradient(to right, rgba(32, 32, 32, .2), rgba(32, 32, 32, 0)); pointer-events: none; }
 .kaft { position: absolute; top: 0; left: 50%; width: 50%; height: 100%; transform-origin: 0 50%; transform-style: preserve-3d;
@@ -1774,8 +1773,8 @@ html:not(.js) img[data-src] { display: none; }
   .js .media.anim.gespiegeld:not(.binnen) .obj { transform: translateX(-150%) rotate(-14deg); }
   .js .media.anim .regel { opacity: 0; transform: translateY(50px); transition: opacity 1s cubic-bezier(.65, 0, .35, 1), transform 1s cubic-bezier(.65, 0, .35, 1); }
   .js .media.anim .regel:nth-child(1) { transition-delay: .2s; }
-  .js .media.anim .kop-cat.regel { transition-delay: .3s; }
-  .js .media.anim .media-zin.regel { transition-delay: .4s; }
+  .js .media.anim .kop-cat.regel, .js .media.anim .quote.regel { transition-delay: .3s; }
+  .js .media.anim .media-zin.regel, .js .media.anim .verhaal.regel { transition-delay: .4s; }
   .js .media.anim .pijl.regel { transition-delay: .5s; }
   .js .media.anim.binnen .obj, .js .media.anim.binnen .regel { opacity: 1; transform: none; }
 }
@@ -1793,8 +1792,9 @@ html:not(.js) img[data-src] { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .tablet-strook, .tablet-puntjes span { transition: none; }
 }
-/* 004–006 op dezelfde linkerlijn als de tekst van de drie blokken (kolom van 8,333% van het ontwerpvak; .wrap gebruikt 8,2%) */
-@media (min-width: 1025px) { .media ~ section > .wrap { padding-left: calc(var(--B) / 12); padding-right: calc(var(--B) / 12); } }
+/* 004–006 op dezelfde linkerlijn als de tekst van de drie blokken (kolom van 8,333% van het ontwerpvak; .wrap gebruikt 8,2%);
+   alleen Babynest: na het atelierboekje op Werkwijze blijven 002–004 waar ze stonden */
+@media (min-width: 1025px) { .media:not(.boekje) ~ section > .wrap { padding-left: calc(var(--B) / 12); padding-right: calc(var(--B) / 12); } }
 
 /* ---------- Logo groot → klein (brief 2026-11-14-babynest-media-en-logo, B; wens Carst 14 nov., optie A; ontwerpgate ronde 1) ----------
    Bovenaan staat alleen "LUX" (scherp bestand van 880 px, wit en donker; de wissel volgt dezelfde regels als het gewone

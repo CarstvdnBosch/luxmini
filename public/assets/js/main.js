@@ -870,6 +870,7 @@
 
   /* ---------------------------------------------------------------
      5f. Babynest (brief 2026-11-14-babynest-media-en-logo, A): boek, magazine en tablet zoals het Media-overzicht van Stock.
+         Ook het atelierboekje op Werkwijze (section.media.boekje, brief 2026-11-14-werkwijze-boekje) gebruikt deze code.
          Komt een blok in beeld, dan schuift het object in (x 150% met een draai → 0, 1,5 s; mobiel van onder) en komen
          de regels één voor één op (CSS .anim.binnen). Daarna slaat de kaft open op de scrollpositie: op desktop terwijl het
          blok vaststaat (hooguit één scherm, CSS sticky), op tablet en mobiel terwijl het object door het beeld gaat (touch native).
@@ -1623,7 +1624,7 @@
     var stilLaden = function () { if (window.requestIdleCallback) window.requestIdleCallback(allesLaden, { timeout: 3000 }); else setTimeout(allesLaden, 1500); };
     if (document.readyState === 'complete') setTimeout(stilLaden, 1000); else window.addEventListener('load', function () { setTimeout(stilLaden, 1000); });
   }
-  // Carrousels (producten, thema's en stoffen op Kraamcadeauboxen, fotorij op Werkwijze; feedback Carst 11 nov.: geen scrollbalk):
+  // Carrousels (producten, thema's en stoffen op Kraamcadeauboxen; feedback Carst 11 nov.: geen scrollbalk):
   // pijlknoppen schuiven één set verder (zoveel tegels als er binnen de rand passen; scroll-snap legt hem precies neer);
   // aan het begin of eind is de knop uit. Vegen op touch en de pijltoetsen in de rij werken vanzelf.
   // Scrolt een rij niet (bijv. de producten vanaf 1025 px), dan geen knoppen en geen tabstop (brief 2026-11-12, Story 1).
