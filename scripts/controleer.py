@@ -1652,9 +1652,13 @@ def controleer_projectpaginas(browser):
     for i, p in enumerate(PROJECTEN):
         volgend = PROJECTEN[(i + 1) % len(PROJECTEN)]
         html = (ROOT / p["pagina"]).read_text(encoding="utf-8")
-        # criterium 8 en 26: de uitleg letterlijk, met de LET OP direct erboven zolang Carst niet heeft goedgekeurd
-        if not re.search(r"<!-- LET OP: wacht op akkoord Carst \(uitleg project " + re.escape(p["naam"]) + r", brief 2026-11-15-inspiratie-projecten\) -->\s*<p class=\"project-uitleg\">" + re.escape(p["uitleg"]) + "</p>", html):
-            fouten.append(f"{p['pagina']}: de uitleg staat er niet letterlijk met direct erboven de LET OP 'wacht op akkoord Carst'")
+        # criterium 8: de uitleg letterlijk; goedgekeurd door Carst (15 nov. 2026, chat 19:29): uitleg, title en description juist zonder LET OP
+        if f'<p class="project-uitleg">{p["uitleg"]}</p>' not in html:
+            fouten.append(f"{p['pagina']}: de uitleg staat er niet letterlijk")
+        if re.search(r"<!--\s*LET OP:[^>]*(uitleg project|title en description project)", html) or "wacht op akkoord Carst" in html:
+            fouten.append(f"{p['pagina']}: bij de goedgekeurde uitleg, title of description staat nog een LET OP (goedgekeurd door Carst, 15 nov.)")
+        if "LET OP: keuze van de foto's wacht op akkoord" not in html:
+            fouten.append(f"{p['pagina']}: de LET OP over de keuze van de foto's ontbreekt (die is nog niet goedgekeurd)")
         for naam, (b, h, touch) in {"desktop": (1440, 900, False), "breed": (1920, 1080, False), "tablet": (768, 1024, True), "klein-tablet": (1024, 768, True), "mobiel": (390, 844, True), "smal": (360, 740, True), "iphone-hoogte": (390, 664, True)}.items():
             ctx, page = nieuwe_pagina(browser, p["pagina"], b, h, touch, reduced_motion="reduce")
             lazy = page.evaluate("() => [...document.querySelectorAll('#fotos .projectfoto img')].map(i => i.getAttribute('loading'))")  # vóór het vooraf laden

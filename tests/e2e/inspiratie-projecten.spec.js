@@ -188,10 +188,11 @@ for (const [i, p] of PROJECTEN.entries()) {
     // aria-current op Inspiratie in header en snelmenu
     expect(await page.locator('[aria-current="page"]').evaluateAll(as => as.map(a => [a.closest('.site-header') ? 'header' : a.closest('.menu-rij') ? 'rij' : 'elders', a.textContent.trim()])))
       .toEqual([['rij', 'Inspiratie'], ['header', 'Inspiratie']]);
-    // de uitleg met direct erboven de LET OP (wacht op akkoord Carst)
+    // de uitleg letterlijk; uitleg, title en description zijn goedgekeurd (Carst, 15 nov. 2026): juist geen LET OP meer
     const html = await (await page.request.get(p.pad)).text();
-    expect(html).toMatch(new RegExp(`<!-- LET OP: wacht op akkoord Carst \\(uitleg project ${p.naam}, brief 2026-11-15-inspiratie-projecten\\) -->\\s*<p class="project-uitleg">`));
-    expect(html).toMatch(new RegExp(`<!-- LET OP: wacht op akkoord Carst \\(title en description project ${p.naam}, brief 2026-11-15-inspiratie-projecten\\) -->\\s*<title>`));
+    expect(html).toMatch(/<p class="project-uitleg">[^<]+<\/p>/);
+    expect(html, 'geen LET OP bij de goedgekeurde teksten').not.toMatch(/LET OP:[^>]*(uitleg project|title en description project)|wacht op akkoord Carst/);
+    expect(html, 'de fotokeuze wacht nog op akkoord').toContain("LET OP: keuze van de foto's wacht op akkoord");
     // OC8: wit h1 >= 40 px, uitleg inkt 18 px (mobiel >= 17), hooguit 31em breed (ontwerpgate 15 nov.; was 34em)
     const kop = await page.evaluate(() => { const h = document.querySelector('h1'), u = document.querySelector('.project-uitleg'), cs = getComputedStyle(u);
       return [getComputedStyle(h).color, parseFloat(getComputedStyle(h).fontSize), cs.color, parseFloat(cs.fontSize), u.getBoundingClientRect().width / parseFloat(cs.fontSize)]; });
