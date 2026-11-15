@@ -9,6 +9,11 @@ export const PAGINAS = [
   { pad: '/prematuurkleding', naam: 'prematuurkleding' },
   { pad: '/babynest', naam: 'babynest' },
   { pad: '/inspiratie', naam: 'inspiratie' },
+  // brief 2026-11-15-inspiratie-projecten: de vier projectpagina's van Inspiratie
+  { pad: '/inspiratie-kleding', naam: 'inspiratie-kleding' },
+  { pad: '/inspiratie-knuffels-en-babynest', naam: 'inspiratie-knuffels-en-babynest' },
+  { pad: '/inspiratie-siliconen-en-hangers', naam: 'inspiratie-siliconen-en-hangers' },
+  { pad: '/inspiratie-kraamcadeauboxen', naam: 'inspiratie-kraamcadeauboxen' },
   { pad: '/contact', naam: 'contact' },
   { pad: '/privacy', naam: 'privacy' },
   { pad: '/bedankt', naam: 'bedankt' },

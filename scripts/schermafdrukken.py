@@ -19,7 +19,7 @@ from playwright.sync_api import sync_playwright
 PROJECT = pathlib.Path(__file__).resolve().parent.parent
 ROOT = PROJECT / "public"
 UIT = PROJECT / "scripts" / "schermafdrukken"
-PAGINAS = sys.argv[1:] or ["index.html", "werkwijze.html", "kraamcadeauboxen.html", "prematuurkleding.html", "babynest.html", "inspiratie.html", "contact.html", "beheer-schrijven", "beheer-lezen"]
+PAGINAS = sys.argv[1:] or ["index.html", "werkwijze.html", "kraamcadeauboxen.html", "prematuurkleding.html", "babynest.html", "inspiratie.html", "inspiratie-kleding.html", "inspiratie-knuffels-en-babynest.html", "inspiratie-siliconen-en-hangers.html", "inspiratie-kraamcadeauboxen.html", "contact.html", "beheer-schrijven", "beheer-lezen"]
 BEHEER = {"beheer-schrijven": "schrijven", "beheer-lezen": "lezen"}
 OVERLAP = 100  # px: hoogte van de vaste balk plus marge
 # touch = has_touch + is_mobile: dan gelden (hover: none) en (pointer: coarse), zoals op een echte telefoon of tablet

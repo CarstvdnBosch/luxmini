@@ -1007,36 +1007,60 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .js .inschuif.in-beeld img { transform: none; }
 @media (prefers-reduced-motion: reduce) { .js .inschuif, .js .inschuif img { clip-path: none; transform: none; transition: none; } }
 
-/* ---------- Kraamcadeaubox: thema's in het ritme van Stock /projecten ----------
-   Foto 58,33% breed (840 x 480 op 1440), lopende regel met de themanaam erachter. */
-.thema { overflow-x: clip; padding-bottom: calc(var(--u) * 10.41); }
-.thema-vak { position: relative; width: var(--B); margin-left: calc(50% - var(--B) / 2); --l: 33.333%; --r: 8.333%; }
-.ritme-2 .thema-vak, .ritme-4 .thema-vak { --l: 8.333%; --r: 33.333%; }
-.ritme-3 .thema-vak { --l: 25%; --r: 16.667%; }
-.thema-label { padding: var(--ritme) 0 calc(var(--u) * 6.94) var(--rand); }
-.thema-beeld { position: relative; }
-.thema-lopend { position: absolute; left: 0; right: 0; top: calc(var(--u) * 19); z-index: 0; opacity: .2; }
-.thema .lopend-spoor { font-size: clamp(64px, 9vw, 140px); color: var(--inkt); }
-.js .thema .lopend-spoor { animation-duration: 30s; } /* een halve spoorbreedte in 30 s */
-.thema-foto { position: relative; z-index: 1; margin: 0 var(--r) 0 var(--l); aspect-ratio: 58.333 / 33.333; overflow: hidden; }
-/* parallax binnen de foto: 120% hoog, main.js schuift hem hooguit 8% op of neer (zonder JS: midden) */
-.thema-foto img { position: absolute; left: 0; top: -10%; width: 100%; height: 120%; object-fit: cover; transform: translate3d(0, var(--parallax, 0px), 0); }
-.thema-onder { position: relative; z-index: 1; margin: calc(var(--u) * 3.47) var(--r) 0 var(--l); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 32px; }
-.thema-slot { margin: calc(var(--u) * 10.41) auto 0; text-align: center; padding: 0 var(--rand); }
+/* ---------- Inspiratie: projecttegels in het ritme van Stock /projecten (brief 2026-11-15-inspiratie-projecten) ----------
+   Was het thema-ritme van de oude kraamcadeauboxpagina (geen HTML gebruikte het nog); hernoemd, geen tweede kopie.
+   Elke tegel is een eigen vlak in een lichte paletkleur (inline background-color, zoals het drieluik: doet niet mee met de
+   kleurlaag, de balk neemt de tint over). Foto 4:3, 58,33% van het ontwerpvak (1440: 840 x 630), linkerrand om en om
+   33,33 / 8,33 / 25 / 8,33%; erachter de projectnaam als lopende regel (inkt 0,2, een halve spoorbreedte in 30 s, decoratief).
+   Foto, titel en "Bekijk de foto's" vormen samen één link (één tabstop). Geen parallax.
+   Muis of toetsenbordfocus: alleen dit vlak verloopt naar de diepe tint (--diep), de titel wordt wit (>= 34 px, 3:1),
+   de lopende regel wit op 0,3 en de foto zoomt binnen zijn kader 1 -> 1,04; 1 s rustig in-uit. Label en pijl blijven inkt.
+   Op touch geen aanwijsstand: lichte tint, alle tekst inkt. Bij minder beweging direct en zonder zoom. */
+.project { overflow-x: clip; padding-bottom: calc(var(--u) * 10.41); transition: background-color 1s var(--rustig); }
+.project-vak { position: relative; width: var(--B); margin-left: calc(50% - var(--B) / 2); --l: 33.333%; --r: 8.333%; }
+.ritme-2 .project-vak, .ritme-4 .project-vak { --l: 8.333%; --r: 33.333%; }
+.ritme-3 .project-vak { --l: 25%; --r: 16.667%; }
+.project-label { padding: var(--ritme) 0 calc(var(--u) * 6.94) var(--rand); }
+.project-beeld { position: relative; }
+.project-lopend { position: absolute; left: 0; right: 0; top: calc(var(--u) * 19); z-index: 0; opacity: .2; transition: opacity 1s var(--rustig); }
+.project .lopend-spoor { font-size: clamp(64px, 9vw, 140px); color: var(--inkt); transition: color 1s var(--rustig); }
+.js .project .lopend-spoor { animation-duration: 30s; } /* een halve spoorbreedte in 30 s */
+.project-link { position: relative; z-index: 1; display: block; margin: 0 var(--r) 0 var(--l); color: var(--inkt); text-decoration: none; }
+.project-link:hover { opacity: 1; }
+.project-foto { display: block; aspect-ratio: 4 / 3; overflow: hidden; }
+.project-foto img { width: 100%; height: 100%; object-fit: cover; transition: transform 1s var(--rustig); }
+.project-onder { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 32px; margin-top: calc(var(--u) * 3.47); }
+.project-onder .kop-m { color: var(--inkt); transition: color 1s var(--rustig); }
+.project-slot { position: relative; z-index: 1; margin: 32px var(--r) 0 var(--l); }
+.project .pijl, .project-fotos .pijl { font-size: 16px; }
+@media (hover: hover) and (pointer: fine) {
+  .project:has(.project-link:hover) { background-color: var(--diep) !important; } /* wint van de inline lichte tint */
+  .project:has(.project-link:hover) .project-onder .kop-m, .project:has(.project-link:hover) .lopend-spoor { color: var(--wit); }
+  .project:has(.project-link:hover) .project-lopend { opacity: .3; }
+  .project-link:hover .project-foto img { transform: scale(1.04); }
+}
+.project:has(.project-link:focus-visible) { background-color: var(--diep) !important; }
+.project:has(.project-link:focus-visible) .project-onder .kop-m, .project:has(.project-link:focus-visible) .lopend-spoor { color: var(--wit); }
+.project:has(.project-link:focus-visible) .project-lopend { opacity: .3; }
+.project-link:focus-visible .project-foto img { transform: scale(1.04); }
 @media (min-width: 761px) and (max-width: 1024px) {
-  .thema-vak, .ritme-2 .thema-vak, .ritme-3 .thema-vak, .ritme-4 .thema-vak { --l: 8%; --r: 16%; }
-  .mobiel-rechts .thema-vak { --l: 16%; --r: 8%; }
-  .thema .lopend-spoor { font-size: 80px; }
+  .project-vak, .ritme-3 .project-vak { --l: 8%; --r: 16%; }
+  .ritme-2 .project-vak, .ritme-4 .project-vak { --l: 16%; --r: 8%; }
+  .project .lopend-spoor { font-size: 80px; }
 }
 @media (max-width: 760px) {
-  .thema { padding-bottom: 56px; }
-  .thema-label { padding-bottom: 32px; }
-  .thema-foto { width: calc((100% - 2 * var(--rand)) * .82); margin: 0 0 0 var(--rand); aspect-ratio: 4 / 3; }
-  .mobiel-rechts .thema-foto { margin: 0 var(--rand) 0 auto; }
-  .thema-foto img { top: 0; height: 100%; transform: none; } /* geen parallax op mobiel */
-  .thema-lopend { top: calc((100% - 2 * var(--rand)) * .82 * .375 - 31px); }
-  .thema .lopend-spoor { font-size: 56px; }
-  .thema-onder { margin: 24px var(--rand) 0; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .project { padding-bottom: 56px; }
+  .project-label { padding-bottom: 32px; }
+  .project-vak, .ritme-2 .project-vak, .ritme-3 .project-vak, .ritme-4 .project-vak { --l: var(--rand); --r: var(--rand); } /* tegen de rand, springt niet */
+  .project-lopend { top: 16px; }
+  .project .lopend-spoor { font-size: 56px; }
+  .project-onder { margin-top: 24px; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .project-onder .kop-m { font-size: 34px; }
+  .project-slot { margin-top: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .project, .project-lopend, .project .lopend-spoor, .project-onder .kop-m, .project-foto img { transition: none; }
+  .project-link .project-foto img { transform: none !important; }
 }
 
 /* ---------- Over: kop met foto in het midden (zoals Stock /over-ons) ---------- */
@@ -1213,38 +1237,29 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .maak-tekst { gap: 10px; }
 }
 
-/* ---------- Portfolio: vier groepen in metselwerk ----------
-   Kolommen met CSS columns: 4 vanaf 1025 px, 3 op tablet, 2 op mobiel. Elke foto houdt zijn eigen
-   verhouding en wordt nooit breder getoond dan het bestand (width-attribuut, max. 100%). */
-.portfolio-links .pijl { min-height: 44px; }
-.portfolio-groep .sectie { gap: 40px; }
-.groep-kop { color: var(--inkt); }
-.werken { columns: 4; column-gap: 32px; }
-.werk { margin: 0 0 32px; break-inside: avoid; display: flex; flex-direction: column; align-items: flex-start; }
-.werk-beeld { position: relative; display: block; max-width: 100%; }
-.werk-beeld img { max-width: 100%; height: auto; } /* breedte = width-attribuut (het bestand), nooit breder; vaste ruimte vóór het laden */
-.werk figcaption { margin-top: 12px; font-family: var(--display); font-size: 24px; line-height: 1.2; color: var(--inkt); }
-@media (max-width: 1024px) { .werken { columns: 3; column-gap: 24px; } .werk { margin-bottom: 24px; } }
+/* ---------- Inspiratie, projectpagina's (brief 2026-11-15-inspiratie-projecten) ----------
+   Kop: de uitleg als lopende tekst in inkt, 18 px (mobiel 17), max. 31em (<= 75 tekens per regel).
+   001 Foto's: het verspringende raster van Prematuurkleding 003 (.voorbeelden: 12 kolommen, gat 16 / 96 px, tablet 12 / 56 px;
+   mobiel 2 kolommen, gat 12 / 24 px). Plaats per foto via --d (kolommen vanaf 761 px), --dt (verschuiving desktop; tablet de helft),
+   --m en --mt (mobiel). Elke foto in zijn eigen verhouding, niet bijgesneden, en nooit breder dan het bestand (width-attribuut,
+   max. 100%). Het kader schuift één keer in (.inschuif, zonder schaal); de eerste foto (LCP) staat er direct. */
+.pagina-kop .project-uitleg { margin: 0; max-width: 31em; /* ca. 72 tekens per regel (ontwerpgate 15 nov., OC8: <= 75) */ font-size: 18px; line-height: 1.6; color: var(--inkt); }
+.project-fotos .sectie { padding-top: 56px; gap: 48px; } /* eerste foto op 1440 x 900 bovenin beeld (OC9) */
+.projectfoto { margin: 0; min-width: 0; grid-column: var(--d, auto); margin-top: var(--dt, 0px); --vertraging: var(--vd, 0s); } /* vertraging per plek in de rij */
+.projectfoto-beeld { display: block; }
+.projectfoto img { max-width: 100%; height: auto; }
+.projectfoto figcaption { margin-top: 12px; font-family: var(--display); font-size: 24px; line-height: 1.2; color: var(--inkt); }
+.js .projectfoto-beeld.inschuif img { transform: translateY(10%); } /* zonder schaal 1,12: nooit groter dan het bestand */
+.js .projectfoto-beeld.inschuif.in-beeld img { transform: none; }
+.project-fotos .pijl-rij { justify-content: flex-start; }
+@media (min-width: 761px) and (max-width: 1024px) { .projectfoto { margin-top: calc(var(--dt, 0px) / 2); } }
 @media (max-width: 760px) {
-  .werken { columns: 2; column-gap: 12px; }
-  .werk { margin-bottom: 20px; }
-  .werk figcaption { margin-top: 8px; font-size: 20px; }
-  .portfolio-groep .sectie { gap: 32px; }
+  .pagina-kop .project-uitleg { font-size: 17px; }
+  .project-fotos .sectie { gap: 32px; }
+  .projectfoto { grid-column: var(--m, 1 / 3); margin-top: var(--mt, 0px); --vertraging: var(--vm, 0s); }
+  .projectfoto figcaption { margin-top: 8px; font-size: 20px; }
 }
-/* bij aanwijzen (alleen met een muis): de laag wordt de diepe tint van de groep (main.js), groepskop en het
-   aangewezen bijschrift worden wit, de andere bijschriften wit op 0,35 en de andere foto's krijgen een
-   warme sluier van 20%. Label en pijl-links blijven inkt (5,4:1; wit haalt daar maar 3:1). */
-@media (hover: hover) and (pointer: fine) {
-  .js .portfolio-groep .groep-kop, .js .portfolio-groep .werk figcaption { transition: color 1s var(--rustig), opacity 1s var(--rustig); }
-  .js .werk-beeld::after { content: ""; position: absolute; inset: 0; background: rgba(60,40,30,.2); opacity: 0; pointer-events: none; transition: opacity 1s var(--rustig); }
-  .js .portfolio-groep.aangewezen .groep-kop { color: var(--wit); }
-  .js .portfolio-groep.aangewezen .werk figcaption { color: var(--wit); opacity: .35; }
-  .js .portfolio-groep.aangewezen .werk.aan figcaption { opacity: 1; }
-  .js .portfolio-groep.aangewezen .werk:not(.aan) .werk-beeld::after { opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .js .portfolio-groep .groep-kop, .js .portfolio-groep .werk figcaption, .js .werk-beeld::after { transition: none; }
-}
+@media (prefers-reduced-motion: reduce) { .js .projectfoto-beeld.inschuif img { transform: none; } }
 
 /* Touch: tikdoelen in het menu minimaal 44 px (ontwerpgate navigatie v2, P1) */
 @media (pointer: coarse) {

@@ -96,7 +96,8 @@ test('sitemap en robots kloppen', async ({ request }) => {
     expect(r.status(), `sitemap-adres ${a}`).toBe(200);
   }
   const paden = adressen.map(a => new URL(a).pathname).sort();
-  expect(paden, 'adressen in de sitemap').toEqual(['/', '/babynest', '/contact', '/inspiratie', '/kraamcadeauboxen', '/prematuurkleding', '/privacy', '/werkwijze']);
+  // brief 2026-11-15-inspiratie-projecten (criterium 15): de vier projectpagina's erbij
+  expect(paden, 'adressen in de sitemap').toEqual(['/', '/babynest', '/contact', '/inspiratie', '/inspiratie-kleding', '/inspiratie-knuffels-en-babynest', '/inspiratie-kraamcadeauboxen', '/inspiratie-siliconen-en-hangers', '/kraamcadeauboxen', '/prematuurkleding', '/privacy', '/werkwijze']);
   for (const oud of ['/producten', '/kraamcadeaubox', '/over', '/portfolio']) expect(paden, `${oud} hoort niet meer in de sitemap`).not.toContain(oud);
   const robots = await (await request.get('/robots.txt')).text();
   expect(robots).toMatch(/Sitemap:\s*https:\/\/www\.luxmini\.nl\/sitemap\.xml/i);

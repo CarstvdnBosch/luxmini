@@ -10,9 +10,9 @@ const SCHERMEN = [[360, 740], [390, 844], [430, 932], [844, 390]];
 const INKT = 'rgb(32, 32, 32)', WIT = 'rgb(255, 255, 255)';
 const HANDWERK = [
   ['Warm en eigen', 'Belettering', 'werkwijze.html#personaliseren', 'rgb(222, 183, 153)'],
-  ['Rustig en praktisch', 'Siliconen items', 'inspiratie.html#siliconen', 'rgb(195, 207, 188)'],
+  ['Rustig en praktisch', 'Siliconen items', 'inspiratie-siliconen-en-hangers.html', 'rgb(195, 207, 188)'],
   ['Klein en precies', 'Prematuurkleding', 'prematuurkleding.html', 'rgb(180, 177, 154)'],
-  ['Speels en levendig', 'Borduren', 'inspiratie.html#textiel', 'rgb(181, 150, 158)'],
+  ['Speels en levendig', 'Borduren', 'inspiratie-knuffels-en-babynest.html', 'rgb(181, 150, 158)'],
 ];
 
 async function nieuweTelefoon(browser, info, b, h, extra = {}) {
