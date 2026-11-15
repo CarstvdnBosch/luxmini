@@ -384,18 +384,26 @@ LEES_DRIELUIK = r"""() => { const s = document.querySelector('#producten'); if (
 LEES_STAP1 = r"""() => [...document.querySelectorAll('#producten .kern-kolom')].map(k => { const r = k.getBoundingClientRect(), b = k.querySelector('.kern-beeld').getBoundingClientRect();
   const s = e => getComputedStyle(k.querySelector(e));
   return [k.id, k.classList.contains('aangekomen'), s('h2').color, s('.nr').color, s('p.klein').opacity, s('a.pijl').opacity, s('a.pijl').visibility, s('a.pijl').display,
-    k.querySelector('a.pijl').tabIndex, getComputedStyle(k).backgroundColor, b.bottom <= r.top + 0.5]; })"""
+    k.querySelector('a.pijl').tabIndex, getComputedStyle(k).backgroundColor, b.bottom <= r.top + 0.5, r.top >= innerHeight * 0.5]; })"""
 
 def drieluik_stappen(page, tag):
     """Mobiel met beweging: in rust stap 1; na het scrollen naar elk blok (bovenrand boven 50 %) stap 2, ook na terug omhoog."""
-    # opnieuw laden bovenaan: eerdere controles (horizontaal scrollen halverwege) hebben de blokken al eenmalig in stap 2 gezet
-    page.evaluate("window.scrollTo(0, 0)")
-    page.reload(wait_until="load"); page.wait_for_timeout(400)
+    # opnieuw openen bovenaan: eerdere controles (horizontaal scrollen halverwege) hebben de blokken al eenmalig in stap 2 gezet
+    # instant: html heeft scroll-behavior: smooth; een zachte scroll die nog loopt wordt bij herladen halverwege hersteld (CI-run
+    # 43733337103: blok 1 stond daardoor al boven de 50 %-lijn en terecht direct in stap 2)
+    page.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })")
+    page.wait_for_function("() => scrollY === 0")
+    page.goto(page.url.split("#")[0], wait_until="load"); page.wait_for_timeout(400)  # nieuwe navigatie: geen herstelde scrollpositie
     if not page.evaluate("() => document.querySelector('#producten').classList.contains('stappen')"):
         fouten.append(f"{tag}: het drieluik staat op mobiel niet in twee stappen (#producten mist .stappen, brief 2026-11-15)"); return
     kleuren = dict((d[0], norm_kleur(page, d[4])) for d in DRIELUIK)
     for rust in page.evaluate(LEES_STAP1):
         id_ = rust[0]
+        if not rust[11]:
+            # begint het blok al boven de 50 %-lijn, dan hoort het direct in stap 2 te staan (ontwerprichting punt 2)
+            if not rust[1]:
+                fouten.append(f"{tag} [drieluik {id_}]: het blok begint boven de 50 %-lijn maar staat niet direct in stap 2: {rust}")
+            continue
         if rust[1] or rust[2:6] != ["rgb(32, 32, 32)", "rgb(32, 32, 32)", "0", "0"] or rust[6] != "visible" or rust[7] == "none" or rust[8] < 0 or rust[9] != kleuren[id_] or not rust[10]:
             fouten.append(f"{tag} [drieluik {id_}]: stap 1 klopt niet (bovenaan nog stap 1, inkt op {kleuren[id_]}, zin en pijl-link opacity 0 maar in de DOM en focusbaar, foto buiten de kolom): {rust}")
     for id_, *_r in DRIELUIK:

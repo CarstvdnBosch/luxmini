@@ -130,7 +130,9 @@ test.describe('telefoon staand, met beweging', () => {
         expect([na.zin[3], na.pijl[3]], `${t}: zin en pijl-link bruikbaar`).toEqual(['auto', 'auto']);
         expect(na.hoogte, `${t}: blokhoogte gelijk in stap 1 en 2`).toBe(voor.hoogte);
         expect([na.nr[0], na.kop[0]], `${t}: nr en kop op dezelfde plek (Δy = 0)`).toEqual([voor.nr[0], voor.kop[0]]);
-        expect([na.zin[5], na.zin[6]], `${t}: zin 18 px / 1,6`).toEqual([18, 28.8]);
+        // regelafstand 18 × 1,6 = 28,8 px; WebKit geeft 28.800001 (afronding van de meting, geen versoepeling)
+        expect(na.zin[5], `${t}: zin 18 px`).toBe(18);
+        expect(na.zin[6], `${t}: regelafstand 1,6 (28,8 px)`).toBeCloseTo(28.8, 1);
         expect(na.zin[7], `${t}: zin max. 300 px`).toBeLessThanOrEqual(300);
         expect(na.pijl[5], `${t}: pijl-link 16 px`).toBe(16);
         expect(na.pijl[6], `${t}: pijl-link ≥ 44 px`).toBeGreaterThanOrEqual(43.5);
@@ -216,7 +218,11 @@ test.describe('telefoon staand, met beweging', () => {
     for (const [anker, blok] of [['kraamcadeauboxen', 'kraamcadeauboxen'], ['kraamcadeaubox', 'kraamcadeauboxen'], ['prematuurkleding', 'prematuurkleding'], ['prematuur', 'prematuurkleding'], ['babynest', 'babynest']]) {
       await page.goto(`/#${anker}`);
       await page.evaluate(() => document.fonts.ready);
-      await page.waitForTimeout(150);
+      // stap 2 staat er meteen (direct), nog vóór de browser klaar is met scrollen
+      const meteen = await page.evaluate(([id]) => { const k = document.getElementById(id); return [k.classList.contains('aangekomen'), k.classList.contains('direct')]; }, [blok]);
+      expect(meteen, `#${anker}: meteen stap 2 zonder overgang`).toEqual([true, true]);
+      // de browser glijdt met html { scroll-behavior: smooth } naar het anker (ca. 0,6 s; in CI langer): meet de eindstand
+      await page.waitForFunction(async () => { const y = scrollY; await new Promise(r => setTimeout(r, 200)); return y > 0 && scrollY === y; }, null, { timeout: 10000 });
       const m = await page.evaluate(([id]) => { const k = document.getElementById(id), balk = document.querySelector('.balk'), a = k.querySelector('a.pijl');
         return { stap2: k.classList.contains('aangekomen'), direct: k.classList.contains('direct'), op: getComputedStyle(a).opacity, kleur: getComputedStyle(k.querySelector('h2')).color,
           onderBalk: balk.classList.contains('zichtbaar') ? balk.getBoundingClientRect().bottom : 56, kop: k.querySelector('h2').getBoundingClientRect().top,
