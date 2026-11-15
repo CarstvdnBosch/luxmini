@@ -155,6 +155,71 @@ Opmerking: projecten 1 en 2 delen de zin over borduren. De ontwerper of Carst ka
 7. **Balk en label.** Wat toont de balk op een projectpagina ("— Inspiratie" of "— Kleding")?
 8. **Ontwerpcriteria.** Graag toetsbare criteria (OC1 …) voor de ontwerpgate: maten per breakpoint, rand ten opzichte van `.wrap`, positie eerste foto op 390 × 844, beweging (start, eind, duur, minder beweging).
 
+### Antwoord website-ontwerper (rol 1, 15 nov.; gemeten op eigen testserver, Chromium)
+
+**1. Overzicht `inspiratie.html`: projecttegels zoals Stock, binnen onze kleurregels**
+- Paginakop blijft (terracotta, "Inspiratie" / "Gemaakt in het atelier in Ospel"); de vier pijl-links in de kop vervallen (tegels zijn de links; scheelt ~180 px op 390 en vier dubbele tabstops).
+- Vier tegels, elk een eigen vlak over de volle breedte in een lichte paletkleur; doet niet mee met de kleurlaag (geen `data-achtergrond`/`data-diep`, zoals het drieluik); tegels sluiten aan zonder witte lijn.
+- Kleuren: 001 Kleding **perzik** `#DEB799` (diep `#C88654`); 002 Knuffels, swaddles en babynest **mauve** `#B5969E` (diep `#AE8C94`); 003 Siliconen en hangers **olijf** `#B4B19A` (diep `#999575`); 004 Kraamcadeauboxen **salie** `#C3CFBC` (diep `#839C75`). Kleding en Kraamcadeauboxen ruilen t.o.v. nu: de kledingfoto's zijn op salie gefotografeerd (`#C3CEBD`) en zouden wegvallen; de box past bij de salie prijskaarten.
+- Opbouw tegel: hergebruik `.thema`, `.thema-vak`, `.ritme-1…4`, `.thema-lopend`, `.thema-foto`, `.thema-onder` uit `style.css` (geen HTML gebruikt ze nog); hernoem naar `.project…` of deel, geen tweede kopie. Label `001 — Kleding` op de rand; achter de foto de projectnaam als lopende regel (`.lopend`/`.lopend-spoor`, `aria-hidden="true"`, inkt 0,2, halve spoorbreedte in 30 s, pauze buiten beeld, begint met de naam); foto 4:3; daaronder `h2.kop-m` en een `span` in `.pijl`-stijl "Bekijk de foto's"; foto + titel + pijl samen één `<a>` (één tabstop); label en lopende regel erbuiten.
+- Ritme van Stock: linkerrand foto 33,33 / 8,33 / 25 / 8,33 % van het ontwerpvak; foto 58,33 % breed (1440: 840 × 630); 4:3 i.p.v. Stocks 1,75:1 (staande productfoto's, namen en LUX-label blijven heel); geen parallax.
+- Tegelfoto = eerste foto op de projectpagina (alle ≥ 900 px breed): Kleding `p-sjaaltje-kleur.jpg` (object-position 50% 35%); Knuffels `p-swaddle-open-kleur.jpg` (50% 60%); Siliconen `p-bijtring-kleur.jpg` (Tobi, 50% 50%); Kraamcadeauboxen `hero-box-open.jpg` (50% 30%).
+
+**2. Aanwijzen, toetsenbord en touch**
+- Muis (`hover: hover` en `pointer: fine`) en `:focus-visible`: alleen dat vlak verloopt naar de diepe tint; titel wit (kop-m ≥ 34 px; 3,0:1); lopende regel wit op 0,3; foto zoomt binnen zijn kader 1 → 1,04 (kleiner dan het bestand); 1 s `cubic-bezier(.45,0,.55,1)`, terug bij verlaten; label en "Bekijk de foto's" blijven inkt (5,4:1); geen sluier; kleurlaag en balk doen niet mee. Met CSS; de hover van `.portfolio-groep` in main.js §4b is niet meer nodig.
+- Touch: geen aanwijsstand; altijd lichte tint, alle tekst inkt, foto boven de titel. De Inspiratie-regel in `CLAUDE.md` verandert mee (criterium 29).
+- Minder beweging: kleur direct, geen zoom, lopende regel stil. Zonder JS alles stil, links werken.
+- Mauve/diep mauve liggen dicht bij elkaar; bij Knuffels toont vooral de witte titel de wissel (bedoeld).
+
+**3. Opbouw projectpagina**
+1. `.pagina-kop` op terracotta (balk na de kop): `p.caps` "Inspiratie"; `h1.kop-xl` projectnaam wit; uitleg lopende tekst inkt 18 px (mobiel 17), regelhoogte 1,6, max. 34em; geen pijl-links in de kop.
+2. `001 — Foto's` op de lichte tint van het project (laag met `data-achtergrond`): alle foto's van de groep in verspringend raster; hergebruik `.voorbeelden` (Prematuurkleding 003: 12 kolommen, gaten 16 / 96 px, tablet 12 / 56, margin-top-verschuiving); elke foto in eigen verhouding, **niet bijgesneden**; bestaand bijschrift in `.werk figcaption`-stijl (Libre Caslon Display 24 px, mobiel 20, inkt); onder het raster de pijl-links uit criterium 14 (16 px).
+3. `002 — Volgend project`: de tegel van het volgende project (zelfde onderdeel en gedrag); volgorde Kleding → Knuffels → Siliconen → Kraamcadeauboxen → Kleding; daaronder op hetzelfde vlak pijl-link "Alle inspiratie" → `inspiratie.html`; geen "Vorig project".
+4. `003 — Contact`: gedeeld contactblok. Geen statement op de projectpagina's.
+
+**4. "Ingezoomd": groot en dichtbij, nooit groter dan het bestand**
+- Veel groter dan nu (270 px in vier kolommen), een paar per scherm; via de weergavebreedte.
+- Geen lightbox; foto's geen link/knop/tabstop; pinch-zoom blijft toegestaan.
+- Max. breedte desktop (12 kolommen, 1 kolom ≈ 86 px op 1440): staande/vierkante productfoto's (900 en 675 px) 5–6 kolommen (492–594 px, nooit hoger dan 810 px op 1440 × 900); liggende thema-/boxfoto's (1100, 1400) 6–7 (594–696); `ig-jasje-teddy`, `ig-jasje-tricot`, `ig-babynest`, `ig-charme-roze` 3 (289); `ig-outfit-ladder`, `ig-charme-blauw`, `ig-speenkoord-paardje` 4 (391); `ig-bijtringen` 5 (492). Kleine foto's als paar (bijv. de twee jasjes).
+- Weergave in CSS-px nooit breder dan het grootste bestand (DPR 1), op elke breedte en tijdens beweging. DPR 2 vraagt grotere originelen (open punt, buiten scope).
+- Inschuiven: hergebruik `.inschuif` (masker van onder, 1,2 s, vertraging per plek) **zonder schaal 1,12**. Minder beweging en zonder JS: direct.
+- Geen foto op een vlak in zijn eigen achtergrondkleur. Bij Siliconen komt `p-bijtring-kleur.jpg` vooraan.
+
+**5. Mobiel (≤ 760 px) en tablet**
+- Overzicht 390: elke tegel in één scherm; foto over de binnenbreedte van `.wrap` (326 × 245), tegen de rand (springt niet); titel kop-m 34 px; lopende regel 56 px achter het bovenste deel van de foto.
+- Overzicht tablet: zoals de oude thema-indeling: foto 76 % breed, om en om 8 % / 16 % van links en rechts; lopende regel 80 px.
+- Projectpagina 390: 2 kolommen, gat 12 px; grote productfoto's volle breedte, rest in paren met de rechter 24 px lager; foto's smaller dan 326 px (`ig-jasje-*`, `ig-babynest`) altijd in een paar; fotoblok ≤ 3,5 schermhoogtes; geen veegrij.
+- Projectpagina tablet: 12 kolommen met de tabletmaten van `.voorbeelden`.
+
+**6. Balk en labels**
+- Balk na `.pagina-kop`.
+- Projectpagina's: `— Inspiratie`, `001 — Foto's`, `002 — Volgend project`, `003 — Contact`.
+- Overzicht (kort): `001 — Kleding`, `002 — Knuffels`, `003 — Siliconen`, `004 — Cadeauboxen`, `— Het atelier`, `005 — Contact`.
+- Reden (gemeten 15 nov.): balklabel begint op x 126 (360) / 128 (390), burger op x 286 / 314; de huidige lange labels lopen nu al 3–9 px (390) en 28–34 px (360) over de burger (bestaande fout). Korte labels houden ≥ 49 px vrij; "002 — Volgend project" (152 px) houdt op 360 nog 9 px; haalt WebKit 8 px niet, dan "002 — Meer zien".
+
+### Ontwerpcriteria (voor de ontwerpgate)
+- **OC1** Na de kop van het overzicht precies vier tegels, elk eigen vlak met berekende achtergrond perzik, mauve, olijf, salie (exacte hex), aansluitend (±1 px) op 360, 390, 768, 1024, 1440. Kop zonder pijl-links; h1 en `kop-xl` ongewijzigd.
+- **OC2** In rust en op touch alle tekst op de tegels inkt `#202020`; geen wit.
+- **OC3** Muis/focus-visible: alleen de aangewezen tegel diep, `.achtergrond` gelijk; titel `#FFFFFF` ≥ 34 px; label en pijl inkt; overgang 1 s, foto `scale` ≤ 1,04; minder beweging duur 0 en geen schaal.
+- **OC4** Tegelfoto 4:3 (±1 %); 1440: 840 px (±2), linkerrand 33,33/8,33/25/8,33 %; 768: 76 %; 390: 326 px (±1) op 32 px van links; `naturalWidth` ≥ 1,04 × weergavebreedte op elke breedte.
+- **OC5** Lopende regel `aria-hidden="true"`, opacity 0,2 in rust; stil bij minder beweging en zonder JS; pauzeert buiten beeld; `scrollWidth ≤ innerWidth` op 360, 390, 768, 1024, 1440.
+- **OC6** Eén tabstop per tegel; link omvat foto, titel en "Bekijk de foto's", ≥ 44 px hoog.
+- **OC7** 390 × 844: hele tegel (label tot onderkant pijl) ≤ 788 px; 1440 × 900: foto + titel + pijl ≤ 836 px.
+- **OC8** Projectkop: h1 projectnaam wit ≥ 40 px; uitleg inkt 18 px desktop, ≥ 17 mobiel, ≤ 75 tekens per regel (≤ 34em).
+- **OC9** Eerste foto projectpagina = tegelfoto; 390 × 844 bovenkant ≤ 844 en bij `scrollY = 844` helemaal in beeld onder de balk; 1440 × 900 bovenkant ≤ 900.
+- **OC10** Geen foto bijgesneden op projectpagina's (verhouding ±1 %); op 360, 390, 768, 1024, 1440, 1920 `clientWidth ≤ naturalWidth`; Instagram-foto's nooit breder dan hun bestand.
+- **OC11** 1440 × 900: geen foto hoger dan 810 px.
+- **OC12** 390 × 844: blok 001 ≤ 2954 px; `ig-jasje-*` en `ig-babynest` in een paar op halve kolombreedte.
+- **OC13** Tijdens inschuiven schaal ≤ 1; minder beweging en zonder JS geen `clip-path`, alles direct zichtbaar.
+- **OC14** Elke foto zijn bestaande bijschrift, inkt, ≥ 20 px mobiel.
+- **OC15** Zelfde tint per project op overzicht en projectpagina (Kleding perzik, Knuffels mauve, Siliconen olijf, Kraamcadeauboxen salie); geen foto op zijn eigen achtergrondkleur.
+- **OC16** "Volgend project" = zelfde onderdeel als de tegel, volgorde klopt (na Kraamcadeauboxen Kleding); "Alle inspiratie" 16 px, ≥ 44 px hoog; geen "Vorig project".
+- **OC17** Balklabels zoals punt 6; op 360 en 390 (Chromium en WebKit) één regel en ≥ 8 px links van de burger; boven een tegel of fotoblok lichte tint, donker logo, label inkt.
+- **OC18** Geen lightbox; foto's geen tabstop; viewport blokkeert inzoomen niet.
+- **OC19** Onder het fotoblok pijl-link naar het formulier (criterium 14), onderaan het contactblok; in `main` geen `wa.me`, `tel:` of `mailto:`.
+
+Opmerkingen ontwerper voor Carst: kleurenruil Kleding ↔ Kraamcadeauboxen; nieuwe linkteksten/labels ("Bekijk de foto's", "Alle inspiratie", "Foto's", "Volgend project", korte overzichtslabels "Knuffels", "Siliconen", "Cadeauboxen"); `CLAUDE.md` Inspiratie-regel wordt "in rust en op touch lichte tint met inkt; muis of focus diepe tint met witte titel"; bestaande fout balklabel over burger op inspiratie.html wordt hiermee opgelost (andere pagina's in de ontwerpgate bekijken).
+
 ## Bestanden
 - `public/inspiratie.html`: projectenoverzicht
 - `public/inspiratie-kleding.html`, `public/inspiratie-knuffels-en-babynest.html`, `public/inspiratie-siliconen-en-hangers.html`, `public/inspiratie-kraamcadeauboxen.html` (nieuw)
