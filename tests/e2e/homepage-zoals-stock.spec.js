@@ -485,7 +485,11 @@ test('C6: nergens een zichtbare horizontale scrollbalk in carrousels (kraamcadea
     await page.goto(pad);
     const rijen = await page.locator('.carrousel').evaluateAll(rs => rs.map(r => [r.id, r.offsetHeight - r.clientHeight, getComputedStyle(r).scrollbarWidth,
       document.querySelectorAll(`.carrousel-knop[aria-controls="${r.id}"]`).length]));
-    expect(rijen.length, `${pad}: carrousels`).toBeGreaterThan(0);
+    // Werkwijze heeft geen fotorij meer (atelierboekje, brief 2026-11-14-werkwijze-boekje): daar geen carrousel en geen losse knop
+    if (pad === '/werkwijze') {
+      expect(rijen.length, `${pad}: geen carrousel meer`).toBe(0);
+      expect(await page.locator('.carrousel-knop, .carrousel-knoppen').count(), `${pad}: geen losse carrouselknoppen`).toBe(0);
+    } else expect(rijen.length, `${pad}: carrousels`).toBeGreaterThan(0);
     for (const [id, h, w, knoppen] of rijen) {
       expect(h, `${pad} #${id}: geen scrollbalk`).toBe(0);
       expect(w, `${pad} #${id}`).toBe('none');

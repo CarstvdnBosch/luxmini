@@ -1097,6 +1097,11 @@ LEES_TABS_SLIDER = "() => [...document.querySelectorAll('.slider [role=\"tab\"]'
 MAAK_RIJEN = [("babykleding", "inspiratie.html#kleding"), ("siliconen", "inspiratie.html#siliconen"), ("babynest", "babynest.html"),
               ("prematuur", "prematuurkleding.html"), ("kraamcadeaubox", "kraamcadeauboxen.html")]
 
+WERKWIJZE_VERHAAL = ("Ik ben Carien Geurts, moeder van twee dochters en oma van vier kleinkinderen. Jarenlang maakte ik kleding voor mezelf en mijn kinderen. "
+    "Sinds er kleinkinderen zijn, maak ik met veel plezier de babyuitzet en de eerste pakjes, en nu ook voor anderen. "
+    "Mijn passie is maatwerk in (prematuur)babykleding: net iets anders en persoonlijks.")
+WERKWIJZE_QUOTE = "“Hoe bijzonder is het om één van de eerste pakjes voor iemand te mogen maken.”"
+
 def controleer_werkwijze(browser):
     """Criterium 7 (en de oude Over-controles): kop, verhaal, Hoe ik werk, slider en Wat ik maak."""
     ctx, page = nieuwe_pagina(browser, "werkwijze.html")
@@ -1119,6 +1124,25 @@ def controleer_werkwijze(browser):
     verhaal = page.inner_text(".verhaal")
     if "moeder van twee dochters en oma van vier kleinkinderen" not in verhaal or "net iets anders en persoonlijks." not in verhaal:
         fouten.append("werkwijze.html: het verhaal van Carien is niet de bestaande tekst")
+    # atelierboekje (brief 2026-11-14-werkwijze-boekje): hetzelfde boek als Babynest, alleen bestaande tekst, drie foto's zonder EXIF, geen fotorij
+    boek = page.evaluate("""() => { const s = document.querySelector('#atelier'); const n = t => t.replace(/\\s+/g, ' ').trim();
+      return { klassen: [...s.classList].sort(), verhaal: n(s.querySelector('.verhaal').textContent), quotes: [...s.querySelectorAll('.quote')].map(q => n(q.textContent)),
+        strook: [...s.querySelectorAll('.kaft-strook')].map(e => n(e.textContent)), kop: s.querySelectorAll('h2, figcaption, .masthead').length,
+        fotos: ['.kaft-voor img', '.kaft-achter img', '.blad-rechts img'].map(q => s.querySelector(q)).map(i => [i.getAttribute('src'), i.naturalWidth || +i.getAttribute('width'), i.naturalHeight || +i.getAttribute('height')]),
+        fotorij: document.querySelectorAll('#fotorij, #atelier .carrousel, [aria-controls="fotorij"]').length, achtergrond: s.getAttribute('data-achtergrond') }; }""")
+    if not {"atelier", "boekje", "media", "op-wit"} <= set(boek["klassen"]) or boek["achtergrond"] != "#C3CFBC":
+        fouten.append(f"{tag}: 001 is niet het atelierboekje (klassen {boek['klassen']}, achtergrond {boek['achtergrond']})")
+    if boek["verhaal"] != WERKWIJZE_VERHAAL or boek["quotes"] != [WERKWIJZE_QUOTE] or boek["strook"] != ["LUX mini · Atelier"] or boek["kop"]:
+        fouten.append(f"{tag}: tekst in het atelierboekje is niet precies het verhaal, de quote (één keer) en 'LUX mini · Atelier' ({boek})")
+    if [f[0] for f in boek["fotos"]] != ["assets/img/atelier-carien-label.jpg", "assets/img/atelier-carien-detail.jpg", "assets/img/atelier-borduurmachine-scherm.jpg"] \
+            or any(f[1:] != [768, 960] for f in boek["fotos"]):
+        fouten.append(f"{tag}: foto's in het atelierboekje kloppen niet ({boek['fotos']})")
+    for f in ["atelier-carien-label.jpg", "atelier-carien-detail.jpg", "atelier-borduurmachine-scherm.jpg"]:
+        data = (ROOT / "assets" / "img" / f).read_bytes()
+        if b"Exif\0\0" in data or b"GPS" in data:
+            fouten.append(f"werkwijze.html: {f} bevat nog EXIF- of GPS-gegevens")
+    if boek["fotorij"] or re.search(r"\.fotorij|\.atelier-vak", (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")):
+        fouten.append("werkwijze.html: de oude fotorij (#fotorij, .fotorij, .atelier-vak of knoppen) staat er nog")
     secties = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()])")
     if secties != [["", "— Werkwijze"], ["atelier", "001 — Het atelier"], ["hoe-ik-werk", "002 — Hoe ik werk"], ["personaliseren", "003 — Personaliseren"], ["contact", "004 — Contact"]]:
         fouten.append(f"{tag}: volgorde of labels van de secties kloppen niet ({secties})")
@@ -1679,7 +1703,7 @@ def controleer_zonder_js(browser):
         page = ctx.new_page(); page.goto(url(pagina), wait_until="load")
         st = page.evaluate("""() => { const zicht = e => { let o = 1; for (let x = e; x; x = x.parentElement) o *= parseFloat(getComputedStyle(x).opacity);
             return e.offsetHeight > 0 && getComputedStyle(e).visibility === 'visible' && o === 1; };
-          return { cat: [...document.querySelectorAll('.categorie-foto img, .categorie-tekst h2, .categorie-tekst .klein, .thema-tegel img:not([data-src]), .thema-tegel figcaption, .inspiratie-rij img, .werk img, .werk figcaption, .maak-rij img, .maak-rij h2, .stap h2, .stap .klein, .techniek h2, .dia img, .fotorij img, .pagina-prijs, .prijs')].filter(e => !zicht(e)).length,
+          return { cat: [...document.querySelectorAll('.categorie-foto img, .categorie-tekst h2, .categorie-tekst .klein, .thema-tegel img:not([data-src]), .thema-tegel figcaption, .inspiratie-rij img, .werk img, .werk figcaption, .maak-rij img, .maak-rij h2, .stap h2, .stap .klein, .techniek h2, .dia img, #atelier .blad-rechts img, #atelier .kaft-achter img, #atelier .quote, #atelier .verhaal, .pagina-prijs, .prijs')].filter(e => !zicht(e)).length,
                    stappen: [...document.querySelectorAll('.hoe-stap')].map(zicht), form: [...document.querySelectorAll('#formulier input:not([name=website]):not([type=radio]), #formulier textarea, #formulier button')].filter(e => !e.closest('.groep:not([data-groep="Kraamcadeaubox"])') && !e.closest('.eigen-stof') && !zicht(e)).length,
                    // blok eigen stof (brief 2026-11-11-c7-stofkeuze): ook zonder JavaScript verborgen tot de eigen stof gekozen is, dan zichtbaar
                    eigen: (() => { const r = document.querySelector('#formulier input[name="box_thema"][value="Een eigen stof of kleur"]'); if (!r) return false;
