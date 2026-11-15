@@ -104,6 +104,57 @@ Vragen aan website-ontwerper:
 11. **Werkwijze.** Doet het atelierboekje mee (aanbevolen voor één boek-code) of blijft het zoals het is (open vraag 2)?
 12. **Toetsbare ontwerpcriteria.** Graag als genummerde lijst, zoals in de brief van 14 nov.: bijvoorbeeld de positie en rotatie bij het begin, de stand per scrollpercentage, de minimale zichtbare rugdikte in px op 390 en 768 px, en de schaduwwaarden.
 
+### Antwoord website-ontwerper (rol 1, 15 nov.; gemeten op eigen poort, 390/768/1024 px)
+
+Gemeten op 390 × 844: eindstand elk object in een vak van 326 × 408 op x 32. 001 staat bij het laden al voor 322 van 408 px in beeld (390 × 664: 142 px); 002 en 003 staan buiten beeld. Werkwijze: atelierboekje op 390 × 844 buiten beeld, op 768 × 1024 al in beeld.
+
+1. **Inschuiven op mobiel en tablet (≤ 1024 px).**
+   - Richting volgt `.gespiegeld`: zonder klasse van **links**, met klasse van **rechts**. Babynest: 001 links, 002 rechts, 003 links; Werkwijze-boekje links. Desktop houdt zijn eigen richting (bewust).
+   - Beginstand: midden van het object op de schermrand: van links `translateX(-50vw)`, van rechts `+50vw` (tablet idem).
+   - Draai alleen in het vlak vanuit het midden (`transform-origin: 50% 50%`): van links `rotate(12deg)`, van rechts `rotate(-12deg)` (voorrand duikt iets omlaag, zoals Stock mobiel; spiegelbeeld van desktop, bewust). Geen `rotateY`/3D op `.obj`.
+   - Altijd dekkend: opacity en `translateY(80px)` vervallen.
+   - Formule: `transform: translateX(calc((1 - var(--in, 1)) * ∓50vw)) rotate(calc((1 - var(--in, 1)) * ±12deg))`; `main.js` §5f zet per blok `--in = e` (drie decimalen), `e = 1 − (1 − s)²`.
+2. **Wanneer.**
+   - Meelopend met scrollen: `s = clamp((vh − top) / (0,4 × vh))`, `top` = bovenkant van `.media-object` (het vak, zonder transform); s 0 als de bovenrand onderaan binnenkomt, 1 op 60 % van vh; terugscrollen = terugschuiven; geen `transition` op transform zolang het meeloopt; touch native, geen scroll-jacking.
+   - Al in beeld bij het laden: één keer op tijd naar `--in: 1`, 1,2 s `cubic-bezier(.65,0,.35,1)`, start 0,2 s nadat `html` geen `intro-aan`/`overgang-binnen` meer heeft (of direct na laden zonder intro/overgang); blijft daarna staan. Geldt voor Babynest 001 (390, 393, 768, 1024) en het atelierboekje op tablet.
+   - Object al helemaal boven beeld (anker, scroll-herstel): direct in eindstand.
+   - Tekstregels komen op zoals nu.
+3. **Eerst inschuiven, dan openslaan.** `--open` blijft 0 zolang `--in < 1`. `mediaStart` = min(0,6 × vh, bovenkant van het vak op het moment dat het object op zijn plek staat). Formule openslaan blijft `open = (p − 0,1) / 0,7`, `p = (mediaStart − top) / (0,5 × vh)`. Mobiel en tablet houden één pagina (kaft tot 90°, dan weg). Tablet van 003 wisselt op dezelfde `p`.
+4. **Realistischer boek en magazine, alle schermen, alleen CSS, binnen het bestaande objectvak.**
+   - Opbouw mobiel/tablet: rug x 0–r; achterplat (alleen boek) r–rechterrand; `.blad` op het plat met overstek b boven/rechts/onder plus bladzijderanden e rechts/onder; kaft scharniert op x = r (boek: zo groot als het plat; magazine: r tot W − e, 0 tot H − e).
+
+   | | Boek (001 Babynest, Werkwijze) | Magazine (002) |
+   |---|---|---|
+   | Rug (r) | 4 % objectbreedte (13 px op 390, 22 px op 560), `#8C6E58` + verloop* | 1,5 % (5 / 8 px), `#202020` + verloop* |
+   | Plat, overstek (b) | 3 px ≤ 760, 4 px ≥ 761; `#8C6E58` | geen |
+   | Bladzijderanden (e) | 4 px ≤ 760, 6 px ≥ 761; om en om 1 px `#FBF8F3`/`#E6DDCF`, buitenste lijn `rgba(32,32,32,.2)` (box-shadow-stapel op `.blad`) | 2 px, twee lijnen |
+   | Scharniergroef `.kaft-voor` | band 2 px op 3 % van links: 1 px `rgba(32,32,32,.15)` + 1 px `rgba(255,255,255,.45)`, onder `.kaft-strook` | geen; verloop 5 % blijft |
+
+   \*Rug-verloop: `linear-gradient(to right, rgba(32,32,32,.35) 0, rgba(255,255,255,.14) 35%, rgba(32,32,32,0) 60%, rgba(32,32,32,.22) 100%)`.
+   - Schaduw alleen op de onderste laag: `0 1px 2px rgba(32,32,32,.22), 0 10px 18px -6px rgba(32,32,32,.20), 0 30px 50px -14px rgba(32,32,32,.34)` (magazine laatste laag `.26`); `.blad` en `.kaft-voor` alleen `0 1px 2px rgba(32,32,32,.18)` (huidige `0 30px 50px` vervalt). Box-shadow, geen `filter: drop-shadow`.
+   - Desktop (spread): overstek 4 px rondom; bladzijderanden aan de buitenkant van elke pagina en onder (boek 6 px, magazine 2 px); rug alleen bij dichte kaft: strook 10 px links van de kaft, `opacity: calc(1 - 2 * var(--open))`; vouwverloop blijft; één pagina ≤ 384 px incl. randen.
+   - Bij voorkeur pseudo-elementen (`.papier::before` plat, `::after` rug); anders lege `<span aria-hidden="true">`. Niets over `.kaft-strook` of `.masthead`. Tablet van 003 ongewijzigd.
+5. **Knippen, minder beweging, zonder JS.** Alleen `.media` knipt (`overflow: clip`, terugval `overflow-x: hidden`); niets op `html`/`body`; geen `contain`/`overflow` op `.media-object`. Alleen `transform` beweegt; geen blijvende `will-change`. Minder beweging en zonder JS: `--in: 1` (standaard in CSS), niets schuift of draait, boek en magazine open, rug/plat/randen/schaduw wel.
+6. **Werkwijze gaat mee.** Zelfde boek (rug, plat, randen, schaduw) en zelfde inschuiven van links op mobiel/tablet (390 × 844 meelopend, 768 × 1024 op tijd). Desktop: alleen uiterlijk, blijft van rechts. "LUX mini · Atelier" blijft inkt op `#FBF8F3`.
+
+**Ontwerpcriteria (toetsbaar)**
+1. Beginstand (390 × 844, Chromium en WebKit): bovenkant vak 002 ≥ vh → `.obj` translateX +195 px, rotate −12° (±1 px, ±0,2°); 001/003 (meelopend) −195 px, +12°; op 768 ±384 px.
+2. Halverwege: bovenkant op 0,8 × vh (s 0,5, e 0,75) → translateX ±49 px (±2) op 390, ±96 op 768; draai ±3° (±0,2).
+3. Eindstand: bovenkant ≤ 0,6 × vh → transform none/identiteit; vak 326 × 408 op x 32 (390), 560 × 700 midden (768, 1024); in rust niets behalve schaduw buiten de zijmarge.
+4. 001 bij laden (390 × 844, zonder intro): binnen 100 ms midden object x < 100; na ≤ 1,5 s transform none; steeds `scrollWidth === innerWidth` (per 100 ms).
+5. Openslaan: `--open` 0 zolang `--in < 1`; op 390 × 844 `--open` ≤ 0,02 bij bovenkant 0,55 × vh en 1 bij ≤ 0,2 × vh; kaft ≥ 12 px onder het label.
+6. Geen horizontaal scrollen: `scrollWidth === innerWidth` bij elke scrollstap van 25 px op 390, 393, 768, 1024, Chromium en WebKit, Babynest en Werkwijze; geen `overflow-x` op html/body.
+7. Maten: rug boek 13 ± 1 (390) / 22 ± 1 (768), magazine 5 ± 1 / 8 ± 1; overstek boek 3 / 4 px; randen boek 4 / 6, magazine 2; objectvak onveranderd; geen foto breder dan het bestand.
+8. Schaduw: onderste laag precies de drie lagen; `.blad` en `.kaft-voor` geen blur > 2 px.
+9. Kleine tekst kaft ≥ 4,5:1; `elementFromPoint` midden op `.kaft-strook`-tekst geeft de strook; masthead idem.
+10. Geen nieuwe knopen in de toegankelijkheidsboom; axe 0 fouten.
+11. Minder beweging en zonder JS: `.obj` transform none, elk object horizontaal binnen het scherm, open, rug/plat/randen zichtbaar.
+12. Desktop 1440 × 900: inschuiven (±150 %, ±14°, 1,5 s), vastzetten (170vh) en openslaan ongewijzigd; alleen uiterlijk; pagina ≤ 384 px.
+13. 390 × 844: in elk blok pijl-link in hetzelfde scherm als het label; CLS niet hoger dan nu.
+14. Werkwijze: 390 × 844 begint op −195 px / +12° en loopt mee; 768 × 1024 op tijd; desktop van rechts zoals nu.
+
+Opmerkingen ontwerper: `#8C6E58` voor het plat is een ontwerpkeuze (geen afspraak in CLAUDE.md), te toetsen in de ontwerpgate op mauve en salie. Punt 2 en 3 vragen meer `main.js` (§5f) dan alleen CSS; risico midden.
+
 ## Bestanden
 - `public/assets/css/style.css`: `.media`, `.papier`, `.blad`, `.kaft*` (rug, bladzijden, schaduw), en het inschuiven per richting in `@media (prefers-reduced-motion: no-preference) and (max-width: 1024px)`
 - `public/assets/js/main.js`: §5f, alleen als het inschuiven scroll-gekoppeld wordt (een variabele per blok, zoals `--open`) of als de richting/klasse daar wordt gezet
@@ -124,7 +175,7 @@ Vragen aan website-ontwerper:
 ## Open vragen
 
 **Blokkerend**
-1. **Ontwerprichting ontbreekt.** Website-ontwerper moet de vragen hierboven beantwoorden: beginafstand, kanteling, tijd of scroll, rugdikte, bladzijden, schaduw, overlap met de rand en tablet. Zonder die antwoorden kan de bouwer criterium 2, 3, 5 en 8 niet uitvoeren zonder zelf ontwerpkeuzes te maken.
+1. ~~**Ontwerprichting ontbreekt.**~~ Opgelost 15 nov.: zie Antwoord website-ontwerper. Website-ontwerper moet de vragen hierboven beantwoorden: beginafstand, kanteling, tijd of scroll, rugdikte, bladzijden, schaduw, overlap met de rand en tablet. Zonder die antwoorden kan de bouwer criterium 2, 3, 5 en 8 niet uitvoeren zonder zelf ontwerpkeuzes te maken.
 2. **Werkwijze mee of niet?** Het atelierboekje gebruikt dezelfde code.
    - Voorstel: **mee**. Dan blijft er één boek-code en oogt het boekje op Werkwijze net zo echt.
    - Gevolg: Werkwijze verandert zichtbaar, en die pagina is net live gegaan (PR #86, goedgekeurd door Carst).
