@@ -150,10 +150,12 @@ test('geen horizontaal scrollen, ook halverwege het openslaan van een kaft', asy
       expect(w[0], `${id} bij ${f}`).toBe(w[1]);
     }
   }
-  // halverwege: de kaft staat echt half open. De kaft begint open te slaan vanaf de plek van het object bij binnenkomst
-  // (hooguit 3/4 scherm, ontwerpgate 14 nov.) en is na een half scherm open: scrol een kwart scherm voorbij dat begin.
+  // halverwege: de kaft staat echt half open. Op tablet en mobiel schuift het object eerst in en staat het op zijn plek
+  // als de bovenkant van het vak op 0,6 scherm staat (brief 2026-11-15-babynest-mobiel-inschuiven, ontwerp 3); daar begint
+  // het openslaan en na een half scherm is de kaft open: p = 0,5 bij de bovenkant op 0,35 scherm. Een blok dat bij het laden
+  // onder het scherm staat, loopt mee met scrollen (een blok dat al in beeld staat, schuift op tijd in).
   const blok = await page.evaluate(() => [...document.querySelectorAll('main .media')].filter(s => s.querySelector('.kaft'))
-    .map(s => { const t = s.querySelector('.media-object').getBoundingClientRect().top + scrollY; return [s.id, t - Math.min(innerHeight * 0.75, t) + innerHeight * 0.25]; })
+    .map(s => { const t = s.querySelector('.media-object').getBoundingClientRect().top + scrollY; return [s.id, t > innerHeight ? t - innerHeight * 0.35 : -1]; })
     .find(([, y]) => y > 0 && y < document.documentElement.scrollHeight - innerHeight));
   expect(blok, 'een kaft waarvoor halverwege openslaan bestaat').toBeTruthy();
   await scrolNaar(page, 0); // eerst terug naar boven: de kaft gaat dicht
@@ -174,7 +176,10 @@ test('met beweging: het object schuift in, de regels komen op en de kaft slaat o
   await page.goto('/babynest');
   const s = page.locator('#babynest');
   await expect(s).toHaveClass(/\banim\b/);
-  await s.evaluate(e => window.scrollTo(0, e.getBoundingClientRect().top + scrollY - innerHeight * 0.5));
+  // desktop: het blok op half scherm; tablet en mobiel: het vak boven 0,6 scherm, waar het object op zijn plek staat
+  // (brief 2026-11-15-babynest-mobiel-inschuiven, ontwerp 2)
+  if (isTouch(info)) await s.evaluate(e => window.scrollTo(0, e.querySelector('.media-object').getBoundingClientRect().top + scrollY - innerHeight * 0.5));
+  else await s.evaluate(e => window.scrollTo(0, e.getBoundingClientRect().top + scrollY - innerHeight * 0.5));
   await expect(s).toHaveClass(/\bbinnen\b/);
   await page.waitForTimeout(1700);
   expect(await s.locator('.obj').evaluate(e => getComputedStyle(e).transform)).toBe('none');
@@ -316,4 +321,324 @@ test('tablet: de kolom (hooguit 560 px) staat in het midden', async ({ page }, i
       expect(Math.abs(b.label - b.links), `label links in de kolom op ${w} px`).toBeLessThanOrEqual(1);
     }
   }
+});
+
+// ---------- Inschuiven van opzij op tablet en mobiel en een echter boek (brief 2026-11-15-babynest-mobiel-inschuiven) ----------
+// Ontwerpcriteria 1–14 van website-ontwerper. Draait op tablet (768, 1024), mobiel (390, 393) en iPhone (WebKit).
+
+// stand van het object: verschuiving x (px) en draai (graden) uit de computed transform
+const stand = (page, id) => page.locator(`#${id} .obj`).evaluate(e => {
+  const t = getComputedStyle(e).transform;
+  if (t === 'none') return { x: 0, rot: 0, none: true };
+  const m = new DOMMatrix(t);
+  return { x: m.e, rot: Math.atan2(m.b, m.a) * 180 / Math.PI, none: false };
+});
+// scrol zo dat de bovenkant van het vak (zonder transform) op f × schermhoogte staat. Scrollen gaat per hele pixel:
+// 'onder' houdt de bovenkant op of onder die lijn (beginstand), 'boven' op of erboven (eindstand), anders afgerond.
+async function vakOp(page, id, f, kant) {
+  const y = await page.evaluate(([i, f]) => document.querySelector(`#${i} .media-object`).getBoundingClientRect().top + scrollY - innerHeight * f, [id, f]);
+  return scrolNaar(page, kant === 'onder' ? Math.floor(y) : kant === 'boven' ? Math.ceil(y) : y);
+}
+const lagen = s => s.split(/,(?![^(]*\))/).map(l => l.trim()).filter(Boolean);
+const blurVan = l => { const n = l.replace(/rgba?\([^)]*\)|#[0-9a-f]+/gi, '').trim().split(/\s+/).map(parseFloat); return n[2] || 0; };
+
+test('inschuiven: beginstand, halverwege en eindstand volgen .gespiegeld (ontwerp 1–3)', async ({ page }, info) => {
+  test.skip(!isTouch(info), 'tablet en mobiel');
+  const breedtes = info.project.name === 'tablet' ? [768, 1024] : info.project.name === 'mobiel' ? [390, 393] : [null];
+  for (const w of breedtes) {
+    if (w) await page.setViewportSize({ width: w, height: info.project.name === 'tablet' ? 1024 : 844 });
+    await beweging(page);
+    await page.goto('/babynest');
+    const vw = await page.evaluate(() => innerWidth);
+    // 002 (gespiegeld) en 003 staan bij het laden onder het scherm: ze lopen mee met scrollen
+    for (const [id, teken] of [['stof', 1], ['dekentje', -1]]) {
+      await vakOp(page, id, 1, 'onder');
+      const b = await stand(page, id);
+      expect(Math.abs(b.x - teken * vw / 2), `${id} op ${vw}: begin x ${b.x}`).toBeLessThanOrEqual(1);
+      expect(Math.abs(b.rot + teken * 12), `${id} op ${vw}: begin draai ${b.rot}`).toBeLessThanOrEqual(0.2);
+      const midden = await page.locator(`#${id} .obj`).evaluate(e => { const r = e.getBoundingClientRect(); return (r.left + r.right) / 2; });
+      expect(teken > 0 ? midden > vw / 2 : midden < vw / 2, `${id}: midden ${teken > 0 ? 'rechts' : 'links'} van het schermmidden`).toBe(true);
+      // halverwege: s 0,5 → e 0,75: x ±vw/8, draai ±3°
+      await vakOp(page, id, 0.8);
+      const h = await stand(page, id);
+      expect(Math.abs(h.x - teken * vw / 8), `${id} op ${vw}: halverwege x ${h.x}`).toBeLessThanOrEqual(2);
+      expect(Math.abs(h.rot + teken * 3), `${id} op ${vw}: halverwege draai ${h.rot}`).toBeLessThanOrEqual(0.2);
+      // eindstand: geen transform, het vak op zijn plek
+      await vakOp(page, id, 0.6, 'boven');
+      expect((await stand(page, id)).none, `${id} op ${vw}: eindstand zonder transform`).toBe(true);
+      await vakOp(page, id, 0.3);
+      expect((await stand(page, id)).none).toBe(true);
+      const v = await page.locator(`#${id} .media-object`).evaluate(e => { const r = e.getBoundingClientRect(), o = e.querySelector('.obj').getBoundingClientRect(); return [r.left, r.width, o.height, innerWidth - r.right]; });
+      if (vw < 761) {
+        expect(Math.abs(v[0] - 32)).toBeLessThanOrEqual(1);
+        expect(Math.abs(v[1] - (vw - 64))).toBeLessThanOrEqual(1);
+      } else {
+        // boek en magazine 560 × 700; de tablet (003) houdt zijn huidige maat (hooguit 560), allemaal in het midden
+        if (id === 'stof') expect([Math.round(v[1]), Math.round(v[2])]).toEqual([560, 700]);
+        else expect(v[1]).toBeLessThanOrEqual(560);
+        expect(Math.abs(v[0] - v[3])).toBeLessThanOrEqual(1);
+      }
+      // terugscrollen = terugschuiven
+      await vakOp(page, id, 0.9);
+      expect(Math.abs((await stand(page, id)).rot)).toBeGreaterThan(0.5);
+    }
+  }
+});
+
+test('inschuiven: 001 (boek) komt van links, ook als het meeloopt op een laag scherm', async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'op 390 × 400 (001 staat dan bij het laden onder het scherm)');
+  await page.setViewportSize({ width: 390, height: 400 });
+  await beweging(page);
+  await page.goto('/babynest');
+  await vakOp(page, 'babynest', 1, 'onder');
+  const b = await stand(page, 'babynest');
+  expect(Math.abs(b.x + 195)).toBeLessThanOrEqual(1);
+  expect(Math.abs(b.rot - 12)).toBeLessThanOrEqual(0.2);
+});
+
+test('inschuiven: een object dat bij het laden in beeld staat, schuift één keer op tijd in en blijft staan (ontwerp 2, 4)', async ({ page }, info) => {
+  test.skip(!isTouch(info), 'tablet en mobiel');
+  await beweging(page);
+  // meet in de pagina zelf (geen vertraging van de testrunner): van DOMContentLoaded tot 001 .ingeschoven krijgt
+  await page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      window.__dcl = performance.now();
+      const s = document.getElementById('babynest');
+      if (!s) return;
+      new MutationObserver((_, mo) => { if (s.classList.contains('ingeschoven')) { window.__ingeschoven = performance.now(); mo.disconnect(); } })
+        .observe(s, { attributes: true, attributeFilter: ['class'] });
+    }, { once: true, capture: true });
+  });
+  await page.goto('/babynest', { waitUntil: 'domcontentloaded' });
+  const t0 = Date.now();
+  const begin = await page.evaluate(() => { const r = document.querySelector('#babynest .obj').getBoundingClientRect(); return [(r.left + r.right) / 2, innerWidth]; });
+  expect(begin[0], '001 begint links (midden van het object op de schermrand)').toBeLessThan(100);
+  // per 100 ms: nooit horizontaal scrollen; na hooguit 1,5 s op zijn plek zonder transform
+  let klaarNa = null;
+  while (Date.now() - t0 < 2500) {
+    const [sw, iw, tr] = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth, getComputedStyle(document.querySelector('#babynest .obj')).transform]);
+    expect(sw, `na ${Date.now() - t0} ms`).toBe(iw);
+    if (tr === 'none' && klaarNa === null) klaarNa = Date.now() - t0;
+    await page.waitForTimeout(100);
+  }
+  expect(klaarNa, '001 staat op zijn plek').not.toBeNull();
+  const opPlek = await page.evaluate(() => window.__ingeschoven - window.__dcl);
+  expect(opPlek, `001 op zijn plek na ${Math.round(opPlek)} ms`).toBeLessThanOrEqual(1500);
+  await expect(page.locator('#babynest')).toHaveClass(/\bingeschoven\b/);
+  // blijft staan: een klein stukje scrollen schuift het niet terug
+  await scrolNaar(page, 40);
+  await scrolNaar(page, 0);
+  expect((await stand(page, 'babynest')).none).toBe(true);
+});
+
+test('openslaan pas als het object op zijn plek staat: --open 0 zolang --in < 1; op 0,55 dicht en op 0,2 open (ontwerp 3, 5)', async ({ page }, info) => {
+  test.skip(!isTouch(info), 'tablet en mobiel');
+  await beweging(page);
+  await page.goto('/babynest');
+  await page.waitForTimeout(1600); // 001 schuift op tijd in
+  const fouten = await page.evaluate(async () => {
+    const uit = [], eind = document.querySelector('#prijs').getBoundingClientRect().top + scrollY;
+    const frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    for (let y = 0; y < eind; y += 25) {
+      window.scrollTo({ top: y, behavior: 'instant' }); await frame();
+      for (const s of document.querySelectorAll('main .media')) {
+        if (!s.querySelector('.kaft')) continue;
+        const inn = parseFloat(s.style.getPropertyValue('--in')), open = parseFloat(s.style.getPropertyValue('--open'));
+        if (inn < 1 && open !== 0) uit.push(`${s.id} y ${y}: --in ${inn}, --open ${open}`);
+      }
+    }
+    return uit;
+  });
+  expect(fouten).toEqual([]);
+  if (info.project.name === 'mobiel') {
+    await vakOp(page, 'stof', 0.55, 'onder');
+    expect(parseFloat(await page.locator('#stof').evaluate(e => e.style.getPropertyValue('--open')))).toBeLessThanOrEqual(0.02);
+    await vakOp(page, 'stof', 0.2, 'boven');
+    expect(await page.locator('#stof').evaluate(e => e.style.getPropertyValue('--open'))).toBe('1.000');
+  }
+});
+
+for (const pad of ['/babynest', '/werkwijze']) {
+  test(`geen horizontaal scrollen bij elke scrollstap van 25 px op ${pad} (ontwerp 6)`, async ({ page }, info) => {
+    test.skip(!isTouch(info), 'tablet en mobiel (Chromium en WebKit)');
+    const breedtes = info.project.name === 'tablet' ? [768, 1024] : info.project.name === 'mobiel' ? [390, 393] : [null];
+    for (const w of breedtes) {
+      if (w) await page.setViewportSize({ width: w, height: info.project.name === 'tablet' ? 1024 : 844 });
+      await beweging(page);
+      await page.goto(pad);
+      const fouten = await page.evaluate(async () => {
+        const uit = [], blokken = [...document.querySelectorAll('main .media')];
+        const eind = Math.min(document.documentElement.scrollHeight - innerHeight, blokken[blokken.length - 1].getBoundingClientRect().bottom + scrollY);
+        const frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        for (let y = 0; y <= eind; y += 25) {
+          window.scrollTo({ top: y, behavior: 'instant' }); await frame();
+          if (document.documentElement.scrollWidth !== innerWidth) uit.push(`y ${y}: ${document.documentElement.scrollWidth} ≠ ${innerWidth}`);
+        }
+        return uit;
+      });
+      expect(fouten, `op ${w || 'iPhone'}`).toEqual([]);
+      const ov = await page.evaluate(() => [getComputedStyle(document.documentElement).overflowX, getComputedStyle(document.body).overflowX]);
+      expect(ov, 'geen overflow-x op html en body (sticky blijft werken)').toEqual(['visible', 'visible']);
+    }
+  });
+}
+
+test('echter boek en magazine: rug, plat, randen van bladzijden en schaduw (ontwerp 4, 7, 8)', async ({ page }, info) => {
+  await page.goto('/babynest'); // minder beweging: alles op zijn plek
+  const m = await page.evaluate(() => ['babynest', 'stof'].map(id => {
+    const p = document.querySelector(`#${id} .papier`), b = p.querySelector('.blad-rechts'), k = p.querySelector('.kaft-voor');
+    const rp = p.getBoundingClientRect(), rb = b.getBoundingClientRect(), voor = getComputedStyle(p, '::before'), na = getComputedStyle(p, '::after');
+    return { id, rug: rb.left - rp.left, over: rb.top - rp.top, rechts: rp.right - rb.right, onder: rp.bottom - rb.bottom,
+      onderSchaduw: voor.boxShadow, plat: voor.backgroundColor, rugBreed: parseFloat(na.width), rugKleur: na.backgroundColor,
+      blad: getComputedStyle(b).boxShadow, kaft: getComputedStyle(k).boxShadow, breed: rp.width, vw: innerWidth };
+  }));
+  const [boek, mag] = m;
+  const mobiel = boek.vw <= 760, desktop = boek.vw >= 1025;
+  // drie lagen op de onderste laag, precies de waarden uit het ontwerp
+  expect(lagen(boek.onderSchaduw)).toHaveLength(3);
+  expect(boek.onderSchaduw).toContain('rgba(32, 32, 32, 0.34)');
+  expect(mag.onderSchaduw).toContain('rgba(32, 32, 32, 0.26)');
+  for (const x of m) {
+    for (const l of lagen(x.blad).concat(lagen(x.kaft))) expect(blurVan(l), `${x.id}: geen blur > 2 px op blad en kaft (${l})`).toBeLessThanOrEqual(2);
+  }
+  expect(boek.plat).toBe('rgb(140, 110, 88)'); // #8C6E58
+  if (desktop) {
+    // spread: bladzijde met 4 px overstek (boek), randen 6 px (boek) en 2 px (magazine); pagina ≤ 384 px
+    expect(Math.round(boek.over)).toBe(4);
+    expect(Math.round(boek.rechts)).toBe(10);
+    expect(Math.round(boek.onder)).toBe(10);
+    expect(Math.round(mag.over)).toBe(0);
+    expect(Math.round(mag.rechts)).toBe(2);
+    expect(boek.breed / 2).toBeLessThanOrEqual(384);
+  } else {
+    // één pagina: rug, overstek en randen
+    const [rugB, rugM, ov, rand] = mobiel ? [13, 5, 3, 4] : [22, 8, 4, 6];
+    expect(Math.abs(boek.rug - rugB), `rug boek ${boek.rug}`).toBeLessThanOrEqual(1);
+    expect(Math.abs(boek.rugBreed - rugB)).toBeLessThanOrEqual(1);
+    expect(Math.abs(mag.rug - rugM), `rug magazine ${mag.rug}`).toBeLessThanOrEqual(1);
+    expect(Math.abs(mag.rugBreed - rugM)).toBeLessThanOrEqual(1);
+    expect(mag.rugKleur).toBe(INKT);
+    expect(Math.round(boek.over)).toBe(ov);
+    expect(Math.round(boek.rechts)).toBe(ov + rand);
+    expect(Math.round(boek.onder)).toBe(ov + rand);
+    expect(Math.round(mag.over)).toBe(0);
+    expect(Math.round(mag.rechts)).toBe(2);
+    expect(Math.round(mag.onder)).toBe(2);
+    // per rand-lijn twee lagen zonder blur: schuin (n, n) en recht omlaag (0, n), zodat de randen onderaan tot de rug doorlopen
+    expect(lagen(boek.blad).filter(l => blurVan(l) === 0)).toHaveLength(2 * rand);
+    expect(lagen(mag.blad).filter(l => blurVan(l) === 0)).toHaveLength(4);
+  }
+});
+
+test('rug, plat en randen zijn alleen opmaak: geen nieuwe elementen, niets voorgelezen (ontwerp 4, 10)', async ({ page }) => {
+  await page.goto('/babynest');
+  const m = await page.$$eval('main .papier', ps => ps.map(p => ({ kinderen: [...p.children].map(c => c.className), voor: getComputedStyle(p, '::before').content, na: getComputedStyle(p, '::after').content })));
+  for (const x of m) {
+    expect(x.kinderen).toEqual(['blad blad-rechts', 'kaft']);
+    expect(x.voor).toBe('""');
+    expect(x.na).toBe('""');
+  }
+  // dezelfde code op Werkwijze
+  await page.goto('/werkwijze');
+  const w = await page.locator('#atelier .papier').evaluate(p => [p.children.length, getComputedStyle(p, '::after').content]);
+  expect(w).toEqual([2, '""']);
+});
+
+test('kleine tekst op de kaften blijft vrij: de strook en de masthead liggen bovenop (ontwerp 9)', async ({ page }, info) => {
+  await beweging(page);
+  await page.goto('/babynest');
+  if (isTouch(info)) {
+    await page.waitForTimeout(1600);
+    await vakOp(page, 'babynest', 0.6);
+  } else {
+    await page.waitForTimeout(1700);
+  }
+  const strook = await page.locator('#babynest .kaft-strook').evaluate(e => {
+    const r = e.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, el = document.elementFromPoint(x, y);
+    return { raak: !!(el && el.closest('.kaft-strook')), r: [r.top, r.bottom, innerHeight], z: getComputedStyle(e).zIndex };
+  });
+  if (strook.r[0] >= 0 && strook.r[1] <= strook.r[2]) expect(strook.raak, 'midden van de strook is de strook').toBe(true);
+  expect(strook.z).toBe('1'); // boven de scharniergroef
+  if (isTouch(info)) {
+    await vakOp(page, 'stof', 0.6);
+    const mh = await page.locator('#stof .masthead-sub').evaluate(e => {
+      const r = e.getBoundingClientRect(), el = document.elementFromPoint(r.left + 20, r.top + r.height / 2);
+      return !!(el && el.closest('.masthead'));
+    });
+    expect(mh, 'midden op de masthead is de masthead').toBe(true);
+  }
+});
+
+test('minder beweging: niets schuift of draait, elk object binnen het scherm, rug en randen wel zichtbaar (ontwerp 11)', async ({ page }) => {
+  await page.goto('/babynest'); // hulp.js: reducedMotion reduce
+  for (const id of ['babynest', 'stof', 'dekentje']) {
+    await page.locator(`#${id}`).scrollIntoViewIfNeeded();
+    const m = await page.locator(`#${id}`).evaluate(s => {
+      const o = s.querySelector('.obj'), r = o.getBoundingClientRect(), p = s.querySelector('.papier');
+      return { tr: getComputedStyle(o).transform, l: r.left, r: r.right, vw: innerWidth, rug: p ? parseFloat(getComputedStyle(p, '::after').width) : 1 };
+    });
+    expect(m.tr).toBe('none');
+    expect(m.l).toBeGreaterThanOrEqual(0);
+    expect(m.r).toBeLessThanOrEqual(m.vw);
+    expect(m.rug).toBeGreaterThan(0);
+  }
+});
+
+test.describe('zonder JavaScript (inschuiven)', () => {
+  test.use({ javaScriptEnabled: false });
+  test('geen transform op de objecten; elk object helemaal binnen het scherm; rug zichtbaar (ontwerp 11)', async ({ page }) => {
+    for (const pad of ['/babynest', '/werkwijze']) {
+      await page.goto(pad);
+      const m = await page.$$eval('main .media .obj', os => os.map(o => {
+        const r = o.getBoundingClientRect(), p = o.closest('.papier') || o.querySelector('.papier') || (o.matches('.papier') ? o : null);
+        return { tr: getComputedStyle(o).transform, l: r.left, r: r.right, vw: innerWidth, rug: o.matches('.papier') ? parseFloat(getComputedStyle(o, '::after').width) : 1 };
+      }));
+      for (const x of m) {
+        expect(x.tr).toBe('none');
+        expect(x.l).toBeGreaterThanOrEqual(0);
+        expect(x.r).toBeLessThanOrEqual(x.vw);
+        expect(x.rug).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+test('desktop: inschuiven ongewijzigd (x ±150% met ±14°, 1,5 s), alleen het uiterlijk is nieuw (ontwerp 12)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'alleen desktop');
+  await beweging(page);
+  await page.goto('/babynest');
+  await page.waitForTimeout(1700); // .anim zet de beginstand met een overgang van 1,5 s
+  const m = await page.locator('#stof .obj').evaluate(e => { const m = new DOMMatrix(getComputedStyle(e).transform);
+    return { x: m.e / e.offsetWidth, rot: Math.atan2(m.b, m.a) * 180 / Math.PI, t: getComputedStyle(e).transitionDuration }; });
+  expect(Math.abs(m.x + 1.5)).toBeLessThanOrEqual(0.01);
+  expect(Math.abs(m.rot + 14)).toBeLessThanOrEqual(0.2);
+  expect(m.t.split(', ')[0]).toBe('1.5s');
+  expect(await page.locator('#stof').evaluate(e => e.style.getPropertyValue('--in'))).toBe('');
+});
+
+test('snel scrollen: de kaft draait pas als het label klaar is met opkomen en blijft minstens 12 px eronder (CI 15 nov.)', async ({ page }, info) => {
+  test.skip(!isTouch(info), 'tablet en mobiel (Chromium en WebKit)');
+  await beweging(page);
+  await page.goto('/babynest');
+  await page.waitForTimeout(300);
+  // in één evaluate, zonder pauzes van de testrunner: zo snel als in CI (voorheen 4,9 px bij het magazine, label schoof nog omhoog)
+  const r = await page.evaluate(async () => {
+    const uit = { min: Infinity, gezien: 0, fout: [] }, frame = () => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f)));
+    for (let y = 0; y <= 2400; y += 30) {
+      window.scrollTo({ top: y, behavior: 'instant' }); await frame();
+      for (const e of document.querySelectorAll('main .media')) {
+        if (!e.querySelector('.kaft')) continue;
+        const open = parseFloat(e.style.getPropertyValue('--open'));
+        if (!(open > 0 && open < 1 && e.style.getPropertyValue('--kaft-o') === '1')) continue;
+        const label = e.querySelector('.media-rij > .label');
+        if (getComputedStyle(label).transform !== 'none') uit.fout.push(`${e.id} y ${y}: label beweegt nog bij --open ${open}`);
+        uit.gezien++;
+        uit.min = Math.min(uit.min, e.querySelector('.kaft-voor').getBoundingClientRect().top - label.getBoundingClientRect().bottom);
+      }
+    }
+    return uit;
+  });
+  expect(r.fout).toEqual([]);
+  expect(r.gezien).toBeGreaterThan(3);
+  expect(r.min).toBeGreaterThanOrEqual(12);
 });
