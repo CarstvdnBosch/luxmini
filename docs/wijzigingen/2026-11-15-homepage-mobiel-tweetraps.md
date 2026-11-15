@@ -108,6 +108,41 @@ Meten op 360 × 740, 390 × 844, 390 × 664 (WebKit/iPhone), 430 × 932 en 844 �
 **B · Handwerk** (alleen na het antwoord op Open vraag 1)
 11. Advies voor Carst: wijkt het lookbook van #88 op een punt wezenlijk af van "Stock in de media" (6.png)? Denk aan de tabjes in woorden in plaats van nummers, het kader om de pijl-link (story 5) en het inschuiven van het object. Of is het al het bedoelde gedrag?
 
+### Antwoord website-ontwerper (rol 1, 15 nov.) — A · Drieluik in twee stappen op mobiel
+
+Gemeten na #88 (Chromium, eigen poort; 390 × 844, 390 × 664, 360 × 740). Wit op de foto met sluier, slechtste pixel onder de tekst: tekst boven met sluier .66 tot 420 px ≥ 5,43 / 5,34 / 5,36 : 1; met .60 haalt broekje en nest 4,42 (te laag) → sluier blijft .66. Inkt in stap 1: 8,8 (perzik), 6,68 (oker), 6,07 (mauve); wit zou 1,85/2,44/2,69 halen → nooit wit op het vlak. Wit op `#2A1C14` ≈ 16,8:1.
+
+1. **Vlak stap 1:** per blok eigen lichte paletkleur met inkt: Kraamcadeauboxen perzik `#DEB799`, Prematuurkleding oker `#C89F67`, Babynest mauve `#B5969E`; nr en kop inkt. Blok 1 loopt naadloos door in het perzik van "001 — Producten". De tekst wordt pas wit als de foto met sluier eronder ligt.
+2. **Trigger:** stap 2 zodra de bovenrand van het blok 50 % van de schermhoogte passeert (eigen IntersectionObserver, `rootMargin: 0px 0px -50% 0px`, los van `drieIo`). Al boven die lijn bij laden/anker: direct stap 2 zonder overgang.
+3. **Overgang:** foto onthult van boven naar beneden (`.kern-beeld` van `translateY(-101%)`, `.kern-masker` van `translateY(101%)` naar `none`, 1 s, `cubic-bezier(.215,.61,.355,1)`, geen scale: `scale(1.3)` vervalt op mobiel). Nr en kop verkleuren inkt → wit, 0,4 s `var(--rustig)`, vertraging 0,2 s. Zin en pijl-link van onder op: y 50 → 0, opacity 0 → 1, 1 s, `cubic-bezier(.215,.61,.355,1)`, vertraging 0,3 s / 0,4 s. Stap 1: zin en pijl alleen `opacity: 0` + `pointer-events: none` (niet visibility/display/aria-hidden). Tik op het blok in stap 1 → stap 2 (volgt geen onzichtbare link). Focus binnen het blok → direct stap 2 (`:focus-within` + klasse uit main.js). Algemene opkom-animaties (`.opkomen` op `.kern-tekst .pijl`, woordanimatie `.kop-m`) op mobiel uitsluiten voor het drieluik of door de stap-2-klasse laten starten.
+4. **Plek:** tekst bovenin, Δy = 0 tussen stap 1 en 2: padding boven 72 px, zijmarge `var(--rand)`; nr 16 px, kop 40 px / 1,08, zin 18 px / 1,6 met `max-width: 300px`, pijl 16 px ≥ 44 px hoog; tekstvak eindigt rond 322 px. Sluier: `linear-gradient(to bottom, rgba(42,28,20,.66) 0, rgba(42,28,20,.66) 420px, rgba(42,28,20,.28) 100%)`. Blokhoogte blijft `clamp(520px, 100svh − 96px, 720px)`. `.kern-masker` houdt `#2A1C14` (wit leesbaar zonder geladen foto).
+5. **Meer tekst:** niet nodig; bestaande zin + pijl-link. Geen nieuwe tekst.
+6. **Terugscrollen:** één keer; stap 2 blijft staan (besluit Carst).
+7. **Liggend (touch, hoogte ≤ 500):** direct stap 2, ongewijzigd na #88.
+8. **Balk:** perzik zoals na #88 (donker logo, label inkt), in stap 1 en 2.
+
+**Ontwerpcriteria (mobiel ≤ 760; 360 × 740, 390 × 844, 390 × 664 WebKit)**
+1. Stap 1: kolomachtergrond `#DEB799` / `#C89F67` / `#B5969E`; `.kern-beeld` geheel buiten de kolom; `.nr` en `.kop-m` `#202020` (≥ 6:1); `.klein` en `.pijl` opacity 0 en `pointer-events: none`, in de DOM, niet display none/visibility hidden/aria-hidden, pijl focusbaar.
+2. Trigger: bovenrand op 60 % vh → stap 1; op ≤ 50 % → stap 2. Kop vóór de wissel helemaal in beeld gedurende ≥ 160 px scrollen (390 × 664) en ≥ 240 px (390 × 844).
+3. Volgorde: `translateY` 1 s met genoemde easing, geen `scale` op de `img`; kleurovergang nr/kop delay ≥ 0,2 s, duur 0,4 s; zin/pijl y 50 → 0, 1 s, delay 0,3 / 0,4 s; nooit witte tekst op paletkleur; na 1,5 s stil.
+4. Plek: bovenkant `.nr` 72 px (±2) onder de kolom, Δy = 0 voor nr en kop; zin 18 px / 1,6, max 300 px; pijl 16 px ≥ 44 px hoog; onderkant pijl ≤ 340 px onder de kolom.
+5. Sluier exact zoals punt 4; wit op het lichtste pixel onder nr, kop, zin, pijl ≥ 4,5:1 op alle drie de foto's; zonder foto op `#2A1C14`; axe 0 fouten.
+6. Blokhoogte stap 1 = stap 2; CLS 0 op mobiel; geen horizontaal scrollen; geen foto groter dan het bestand.
+7. Eén keer: stap 2 blijft, ook na terugscrollen of uit beeld.
+8. Tab naar de pijl in stap 1 → stap 2 in hetzelfde frame, zichtbare focusrand, opacity 1 na de overgang. Tik in stap 1 → stap 2, URL ongewijzigd. Na `#kraamcadeauboxen`, `#kraamcadeaubox`, `#prematuurkleding`, `#prematuur`, `#babynest` en na herladen halverwege: direct stap 2, kop en pijl onder de balk (56 px) en binnen het scherm.
+9. Minder beweging, zonder JS en liggend (844 × 390): direct stap 2 zoals na #88 (`transition-duration` 0 bij minder beweging); verbergen alleen onder `.js` via een klasse uit main.js, niet bij liggende telefoons.
+10. Balk boven het drieluik perzik `#DEB799`, donker logo, label inkt, stap 1 en 2.
+11. Desktop, tablet en touch-tablets wijken niet af van de visuele basis.
+
+**Tekst voor `CLAUDE.md`** (vervangt "001 Producten" onder Homepage op mobiel): drie blokken over de volle breedte (`clamp(520px, 100svh − 96px, 720px)`) in twee stappen. Stap 1: effen vlak in de paletkleur van het blok (perzik · oker · mauve), alleen nummer en kop in inkt, bovenin (72 px); zin en pijl-link met opacity 0 (voorleesbaar en focusbaar). Stap 2, één keer, zodra de bovenrand 50 % van het scherm passeert, bij focus of tik: foto onthult van boven naar beneden (1 s, niet schalen) met sluier `rgba(42,28,20)` .66 (bovenste 420 px) naar .28; dan worden nummer en kop wit (0,4 s, na 0,2 s) en komen zin (18 px) en pijl-link (16 px) van onder op (na 0,3 en 0,4 s); alle witte tekst ≥ 4,5:1; wit nooit op de paletkleur. Na anker/herlaad, bij minder beweging en zonder JS direct stap 2. Liggend: tekst links op `#2A1C14`, foto rechts, altijd stap 2. Balk perzik. Bij **Witte tekst** de uitzondering uitbreiden met de mobiele drieluikblokken in stap 2 (wit op foto met warme sluier ≥ .66 boven de tekst).
+
+Kan beter (geen criterium): naamlabel "Sem" valt deels achter de pijl-link; voor onderin ingekaderde foto's zie fotolijst; prematuurfoto is tijdelijk.
+
+## Besluiten Carst (15 nov., keuzevragen in de chat)
+1. **Handwerk (deel B):** Carst bekijkt eerst de live site met #88 (lookbook). Deel B wordt **niet** gebouwd in deze wijziging.
+2. **Terugscrollen:** stap 2 blijft staan (één keer).
+3. **Meer tekst:** geen nieuwe tekst (advies ontwerper; geen nieuwe tekst = geen akkoord nodig).
+
 ## Bestanden
 - `public/assets/css/style.css`: alleen binnen de mobiele mediaquery: `.kern-kolom`, `.kern-beeld`, `.kern-masker`, `.kern-tekst`, en een nieuwe toestandsklasse voor stap 2.
 - `public/assets/js/main.js`: een IntersectionObserver voor de drieluikblokken op mobiel (los van de bestaande `drieIo` voor de muis), focus en ankers, minder beweging.
