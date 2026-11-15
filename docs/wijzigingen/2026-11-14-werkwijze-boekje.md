@@ -135,7 +135,7 @@ De keuze en de volgorde zijn een voorstel. De ontwerper beslist (vraag O1).
 | Plannen | website-planner | Brief uit Story 7 (feedback Carst 12 nov., keuze "eigen atelierboekje"). Acht foto's bekeken: 8, 7, 6, 3 en 4 voorgesteld, 5 dubbel, 1 en 2 niet gebruiken (betalingsbericht, ingelijste tekst, andere persoon in beeld). Aansluiting op het boek van de babynest-branch (`.papier/.blad/.kaft`, main.js §5f) zonder kopie; bouwen na de merge van die PR. Ontwerprichting leeg met vragen O1–O7 voor website-ontwerper. Risico midden. Blokkerend: babynest-PR, ontwerprichting, weinig tekst |
 | Ontwerprichting | website-ontwerper | |
 | Bouwen | website-bouwer | 15 nov. `#atelier` is nu `op-wit media boekje atelier` op salie met het boek van Babynest (`.papier/.blad/.kaft/.kaft-strook`, main.js §5f ongewijzigd behalve commentaar; geen kopie): kaft `atelier-carien-label.jpg` + strook "LUX mini · Atelier", links `atelier-carien-detail.jpg`, rechts `atelier-borduurmachine-scherm.jpg` (768 × 960, JPEG 80, lichte warme correctie, zonder EXIF; originelen niet gecommit). Naast het boek label → pull-quote (lijnen 1 px, 28–36/26 px) → verhaal woord voor woord met initiaal via `::first-letter` (`initial-letter: 3`, terugval float). Fotorij, knoppen en `.fotorij*`/`.atelier-vak*` weg. Algemener: `.blad:not(:has(figcaption)) img` (88 %), `.media:not(.boekje) ~ section > .wrap`, vertragingen `.quote.regel`/`.verhaal.regel`. Extra: `.over-kop .badge` krijgt `position: absolute; margin: 0`, want de mobiele hero-regel `.badge` (r. ~1679, niet gescoped) zette de badge van de Werkwijze-kop onder de kop, nu bovenop de kaft (bestond al op main). Tests: nieuwe `werkwijze-boekje.spec.js`; C6 in `homepage-zoals-stock.spec.js` eist op Werkwijze nu 0 carrousels en 0 knoppen (strenger); `controleer.py` toetst het boekje (tekst exact, foto's, EXIF, geen fotorij). CLAUDE.md: mapregel, carrouselregel, ontwerpregel atelierboekje. Uitkomst: `npm test` groen; Playwright Chromium desktop/tablet/mobiel groen (incl. `babynest-media.spec.js` ongewijzigd); axe, WebKit, Lighthouse en visueel lokaal niet te draaien (geen `@axe-core/playwright`, WebKit en basisschermen in deze omgeving) → CI. `controleer.py`: geen fouten |
-| Controleren | website-controleur | |
+| Controleren | website-controleur | AKKOORD — tekst woord voor woord, quote 1×, kaft alleen "LUX mini · Atelier"; 3 foto's 768×960 Q80 zonder EXIF, alleen geschaald/licht warm; boek van Babynest hergebruikt, babynest-media.spec ongewijzigd groen, 002–004 niet verschoven; fotorij weg; badgeherstel terecht; npm test, controleer.py en Playwright Chromium groen |
 | Ontwerpgate | website-ontwerper | |
 | Preview bekeken | Carst | |
 | Live gezet (merge) | Carst | |
@@ -266,3 +266,6 @@ Antwoorden op de niet-blokkerende vragen:
 
 Kan beter, P3: op desktop staat Carien achter een machine twee keer kort na elkaar (de kopfoto `over-carien` en de kaft). Dat is acceptabel, omdat de omgeving anders is. Wordt het later toch te veel, dan kan `atelier-6` de kaft worden.
 
+
+## Besluit Carst B2 (15 nov., keuzevraag in de chat)
+De foto's met Carien herkenbaar mogen online; er hoeft geen fotograaf vermeld te worden.
