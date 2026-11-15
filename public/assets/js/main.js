@@ -1142,7 +1142,10 @@
       var laadIo = new IntersectionObserver(function (items) {
         items.forEach(function (it) { if (it.isIntersecting) { mediaLaden(it.target); laadIo.unobserve(it.target); } });
       }, { rootMargin: '100% 0px 100% 0px' });
-      mediaBlokken.forEach(function (sec) { mediaIo.observe(sec); laadIo.observe(sec); });
+      mediaBlokken.forEach(function (sec) { mediaIo.observe(sec); });
+      // pas na load: de extra foto's mogen de eerste foto (LCP, kaft van 001) niet vertragen (brief 2026-11-15-babynest-lcp)
+      var laadStarten = function () { mediaBlokken.forEach(function (sec) { laadIo.observe(sec); }); };
+      if (document.readyState === 'complete') laadStarten(); else window.addEventListener('load', laadStarten);
     } else {
       mediaBlokken.forEach(function (sec) { sec.binnenTijd = -1e9; sec.classList.add('binnen'); mediaLaden(sec); });
     }
