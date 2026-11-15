@@ -644,34 +644,6 @@
     }
   });
 
-  // 4b. Portfoliopagina: met een muis kleurt de laag bij aanwijzen in 1 s (rustig) naar de diepe tint
-  //     van de groep (data-diep); CSS maakt kop en bijschrift wit. Weg uit het raster: terug naar de
-  //     lichte groepskleur. Op touch en zonder JavaScript: geen hoverstand, alles in inkt.
-  if (muis) {
-    document.querySelectorAll('.portfolio-groep[data-diep]').forEach(function (groep) {
-      var raster = groep.querySelector('.werken');
-      var werken = Array.prototype.slice.call(groep.querySelectorAll('.werk'));
-      if (!raster || !werken.length) return;
-      var traagTimer = null;
-      werken.forEach(function (w) {
-        w.addEventListener('mouseenter', function () {
-          werken.forEach(function (x) { x.classList.toggle('aan', x === w); });
-          groep.classList.add('aangewezen');
-          clearTimeout(traagTimer); laag.classList.add('traag');
-          zetLaag(groep.getAttribute('data-diep'));
-        });
-      });
-      raster.addEventListener('mouseleave', function () {
-        if (!groep.classList.contains('aangewezen')) return;
-        groep.classList.remove('aangewezen');
-        werken.forEach(function (x) { x.classList.remove('aan'); });
-        laagBijwerken(true);
-        clearTimeout(traagTimer);
-        traagTimer = setTimeout(function () { laag.classList.remove('traag'); }, 1000);
-      });
-    });
-  }
-
   document.querySelectorAll('.hoverlijst:not(.sferen)').forEach(function (lijst) {
     var sectie = lijst.closest('.hoverlijst-sectie');
     var groot = lijst.querySelector('.groot');
@@ -835,8 +807,9 @@
          vloeit naar de kleur van de sectie waarvan het midden in beeld is
      --------------------------------------------------------------- */
   var lagen = Array.prototype.slice.call(document.querySelectorAll('main > section')).filter(function (sec) {
-    // koppen en het drieluik (eigen perzik vlak, kolommen met eigen kleur: geen gebroken strook bij de laagovergang) houden hun eigen kleur
-    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement') && !sec.matches('.contact-kop, .pagina-kop, .over-kop, .drieluik');
+    // koppen en het drieluik (eigen perzik vlak, kolommen met eigen kleur: geen gebroken strook bij de laagovergang) houden hun eigen kleur;
+    // ook de projecttegels van Inspiratie (eigen vlak in een lichte tint, brief 2026-11-15-inspiratie-projecten)
+    return !sec.classList.contains('hero-kleur') && !sec.classList.contains('statement') && !sec.matches('.contact-kop, .pagina-kop, .over-kop, .drieluik, .project');
   });
   lagen.forEach(function (sec) {
     if (!sec.hasAttribute('data-achtergrond')) sec.setAttribute('data-achtergrond', getComputedStyle(sec).backgroundColor);
@@ -997,10 +970,9 @@
   later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)
   /* ---------------------------------------------------------------
      5e. Lichte parallax (alleen met een muis en zonder "minder beweging"):
-         de themafoto's schuiven binnen hun kader hooguit 9% op of neer,
          de kopfoto van Contact zakt langzaam mee met scrollen.
      --------------------------------------------------------------- */
-  var parallaxEls = Array.prototype.slice.call(document.querySelectorAll('.thema-foto img, .contact-kop-foto img'));
+  var parallaxEls = Array.prototype.slice.call(document.querySelectorAll('.contact-kop-foto img'));
   if (parallaxEls.length && muis && !stil) {
     var parallaxBijwerken = function () {
       var vh = window.innerHeight;
@@ -1120,6 +1092,8 @@
     document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld img, main .contact-foto').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
     /* Prematuurkleding 003 Voorbeelden: het kader schuift één keer in (CSS .inschuif, brief 2026-11-14-prematuur-fotos) */
     document.querySelectorAll('main .voorbeeld').forEach(function (f) { f.classList.add('inschuif'); io.observe(f); });
+    /* Inspiratie, projectpagina's 001 Foto's: hetzelfde inschuiven, zonder schaal; de eerste foto (LCP) staat er direct (brief 2026-11-15-inspiratie-projecten) */
+    document.querySelectorAll('main .projectfoto:not(:first-child) .projectfoto-beeld').forEach(function (f) { f.classList.add('inschuif'); io.observe(f); });
   }
 
   later(function () { // na de eerste weergave: kortere taken bij het laden (harness: TBT)

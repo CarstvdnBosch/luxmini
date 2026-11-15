@@ -88,7 +88,8 @@ for (const { pad, naam } of PAGINAS.filter(p => p.naam !== 'contact')) {
     expect(direct, 'directe contactlinks in de inhoud').toBe(0);
     const doelen = await page.locator('main a[href*="contact"]').evaluateAll(as => as.map(a => a.getAttribute('href')));
     // brief 2026-11-06: ook met onderwerp (en formaat), zodat het formulier vooraf is ingevuld; elke CTA gaat naar het formulier
-    for (const d of doelen) expect(d, 'contact-link in de inhoud').toMatch(/^(contact\.html|\/contact)(\?onderwerp=(kraamcadeaubox|prematuurkleding|babynest)(&formaat=(35|50|65|80))?)?#formulier$/);
+    // (brief 2026-11-15-inspiratie-projecten: ook "Iets op maat laten maken", de bestaande waarde uit contact.html)
+    for (const d of doelen) expect(d, 'contact-link in de inhoud').toMatch(/^(contact\.html|\/contact)(\?onderwerp=(kraamcadeaubox|prematuurkleding|babynest|iets-op-maat-laten-maken)(&formaat=(35|50|65|80))?)?#formulier$/);
     await expect(page.locator('#menu-scherm a[href^="https://wa.me/31643791618"]')).toHaveCount(1);
   });
 }
@@ -106,7 +107,8 @@ test('homepage: hero, 001 Producten, 002 Handwerk, 003 Inspiratie, 004 Instagram
   const technieken = page.locator('#technieken .hoverlijst ul a');
   await expect(technieken).toHaveCount(4);
   const doelen = await technieken.evaluateAll(as => as.map(a => a.getAttribute('href')));
-  expect(doelen).toEqual(['werkwijze.html#personaliseren', 'inspiratie.html#siliconen', 'prematuurkleding.html', 'inspiratie.html#textiel']);
+  // brief 2026-11-15-inspiratie-projecten (criterium 13): Rustig en praktisch en Speels en levendig gaan naar hun projectpagina
+  expect(doelen).toEqual(['werkwijze.html#personaliseren', 'inspiratie-siliconen-en-hangers.html', 'prematuurkleding.html', 'inspiratie-knuffels-en-babynest.html']);
   for (const [i, naam] of [[0, /Warm en eigen\s?: Belettering/], [1, /Rustig en praktisch\s?: Siliconen items/], [2, /Klein en precies\s?: Prematuurkleding/], [3, /Speels en levendig\s?: Borduren/]]) {
     await expect(technieken.nth(i)).toHaveAccessibleName(naam);
   }
