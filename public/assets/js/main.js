@@ -844,46 +844,61 @@
       k.classList.add('aangekomen');
       if (stapIo) { stapIo.unobserve(k); zichtIo.unobserve(k); }
     };
-    // na een anker (bij laden of op de pagina): het doelblok en de blokken erboven direct in stap 2
+    // na een anker (bij laden of op de pagina): het doelblok en de blokken erboven direct in stap 2 (alleen t/m 760 px)
     var stapAnker = function () {
+      if (!stapSmal.matches) return;
       var id = decodeURIComponent((location.hash || '').slice(1));
       var doel = id && document.getElementById(id);
       var k = doel && doel.closest && doel.closest('.kern-kolom');
       if (!k || !drieluik.contains(k)) return;
       stapKolommen.forEach(function (x) { if (x === k || (x.compareDocumentPosition(k) & Node.DOCUMENT_POSITION_FOLLOWING)) aankomen(x, true); });
     };
+    // De observers, focus en tik alleen als het scherm t/m 760 px is (controleur: op desktop en tablet geen .aangekomen en geen
+    // eager foto's). Wordt het venster later smal (resize of draaien), dan komen ze er alsnog bij; één keer opgezet blijven ze.
+    var opgezet = false;
+    var opzetten = function () {
+      if (opgezet || !stapSmal.matches) return;
+      opgezet = true;
+      stapAnker();
+      // foto's klaarzetten: in stap 1 ligt de foto buiten de kolom, dan laadt de browser hem niet vanzelf (lazy)
+      laadIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) { if (it.isIntersecting && stapSmal.matches) { stapLaden(it.target); laadIo.unobserve(it.target); } });
+      }, { rootMargin: '0px 0px 100% 0px' });
+      // "gezien": het blok staat in stap 1 onder de drempel in beeld (de kop is te zien); alleen dan de overgang
+      zichtIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) { if (it.isIntersecting && it.boundingClientRect.top > window.innerHeight * 0.5) it.target.luxGezien = true; });
+      });
+      stapIo = new IntersectionObserver(function (items) {
+        if (!stapSmal.matches) return; // venster intussen breder: niets zetten (bij weer smal meldt de observer zich opnieuw)
+        items.forEach(function (it) {
+          var top = it.boundingClientRect.top;
+          if (!it.isIntersecting && top >= window.innerHeight * 0.5) return; // nog onder de drempel
+          aankomen(it.target, !it.target.luxGezien || it.boundingClientRect.bottom <= 0);
+        });
+      }, { rootMargin: '0px 0px -50% 0px' });
+      stapKolommen.forEach(function (k) {
+        laadIo.observe(k);
+        if (k.classList.contains('aangekomen')) return;
+        zichtIo.observe(k);
+        stapIo.observe(k);
+        k.addEventListener('focusin', function () { if (stapSmal.matches) aankomen(k, false); });
+        // een tik op het blok in stap 1 toont eerst stap 2 en volgt geen (nog onzichtbare) link
+        k.addEventListener('click', function (e) {
+          if (k.classList.contains('aangekomen') || !drieluik.classList.contains('stappen')) return;
+          e.preventDefault();
+          aankomen(k, false);
+        });
+      });
+    };
+    var stapMediaWissel = function () {
+      stappenZetten();
+      opzetten();
+      if (stapIo && stapSmal.matches) stapKolommen.forEach(function (k) { if (!k.classList.contains('aangekomen')) { stapIo.unobserve(k); stapIo.observe(k); } });
+    };
     stappenZetten();
-    if (stapSmal.addEventListener) { stapSmal.addEventListener('change', stappenZetten); stapLiggend.addEventListener('change', stappenZetten); }
-    stapAnker();
+    if (stapSmal.addEventListener) { stapSmal.addEventListener('change', stapMediaWissel); stapLiggend.addEventListener('change', stappenZetten); }
     window.addEventListener('hashchange', stapAnker);
-    // foto's klaarzetten: in stap 1 ligt de foto buiten de kolom, dan laadt de browser hem niet vanzelf (lazy)
-    laadIo = new IntersectionObserver(function (items) {
-      items.forEach(function (it) { if (it.isIntersecting) { stapLaden(it.target); laadIo.unobserve(it.target); } });
-    }, { rootMargin: '0px 0px 100% 0px' });
-    // "gezien": het blok staat in stap 1 onder de drempel in beeld (de kop is te zien); alleen dan de overgang
-    zichtIo = new IntersectionObserver(function (items) {
-      items.forEach(function (it) { if (it.isIntersecting && it.boundingClientRect.top > window.innerHeight * 0.5) it.target.luxGezien = true; });
-    });
-    stapIo = new IntersectionObserver(function (items) {
-      items.forEach(function (it) {
-        var top = it.boundingClientRect.top;
-        if (!it.isIntersecting && top >= window.innerHeight * 0.5) return; // nog onder de drempel
-        aankomen(it.target, !it.target.luxGezien || it.boundingClientRect.bottom <= 0);
-      });
-    }, { rootMargin: '0px 0px -50% 0px' });
-    stapKolommen.forEach(function (k) {
-      laadIo.observe(k);
-      if (k.classList.contains('aangekomen')) return;
-      zichtIo.observe(k);
-      stapIo.observe(k);
-      k.addEventListener('focusin', function () { aankomen(k, false); });
-      // een tik op het blok in stap 1 toont eerst stap 2 en volgt geen (nog onzichtbare) link
-      k.addEventListener('click', function (e) {
-        if (k.classList.contains('aangekomen') || !drieluik.classList.contains('stappen')) return;
-        e.preventDefault();
-        aankomen(k, false);
-      });
-    });
+    opzetten();
   }
   // Binnen de bovenkant blijft de kleur staan zoals bij Stock; wie de bovenkant
   // verlaat, krijgt weer set A en terracotta. Bij focus alleen als de focus

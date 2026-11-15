@@ -156,6 +156,8 @@ test.describe('telefoon staand, met beweging', () => {
     const ctx = await telefoon(browser, info, 390, 844);
     const page = await ctx.newPage();
     await page.goto('/');
+    // eerst wachten tot het aanzetten van de stappen klaar is (.stappen-wissel zet de overgangen twee beelden lang uit)
+    await page.waitForFunction(() => { const d = document.querySelector('#producten'); return d.classList.contains('stappen') && !d.classList.contains('stappen-wissel'); });
     const m = await page.evaluate(() => { const k = document.getElementById('prematuurkleding'), s = e => getComputedStyle(k.querySelector(e));
       return { beeld: [s('.kern-beeld').transitionDuration, s('.kern-beeld').transitionTimingFunction, s('.kern-masker').transitionDuration],
         tekst: [s('.kern-tekst').transitionProperty, s('.kern-tekst').transitionDuration, s('.kern-tekst').transitionDelay],
@@ -311,4 +313,15 @@ test(`desktop en tablet: geen twee stappen in het drieluik (${BRIEF}, criterium 
   await page.goto('/');
   const m = await page.evaluate(() => [document.querySelector('#producten').classList.contains('stappen'), getComputedStyle(document.querySelector('#prematuurkleding .kern-tekst')).color]);
   expect(m).toEqual([false, INKT]);
+  // door het drieluik scrollen en focus op een pijl-link: op desktop en tablet geen .aangekomen (controleur: observers alleen t/m 760 px)
+  for (const id of ['kraamcadeauboxen', 'prematuurkleding', 'babynest']) {
+    await page.evaluate(i => { const k = document.getElementById(i); window.scrollTo({ top: k.getBoundingClientRect().top + scrollY - 100, behavior: 'instant' }); }, id);
+    await page.waitForTimeout(150);
+  }
+  await page.locator('#prematuurkleding a.pijl').focus();
+  const na = await page.evaluate(() => [[...document.querySelectorAll('#producten .kern-kolom')].filter(k => k.classList.contains('aangekomen') || k.classList.contains('direct')).length,
+    [...document.querySelectorAll('#producten .kern-beeld img')].map(i => i.getAttribute('loading'))]);
+  expect(na[0], 'geen .aangekomen of .direct op desktop en tablet').toBe(0);
+  // touch-tablet: geen muis, dus ook drieIo zet de foto's niet op eager; ze blijven lazy
+  if (info.project.name === 'tablet') expect(na[1], 'tablet: foto\'s blijven lazy').toEqual(['lazy', 'lazy', 'lazy']);
 });
