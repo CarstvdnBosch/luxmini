@@ -172,25 +172,27 @@
 </section>
 
 <!-- 001 Producten (label goedgekeurd door Carst, 6 nov.): drieluik zoals de kernwaarden van Stock (brief 2026-11-06). In rust drie lichte paletkleuren met inkt;
-     met een muis schuift bij aanwijzen of focus een foto in en wordt de tekst wit. Op touch staat de foto boven de tekst.
+     met een muis schuift bij aanwijzen of focus een foto in en wordt de tekst wit. Op touch-tablets staat de foto boven de tekst.
+     Op mobiel (≤ 760 px en telefoons liggend) is elk product een eigen blok met de foto als stilstaande achtergrond, een warme
+     sluier en de tekst onderaan in wit (brief 2026-11-14-homepage-mobiel-stock, A).
      Oude adressen /producten#kraamcadeaubox, #prematuur en #babynest landen op de kolommen. -->
 <section id="producten" class="op-wit kernwaarden drieluik" data-achtergrond="#DEB799" style="background-color: #DEB799" data-label="<span>001 —</span> Producten">
   <p class="label kern-label"><span>001 —</span> Producten</p>
   <div class="kern-kolommen">
     <section id="kraamcadeauboxen" class="kern-kolom kolom-box">
       <span id="kraamcadeaubox" class="anker" aria-hidden="true"></span>
-      <div class="kern-beeld"><div class="kern-masker"><img src="assets/img/hero-box-open.jpg" srcset="assets/img/hero-box-open-600.jpg 600w, assets/img/hero-box-open.jpg 1400w" sizes="(max-width: 760px) 90vw, (max-width: 1024px) 34vw, 900px" width="1400" height="1400" alt="Geopende kraamcadeaubox met een zakje met de naam Sem en geboortedatum" loading="lazy" decoding="async"></div></div>
+      <div class="kern-beeld"><div class="kern-masker"><img src="assets/img/hero-box-open.jpg" srcset="assets/img/hero-box-open-600.jpg 600w, assets/img/hero-box-open.jpg 1400w" sizes="(max-width: 720px) 720px, (max-width: 760px) 100vw, (hover: none) and (pointer: coarse) and (max-height: 500px) 55vw, (max-width: 1024px) 34vw, 900px" width="1400" height="1400" alt="Geopende kraamcadeaubox met een zakje met de naam Sem en geboortedatum" loading="lazy" decoding="async"></div></div>
       <div class="kern-tekst">
         <span class="nr">01</span>
         <h2 class="kop-m">Kraam&shy;cadeau&shy;boxen</h2>
-        <p class="klein">Handgemaakte babyproducten in één thema, met naam en geboortedatum. Vanaf € 35.</p>
+        <p class="klein">Handgemaakte babyproducten in één thema, met naam en geboortedatum. Vanaf&nbsp;€&nbsp;35.</p>
         <a class="pijl kolom-link" href="kraamcadeauboxen.html"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Bekijk de kraamcadeauboxen</a>
       </div>
     </section>
     <section id="prematuurkleding" class="kern-kolom kolom-prem">
       <span id="prematuur" class="anker" aria-hidden="true"></span>
       <!-- LET OP: tijdelijke foto (het broekje) tot er een foto van prematuurkleding is (docs/fotolijst.md, opname 13) -->
-      <div class="kern-beeld"><div class="kern-masker"><img src="assets/img/p-broekje-kleur.jpg" srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="(max-width: 760px) 90vw, (max-width: 1024px) 34vw, 680px" width="900" height="1200" alt="Wit broekje met brede boord en een print van kleine bruine regenbogen" loading="lazy" decoding="async"></div></div>
+      <div class="kern-beeld"><div class="kern-masker"><img src="assets/img/p-broekje-kleur.jpg" srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="(max-width: 540px) 540px, (max-width: 760px) 100vw, (hover: none) and (pointer: coarse) and (max-height: 500px) 55vw, (max-width: 1024px) 34vw, 680px" width="900" height="1200" alt="Wit broekje met brede boord en een print van kleine bruine regenbogen" loading="lazy" decoding="async"></div></div>
       <div class="kern-tekst">
         <span class="nr">02</span>
         <h2 class="kop-m">Prematuur&shy;kleding</h2>
@@ -241,6 +243,42 @@
       <a class="kaart" href="prematuurkleding.html" style="--kaart-kleur: #999575"><img src="assets/img/p-broekje-kleur-600.jpg" srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="320px" alt="" loading="lazy" decoding="async"><span class="kaart-naam">Klein en precies</span><span class="kaart-regel">Prematuurkleding</span></a>
       <a class="kaart" href="inspiratie.html#textiel" style="--kaart-kleur: #AE8C94"><img src="assets/img/p-knuffel-naam-600.jpg" srcset="assets/img/p-knuffel-naam-600.jpg 600w, assets/img/p-knuffel-naam.jpg 675w" sizes="320px" alt="" loading="lazy" decoding="async"><span class="kaart-naam">Speels en levendig</span><span class="kaart-regel">Borduren</span></a>
     </div>
+    <!-- Mobiel (≤ 760 px en telefoons liggend; brief 2026-11-14-homepage-mobiel-stock, B): per item een opengeslagen eigen LUX mini-lookbook
+         (decoratief) op een lichte paletkleur, met de naam en de productregel als één link. Vegen met scroll-snap of de tabjes 01–04;
+         er wisselt niets vanzelf. Zonder JavaScript: alleen de veegrij (main.js haalt hidden van de tabjes en zet de tab-rollen). -->
+    <div class="lookbook">
+      <div class="lookbook-rij" id="lookbook-rij">
+        <div class="lookbook-paneel" id="lookbook-1" data-kleur="#DEB799" style="--item-kleur: #DEB799">
+          <a href="werkwijze.html#personaliseren">
+            <span class="papier spread" aria-hidden="true"><span class="blad blad-links"><img src="assets/img/pers-naam.jpg" sizes="200px" alt="" loading="lazy" decoding="async"><span class="blad-regel">LUX mini</span></span><span class="blad blad-rechts"><img src="assets/img/p-bijtring-kleur-600.jpg" srcset="assets/img/p-bijtring-kleur-600.jpg 600w, assets/img/p-bijtring-kleur.jpg 900w" sizes="200px" alt="" loading="lazy" decoding="async"><span class="blad-regel">Belettering</span></span></span>
+            <h3 class="lookbook-naam">Warm en eigen</h3>
+            <span class="lookbook-regel">Belettering<svg aria-hidden="true" focusable="false" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg></span>
+          </a>
+        </div>
+        <div class="lookbook-paneel" id="lookbook-2" data-kleur="#C3CFBC" style="--item-kleur: #C3CFBC">
+          <a href="inspiratie.html#siliconen">
+            <span class="papier spread" aria-hidden="true"><span class="blad blad-links"><img src="assets/img/p-bijtring-naam-600.jpg" srcset="assets/img/p-bijtring-naam-600.jpg 600w, assets/img/p-bijtring-naam.jpg 675w" sizes="200px" alt="" loading="lazy" decoding="async"><span class="blad-regel">LUX mini</span></span><span class="blad blad-rechts"><img src="assets/img/p-bijtring-giraf-kleur-600.jpg" srcset="assets/img/p-bijtring-giraf-kleur-600.jpg 600w, assets/img/p-bijtring-giraf-kleur.jpg 900w" sizes="200px" alt="" loading="lazy" decoding="async"><span class="blad-regel">Siliconen items</span></span></span>
+            <h3 class="lookbook-naam">Rustig en praktisch</h3>
+            <span class="lookbook-regel">Siliconen items<svg aria-hidden="true" focusable="false" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg></span>
+          </a>
+        </div>
+        <div class="lookbook-paneel" id="lookbook-3" data-kleur="#B4B19A" style="--item-kleur: #B4B19A">
+          <a href="prematuurkleding.html">
+            <span class="papier spread" aria-hidden="true"><span class="blad blad-links"><img src="assets/img/p-broekje-kleur-600.jpg" srcset="assets/img/p-broekje-kleur-600.jpg 600w, assets/img/p-broekje-kleur.jpg 900w" sizes="200px" alt="" loading="lazy" decoding="async"><span class="blad-regel">LUX mini</span></span><span class="blad blad-rechts"><img src="assets/img/p-shirtje-kleur-600.jpg" srcset="assets/img/p-shirtje-kleur-600.jpg 600w, assets/img/p-shirtje-kleur.jpg 900w" sizes="200px" alt="" loading="lazy" decoding="async"><span class="blad-regel">Prematuur&shy;kleding</span></span></span>
+            <h3 class="lookbook-naam">Klein en precies</h3>
+            <span class="lookbook-regel">Prematuurkleding<svg aria-hidden="true" focusable="false" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg></span>
+          </a>
+        </div>
+        <div class="lookbook-paneel" id="lookbook-4" data-kleur="#B5969E" style="--item-kleur: #B5969E">
+          <a href="inspiratie.html#textiel">
+            <span class="papier spread" aria-hidden="true"><span class="blad blad-links"><img src="assets/img/p-knuffel-naam-600.jpg" srcset="assets/img/p-knuffel-naam-600.jpg 600w, assets/img/p-knuffel-naam.jpg 675w" sizes="200px" alt="" loading="lazy" decoding="async"><span class="blad-regel">LUX mini</span></span><span class="blad blad-rechts"><img src="assets/img/pers-sjaaltje-naam.jpg" sizes="200px" alt="" loading="lazy" decoding="async"><span class="blad-regel">Borduren</span></span></span>
+            <h3 class="lookbook-naam">Speels en levendig</h3>
+            <span class="lookbook-regel">Borduren<svg aria-hidden="true" focusable="false" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg></span>
+          </a>
+        </div>
+      </div>
+      <div class="lookbook-tabs" role="tablist" aria-label="Handwerk" hidden><button type="button" role="tab" id="lookbook-tab-1" aria-controls="lookbook-1" aria-selected="true"><span>01</span><span class="sr-only"> Belettering</span></button><button type="button" role="tab" id="lookbook-tab-2" aria-controls="lookbook-2" aria-selected="false"><span>02</span><span class="sr-only"> Siliconen items</span></button><button type="button" role="tab" id="lookbook-tab-3" aria-controls="lookbook-3" aria-selected="false"><span>03</span><span class="sr-only"> Prematuurkleding</span></button><button type="button" role="tab" id="lookbook-tab-4" aria-controls="lookbook-4" aria-selected="false"><span>04</span><span class="sr-only"> Borduren</span></button></div>
+    </div>
     <a class="pijl midden" href="werkwijze.html#personaliseren"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>Zo personaliseert Carien</a>
   </div>
 </section>
@@ -267,9 +305,12 @@
   <div class="wrap sectie">
     <p class="label"><span>004 —</span> Instagram</p>
     <div class="insta-blok">
+      <!-- mobiel (brief 2026-11-14-homepage-mobiel-stock, C): een eigen post van het atelier, met het LUX-logo als avatar en drie eigen lijniconen (decoratief); geen Instagram-logo of tellers -->
+      <div class="insta-profiel"><span class="insta-avatar"><img src="assets/img/logo-lux-groot-wit.png" alt="" width="880" height="334" loading="lazy"></span><span class="insta-naam">luxmini2020</span></div>
       <a class="insta-foto" href="https://www.instagram.com/Luxmini2020/"><img src="assets/img/ig-outfit-ladder.jpg" alt="Mauve overslagshirtje met ruches en een flared broekje aan een houten ladder, op Instagram" width="480" height="640" loading="lazy"></a>
+      <div class="insta-iconen" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20.5 11.6a8.4 8.4 0 0 1-12.3 7.5L3.5 20.5l1.4-4.6a8.4 8.4 0 1 1 15.6-4.3z"/></svg><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M21 3.5 10.2 13.8M21 3.5l-6.6 17-4.2-6.7-6.7-4.2z"/></svg></div>
       <div class="insta-tekst">
-        <h2 class="kop-l">Volg het<br>atelier op<br>Instagram</h2>
+        <h2 class="kop-l">Volg het <br>atelier op <br>Instagram</h2>
         <p class="klein">Nieuwe stukjes uit het atelier, zo van de naaimachine.</p>
         <a class="pijl" href="https://www.instagram.com/Luxmini2020/"><svg aria-hidden="true" viewBox="0 0 28 10" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M0 5h26M22 1l4 4-4 4"/></svg>@luxmini2020</a>
       </div>
