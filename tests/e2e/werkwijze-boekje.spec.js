@@ -138,7 +138,7 @@ test('typografie: pull-quote, initiaal en verhaal in één kolom (criterium 13, 
   for (const r of regels) expect(r.tekens, 'hooguit 75 tekens per regel').toBeLessThanOrEqual(75);
 });
 
-test('desktop: boek 576 px (bladzijden 288 × 360), tekst op x = 120 en samen in beeld tijdens het vastzetten (ontwerp 2, 10)', async ({ page }, info) => {
+test('desktop: boek 576 px (bladzijden 288 × 360 met plat en randen), tekst op x = 120 en samen in beeld tijdens het vastzetten (ontwerp 2, 10)', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'alleen desktop');
   await beweging(page);
   await page.goto('/werkwijze');
@@ -152,8 +152,11 @@ test('desktop: boek 576 px (bladzijden 288 × 360), tekst op x = 120 en samen in
     const m = await s.evaluate(e => { const r = q => e.querySelector(q).getBoundingClientRect();
       return { boek: r('.papier'), blad: r('.blad-rechts'), label: r('.media-rij > .label'), quote: r('.quote'), verhaal: r('.verhaal') }; });
     expect(Math.abs(m.boek.width - 576)).toBeLessThanOrEqual(2);
-    expect(Math.abs(m.blad.width - 288)).toBeLessThanOrEqual(2);
-    expect(Math.abs(m.blad.height - 360)).toBeLessThanOrEqual(2);
+    // de helft van het boek blijft 288 × 360; de bladzijde ligt daarop met 4 px overstek en 6 px randen rechts en onder
+    // (brief 2026-11-15-babynest-mobiel-inschuiven, ontwerp 4): 278 × 346
+    expect(Math.abs(m.blad.width - 278)).toBeLessThanOrEqual(2);
+    expect(Math.abs(m.blad.height - 346)).toBeLessThanOrEqual(2);
+    expect(Math.abs(m.blad.left - (m.boek.left + 288))).toBeLessThanOrEqual(1);
     expect(Math.abs(m.label.left - 120)).toBeLessThanOrEqual(1);
     expect(m.verhaal.width).toBeLessThanOrEqual(480);
     expect(m.label.top, `bij ${f}`).toBeGreaterThanOrEqual(0);
@@ -223,9 +226,12 @@ test('met beweging: het boek schuift in, de regels komen op en de kaft slaat ope
   const s = page.locator('#atelier');
   await expect(s).toHaveClass(/\banim\b/);
   const t = await s.evaluate(e => [getComputedStyle(e.querySelector('.obj')).transitionDuration, getComputedStyle(e.querySelector('.verhaal')).transitionDuration]);
-  expect(t[0].split(', ')[0]).toBe('1.5s');
+  // desktop schuift op tijd in (1,5 s); tablet en mobiel lopen mee met de scrollpositie (--in, brief 2026-11-15-babynest-mobiel-inschuiven)
+  if (info.project.name === 'desktop') expect(t[0].split(', ')[0]).toBe('1.5s');
+  else expect(await s.evaluate(e => e.style.getPropertyValue('--in')), '--in gezet').toMatch(/^[01]\.\d{3}$/);
   expect(t[1].split(', ')[0]).toBe('1s');
-  await s.evaluate(e => window.scrollTo(0, e.getBoundingClientRect().top + scrollY - innerHeight * 0.5));
+  if (isTouch(info)) await s.evaluate(e => window.scrollTo(0, e.querySelector('.media-object').getBoundingClientRect().top + scrollY - innerHeight * 0.5));
+  else await s.evaluate(e => window.scrollTo(0, e.getBoundingClientRect().top + scrollY - innerHeight * 0.5));
   await expect(s).toHaveClass(/\bbinnen\b/);
   await page.waitForTimeout(1700);
   expect(await s.locator('.obj').evaluate(e => getComputedStyle(e).transform)).toBe('none');
@@ -285,4 +291,65 @@ test('002, 003 en 004 staan waar ze stonden (ontwerp 12)', async ({ page }, info
   const x = await page.evaluate(() => ['hoe-ik-werk', 'personaliseren', 'contact'].map(id => Math.round(document.querySelector(`#${id} .label`).getBoundingClientRect().left * 10) / 10));
   const verwacht = LABELS_X[info.project.name];
   x.forEach((v, i) => expect(Math.abs(v - verwacht[i]), `label ${i + 2}`).toBeLessThanOrEqual(0.5));
+});
+
+// ---------- Werkwijze gaat mee (brief 2026-11-15-babynest-mobiel-inschuiven, besluit Carst 1, ontwerp 6 en 14) ----------
+const standObj = s => s.locator('.obj').evaluate(e => {
+  const t = getComputedStyle(e).transform; if (t === 'none') return { x: 0, rot: 0, none: true };
+  const m = new DOMMatrix(t); return { x: m.e, rot: Math.atan2(m.b, m.a) * 180 / Math.PI, none: false };
+});
+
+test('mobiel: het boekje schuift van links in en loopt mee met scrollen (ontwerp 14)', async ({ page }, info) => {
+  test.skip(!['mobiel', 'iphone'].includes(info.project.name), 'op 390 px (Chromium en WebKit)');
+  await beweging(page);
+  await page.goto('/werkwijze');
+  const s = page.locator('#atelier');
+  const top = await s.evaluate(e => e.querySelector('.media-object').getBoundingClientRect().top + scrollY);
+  const vh = await page.evaluate(() => innerHeight);
+  expect(top, 'het boekje staat bij het laden onder het scherm').toBeGreaterThan(vh);
+  await scrolNaar(page, Math.floor(top - vh));
+  let b = await standObj(s);
+  expect(Math.abs(b.x + 195)).toBeLessThanOrEqual(1);
+  expect(Math.abs(b.rot - 12)).toBeLessThanOrEqual(0.2);
+  await scrolNaar(page, top - vh * 0.8);
+  b = await standObj(s);
+  expect(Math.abs(b.x + 195 / 4)).toBeLessThanOrEqual(2);
+  expect(Math.abs(b.rot - 3)).toBeLessThanOrEqual(0.2);
+  await scrolNaar(page, Math.ceil(top - vh * 0.6));
+  expect((await standObj(s)).none).toBe(true);
+});
+
+test('tablet: het boekje staat bij het laden in beeld en schuift één keer op tijd van links in (ontwerp 14)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'tablet', 'op 768 × 1024');
+  await beweging(page);
+  await page.goto('/werkwijze', { waitUntil: 'domcontentloaded' });
+  const s = page.locator('#atelier');
+  const begin = await s.evaluate(e => { const r = e.querySelector('.obj').getBoundingClientRect(); return (r.left + r.right) / 2; });
+  expect(begin, 'begint links').toBeLessThan(100);
+  await expect.poll(async () => (await standObj(s)).none, { timeout: 1600, intervals: [100] }).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth === innerWidth)).toBe(true);
+});
+
+test('desktop: het boekje komt nog steeds van rechts (ontwerp 14)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'alleen desktop');
+  await beweging(page);
+  await page.goto('/werkwijze');
+  await page.waitForTimeout(1700);
+  const m = await page.locator('#atelier .obj').evaluate(e => { const m = new DOMMatrix(getComputedStyle(e).transform); return [m.e / e.offsetWidth, Math.atan2(m.b, m.a) * 180 / Math.PI]; });
+  if (!(await page.locator('#atelier').evaluate(e => e.classList.contains('binnen')))) {
+    expect(Math.abs(m[0] - 1.5)).toBeLessThanOrEqual(0.01);
+    expect(Math.abs(m[1] - 14)).toBeLessThanOrEqual(0.2);
+  }
+});
+
+test('het boekje is hetzelfde echte boek: rug, plat en randen (ontwerp 6)', async ({ page }, info) => {
+  await page.goto('/werkwijze');
+  const m = await page.locator('#atelier .papier').evaluate(p => { const rp = p.getBoundingClientRect(), rb = p.querySelector('.blad-rechts').getBoundingClientRect();
+    return { rug: rb.left - rp.left, over: rb.top - rp.top, rechts: rp.right - rb.right, plat: getComputedStyle(p, '::before').backgroundColor, vw: innerWidth,
+      strook: [getComputedStyle(p.querySelector('.kaft-strook')).color, getComputedStyle(p.querySelector('.kaft-strook')).backgroundColor] }; });
+  expect(m.plat).toBe('rgb(140, 110, 88)');
+  expect(m.strook).toEqual([INKT, 'rgb(251, 248, 243)']); // "LUX mini · Atelier" blijft inkt op #FBF8F3
+  if (m.vw <= 760) { expect(Math.abs(m.rug - 13)).toBeLessThanOrEqual(1); expect(Math.round(m.over)).toBe(3); expect(Math.round(m.rechts)).toBe(7); }
+  else if (m.vw <= 1024) { expect(Math.abs(m.rug - 22)).toBeLessThanOrEqual(1); expect(Math.round(m.over)).toBe(4); expect(Math.round(m.rechts)).toBe(10); }
+  else { expect(Math.round(m.over)).toBe(4); expect(Math.round(m.rechts)).toBe(10); }
 });
