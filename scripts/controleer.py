@@ -1655,7 +1655,7 @@ def controleer_projectpaginas(browser):
         # criterium 8 en 26: de uitleg letterlijk, met de LET OP direct erboven zolang Carst niet heeft goedgekeurd
         if not re.search(r"<!-- LET OP: wacht op akkoord Carst \(uitleg project " + re.escape(p["naam"]) + r", brief 2026-11-15-inspiratie-projecten\) -->\s*<p class=\"project-uitleg\">" + re.escape(p["uitleg"]) + "</p>", html):
             fouten.append(f"{p['pagina']}: de uitleg staat er niet letterlijk met direct erboven de LET OP 'wacht op akkoord Carst'")
-        for naam, (b, h, touch) in {"desktop": (1440, 900, False), "breed": (1920, 1080, False), "tablet": (768, 1024, True), "klein-tablet": (1024, 768, True), "mobiel": (390, 844, True), "smal": (360, 740, True)}.items():
+        for naam, (b, h, touch) in {"desktop": (1440, 900, False), "breed": (1920, 1080, False), "tablet": (768, 1024, True), "klein-tablet": (1024, 768, True), "mobiel": (390, 844, True), "smal": (360, 740, True), "iphone-hoogte": (390, 664, True)}.items():
             ctx, page = nieuwe_pagina(browser, p["pagina"], b, h, touch, reduced_motion="reduce")
             lazy = page.evaluate("() => [...document.querySelectorAll('#fotos .projectfoto img')].map(i => i.getAttribute('loading'))")  # vóór het vooraf laden
             page.evaluate("async () => { document.querySelectorAll('img[loading=lazy]').forEach(i => i.loading = 'eager'); await Promise.all([...document.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; }))); }")
@@ -1663,7 +1663,7 @@ def controleer_projectpaginas(browser):
             st = page.evaluate(LEES_PROJECT)
             for f, l in zip(st["fotos"], lazy):
                 f["lazy"] = l
-            if [s[:2] for s in st["secties"]] != [["", "— Inspiratie"], ["fotos", "001 — Foto's"], ["volgend", "002 — Volgend project"], ["contact", "003 — Contact"]] or any(s[1] != s[2] for s in st["secties"][1:]):
+            if [s[:2] for s in st["secties"]] != [["", "— Inspiratie"], ["fotos", "001 — Foto's"], ["volgend", "002 — Meer zien"], ["contact", "003 — Contact"]] or any(s[1] != s[2] for s in st["secties"][1:]):
                 fouten.append(f"{tag}: secties, labels of zichtbare labels kloppen niet ({st['secties']})")
             if st["h1"] != p["naam"] or st["caps"] != "Inspiratie" or st["uitleg"] != p["uitleg"] or st["laag"] != p["licht"]:
                 fouten.append(f"{tag}: kop (label, h1, uitleg) of de tint van 001 klopt niet ({st['h1']}, {st['caps']}, {st['laag']})")
@@ -1677,6 +1677,8 @@ def controleer_projectpaginas(browser):
             if naam == "desktop":
                 if max(f["h"] for f in st["fotos"]) > 810 or st["fotos"][0]["top"] > 900:
                     fouten.append(f"{tag}: een foto is hoger dan 810 px of de eerste foto begint onder het eerste scherm ({st['fotos'][0]['top']:.0f})")
+            if naam == "iphone-hoogte" and st["blok"] > 3.5 * h:  # OC12 ook op de hoogte van de iPhone (CI PR #92)
+                fouten.append(f"{tag}: fotoblok {st['blok']:.0f} px is hoger dan 3,5 schermen ({3.5 * h:.0f} px)")
             if naam == "mobiel":
                 e = st["fotos"][0]
                 # OC9 (lezing in de brief): bovenkant <= 844, onderkant <= 1688 en hoogte <= 788 (past onder de balk)

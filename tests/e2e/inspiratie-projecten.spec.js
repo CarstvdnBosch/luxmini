@@ -180,7 +180,7 @@ for (const [i, p] of PROJECTEN.entries()) {
     expect(antwoord.status()).toBe(200);
     const s = await page.evaluate(() => [...document.querySelectorAll('main > section')].map(x => { const l = x.querySelector(':scope .label');
       return [x.id, x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim(), l ? l.textContent.replace(/\s+/g, ' ').trim() : null]; }));
-    expect(s.map(x => x.slice(0, 2))).toEqual([['', '— Inspiratie'], ['fotos', "001 — Foto's"], ['volgend', '002 — Volgend project'], ['contact', '003 — Contact']]);
+    expect(s.map(x => x.slice(0, 2))).toEqual([['', '— Inspiratie'], ['fotos', "001 — Foto's"], ['volgend', '002 — Meer zien'], ['contact', '003 — Contact']]);
     for (const x of s.slice(1)) expect(x[2], `${x[0]}: zichtbaar label gelijk aan data-label`).toBe(x[1]);
     await expect(page.locator('h1')).toHaveText(p.naam);
     await expect(page.locator('main > section.pagina-kop')).toHaveCount(1);
@@ -475,10 +475,24 @@ test('mobiel: liggende foto\'s over de volle breedte, staande, vierkante en klei
     await page.goto(p.pad);
     const m = await page.evaluate(() => { const v = document.querySelector('#fotos .voorbeelden'), vb = v.getBoundingClientRect();
       return { b: vb.width, h: vb.height, fotos: [...v.querySelectorAll('img')].map(i => ({ src: i.getAttribute('src'), w: +i.getAttribute('width'), hh: +i.getAttribute('height'), b: i.getBoundingClientRect().width })) }; });
-    for (const f of m.fotos) {
-      if (f.w > f.hh && f.w >= m.b) expect(Math.abs(f.b - m.b), `${f.src}: liggend, volle breedte`).toBeLessThanOrEqual(1);
-      if (f.w > f.hh && f.w < m.b) expect(f.b, `${f.src}: klein liggend, in een paar`).toBeLessThan(m.b / 2 + 1);
-    }
-    expect(m.h, `${p.id}: fotoblok`).toBeLessThanOrEqual(info.project.name === 'mobiel' ? 2954 : 3.5 * info.project.use.viewport.height);
+    // groot genoeg om de inhoud te zien en binnen 3,5 schermen, ook op 390 × 664 (CI 15 nov.): op Kraamcadeauboxen staan vijf van de acht
+    // liggende themafoto's over de volle breedte, de andere drie in een paar; liggende foto's van andere projecten zijn klein (paar) of vol
+    const liggend = m.fotos.filter(f => f.w > f.hh && f.w >= m.b);
+    const vol = liggend.filter(f => Math.abs(f.b - m.b) <= 1).length;
+    if (p.id === 'boxen') expect(vol, 'boxen: liggende foto\'s over de volle breedte').toBeGreaterThanOrEqual(5);
+    else expect(vol, `${p.id}: liggende foto's over de volle breedte`).toBe(liggend.length);
+    for (const f of liggend) expect(f.b, `${f.src}: minstens een halve kolom`).toBeGreaterThanOrEqual((m.b - 12) / 2 - 1);
+    for (const f of m.fotos.filter(f => f.w > f.hh && f.w < m.b)) expect(f.b, `${f.src}: klein liggend, in een paar`).toBeLessThan(m.b / 2 + 1);
+    expect(m.h, `${p.id}: fotoblok`).toBeLessThanOrEqual(Math.min(2954, 3.5 * page.viewportSize().height));
+  }
+});
+
+test('390 × 664 (iPhone-hoogte in Chromium): fotoblok binnen 3,5 schermen op alle projectpagina\'s (OC12)', async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'één keer, met de hoogte van de iPhone');
+  await page.setViewportSize({ width: 390, height: 664 });
+  for (const p of PROJECTEN) {
+    await page.goto(p.pad);
+    const h = await page.evaluate(() => document.querySelector('#fotos .voorbeelden').getBoundingClientRect().height);
+    expect(h, `${p.id}: fotoblok ${h.toFixed(0)} px`).toBeLessThanOrEqual(3.5 * 664);
   }
 });
