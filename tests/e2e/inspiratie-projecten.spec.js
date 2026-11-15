@@ -61,7 +61,11 @@ test('overzicht: vier projecttegels in volgorde, kleur, één link en één tabs
     expect(x.kleuren, `${p.id}: alle tekst inkt in rust`).toEqual([INKT, INKT, INKT]);
     expect(x.lopend, `${p.id}: lopende regel decoratief, 0,2`).toEqual([['true', 0.2]]);
     if (i) expect(Math.abs(x.boven - t[i - 1].onder), `${p.id} sluit aan`).toBeLessThanOrEqual(1);
+    // de tegelfoto is decoratief (alt=""); de link heet naar de titel en de pijl
+    await expect(page.locator(`#${p.id} .project-foto img`)).toHaveAttribute('alt', '');
+    await expect(page.locator(`#${p.id} a.project-link`)).toHaveAccessibleName(new RegExp(`^${p.naam},? Bekijk de foto's$`));
   }
+  await expect(page.locator('main .project-link span h2'), 'geen kop binnen een span').toHaveCount(0);
   // de lopende regel telt niet als kop
   await expect(page.locator('main .lopend h1, main .lopend h2, main .lopend h3')).toHaveCount(0);
 });
@@ -219,6 +223,8 @@ for (const [i, p] of PROJECTEN.entries()) {
         vorig: /vorig/i.test(document.querySelector('main').textContent) }; });
     expect([v.href, v.naam, v.kleur]).toEqual([bestand(volgend), volgend.naam, volgend.licht]);
     expect(v.tab).toBe(2);
+    await expect(page.locator('#volgend .project-foto img')).toHaveAttribute('alt', '');
+    await expect(page.locator('#volgend a.project-link')).toHaveAccessibleName(new RegExp(`^${volgend.naam},? Bekijk de foto's$`));
     expect(v.alle.slice(0, 2)).toEqual(['Alle inspiratie', 'inspiratie.html']);
     expect(v.alle[2]).toBeGreaterThanOrEqual(16);
     expect(v.alle[3]).toBeGreaterThanOrEqual(44);
@@ -270,12 +276,12 @@ for (const [i, p] of PROJECTEN.entries()) {
   });
 }
 
-test('geen horizontaal scrollen op 360, 390, 768, 1024, 1440 en 1920 px (criterium 21, OC5, OC10)', async ({ page }, info) => {
-  test.setTimeout(240_000); // zes breedtes x vijf pagina's, elk helemaal geladen
-  test.skip(info.project.name !== 'desktop', 'breedtes worden hier zelf gezet');
-  for (const [w, h] of [[360, 740], [390, 844], [768, 1024], [1024, 768], [1440, 900], [1920, 1080]]) {
-    await page.setViewportSize({ width: w, height: h });
-    for (const pad of ['/inspiratie', ...PROJECTEN.map(p => p.pad)]) {
+// per pagina een eigen test (zes breedtes, elk helemaal geladen)
+for (const pad of ['/inspiratie', ...PROJECTEN.map(p => p.pad)]) {
+  test(`${pad}: geen horizontaal scrollen op 360, 390, 768, 1024, 1440 en 1920 px (criterium 21, OC5, OC10)`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'breedtes worden hier zelf gezet');
+    for (const [w, h] of [[360, 740], [390, 844], [768, 1024], [1024, 768], [1440, 900], [1920, 1080]]) {
+      await page.setViewportSize({ width: w, height: h });
       await page.goto(pad);
       await page.evaluate(async () => { document.querySelectorAll('img[loading=lazy]').forEach(i => { i.loading = 'eager'; }); for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 20)); } });
       const r = await page.evaluate(async () => {
@@ -287,8 +293,8 @@ test('geen horizontaal scrollen op 360, 390, 768, 1024, 1440 en 1920 px (criteri
       expect(r.breed, `${pad} op ${w}: geen horizontale scroll`).toBeLessThanOrEqual(0);
       expect(r.vergroot, `${pad} op ${w}: niets vergroot`).toEqual([]);
     }
-  }
-});
+  });
+}
 
 test('balk: korte labels op één regel en minstens 8 px links van de burger (OC17)', async ({ page }, info) => {
   test.skip(!['mobiel', 'iphone'].includes(info.project.name), 'op telefoons (Chromium en WebKit)');
@@ -355,7 +361,7 @@ test('kernpad: van het overzicht naar elk project en via "Volgend project" de he
 
 test('homepage Handwerk: Rustig en praktisch en Speels en levendig gaan naar hun project (criterium 13)', async ({ page }) => {
   await page.goto('/');
-  for (const sel of ['#technieken .hoverlijst ul a', '#technieken .kaarten a.kaart']) {
+  for (const sel of ['#technieken .hoverlijst ul a', '#technieken .kaarten a.kaart', '#technieken .lookbook-paneel a']) { // ook de mobiele lookbook-panelen (brief 2026-11-14-homepage-mobiel-stock)
     const h = await page.locator(sel).evaluateAll(as => as.map(a => a.getAttribute('href')));
     expect(h, sel).toEqual(['werkwijze.html#personaliseren', 'inspiratie-siliconen-en-hangers.html', 'prematuurkleding.html', 'inspiratie-knuffels-en-babynest.html']);
   }

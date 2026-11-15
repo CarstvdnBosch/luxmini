@@ -842,6 +842,83 @@
   }
 
   /* ---------------------------------------------------------------
+     5g. Homepage 002 Handwerk op mobiel (≤ 760 px en telefoons liggend; brief 2026-11-14-homepage-mobiel-stock, B):
+         een veegrij met één lookbook per keer en de tabjes 01–04 (tablist). Het actieve paneel volgt uit een
+         IntersectionObserver (drempel 0,6; Safari kent niet overal scrollend). Een tik of pijltoets op een tab scrolt naar
+         het paneel (bij "minder beweging" direct). Niet-actieve panelen zijn inert. De sectie (en dus de balk) krijgt de
+         kleur van het actieve item en doet dan niet mee met de kleurlaag. Er wisselt niets vanzelf.
+         Zonder JavaScript blijft de tablist verborgen en is de rij gewoon veegbaar.
+     --------------------------------------------------------------- */
+  document.querySelectorAll('.lookbook').forEach(function (lb) {
+    var rij = lb.querySelector('.lookbook-rij');
+    var lijst = lb.querySelector('.lookbook-tabs');
+    var sec = lb.closest('section');
+    if (!rij || !lijst || !sec) return;
+    var tabs = Array.prototype.slice.call(lijst.querySelectorAll('[role="tab"]'));
+    var panelen = Array.prototype.slice.call(rij.querySelectorAll('.lookbook-paneel'));
+    if (!tabs.length || tabs.length !== panelen.length) return;
+    var mobiel = window.matchMedia('(max-width: 760px), (hover: none) and (pointer: coarse) and (max-height: 500px)');
+    var eigenKleur = sec.getAttribute('data-achtergrond');
+    var huidig = 0, doel = null, doelTimer = null;
+    lijst.hidden = false;
+    panelen.forEach(function (p, n) { p.setAttribute('role', 'tabpanel'); p.setAttribute('aria-labelledby', tabs[n].id); });
+    function kleurZetten() {
+      if (mobiel.matches) {
+        var kleur = panelen[huidig].getAttribute('data-kleur');
+        sec.classList.remove('met-laag');
+        sec.classList.add('handwerk-kleur');
+        sec.style.backgroundColor = kleur;
+        sec.setAttribute('data-achtergrond', kleur);
+      } else {
+        sec.classList.add('met-laag');
+        sec.classList.remove('handwerk-kleur');
+        sec.style.backgroundColor = '';
+        if (eigenKleur) sec.setAttribute('data-achtergrond', eigenKleur);
+      }
+      laagBijwerken(true);
+      if (balkBijwerken) balkBijwerken(true);
+    }
+    function kies(n) {
+      huidig = n;
+      tabs.forEach(function (t, i) { t.setAttribute('aria-selected', i === n ? 'true' : 'false'); t.tabIndex = i === n ? 0 : -1; });
+      panelen.forEach(function (p, i) { if (i === n) p.removeAttribute('inert'); else p.setAttribute('inert', ''); });
+      kleurZetten();
+    }
+    function ga(n, focus) {
+      kies(n);
+      if (focus) tabs[n].focus();
+      doel = n; clearTimeout(doelTimer);
+      doelTimer = setTimeout(function () { doel = null; }, 1500); // vangnet als het scrollen wordt onderbroken
+      rij.scrollTo({ left: panelen[n].offsetLeft, behavior: stil ? 'auto' : 'smooth' });
+    }
+    tabs.forEach(function (t, n) { t.addEventListener('click', function () { ga(n, false); }); });
+    lijst.addEventListener('keydown', function (e) {
+      var n = tabs.indexOf(document.activeElement), naar = null;
+      if (n < 0) return;
+      if (e.key === 'ArrowRight') naar = (n + 1) % tabs.length;
+      else if (e.key === 'ArrowLeft') naar = (n - 1 + tabs.length) % tabs.length;
+      else if (e.key === 'Home') naar = 0;
+      else if (e.key === 'End') naar = tabs.length - 1;
+      if (naar === null) return;
+      e.preventDefault(); ga(naar, true);
+    });
+    if ('IntersectionObserver' in window) {
+      var lbIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) {
+          if (!it.isIntersecting || it.intersectionRatio < 0.6) return;
+          var n = panelen.indexOf(it.target);
+          if (doel !== null) { if (n !== doel) return; doel = null; clearTimeout(doelTimer); }
+          if (n !== huidig) kies(n);
+        });
+      }, { root: rij, threshold: 0.6 });
+      panelen.forEach(function (p) { lbIo.observe(p); });
+    }
+    var opnieuw = function () { kies(huidig); rij.scrollLeft = panelen[huidig].offsetLeft; };
+    if (mobiel.addEventListener) mobiel.addEventListener('change', opnieuw);
+    kies(0);
+  });
+
+  /* ---------------------------------------------------------------
      5f. Babynest (brief 2026-11-14-babynest-media-en-logo, A): boek, magazine en tablet zoals het Media-overzicht van Stock.
          Ook het atelierboekje op Werkwijze (section.media.boekje, brief 2026-11-14-werkwijze-boekje) gebruikt deze code.
          Komt een blok in beeld, dan schuift het object in (x 150% met een draai → 0, 1,5 s; mobiel van onder) en komen

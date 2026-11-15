@@ -23,9 +23,10 @@ Wat het doet:
     tablet (768, 1024) zes foto's met minstens 12 px tussen kop en foto
   - brief homepage zoals Stock (2026-11-06): homepage hero, 001 Producten
     (drieluik: drie kolommen, producttekst, één pijl-link en één tabstop per
-    kolom, foto boven de tekst op touch, bij aanwijzen witte tekst met 4,5:1 op
+    kolom, foto boven de tekst op touch-tablets en op mobiel de tekst wit op de foto
+    als achtergrond (brief 2026-11-14-homepage-mobiel-stock), bij aanwijzen witte tekst met 4,5:1 op
     de foto (Babynest net zo vol als de andere twee), koppen binnen de kolom op 1025/1280/1440),
-    002 Technieken (vier links, diepe tint bij aanwijzen, kaarten op touch),
+    002 Technieken (vier links, diepe tint bij aanwijzen, kaarten op touch-tablets, op mobiel vier lookbook-panelen met tabjes),
     003 Inspiratie (grote foto, witte tekst 4,5:1 op de sluier, #contact),
     004 Instagram; LET OP's (tijdelijke foto's, babynestfoto, douchehandschoen;
     goedgekeurde teksten en formuliervelden juist zonder LET OP, Carst 14 nov.); prijskaarten en contactlinks met ?onderwerp=;
@@ -377,6 +378,8 @@ LEES_DRIELUIK = r"""() => { const s = document.querySelector('#producten'); if (
         pijlen: [...k.querySelectorAll('a')].map(a => [a.getAttribute('href'), a.getBoundingClientRect().height, getComputedStyle(a).visibility, parseFloat(getComputedStyle(a).opacity)]),
         breedte: r.width, kleur: getComputedStyle(k).backgroundColor, buiten: woorden,
         img: img ? [img.getAttribute('src'), img.getAttribute('loading'), ir.width, ir.height, ir.bottom <= hr.top + 1, img.naturalWidth || 0, getComputedStyle(img.closest('.kern-beeld')).display] : null,
+        vult: img ? (() => { const f = img.closest('.kern-beeld').getBoundingClientRect(); return Math.abs(f.left - r.left) + Math.abs(f.top - r.top) + Math.abs(f.right - r.right) + Math.abs(f.bottom - r.bottom) <= 2 && hr.top >= f.top && hr.bottom <= f.bottom; })() : false,
+        tekstkleur: [...k.querySelectorAll('.kern-tekst .nr, .kern-tekst h2, .kern-tekst p, .kern-tekst a')].map(e => getComputedStyle(e).color),
         tabstops: [...k.querySelectorAll('a, button, [tabindex]')].filter(e => e.tabIndex >= 0).length + (k.tabIndex >= 0 ? 1 : 0) }; }) }; }"""
 
 def controleer_home(page, tag, naam):
@@ -405,13 +408,29 @@ def controleer_home(page, tag, naam):
             fouten.append(f"{ktag}: foto ontbreekt")
         elif naam != "desktop":
             src, _, b, h, boven, nat, disp = k["img"]
-            if disp == "none" or not boven:
+            if naam == "mobiel":
+                # Mobiel-regel 10 (besluit Carst 14 nov., brief 2026-11-14-homepage-mobiel-stock): op mobiel staat de tekst op de foto
+                # (stilstaande achtergrond over het hele blok, ondergrond #2A1C14, sluier) en is alle tekst wit; touch-tablets houden foto boven tekst
+                if disp == "none" or not k["vult"] or k["kleur"] != "rgb(42, 28, 20)" or any(c != "rgb(255, 255, 255)" for c in k["tekstkleur"]):
+                    fouten.append(f"{ktag}: op mobiel vult de foto het blok niet als achtergrond met witte tekst erop ({k['img']}, vult {k['vult']}, {k['kleur']}, {k['tekstkleur']})")
+            elif disp == "none" or not boven:
                 fouten.append(f"{ktag}: op touch staat de foto niet boven de tekst ({k['img']})")
             if nat and b > nat + 0.5:
                 fouten.append(f"{ktag}: foto {src} groter getoond ({b:.0f} px) dan het bestand ({nat} px)")
             # wens Carst 14 nov.: de babynestkolom is gelijk aan de andere twee (nieuwe foto in .kern-beeld, geen ingelijste kleine foto)
             if id_ == "babynest" and ("babynest-boven.jpg" not in src or b > 768.5):
                 fouten.append(f"{ktag}: babynestkolom niet zoals de andere kolommen (foto {src}, {b:.0f} px, max. 768)")
+    if naam == "mobiel":
+        # Mobiel-regel 10: de sluier haalt voor de kleine witte tekst 4,5:1 en voor de kop 3:1 (op de lichtste plekken)
+        for id_, *_r in DRIELUIK:
+            page.evaluate("""id => { const k = document.getElementById(id), i = k.querySelector('.kern-beeld img'); i.loading = 'eager';
+              window.scrollTo(0, k.getBoundingClientRect().top + scrollY - 60); return i.decode().catch(() => {}); }""", id_)
+            page.wait_for_timeout(300)
+            for sel, minimum in [("p.klein", 4.5), ("a.pijl", 4.5), ("h2", 3)]:
+                c = contrast_wit_over_foto(page, f"#{id_} .kern-tekst {sel}", f"#{id_} .kern-beeld")
+                if c is None or c < minimum:
+                    fouten.append(f"{tag} [drieluik {id_}]: wit {sel} haalt op de foto {c and round(c, 2)}:1 (min. {minimum}:1, Mobiel-regel 10)")
+        page.evaluate("window.scrollTo(0, 0)")
     if naam == "desktop":
         breedtes = [round(k["breedte"]) for k in d["kolommen"]]
         if max(breedtes) - min(breedtes) > 1 or d["hoogte"] > 900.5:
@@ -424,7 +443,9 @@ def controleer_home(page, tag, naam):
       return [s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim(), [...s.querySelectorAll('.hoverlijst ul a')].map(a => [a.childNodes[0].textContent.trim(), a.getAttribute('href'), a.dataset.kleur]),
         [...s.querySelectorAll('.sfeer-kaarten a.kaart')].map(a => [a.querySelector('.kaart-naam').textContent.trim(), a.querySelector('.kaart-regel').textContent.trim(), a.getAttribute('href'), a.offsetHeight > 0]),
         [...s.querySelectorAll('.sfeer .productregel')].map(p => p.textContent.trim()), !!s.querySelector('#babykleding'), !!s.querySelector('#siliconen'),
-        [...s.querySelectorAll(':scope > .wrap > a.pijl')].map(a => a.getAttribute('href'))]; }""")
+        [...s.querySelectorAll(':scope > .wrap > a.pijl')].map(a => a.getAttribute('href')),
+        [...s.querySelectorAll('.lookbook-paneel')].map(p => [p.querySelector('h3').textContent.trim(), p.querySelector('.lookbook-regel').textContent.trim(), p.querySelector('a').getAttribute('href'), p.offsetHeight > 0]),
+        [...s.querySelectorAll('.lookbook [role="tab"]')].filter(t => t.offsetHeight > 0).length]; }""")
     if not t:
         fouten.append(f"{tag}: sectie #technieken ontbreekt")
     else:
@@ -432,7 +453,12 @@ def controleer_home(page, tag, naam):
             fouten.append(f"{tag}: Technieken klopt niet ({t[:2]})")
         if [x[:3] for x in t[2]] != [[n, r, h] for n, r, h, _ in TECHNIEKEN] or t[3] != [r for _, r, _, _ in TECHNIEKEN]:
             fouten.append(f"{tag}: kaarten of productregels van Technieken kloppen niet ({t[2]}, {t[3]})")
-        if naam != "desktop" and not all(x[3] for x in t[2]):
+        if naam == "mobiel":
+            # brief 2026-11-14-homepage-mobiel-stock (B, besluit Carst 14 nov.): op mobiel één LUX mini-lookbook per keer met tabjes 01–04
+            # (vervangt de kaarten met witte naam 24 px en productregel 19 px op mobiel); touch-tablets houden de kaarten
+            if [x[:3] for x in t[7]] != [[n, r, h] for n, r, h, _ in TECHNIEKEN] or not all(x[3] for x in t[7]) or t[8] != 4 or any(x[3] for x in t[2]):
+                fouten.append(f"{tag}: op mobiel hoort Handwerk vier lookbook-panelen met tabjes te tonen in plaats van de kaarten ({t[7]}, tabjes {t[8]})")
+        elif naam != "desktop" and not all(x[3] for x in t[2]):
             fouten.append(f"{tag}: op touch staan de kaarten van Technieken niet in beeld")
         if not (t[4] and t[5]):
             fouten.append(f"{tag}: ankers #babykleding en #siliconen horen bovenaan Technieken")
@@ -472,6 +498,9 @@ def controleer_witte_lijn(browser):
         ctx, page = nieuwe_pagina(browser, "index.html", b, h, touch, reduced_motion="reduce")
         r = page.evaluate("() => { const e = document.querySelector('#producten'); window.scrollTo(0, e.getBoundingClientRect().top + scrollY - 70); }")
         page.wait_for_timeout(500)
+        # alleen lijnen in de opmaak tellen, geen letters: op mobiel is de tekst wit op de foto (brief 2026-11-14-homepage-mobiel-stock),
+        # en de dunne stokken van witte letters zijn geen scheidingslijn; daarom de tekst even onzichtbaar (de foto's en vlakken blijven)
+        page.evaluate("() => document.querySelectorAll('#producten .kern-tekst').forEach(e => e.style.visibility = 'hidden')")
         vak = page.evaluate("""() => { const r = document.querySelector('#producten').getBoundingClientRect();
           const k = [...document.querySelectorAll('#producten .kern-kolom')].map(c => Math.round(c.getBoundingClientRect().left));
           return [Math.max(0, r.top - 3), Math.min(innerHeight, r.bottom + 3), k]; }""")
@@ -1550,7 +1579,7 @@ LEES_TEGELS = """async () => { const echt = async i => { const b = new Image(); 
   const uit = []; for (const s of document.querySelectorAll('main > section.project')) { const a = s.querySelectorAll('a'), img = s.querySelector('.project-foto img'), r = img.getBoundingClientRect(), sr = s.getBoundingClientRect(), nat = await echt(img);
   const c = e => getComputedStyle(e).color;
   uit.push({ id: s.id, kleur: getComputedStyle(s).backgroundColor, links: [...a].map(x => [x.getAttribute('href'), Math.round(x.getBoundingClientRect().height)]),
-    kop: (s.querySelector('a.project-link h2') || {}).textContent, foto: !!s.querySelector('a.project-link img'), pijl: (s.querySelector('a.project-link .pijl') || {}).textContent,
+    kop: (s.querySelector('a.project-link h2') || {}).textContent, foto: !!s.querySelector('a.project-link img[alt=""]') && !s.querySelector('a.project-link span h2'), pijl: (s.querySelector('a.project-link .pijl') || {}).textContent,
     lopend: [...s.querySelectorAll('.lopend')].map(l => l.getAttribute('aria-hidden')), tab: [...s.querySelectorAll('a, button, [tabindex]')].filter(e => e.tabIndex >= 0).length,
     kleuren: [c(s.querySelector('.label')), c(s.querySelector('h2')), c(s.querySelector('.project-link .pijl'))],
     b: r.width, h: r.height, l: r.left, nat, boven: sr.top + scrollY, onder: sr.bottom + scrollY }); } return uit; }"""  # nat: het geladen bestand (naturalWidth volgt bij srcset de sizes)
@@ -1650,8 +1679,9 @@ def controleer_projectpaginas(browser):
                     fouten.append(f"{tag}: een foto is hoger dan 810 px of de eerste foto begint onder het eerste scherm ({st['fotos'][0]['top']:.0f})")
             if naam == "mobiel":
                 e = st["fotos"][0]
-                if e["top"] > 844 or e["onder"] > 1688 or st["blok"] > 2954:
-                    fouten.append(f"{tag}: eerste foto niet na hooguit één keer scrollen helemaal in beeld of fotoblok te hoog ({e['top']:.0f}–{e['onder']:.0f}, blok {st['blok']:.0f})")
+                # OC9 (lezing in de brief): bovenkant <= 844, onderkant <= 1688 en hoogte <= 788 (past onder de balk)
+                if e["top"] > 844 or e["onder"] > 1688 or e["h"] > 788 or st["blok"] > 2954:
+                    fouten.append(f"{tag}: eerste foto niet na hooguit één keer scrollen helemaal in beeld (bovenkant <= 844, onderkant <= 1688, hoogte <= 788) of fotoblok te hoog ({e['top']:.0f}–{e['onder']:.0f}, {e['h']:.0f} px hoog, blok {st['blok']:.0f})")
             if [l[:2] for l in st["links"]] != p["links"] or any(l[2] < 44 for l in st["links"]):
                 fouten.append(f"{tag}: pijl-links onder de foto's zijn {st['links']}, verwacht {p['links']}")
             if not st["volgend"] or st["volgend"][:2] != [volgend["pagina"], volgend["naam"]] or st["volgend"][2] != norm_kleur(page, volgend["licht"]):
