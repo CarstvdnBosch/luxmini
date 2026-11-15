@@ -1739,5 +1739,84 @@
     // opnieuw meten zodra de rij in beeld komt (de foto's laden pas bij nadering)
     if ('IntersectionObserver' in window) new IntersectionObserver(function (items) { if (items.some(function (it) { return it.isIntersecting; })) stand(); }).observe(rij);
   });
+  /* ---------------------------------------------------------------
+     Homepage 004 Instagram: het broekje schommelt één keer even (brief 2026-11-15-instagram-pakje-schommelt)
+     Twee uitsneden van dezelfde foto (scripts/broekje-uitknippen.py) komen pas binnen 400 px van het scherm.
+     Start één keer per paginabezoek zodra ≥ 60 % van de foto in beeld is en op zijn vroegst 700 ms na het
+     opkomen (in-beeld). Niet gedecodeerd binnen 2 s: schommelen vervalt, de foto blijft. Alleen tijdens het
+     schommelen liggen de lagen over de foto; daarna verborgen, zonder observer, timer of rAF.
+     Minder beweging of zonder JavaScript: alleen de gewone foto, niets extra geladen.
+     --------------------------------------------------------------- */
+  (function () {
+    var post = document.querySelector('main .insta-foto');
+    var binnen = post && post.querySelector('.insta-binnen');
+    if (!binnen || stil || !('IntersectionObserver' in window) || !Element.prototype.animate) return;
+    var lagen = null, broek = null, achter = null, zichtbaar = false, gedaan = false, timer = 0;
+    var inBeeld = (!post.classList.contains('opkomen') || post.classList.contains('in-beeld')) ? performance.now() : 0;
+    var maakLaag = function (bron, klas, w, h) {
+      var img = document.createElement('img');
+      img.className = klas; img.alt = ''; img.width = w; img.height = h; img.decoding = 'async';
+      img.src = bron;
+      return img;
+    };
+    var laad = function () {
+      if (lagen) return;
+      lagen = document.createElement('span');
+      lagen.className = 'insta-lagen'; lagen.hidden = true; lagen.setAttribute('aria-hidden', 'true');
+      achter = maakLaag('assets/img/ig-outfit-ladder-achtergrond.jpg', 'insta-laag', 384, 224);
+      broek = maakLaag('assets/img/ig-outfit-broekje.webp', 'insta-laag insta-broekje', 384, 224);
+      lagen.appendChild(achter); lagen.appendChild(broek);
+      binnen.appendChild(lagen);
+    };
+    var laadIo = new IntersectionObserver(function (items) {
+      if (items.some(function (it) { return it.isIntersecting; })) { laad(); laadIo.disconnect(); }
+    }, { rootMargin: '400px 0px' });
+    var stopAlles = function () {
+      gedaan = true; clearTimeout(timer);
+      laadIo.disconnect(); startIo.disconnect(); if (klasMo) klasMo.disconnect();
+    };
+    var schommel = function () {
+      var e = 'cubic-bezier(.45,0,.55,1)';
+      lagen.hidden = false;
+      post.dataset.schommel = 'bezig';
+      var anim = broek.animate([
+        { transform: 'skewX(0deg)', offset: 0, easing: e },
+        { transform: 'skewX(2.5deg)', offset: 0.18, easing: e },
+        { transform: 'skewX(-1.6deg)', offset: 0.38, easing: e },
+        { transform: 'skewX(0.9deg)', offset: 0.58, easing: e },
+        { transform: 'skewX(-0.4deg)', offset: 0.78, easing: e },
+        { transform: 'skewX(0deg)', offset: 1 }
+      ], { duration: 2800, fill: 'none' });
+      var klaar = function () { lagen.hidden = true; post.dataset.schommel = 'klaar'; };
+      anim.onfinish = klaar; anim.oncancel = klaar;
+    };
+    var start = function () {
+      if (gedaan || !zichtbaar) return;
+      stopAlles();
+      laad();
+      var wacht = new Promise(function (ok, nee) { setTimeout(nee, 2000); });
+      Promise.race([Promise.all([achter.decode(), broek.decode()]), wacht]).then(schommel, function () {
+        if (lagen && lagen.parentNode) lagen.parentNode.removeChild(lagen);
+        post.dataset.schommel = 'vervallen';
+      });
+    };
+    var plan = function () {
+      clearTimeout(timer);
+      if (gedaan || !zichtbaar || !inBeeld) return;
+      timer = setTimeout(start, Math.max(0, inBeeld + 700 - performance.now()));
+    };
+    var startIo = new IntersectionObserver(function (items) {
+      var it = items[items.length - 1];
+      zichtbaar = it.isIntersecting && it.intersectionRatio >= 0.599; // afronding van de browser op de drempel
+      plan();
+    }, { threshold: [0, 0.6] });
+    var klasMo = inBeeld ? null : new MutationObserver(function () {
+      if (!post.classList.contains('in-beeld')) return;
+      inBeeld = performance.now(); klasMo.disconnect(); klasMo = null; plan();
+    });
+    if (klasMo) klasMo.observe(post, { attributes: true, attributeFilter: ['class'] });
+    laadIo.observe(post);
+    startIo.observe(post);
+  })();
   document.querySelectorAll('[data-jaar]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 })();
