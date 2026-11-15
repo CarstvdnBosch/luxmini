@@ -301,6 +301,176 @@
   }
 
   /* ---------------------------------------------------------------
+     2c. Logo groot → klein (brief 2026-11-14-babynest-media-en-logo, B; ontwerpgate ronde 1): bovenaan het grote "LUX",
+         vast in beeld (position: fixed, zoals de burger). Bij scrollen schuift en schaalt het (transform, linksboven) naar
+         plek en maat van "LUX" in het balklogo; op dat eindpunt komt "LUX mini" (een vaste kopie van het gewone logo) op.
+         Na het eindpunt scrolt "LUX mini" met de pagina mee weg (besluit Carst ronde 5); het eindpunt ligt boven de eerste
+         tekst, dus het ligt na het krimpen nooit op tekst. Daarna neemt het balklogo het over (nooit twee logo's).
+         Op de scrollwaarde zelf (met een muis al afgevlakt door het zachte scrollen), dus zonder eigen animatie: wie
+         halverwege binnenkomt, ziet meteen de juiste stand. Klaar binnen 40% van een schermhoogte en vóór de balk;
+         terug omhoog groeit het weer. Is er naast het menu (vanaf 1280 px) minder dan 70 px hoogte voor het grote logo,
+         dan alleen het gewone logo. Niet bij "minder beweging" (CSS).
+     --------------------------------------------------------------- */
+  var logoEl = document.querySelector('.site-header .logo');
+  var logoGroot = logoEl && logoEl.querySelector('.logo-groot');
+  if (logoGroot && !stil) {
+    var logoKleinBox = logoEl.querySelector('.logo-klein');
+    var logoKlein = logoKleinBox.querySelector('img');
+    var grootImg = logoGroot.querySelector('img');
+    // "LUX mini" op het eindpunt: kopie van het gewone logo (wit en donker, dezelfde kleurregels), zonder tweede naam
+    var logoVast = document.createElement('span');
+    logoVast.className = 'logo-vast';
+    logoVast.setAttribute('aria-hidden', 'true');
+    Array.prototype.forEach.call(logoKleinBox.querySelectorAll('img'), function (img) {
+      var k = img.cloneNode(false); k.alt = ''; k.removeAttribute('fetchpriority'); logoVast.appendChild(k);
+    });
+    logoEl.appendChild(logoVast);
+    var balkLogo = function () {
+      var imgs = document.querySelectorAll('.balk .links img');
+      for (var i = 0; i < imgs.length; i++) if (imgs[i].offsetWidth) return imgs[i];
+      return null;
+    };
+    var logoStand = '', logoMaat = -1, logoBegin = null, logoTekst = null, logoBeeld = null;
+    var kopHeader = document.querySelector('.site-header'), kopMain = document.querySelector('main');
+    // verschuiving door intro of pagina-overgang (header en main staan dan even verschoven): eruit rekenen, anders meet je
+    // een plek die na de intro niet meer klopt en springt het grote "LUX" (CLS, controle ronde 4)
+    var verschoven = function (el) {
+      var t = el ? getComputedStyle(el).transform : 'none';
+      if (!t || t === 'none') return { x: 0, y: 0 };
+      try { var m = new DOMMatrix(t); return { x: m.m41 || 0, y: m.m42 || 0 }; } catch (e) { return { x: 0, y: 0 }; }
+    };
+    var logoBeginMeten = function () { // zonder transform en zonder .vast-klaar: de plek in de header, in documentmaat
+      logoEl.classList.remove('vast-klaar');
+      logoGroot.style.transform = 'none';
+      var r = logoGroot.getBoundingClientRect();
+      logoGroot.style.transform = '';
+      var v = verschoven(kopHeader);
+      logoBegin = { x: r.left - v.x, y: r.top - v.y + window.scrollY };
+      logoTekst = null; logoBeeld = null;
+      logoEl.style.setProperty('--groot-x', logoBegin.x + 'px');
+      logoEl.style.setProperty('--groot-y', logoBegin.y + 'px');
+      logoEl.classList.add('vast-klaar');
+    };
+    // de bovenkant (documentmaat) van de eerste tekst onder de strook x0–x1: het kleine logo mag na het krimpen nooit op tekst
+    // liggen (besluit Carst ronde 5: het scrolt daarna mee weg, dus het eindpunt ligt boven de eerste tekst)
+    var TEKST = 'main p, main h1, main h2, main h3, main li, main dd, main dt, main blockquote, main label, main .caps, main .pijl, footer p, footer a';
+    var eersteTekst = function (x0, x1) {
+      var mv = verschoven(kopMain).y, boven = Infinity;
+      Array.prototype.forEach.call(document.querySelectorAll(TEKST), function (el) {
+        var inMain = kopMain && kopMain.contains(el);
+        Array.prototype.forEach.call(el.getClientRects(), function (q) {
+          if (q.width <= 0 || q.height <= 0 || q.right <= x0 || q.left >= x1) return;
+          var t = q.top + window.scrollY - (inMain ? mv : 0);
+          if (t < boven) boven = t;
+        });
+      });
+      return boven;
+    };
+    // de bovenkant (documentmaat, zonder transform: ook als de hero-foto's met de muis meebewegen) van de eerste hero-foto onder
+    // de strook x0–x1 (ontwerpgate ronde 2: het witte logo krimpt nooit over de lichte hero-foto's). Alleen de hero: de
+    // contactkop is een donkere foto met sluier en de kopfoto van Werkwijze blijft zoals hij is (ontwerpgate ronde 2)
+    var BEELD = '.hero .tegel';
+    var eersteBeeld = function (x0, x1) {
+      var boven = Infinity;
+      Array.prototype.forEach.call(document.querySelectorAll(BEELD), function (el) {
+        if (!el.offsetWidth || !el.offsetHeight) return;
+        var l = 0, t = 0;
+        for (var e = el; e; e = e.offsetParent) { l += e.offsetLeft; t += e.offsetTop; }
+        if (l + el.offsetWidth <= x0 || l >= x1) return;
+        if (t < boven) boven = t;
+      });
+      return boven;
+    };
+    var logoBijwerken = function () {
+      // vanaf 1280 px staat het menu op één regel ernaast (rechts tegen de burger): het grote logo wordt hooguit zo breed
+      // dat de rechterrand 24 px links van de eerste link blijft; past minder dan 70 px hoogte, dan geen groot logo
+      var kleinR = logoKlein.getBoundingClientRect();
+      var menuA = document.querySelector('.site-header .menu a');
+      var naastMenu = !!(menuA && menuA.offsetWidth && window.innerWidth >= 1280);
+      var ruimte = naastMenu ? menuA.getBoundingClientRect().left - 24 - (kleinR.left + kleinR.width * 0.024) : 0;
+      var maatNu = naastMenu ? Math.max(0, Math.min(110, Math.floor(ruimte / (880 / 334) - 1))) : 0;
+      logoEl.classList.toggle('zonder-groot', naastMenu && maatNu < 70);
+      if (maatNu !== logoMaat) { logoMaat = maatNu; logoBegin = null; if (maatNu >= 70) logoEl.style.setProperty('--groot-h', maatNu + 'px'); else logoEl.style.removeProperty('--groot-h'); }
+      if (getComputedStyle(logoGroot).display === 'none') { logoStand = ''; return; }
+      var hGroot = grootImg.offsetHeight, hKlein = logoKlein.offsetHeight;
+      if (!hGroot || !hKlein) return;
+      // begin: de plek van het grote logo in de header bij scrollY 0 (CSS zet het daar eerst absoluut neer: boven ca. 32 px,
+      // mobiel ca. 18 px, zoals de burger); daarna staat het op precies die plek vast in beeld (.vast-klaar), zonder verspringen
+      if (!logoBegin) logoBeginMeten();
+      var x0 = logoBegin.x, y0 = logoBegin.y;
+      // eind: "LUX" in het balklogo (offset binnen de vaste balk, los van het in- en uitschuiven). Pagina's zonder balk
+      // (privacy, bedankt, 404): de maat en plek van het gewone logo bovenaan. Na het eindpunt scrolt "LUX mini" op alle
+      // pagina's met de pagina mee naar boven weg (besluit Carst ronde 5, "meescrollen tot de balk"); daarna neemt de balk over
+      var b = balkLogo(), bx, by, bw, bh;
+      if (b) {
+        bx = b.offsetLeft; by = b.offsetTop; bw = b.offsetWidth; bh = b.offsetHeight;
+        for (var op = b.offsetParent; op && op !== document.body && !op.classList.contains('balk'); op = op.offsetParent) { bx += op.offsetLeft; by += op.offsetTop; }
+      } else {
+        var hv = verschoven(kopHeader);
+        bx = kleinR.left - hv.x; by = kleinR.top - hv.y + window.scrollY; bw = kleinR.width; bh = hKlein;
+      }
+      var x1 = bx + bw * 0.024, y1 = by + bh * 0.054;
+      var s1 = bh * 82 / 93 / hGroot; // 82/93: hoogte van "LUX" in het gewone logo (bestand 248 x 93)
+      // klaar binnen 40% van een schermhoogte, ruim voordat de balk verschijnt (onderkant van de kop 40 px onder de bovenrand)
+      var eind = window.innerHeight * 0.4;
+      if (kopEl) eind = Math.min(eind, Math.max(1, (kopEl.offsetTop + kopEl.offsetHeight - 40) * 0.8));
+      eind = Math.min(eind, Math.max(1, document.documentElement.scrollHeight - window.innerHeight)); // korte pagina (privacy, bedankt, 404): onderaan klein
+      // en zo vroeg dat "LUX mini" op het eindpunt boven de eerste tekst ligt (8 px vrij): het scrolt daarna mee, dus het
+      // komt nooit meer op tekst te liggen
+      if (logoTekst === null) logoTekst = eersteTekst(bx, bx + bw);
+      // en het hele logo (groot én klein) blijft 8 px boven de eerste hero-foto in zijn strook. De onderkant van het krimpende
+      // logo en de bovenkant van de foto bewegen allebei lineair met de scroll; is er bovenaan ruimte, dan is het eindpunt de
+      // krapste plek: de foto staat dan 8 px onder de onderkant van het geheel (groot "LUX" op eindmaat of "LUX mini")
+      if (logoBeeld === null) logoBeeld = eersteBeeld(Math.min(x0, bx), Math.max(x0 + grootImg.offsetWidth, bx + bw));
+      eind = Math.max(1, Math.min(eind, logoTekst - 8 - by - bh, logoBeeld - 8 - Math.max(y1 + hGroot * s1, by + bh)));
+      var p = Math.max(0, Math.min(1, window.scrollY / eind));
+      var s = 1 + (s1 - 1) * p;
+      var dx = (x1 - x0) * p, dy = (y1 - y0) * p;
+      var vaag = Math.max(0, Math.min(1, (p - 0.7) / 0.3)); // de laatste 30%: "LUX mini" komt op, het grote "LUX" gaat weg
+      var weg = Math.max(0, window.scrollY - eind); // na het eindpunt mee omhoog (transform, dus geen verschuiving: CLS 0)
+      // korte pagina (404 op ca. 1165–1215 × 768): kan het logo niet helemaal wegscrollen, dan vervaagt het in de laatste 20 px
+      // van de scroll, zodat er onderaan nooit een half logo blijft staan
+      var maxS = document.documentElement.scrollHeight - window.innerHeight, rest = 1;
+      if (maxS > eind && maxS < eind + by + bh) {
+        var vanaf = Math.max(eind, maxS - 20);
+        rest = 1 - Math.max(0, Math.min(1, (window.scrollY - vanaf) / Math.max(1, maxS - vanaf)));
+      }
+      var stand = [x0.toFixed(1), x1.toFixed(1), y1.toFixed(1), by.toFixed(1), bh, s.toFixed(4), dx.toFixed(2), dy.toFixed(2), vaag.toFixed(3), weg.toFixed(1), eind.toFixed(1), rest.toFixed(3)].join('|');
+      if (stand === logoStand) return;
+      logoStand = stand;
+      logoEl.style.setProperty('--logo-eind', eind.toFixed(1));
+      logoEl.style.setProperty('--vast-x', bx + 'px');
+      logoEl.style.setProperty('--vast-y', by + 'px');
+      logoEl.style.setProperty('--vast-h', bh + 'px');
+      logoEl.style.setProperty('--logo-weg', weg.toFixed(1) + 'px');
+      logoEl.style.setProperty('--logo-s', s.toFixed(4));
+      logoEl.style.setProperty('--logo-dx', dx.toFixed(2) + 'px');
+      logoEl.style.setProperty('--logo-dy', (dy - weg).toFixed(2) + 'px');
+      logoEl.style.setProperty('--logo-groot-o', (1 - vaag).toFixed(3));
+      logoEl.style.setProperty('--logo-klein-o', (vaag * rest).toFixed(3));
+    };
+    // zodra de balk zichtbaar is, neemt het balklogo het over
+    var balkEl = document.querySelector('.balk');
+    if (balkEl) {
+      var overnemen = function () { logoEl.classList.toggle('overgenomen', balkEl.classList.contains('zichtbaar')); };
+      new MutationObserver(overnemen).observe(balkEl, { attributes: true, attributeFilter: ['class'] });
+      overnemen();
+    }
+    var logoGepland = false;
+    window.addEventListener('scroll', function () {
+      if (!logoGepland) { logoGepland = true; requestAnimationFrame(function () { logoGepland = false; logoBijwerken(); }); }
+    }, { passive: true });
+    var logoOpnieuw = function () { logoStand = ''; logoBegin = null; logoBijwerken(); };
+    window.addEventListener('resize', logoOpnieuw);
+    window.addEventListener('load', logoOpnieuw);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(logoOpnieuw); // de menubreedte hangt af van de letter
+    // ook als de letter later binnenkomt (fonts.ready kan al klaar zijn voordat de letter gevraagd is): menu meten bij elke maatwissel
+    var logoMenu = document.querySelector('.site-header .menu');
+    if (logoMenu && 'ResizeObserver' in window) new ResizeObserver(function () { logoOpnieuw(); }).observe(logoMenu);
+    logoBijwerken();
+  }
+
+  /* ---------------------------------------------------------------
      3. Collage: meebewegen en licht kantelen met de muis; de foto's wisselen
         samen per schermhelft (set A "Het atelier" op terracotta, set B
         "Het cadeau" op salie). Op touch en met het toetsenbord via de
@@ -699,6 +869,80 @@
   }
 
   /* ---------------------------------------------------------------
+     5f. Babynest (brief 2026-11-14-babynest-media-en-logo, A): boek, magazine en tablet zoals het Media-overzicht van Stock.
+         Komt een blok in beeld, dan schuift het object in (x 150% met een draai → 0, 1,5 s; mobiel van onder) en komen
+         de regels één voor één op (CSS .anim.binnen). Daarna slaat de kaft open op de scrollpositie: op desktop terwijl het
+         blok vaststaat (hooguit één scherm, CSS sticky), op tablet en mobiel terwijl het object door het beeld gaat (touch native).
+         De tablet wisselt van foto op de scrollpositie. Bij "minder beweging": alles open en direct, de tablet wisselt zonder schuiven.
+     --------------------------------------------------------------- */
+  var mediaBlokken = Array.prototype.slice.call(document.querySelectorAll('main .media'));
+  if (mediaBlokken.length) {
+    var mediaBreed = window.matchMedia('(min-width: 1025px)');
+    var beperk01 = function (x) { return Math.max(0, Math.min(1, x)); };
+    var mediaLaden = function (sec) { // foto's verderop in het blok (tablet, achterkant van de kaft) liggen buiten beeld: alvast in de cache
+      sec.querySelectorAll('.media-object img').forEach(function (img) { var v = new Image(); v.decoding = 'async'; v.src = img.currentSrc || img.src; });
+    };
+    mediaBlokken.forEach(function (sec) {
+      if (!stil) { sec.classList.add('anim'); if (sec.querySelector('.kaft')) { sec.style.setProperty('--open', '0'); sec.style.setProperty('--kaft-o', '1'); } }
+    });
+    var mediaStartZetten = function (sec) { // bovenkant van het object bij scrollY 0 (in documentmaat), hooguit 3/4 scherm
+      sec.mediaStart = Math.min(window.innerHeight * 0.75, sec.querySelector('.media-object').getBoundingClientRect().top + window.scrollY);
+    };
+    var mediaStartOpnieuw = function () { mediaBlokken.forEach(mediaStartZetten); };
+    var mediaBijwerken = function () {
+      var vh = window.innerHeight;
+      mediaBlokken.forEach(function (sec) {
+        var r = sec.getBoundingClientRect();
+        if (r.bottom < -vh || r.top > 2 * vh) return;
+        var p;
+        if (!stil && mediaBreed.matches && r.height > vh + 1) {
+          p = beperk01(-r.top / (r.height - vh)); // vastgezet: 0 bij het begin, 1 aan het eind
+        } else {
+          // tablet en mobiel: de kaft begint pas open te slaan als je scrolt; staat het object bij binnenkomst al hoger
+          // dan 3/4 van het scherm, dan begint het op die plek (anders staat de kaft bij binnenkomst al half open)
+          var o = sec.querySelector('.media-object').getBoundingClientRect();
+          if (sec.mediaStart == null) mediaStartZetten(sec);
+          p = beperk01((sec.mediaStart - o.top) / (vh * 0.5));
+        }
+        if (!stil && sec.querySelector('.kaft')) {
+          var open = sec.classList.contains('binnen') ? beperk01((p - 0.1) / 0.7) : 0;
+          sec.style.setProperty('--open', open.toFixed(3));
+          sec.style.setProperty('--kaft-o', open > 0.995 ? '0' : '1');
+        }
+        var strook = sec.querySelector('.tablet-strook');
+        if (strook) {
+          var stap = Math.min(2, Math.floor(p * 3));
+          strook.style.setProperty('--stap', stap);
+          sec.querySelectorAll('.tablet-puntjes span').forEach(function (s, i) { s.classList.toggle('aan', i === stap); });
+        }
+      });
+    };
+    if ('IntersectionObserver' in window) {
+      var mediaIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) {
+          if (!it.isIntersecting) return;
+          it.target.classList.add('binnen');
+          mediaIo.unobserve(it.target);
+          mediaBijwerken();
+        });
+      }, { rootMargin: '0px 0px -15% 0px' });
+      var laadIo = new IntersectionObserver(function (items) {
+        items.forEach(function (it) { if (it.isIntersecting) { mediaLaden(it.target); laadIo.unobserve(it.target); } });
+      }, { rootMargin: '100% 0px 100% 0px' });
+      mediaBlokken.forEach(function (sec) { mediaIo.observe(sec); laadIo.observe(sec); });
+    } else {
+      mediaBlokken.forEach(function (sec) { sec.classList.add('binnen'); mediaLaden(sec); });
+    }
+    var mediaGepland = false;
+    var mediaPlan = function () { if (!mediaGepland) { mediaGepland = true; requestAnimationFrame(function () { mediaGepland = false; mediaBijwerken(); }); } };
+    window.addEventListener('scroll', mediaPlan, { passive: true });
+    window.addEventListener('resize', function () { mediaStartOpnieuw(); mediaPlan(); });
+    window.addEventListener('load', function () { mediaStartOpnieuw(); mediaPlan(); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { mediaStartOpnieuw(); mediaPlan(); });
+    mediaBijwerken();
+  }
+
+  /* ---------------------------------------------------------------
      5d. Over, "Hoe ik werk": vanaf 761 px een menu met drie stappen.
          Alleen een klik, Enter of Spatie wisselt (aanwijzen en focus niet);
          de tekst wisselt met een crossfade van 0,4 s (CSS). Mobiel en zonder
@@ -864,7 +1108,7 @@
     }, { rootMargin: '0px 0px -8% 0px' });
     document.querySelectorAll('main .label, main .quote, main .stap .klein, main .formaat, main .formaten-voet, main .pijl, main .paar .tekst, main .duo .tekst > p, main .insta-foto, main .insta-tekst > p, main .prijs, main .uitgelicht-tekst, main .contact-inleiding, main .formulier').forEach(function (el, i) {
       // niet in de hero, het statement of de paginakop: wat bij het openen al in beeld staat, staat er meteen (snellere LCP)
-      if (el.closest('.hero') || el.closest('.statement') || el.closest('.pagina-kop, .over-kop, .contact-kop')) return;
+      if (el.closest('.hero') || el.closest('.statement') || el.closest('.pagina-kop, .over-kop, .contact-kop') || el.closest('.media')) return; // Babynest-blokken: eigen regels (5f)
       el.classList.add('opkomen');
       el.style.transitionDelay = ((i % 3) * 0.08).toFixed(2) + 's';
       io.observe(el);
