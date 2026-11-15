@@ -399,6 +399,16 @@ test('inschuiven: 001 (boek) komt van links, ook als het meeloopt op een laag sc
 test('inschuiven: een object dat bij het laden in beeld staat, schuift één keer op tijd in en blijft staan (ontwerp 2, 4)', async ({ page }, info) => {
   test.skip(!isTouch(info), 'tablet en mobiel');
   await beweging(page);
+  // meet in de pagina zelf (geen vertraging van de testrunner): van DOMContentLoaded tot 001 .ingeschoven krijgt
+  await page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      window.__dcl = performance.now();
+      const s = document.getElementById('babynest');
+      if (!s) return;
+      new MutationObserver((_, mo) => { if (s.classList.contains('ingeschoven')) { window.__ingeschoven = performance.now(); mo.disconnect(); } })
+        .observe(s, { attributes: true, attributeFilter: ['class'] });
+    }, { once: true, capture: true });
+  });
   await page.goto('/babynest', { waitUntil: 'domcontentloaded' });
   const t0 = Date.now();
   const begin = await page.evaluate(() => { const r = document.querySelector('#babynest .obj').getBoundingClientRect(); return [(r.left + r.right) / 2, innerWidth]; });
@@ -412,7 +422,8 @@ test('inschuiven: een object dat bij het laden in beeld staat, schuift één kee
     await page.waitForTimeout(100);
   }
   expect(klaarNa, '001 staat op zijn plek').not.toBeNull();
-  expect(klaarNa, `001 op zijn plek na ${klaarNa} ms`).toBeLessThanOrEqual(1500);
+  const opPlek = await page.evaluate(() => window.__ingeschoven - window.__dcl);
+  expect(opPlek, `001 op zijn plek na ${Math.round(opPlek)} ms`).toBeLessThanOrEqual(1500);
   await expect(page.locator('#babynest')).toHaveClass(/\bingeschoven\b/);
   // blijft staan: een klein stukje scrollen schuift het niet terug
   await scrolNaar(page, 40);
@@ -513,8 +524,9 @@ test('echter boek en magazine: rug, plat, randen van bladzijden en schaduw (ontw
     expect(Math.round(mag.over)).toBe(0);
     expect(Math.round(mag.rechts)).toBe(2);
     expect(Math.round(mag.onder)).toBe(2);
-    expect(lagen(boek.blad).filter(l => blurVan(l) === 0)).toHaveLength(rand);
-    expect(lagen(mag.blad).filter(l => blurVan(l) === 0)).toHaveLength(2);
+    // per rand-lijn twee lagen zonder blur: schuin (n, n) en recht omlaag (0, n), zodat de randen onderaan tot de rug doorlopen
+    expect(lagen(boek.blad).filter(l => blurVan(l) === 0)).toHaveLength(2 * rand);
+    expect(lagen(mag.blad).filter(l => blurVan(l) === 0)).toHaveLength(4);
   }
 });
 
@@ -602,4 +614,31 @@ test('desktop: inschuiven ongewijzigd (x ±150% met ±14°, 1,5 s), alleen het u
   expect(Math.abs(m.rot + 14)).toBeLessThanOrEqual(0.2);
   expect(m.t.split(', ')[0]).toBe('1.5s');
   expect(await page.locator('#stof').evaluate(e => e.style.getPropertyValue('--in'))).toBe('');
+});
+
+test('snel scrollen: de kaft draait pas als het label klaar is met opkomen en blijft minstens 12 px eronder (CI 15 nov.)', async ({ page }, info) => {
+  test.skip(!isTouch(info), 'tablet en mobiel (Chromium en WebKit)');
+  await beweging(page);
+  await page.goto('/babynest');
+  await page.waitForTimeout(300);
+  // in één evaluate, zonder pauzes van de testrunner: zo snel als in CI (voorheen 4,9 px bij het magazine, label schoof nog omhoog)
+  const r = await page.evaluate(async () => {
+    const uit = { min: Infinity, gezien: 0, fout: [] }, frame = () => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f)));
+    for (let y = 0; y <= 2400; y += 30) {
+      window.scrollTo({ top: y, behavior: 'instant' }); await frame();
+      for (const e of document.querySelectorAll('main .media')) {
+        if (!e.querySelector('.kaft')) continue;
+        const open = parseFloat(e.style.getPropertyValue('--open'));
+        if (!(open > 0 && open < 1 && e.style.getPropertyValue('--kaft-o') === '1')) continue;
+        const label = e.querySelector('.media-rij > .label');
+        if (getComputedStyle(label).transform !== 'none') uit.fout.push(`${e.id} y ${y}: label beweegt nog bij --open ${open}`);
+        uit.gezien++;
+        uit.min = Math.min(uit.min, e.querySelector('.kaft-voor').getBoundingClientRect().top - label.getBoundingClientRect().bottom);
+      }
+    }
+    return uit;
+  });
+  expect(r.fout).toEqual([]);
+  expect(r.gezien).toBeGreaterThan(3);
+  expect(r.min).toBeGreaterThanOrEqual(12);
 });

@@ -1021,6 +1021,14 @@
       });
     }
 
+    var REGELS_MS = 1250; // label: 0,2 s vertraging + 1 s opkomen (CSS .anim .regel), met een kleine marge
+    var regelsKlaar = function (sec) {
+      if (sec.binnenTijd == null) return false;
+      var rest = REGELS_MS - (performance.now() - sec.binnenTijd);
+      if (rest <= 0) return true;
+      if (!sec.regelsTimer) sec.regelsTimer = setTimeout(function () { sec.regelsTimer = null; mediaPlan(); }, rest + 20);
+      return false;
+    };
     var mediaBijwerken = function () {
       var vh = window.innerHeight;
       mediaBlokken.forEach(function (sec) {
@@ -1047,7 +1055,9 @@
         }
         if (!stil && sec.querySelector('.kaft')) {
           // desktop: pas na binnenkomst; tablet en mobiel: pas als het object op zijn plek staat (--open 0 zolang --in < 1)
-          var magOpen = mediaBreed.matches ? sec.classList.contains('binnen') : klaar;
+          // én het label klaar is met opkomen (y 50 → 0 in 1 s na 0,2 s): anders komt de draaiende kaft bij snel scrollen
+          // tegen het label dat nog omhoog schuift (CI 15 nov.: 6,7 px i.p.v. ≥ 12 px)
+          var magOpen = mediaBreed.matches ? sec.classList.contains('binnen') : (klaar && (stil || regelsKlaar(sec)));
           var open = magOpen ? beperk01((p - 0.1) / 0.7) : 0;
           sec.style.setProperty('--open', open.toFixed(3));
           sec.style.setProperty('--kaft-o', open > 0.995 ? '0' : '1');
@@ -1064,6 +1074,7 @@
       var mediaIo = new IntersectionObserver(function (items) {
         items.forEach(function (it) {
           if (!it.isIntersecting) return;
+          it.target.binnenTijd = performance.now();
           it.target.classList.add('binnen');
           mediaIo.unobserve(it.target);
           mediaBijwerken();
@@ -1074,7 +1085,7 @@
       }, { rootMargin: '100% 0px 100% 0px' });
       mediaBlokken.forEach(function (sec) { mediaIo.observe(sec); laadIo.observe(sec); });
     } else {
-      mediaBlokken.forEach(function (sec) { sec.classList.add('binnen'); mediaLaden(sec); });
+      mediaBlokken.forEach(function (sec) { sec.binnenTijd = -1e9; sec.classList.add('binnen'); mediaLaden(sec); });
     }
     var mediaGepland = false;
     var mediaPlan = function () { if (!mediaGepland) { mediaGepland = true; requestAnimationFrame(function () { mediaGepland = false; mediaBijwerken(); }); } };

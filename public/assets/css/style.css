@@ -1732,17 +1732,21 @@ html:not(.js) img[data-src] { display: none; }
 /* boek en magazine: rechterpagina met daarop de kaft, die om de rug (midden van het objectvak) naar links draait.
    Echter (brief 2026-11-15-babynest-mobiel-inschuiven, ontwerp 4): alleen CSS, binnen het objectvak. ::before is de onderste
    laag (boek: het plat in #8C6E58, magazine: papier) en draagt als enige de diepe schaduw; ::after is de rug. De bladzijde
-   ligt op het plat met overstek (--over) en heeft randen van bladzijden rechts en onder (--randen, box-shadow zonder blur).
+   ligt op het plat met overstek (--over) en heeft randen van bladzijden rechts en onder (--randen, box-shadow zonder blur; per laag
+   schuin (n, n) voor de buitenkant en recht omlaag (0, n), zodat de randen onderaan tot de rug doorlopen, ontwerpgate P2).
+   Het lookbook op de homepage (.papier.spread) blijft plat papier zoals het was.
    --rug: breedte van de rug (mobiel/tablet), --kaft-in: zoveel is de kaft kleiner dan het plat (magazine: de randen). */
 .papier { position: relative; width: 100%; aspect-ratio: 8 / 5; perspective: 2200px;
   --over: 4px; --rand-b: 6px; --kaft-in: 0px; --plat: #8C6E58; --rugkleur: #8C6E58;
   --onder: 0 1px 2px rgba(32, 32, 32, .22), 0 10px 18px -6px rgba(32, 32, 32, .20), 0 30px 50px -14px rgba(32, 32, 32, .34);
-  --randen: 1px 1px 0 #E6DDCF, 2px 2px 0 #FBF8F3, 3px 3px 0 #E6DDCF, 4px 4px 0 #FBF8F3, 5px 5px 0 #E6DDCF, 6px 6px 0 rgba(32, 32, 32, .2);
-  --randen-l: -1px 1px 0 #E6DDCF, -2px 2px 0 #FBF8F3, -3px 3px 0 #E6DDCF, -4px 4px 0 #FBF8F3, -5px 5px 0 #E6DDCF, -6px 6px 0 rgba(32, 32, 32, .2); }
+  --randen: 1px 1px 0 #E6DDCF, 0 1px 0 #E6DDCF, 2px 2px 0 #FBF8F3, 0 2px 0 #FBF8F3, 3px 3px 0 #E6DDCF, 0 3px 0 #E6DDCF, 4px 4px 0 #FBF8F3, 0 4px 0 #FBF8F3,
+    5px 5px 0 #E6DDCF, 0 5px 0 #E6DDCF, 6px 6px 0 rgba(32, 32, 32, .2), 0 6px 0 rgba(32, 32, 32, .2);
+  --randen-l: -1px 1px 0 #E6DDCF, 0 1px 0 #E6DDCF, -2px 2px 0 #FBF8F3, 0 2px 0 #FBF8F3, -3px 3px 0 #E6DDCF, 0 3px 0 #E6DDCF, -4px 4px 0 #FBF8F3, 0 4px 0 #FBF8F3,
+    -5px 5px 0 #E6DDCF, 0 5px 0 #E6DDCF, -6px 6px 0 rgba(32, 32, 32, .2), 0 6px 0 rgba(32, 32, 32, .2); }
 .magazine.papier { --over: 0px; --rand-b: 2px; --kaft-in: 2px; --plat: #FBF8F3; --rugkleur: var(--inkt);
   --onder: 0 1px 2px rgba(32, 32, 32, .22), 0 10px 18px -6px rgba(32, 32, 32, .20), 0 30px 50px -14px rgba(32, 32, 32, .26);
-  --randen: 1px 1px 0 #E6DDCF, 2px 2px 0 rgba(32, 32, 32, .2);
-  --randen-l: -1px 1px 0 #E6DDCF, -2px 2px 0 rgba(32, 32, 32, .2); }
+  --randen: 1px 1px 0 #E6DDCF, 0 1px 0 #E6DDCF, 2px 2px 0 rgba(32, 32, 32, .2), 0 2px 0 rgba(32, 32, 32, .2);
+  --randen-l: -1px 1px 0 #E6DDCF, 0 1px 0 #E6DDCF, -2px 2px 0 rgba(32, 32, 32, .2), 0 2px 0 rgba(32, 32, 32, .2); }
 .papier::before, .papier::after { content: ""; position: absolute; top: 0; height: 100%; pointer-events: none; }
 /* desktop: het rechterplat; het linkerplat komt pas als de kaft voorbij 90° is (onder de kaft, die het altijd bedekt) */
 .papier::before { z-index: -2; right: 0; left: calc(50% - 50% * max(0, var(--open, 1) * 2 - 1)); background: var(--plat); box-shadow: var(--onder); }
@@ -1818,7 +1822,8 @@ html:not(.js) img[data-src] { display: none; }
 }
 @media (max-width: 760px) {
   .papier { --over: 3px; --rand-b: 4px;
-    --randen: 1px 1px 0 #E6DDCF, 2px 2px 0 #FBF8F3, 3px 3px 0 #E6DDCF, 4px 4px 0 rgba(32, 32, 32, .2); }
+    --randen: 1px 1px 0 #E6DDCF, 0 1px 0 #E6DDCF, 2px 2px 0 #FBF8F3, 0 2px 0 #FBF8F3, 3px 3px 0 #E6DDCF, 0 3px 0 #E6DDCF,
+      4px 4px 0 rgba(32, 32, 32, .2), 0 4px 0 rgba(32, 32, 32, .2); }
 }
 @media (max-width: 760px) {
   .media-object { max-width: none; }
@@ -1924,6 +1929,8 @@ html:not(.js) img[data-src] { display: none; }
   .lookbook-paneel > a:hover { opacity: 1; }
   .papier.spread { display: block; width: min(calc(100vw - 32px), 400px, calc((100svh - 190px) * 1.6)); aspect-ratio: 8 / 5; perspective: none; }
   .papier.spread .blad { display: block; width: 50%; }
+  .papier.spread::before, .papier.spread::after { content: none; } /* geen plat en rug: het lookbook blijft zoals het was */
+  .papier.spread .blad { top: 0; height: 100%; box-shadow: 0 30px 50px rgba(32, 32, 32, .28); }
   .papier.spread .blad-links { left: 0; }
   .papier.spread .blad-rechts { left: 50%; }
   /* ruimte onder de foto voor twee regels: "Prematuur-kleding" past op 360–390 px niet op één regel in spatiekapitalen van 13 px */
