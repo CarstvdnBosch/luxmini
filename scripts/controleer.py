@@ -1682,6 +1682,13 @@ def controleer_projectpaginas(browser):
                 # OC9 (lezing in de brief): bovenkant <= 844, onderkant <= 1688 en hoogte <= 788 (past onder de balk)
                 if e["top"] > 844 or e["onder"] > 1688 or e["h"] > 788 or st["blok"] > 2954:
                     fouten.append(f"{tag}: eerste foto niet na hooguit één keer scrollen helemaal in beeld (bovenkant <= 844, onderkant <= 1688, hoogte <= 788) of fotoblok te hoog ({e['top']:.0f}–{e['onder']:.0f}, {e['h']:.0f} px hoog, blok {st['blok']:.0f})")
+            if naam in ("desktop", "tablet"):  # OC8 (ontwerpgate 15 nov.): hooguit 75 tekens per regel in de uitleg
+                regels = page.evaluate("""() => { const el = document.querySelector('.pagina-kop .project-uitleg'), m = new Map(), w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+                  for (let n = w.nextNode(); n; n = w.nextNode()) for (let i = 0; i < n.length; i++) { const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 1);
+                    const b = r.getClientRects()[0]; if (b && b.width) { const k = Math.round(b.top); m.set(k, (m.get(k) || '') + n.data[i]); } }
+                  return [...m.values()].map(x => x.trim().length); }""")
+                if max(regels) > 75:
+                    fouten.append(f"{tag}: de uitleg heeft regels van meer dan 75 tekens ({regels})")
             if [l[:2] for l in st["links"]] != p["links"] or any(l[2] < 44 for l in st["links"]):
                 fouten.append(f"{tag}: pijl-links onder de foto's zijn {st['links']}, verwacht {p['links']}")
             if not st["volgend"] or st["volgend"][:2] != [volgend["pagina"], volgend["naam"]] or st["volgend"][2] != norm_kleur(page, volgend["licht"]):

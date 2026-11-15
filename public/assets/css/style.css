@@ -1197,12 +1197,12 @@ html.zacht-scrollen { scroll-behavior: auto; }
 }
 
 /* ---------- Inspiratie, projectpagina's (brief 2026-11-15-inspiratie-projecten) ----------
-   Kop: de uitleg als lopende tekst in inkt, 18 px (mobiel 17), max. 34em.
+   Kop: de uitleg als lopende tekst in inkt, 18 px (mobiel 17), max. 31em (<= 75 tekens per regel).
    001 Foto's: het verspringende raster van Prematuurkleding 003 (.voorbeelden: 12 kolommen, gat 16 / 96 px, tablet 12 / 56 px;
    mobiel 2 kolommen, gat 12 / 24 px). Plaats per foto via --d (kolommen vanaf 761 px), --dt (verschuiving desktop; tablet de helft),
    --m en --mt (mobiel). Elke foto in zijn eigen verhouding, niet bijgesneden, en nooit breder dan het bestand (width-attribuut,
    max. 100%). Het kader schuift één keer in (.inschuif, zonder schaal); de eerste foto (LCP) staat er direct. */
-.pagina-kop .project-uitleg { margin: 0; max-width: 34em; font-size: 18px; line-height: 1.6; color: var(--inkt); }
+.pagina-kop .project-uitleg { margin: 0; max-width: 31em; /* ca. 72 tekens per regel (ontwerpgate 15 nov., OC8: <= 75) */ font-size: 18px; line-height: 1.6; color: var(--inkt); }
 .project-fotos .sectie { padding-top: 56px; gap: 48px; } /* eerste foto op 1440 x 900 bovenin beeld (OC9) */
 .projectfoto { margin: 0; min-width: 0; grid-column: var(--d, auto); margin-top: var(--dt, 0px); --vertraging: var(--vd, 0s); } /* vertraging per plek in de rij */
 .projectfoto-beeld { display: block; }

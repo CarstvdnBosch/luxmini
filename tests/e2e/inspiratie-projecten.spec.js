@@ -192,14 +192,14 @@ for (const [i, p] of PROJECTEN.entries()) {
     const html = await (await page.request.get(p.pad)).text();
     expect(html).toMatch(new RegExp(`<!-- LET OP: wacht op akkoord Carst \\(uitleg project ${p.naam}, brief 2026-11-15-inspiratie-projecten\\) -->\\s*<p class="project-uitleg">`));
     expect(html).toMatch(new RegExp(`<!-- LET OP: wacht op akkoord Carst \\(title en description project ${p.naam}, brief 2026-11-15-inspiratie-projecten\\) -->\\s*<title>`));
-    // OC8: wit h1 >= 40 px, uitleg inkt 18 px (mobiel >= 17), hooguit 34em breed
+    // OC8: wit h1 >= 40 px, uitleg inkt 18 px (mobiel >= 17), hooguit 31em breed (ontwerpgate 15 nov.; was 34em)
     const kop = await page.evaluate(() => { const h = document.querySelector('h1'), u = document.querySelector('.project-uitleg'), cs = getComputedStyle(u);
       return [getComputedStyle(h).color, parseFloat(getComputedStyle(h).fontSize), cs.color, parseFloat(cs.fontSize), u.getBoundingClientRect().width / parseFloat(cs.fontSize)]; });
     expect(kop[0]).toBe(WIT);
     expect(kop[1]).toBeGreaterThanOrEqual(40);
     expect(kop[2]).toBe(INKT);
     expect(kop[3]).toBeGreaterThanOrEqual(['desktop'].includes(info.project.name) ? 18 : 17);
-    expect(kop[4]).toBeLessThanOrEqual(34.01);
+    expect(kop[4]).toBeLessThanOrEqual(31.01);
     // criterium 10: eigen meta met canonical zonder .html en og:image uit de groep
     const meta = await page.evaluate(() => Object.fromEntries(['link[rel="canonical"]', 'meta[property="og:url"]', 'meta[property="og:title"]', 'meta[property="og:description"]', 'meta[property="og:image"]', 'meta[name="description"]']
       .map(q => [q, (document.querySelector(q) || {}).href || (document.querySelector(q) || {}).content || ''])));
@@ -427,5 +427,58 @@ test('touch: alle tikdoelen op de vijf pagina\'s minstens 44 px, niets alleen bi
     const verborgen = await page.evaluate(() => [...document.querySelectorAll('main .project-onder, main .project-link .pijl, main .projectfoto figcaption')].filter(e => {
       let o = 1; for (let x = e; x; x = x.parentElement) o *= parseFloat(getComputedStyle(x).opacity); return o < 1 || getComputedStyle(e).visibility !== 'visible'; }).length);
     expect(verborgen, `${pad}: alles zichtbaar zonder aanwijzen`).toBe(0);
+  }
+});
+
+// Tekens per visuele regel van een tekstblok (letters op dezelfde regelhoogte samen), zonder de spatie aan het regeleinde
+const tekensPerRegel = (page, sel) => page.evaluate(sel => {
+  const el = document.querySelector(sel), regels = new Map();
+  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) for (let i = 0; i < n.length; i++) {
+    const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + 1);
+    const b = r.getClientRects()[0]; if (!b || !b.width) continue;
+    const k = Math.round(b.top); regels.set(k, (regels.get(k) || '') + n.data[i]);
+  }
+  return [...regels.values()].map(t => t.trim().length);
+}, sel);
+
+for (const p of PROJECTEN) {
+  test(`${p.id}: uitleg in de kop hooguit 75 tekens per regel op 1440 en 768 px (OC8, principe 4)`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop', 'breedtes worden hier zelf gezet');
+    for (const [w, h] of [[1440, 900], [768, 1024]]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.goto(p.pad);
+      await wachtOpRust(page);
+      const regels = await tekensPerRegel(page, '.pagina-kop .project-uitleg');
+      expect(regels.length, `${w}: meer dan één regel`).toBeGreaterThan(1);
+      expect(Math.max(...regels), `${w} px: tekens per regel ${regels.join(', ')}`).toBeLessThanOrEqual(75);
+    }
+  });
+}
+
+test('001 Foto\'s: de laag staat al in de projecttint zodra het blok in beeld komt (ontwerpgate P2)', async ({ page }) => {
+  for (const p of PROJECTEN) {
+    await page.goto(p.pad);
+    await wachtOpRust(page);
+    expect(await page.locator('#fotos').getAttribute('data-laag-lijn')).toBe('0.99');
+    // geen witte tekst in 001 (voorwaarde voor een eigen wissellijn, CLAUDE.md)
+    expect(await page.evaluate(() => [...document.querySelectorAll('#fotos *')].filter(e => e.childNodes.length && [...e.childNodes].some(n => n.nodeType === 3 && n.data.trim()) && getComputedStyle(e).color === 'rgb(255, 255, 255)').length)).toBe(0);
+    // het blok komt in beeld: de laag is (na de overgang) de lichte tint
+    await page.evaluate(() => { const s = document.getElementById('fotos'); window.scrollTo(0, Math.max(0, s.getBoundingClientRect().top + scrollY - innerHeight * 0.97)); });
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('.achtergrond')).backgroundColor), { message: p.id }).toBe(p.licht);
+  }
+});
+
+test('mobiel: liggende foto\'s over de volle breedte, staande, vierkante en kleine in paren; fotoblok binnen 3,5 schermen (ontwerpgate P1, OC12)', async ({ page }, info) => {
+  test.skip(!['mobiel', 'iphone'].includes(info.project.name), 'op telefoons');
+  for (const p of PROJECTEN) {
+    await page.goto(p.pad);
+    const m = await page.evaluate(() => { const v = document.querySelector('#fotos .voorbeelden'), vb = v.getBoundingClientRect();
+      return { b: vb.width, h: vb.height, fotos: [...v.querySelectorAll('img')].map(i => ({ src: i.getAttribute('src'), w: +i.getAttribute('width'), hh: +i.getAttribute('height'), b: i.getBoundingClientRect().width })) }; });
+    for (const f of m.fotos) {
+      if (f.w > f.hh && f.w >= m.b) expect(Math.abs(f.b - m.b), `${f.src}: liggend, volle breedte`).toBeLessThanOrEqual(1);
+      if (f.w > f.hh && f.w < m.b) expect(f.b, `${f.src}: klein liggend, in een paar`).toBeLessThan(m.b / 2 + 1);
+    }
+    expect(m.h, `${p.id}: fotoblok`).toBeLessThanOrEqual(info.project.name === 'mobiel' ? 2954 : 3.5 * info.project.use.viewport.height);
   }
 });
