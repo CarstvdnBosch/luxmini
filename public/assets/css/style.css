@@ -673,12 +673,44 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .kern-kolom .kern-tekst .klein { max-width: 300px; font-size: 16px; line-height: 1.7; }
   .kern-kolom .kern-tekst .pijl { margin-top: 0; min-height: 44px; font-size: 16px; }
 }
+/* Mobiel staand in twee stappen (brief 2026-11-15-homepage-mobiel-tweetraps, A): de tekst staat bovenin (72 px) en blijft in
+   beide stappen op dezelfde plek; de sluier is donker bovenin (.66 over 420 px) en lichter naar onderen (.28). De kolom heeft de
+   paletkleur van het blok (perzik · oker · mauve): die is alleen te zien in stap 1, daarna dekt de foto met #2A1C14 het blok.
+   Zonder JavaScript, bij minder beweging en op liggende telefoons staat alles direct in stap 2. */
+@media (max-width: 760px) {
+  .kern-kolommen .kern-kolom { justify-content: flex-start; padding: 72px var(--rand) 48px; }
+  .kern-kolommen .kolom-box { background: var(--perzik); }
+  .kern-kolommen .kolom-prem { background: var(--oker); }
+  .kern-kolommen .kolom-nest { background: var(--mauve); }
+  .kern-kolom .kern-masker::after { background: linear-gradient(to bottom, rgba(42,28,20,.66) 0, rgba(42,28,20,.66) 420px, rgba(42,28,20,.28) 100%); }
+  .kern-kolom .kern-tekst .klein { font-size: 18px; line-height: 1.6; }
+  /* Stap 2 (eindstand) en de overgangen ernaartoe: foto onthult van boven naar beneden (1 s, niet schalen), daarna worden nr en
+     kop wit (0,4 s na 0,2 s) en komen zin en pijl-link van onder op (y 50 -> 0, 1 s, na 0,3 en 0,4 s). De algemene opkom- en
+     woordanimaties doen hier niet mee (!important wint van de vertraging die main.js inline zet bij .opkomen). */
+  .js .drieluik.stappen .kern-beeld, .js .drieluik.stappen .kern-masker { transition: transform 1s cubic-bezier(.215,.61,.355,1); }
+  .js .drieluik.stappen .kern-tekst { transition: color .4s var(--rustig) .2s; }
+  .js .drieluik.stappen .kern-tekst .woorden-kop .w > span { transform: none; transition: none; }
+  .js .drieluik.stappen .kern-tekst .klein, .js .drieluik.stappen .kern-tekst .pijl { opacity: 1; transform: none; transition: opacity 1s cubic-bezier(.215,.61,.355,1), transform 1s cubic-bezier(.215,.61,.355,1); transition-delay: .3s !important; }
+  .js .drieluik.stappen .kern-tekst .pijl { transition-delay: .4s !important; }
+  /* Stap 1 (rust): effen paletkleur, alleen nr en kop in inkt; foto buiten de kolom; zin en pijl-link onzichtbaar maar
+     voorleesbaar en focusbaar (geen display/visibility/aria-hidden). Focus in het blok zet het meteen in stap 2. */
+  .js .drieluik.stappen .kern-kolom:not(.aangekomen):not(:focus-within) .kern-beeld { transform: translateY(-101%); }
+  .js .drieluik.stappen .kern-kolom:not(.aangekomen):not(:focus-within) .kern-masker { transform: translateY(101%); }
+  .js .drieluik.stappen .kern-kolom:not(.aangekomen):not(:focus-within) .kern-tekst { color: var(--inkt); }
+  .js .drieluik.stappen .kern-kolom:not(.aangekomen):not(:focus-within) .kern-tekst .klein,
+  .js .drieluik.stappen .kern-kolom:not(.aangekomen):not(:focus-within) .kern-tekst .pijl { opacity: 0; transform: translateY(50px); pointer-events: none; }
+  .js .drieluik.stappen .kern-kolom:not(.aangekomen) { cursor: pointer; }
+  /* al voorbij de drempel bij laden, na een anker of na een sprong: direct stap 2, zonder overgang */
+  .js .drieluik.stappen .kern-kolom.direct, .js .drieluik.stappen .kern-kolom.direct *,
+  .js .drieluik.stappen-wissel .kern-kolom, .js .drieluik.stappen-wissel .kern-kolom * { transition: none !important; }
+}
 /* Telefoon liggend: twee helften, links de tekst op effen #2A1C14 (45 %), rechts de foto (55 %) met een verloop naar de tekst */
 @media (hover: none) and (pointer: coarse) and (max-height: 500px) {
-  .kern-kolommen .kern-kolom { height: 100svh; justify-content: center; padding: 16px calc(55% + 24px) 72px var(--rand); }
+  .kern-kolommen .kern-kolom { height: 100svh; justify-content: center; padding: 16px calc(55% + 24px) 72px var(--rand); background: #2A1C14; }
   .kern-kolom .kern-beeld { inset: 0 0 0 auto; width: 55%; }
   .kern-kolom .kern-masker::after { background: linear-gradient(to right, #2A1C14 0, rgba(42,28,20,.28) 100%); }
   .kern-kolom .kern-tekst .kop-m { font-size: clamp(34px, 9svh, 40px); }
+  .kern-kolom .kern-tekst .klein { font-size: 16px; line-height: 1.7; }
 }
 
 /* =====================================================================
