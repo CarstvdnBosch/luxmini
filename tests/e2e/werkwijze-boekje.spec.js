@@ -209,9 +209,16 @@ test('tablet en mobiel: de draaiende kaft blijft minstens 12 px onder het label 
   await page.goto('/werkwijze');
   const s = page.locator('#atelier');
   const top = await s.evaluate(e => e.getBoundingClientRect().top + scrollY);
-  let min = Infinity, gezien = 0;
+  let min = Infinity, gezien = 0, labelStaat = false;
   for (let y = Math.max(0, top - 1000); y <= top + 900; y += 30) {
     await scrolNaar(page, y);
+    // de kaft draait pas als het label klaar is met opkomen (brief 2026-11-15-babynest-mobiel-inschuiven, CI 15 nov.);
+    // wacht daar één keer op zodra het blok binnen is, anders is de test in CI sneller dan het label en draait er nog niets
+    if (!labelStaat && await s.evaluate(e => e.classList.contains('binnen'))) {
+      await expect.poll(() => s.locator('.media-rij > .label').evaluate(e => getComputedStyle(e).transform), { message: 'label in rust' }).toBe('none');
+      await page.waitForTimeout(100); // de timer van main.js (1,25 s na .binnen) werkt de stand bij
+      labelStaat = true;
+    }
     const x = await s.evaluate(e => ({ binnen: e.classList.contains('binnen'), open: parseFloat(e.style.getPropertyValue('--open')), zicht: e.style.getPropertyValue('--kaft-o') === '1',
       vrij: e.querySelector('.kaft-voor').getBoundingClientRect().top - e.querySelector('.media-rij > .label').getBoundingClientRect().bottom }));
     if (x.binnen && x.zicht && x.open > 0 && x.open < 1) { gezien++; min = Math.min(min, x.vrij); }
