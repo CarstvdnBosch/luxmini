@@ -655,6 +655,31 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .achtergrond, .achtergrond.traag, .js .hero-kleur, .js .balk { transition: none; } /* laag, bovenkant en balk wisselen direct (stond hier vóór het drieluik) */
   .kern-beeld, .kern-masker, .kern-masker img, .kern-tekst, .kern-tekst .kop-m { transition: none !important; }
 }
+/* Mobiel (≤ 760 px en telefoons liggend; brief 2026-11-14-homepage-mobiel-stock, A): elk product is een eigen blok over de volle
+   breedte met de foto als stilstaande achtergrond (cover, niet inschuiven of schalen) en een warme sluier; de tekst staat onderaan
+   in wit (nr, kop 40 px, zin en pijl-link 16 px; op de lichtste plek minstens 4,5:1). Ondergrond #2A1C14, ook zolang de foto laadt.
+   Touch-tablets (761–1024 px) houden de foto boven de tekst. */
+@media (max-width: 760px), (hover: none) and (pointer: coarse) and (max-height: 500px) {
+  .kern-label { position: static; padding: var(--ritme) var(--rand) 0; }
+  .kern-kolommen { grid-template-columns: minmax(0, 1fr); margin-top: 32px; }
+  .kern-kolommen .kern-kolom { height: clamp(520px, calc(100svh - 96px), 720px); justify-content: flex-end; padding: 0 var(--rand) 48px; background: #2A1C14; }
+  .kern-kolom .kern-beeld { display: block; position: absolute; inset: 0; z-index: -1; margin: 0; aspect-ratio: auto; overflow: hidden; transform: none; transition: none; }
+  .kern-kolom .kern-masker { position: absolute; inset: 0; overflow: hidden; background: #2A1C14; transform: none; transition: none; }
+  .kern-kolom .kern-masker img { opacity: 1; transform: none; transition: none; }
+  .kern-kolom .kern-masker::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(42,28,20,.66) 0, rgba(42,28,20,.66) 380px, rgba(42,28,20,.28) 100%); }
+  .kolom-box .kern-masker img { object-position: 30% 50%; }
+  .kern-kolom .kern-tekst { width: 100%; gap: 20px; color: var(--wit); }
+  .kern-kolom .kern-tekst .kop-m { font-size: 40px; line-height: 1.08; }
+  .kern-kolom .kern-tekst .klein { max-width: 300px; font-size: 16px; line-height: 1.7; }
+  .kern-kolom .kern-tekst .pijl { margin-top: 0; min-height: 44px; font-size: 16px; }
+}
+/* Telefoon liggend: twee helften, links de tekst op effen #2A1C14 (45 %), rechts de foto (55 %) met een verloop naar de tekst */
+@media (hover: none) and (pointer: coarse) and (max-height: 500px) {
+  .kern-kolommen .kern-kolom { height: 100svh; justify-content: center; padding: 16px calc(55% + 24px) 72px var(--rand); }
+  .kern-kolom .kern-beeld { inset: 0 0 0 auto; width: 55%; }
+  .kern-kolom .kern-masker::after { background: linear-gradient(to right, #2A1C14 0, rgba(42,28,20,.28) 100%); }
+  .kern-kolom .kern-tekst .kop-m { font-size: clamp(34px, 9svh, 40px); }
+}
 
 /* =====================================================================
    002 Portfolio: vijf sferen (naar de portfoliolijst van Stock)
@@ -1839,4 +1864,67 @@ html:not(.js) img[data-src] { display: none; }
 @media (prefers-reduced-motion: no-preference) and (max-width: 760px) {
   /* de header scrolt mee op mobiel: ruimte voor het grote logo vast gereserveerd (geen verspringing bij het krimpen) */
   .js .site-header .wrap { padding-bottom: max(12px, calc(var(--groot-h) + 2px + 12px - 44px)); }
+}
+
+/* ---------- Homepage 002 Handwerk op mobiel: een opengeslagen LUX mini-lookbook per item (brief 2026-11-14-homepage-mobiel-stock, B) ----------
+   Alleen ≤ 760 px en telefoons liggend; daarboven blijven de hover-lijst en de touch-kaarten zoals ze zijn. Elk paneel is 100 % breed
+   op zijn eigen lichte paletkleur (alle tekst inkt) en is één link (object, naam en productregel). De rij veegt met scroll-snap zonder
+   scrollbalk; de tabjes 01–04 zijn de bediening (main.js: tab-rollen, inert, kleur van sectie en balk). Zonder JavaScript: alleen de
+   veegrij, met een dunne scrollbalk voor een muis. Het object hergebruikt het papier van de babynestpagina (.papier, .blad). */
+.lookbook { display: none; }
+@media (max-width: 760px), (hover: none) and (pointer: coarse) and (max-height: 500px) {
+  .js .hoverlijst.sferen, .hoverlijst.sferen, .kaarten.sfeer-kaarten, .js .kaarten.sfeer-kaarten { display: none; }
+  .js #technieken > .sectie { padding-bottom: calc(var(--ritme) / 2); }
+  .js #technieken.handwerk-kleur { transition: background-color .75s var(--rustig); }
+  #technieken > .sectie { gap: 32px; }
+  .lookbook { display: flex; flex-direction: column; align-items: center; gap: 32px; margin-inline: calc(-1 * var(--rand)); }
+  .lookbook-rij { position: relative; display: flex; width: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; scroll-behavior: smooth; }
+  .lookbook-rij::-webkit-scrollbar { display: none; }
+  .lookbook-paneel { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; background: var(--item-kleur); padding: 8px 16px 0; }
+  .lookbook-paneel > a { display: flex; flex-direction: column; align-items: center; text-align: center; color: var(--inkt); text-decoration: none; font-size: 16px; }
+  .lookbook-paneel > a:hover { opacity: 1; }
+  .papier.spread { display: block; width: min(calc(100vw - 32px), 400px, calc((100svh - 190px) * 1.6)); aspect-ratio: 8 / 5; perspective: none; }
+  .papier.spread .blad { display: block; width: 50%; }
+  .papier.spread .blad-links { left: 0; }
+  .papier.spread .blad-rechts { left: 50%; }
+  /* ruimte onder de foto voor twee regels: "Prematuur-kleding" past op 360–390 px niet op één regel in spatiekapitalen van 13 px */
+  .papier.spread .blad img { height: calc(94% - 50px); }
+  .papier.spread .blad-regel { position: absolute; left: 7%; right: 4%; bottom: 10px; font-family: var(--serif); font-size: 13px; line-height: 1.2; letter-spacing: .1em; text-transform: uppercase; hyphens: manual; -webkit-hyphens: manual; color: var(--inkt); }
+  .lookbook-naam { margin: 44px 0 0; font-family: var(--display); font-weight: 400; font-size: 40px; line-height: 1.08; color: inherit; }
+  .lookbook-regel { display: inline-flex; align-items: center; gap: 14px; min-height: 44px; margin-top: 4px; font-family: var(--sans); font-size: 16px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; }
+  .lookbook-regel svg { width: 28px; height: 10px; flex: none; }
+  .lookbook-tabs { display: flex; justify-content: center; gap: 8px; }
+  .lookbook-tabs[hidden] { display: none; }
+  .lookbook-tabs [role="tab"] { width: 48px; min-height: 44px; padding: 0; border: 0; background: none; font-family: var(--serif); font-size: 16px; line-height: 1; color: var(--inkt); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .lookbook-tabs [role="tab"] > span:first-child { position: relative; display: inline-block; }
+  .lookbook-tabs [role="tab"] > span:first-child::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left center; transition: transform .5s cubic-bezier(.2,.7,.2,1); }
+  .lookbook-tabs [role="tab"][aria-selected="true"] > span:first-child::after { transform: none; }
+  #technieken .sectie > .pijl.midden { align-self: center; font-size: 16px; }
+}
+@media (hover: hover) and (pointer: fine) and (max-width: 760px) { html:not(.js) .lookbook-rij { scrollbar-width: thin; } html:not(.js) .lookbook-rij::-webkit-scrollbar { display: initial; } }
+@media (prefers-reduced-motion: reduce) {
+  .lookbook-rij { scroll-behavior: auto; }
+  .js #technieken.handwerk-kleur, .lookbook-tabs [role="tab"] > span:first-child::after { transition: none; }
+}
+
+/* ---------- Homepage 004 Instagram op mobiel: een eigen post van het atelier (brief 2026-11-14-homepage-mobiel-stock, C) ----------
+   Witte kaart op grijsblauw (rechte hoeken, zonder rand of schaduw): profielregel met het LUX-logo als avatar (geen link), foto 4:5,
+   drie eigen lijniconen (decoratief, geen knoppen, geen tellers), de bestaande kop als bijschrift (28 px), zin en pijl-link.
+   Geen Instagram-logo, kleurverloop of nagemaakte interface. Desktop en tablet blijven zoals ze zijn. */
+.insta-profiel, .insta-iconen { display: none; }
+@media (max-width: 760px), (hover: none) and (pointer: coarse) and (max-height: 500px) {
+  .insta-blok { display: flex; flex-direction: column; align-items: stretch; gap: 0; width: 100%; max-width: 400px; margin: 0 auto; background: var(--wit); }
+  .insta-profiel { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .insta-avatar { display: flex; align-items: center; justify-content: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--terracotta); box-shadow: 0 0 0 2px var(--wit), 0 0 0 3px var(--terracotta); }
+  .insta-avatar img { width: 26px; height: auto; }
+  .insta-naam { font-family: var(--sans); font-size: 16px; font-weight: 600; line-height: 1.3; color: var(--inkt); }
+  .insta-foto { width: 100%; max-width: none; }
+  .insta-foto img { aspect-ratio: 4 / 5; object-position: 50% 40%; }
+  .insta-iconen { display: flex; gap: 18px; padding: 14px 14px 0; color: var(--inkt); pointer-events: none; }
+  .insta-iconen svg { width: 24px; height: 24px; flex: none; }
+  .insta-tekst { gap: 12px; padding: 10px 14px 16px; }
+  .insta-tekst .kop-l { font-size: 28px; line-height: 1.12; }
+  .insta-tekst .kop-l br { display: none; }
+  .insta-tekst .klein { font-size: 16px; line-height: 1.6; }
+  .insta-tekst .pijl { min-height: 44px; font-size: 16px; }
 }
