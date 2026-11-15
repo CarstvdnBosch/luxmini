@@ -4,6 +4,7 @@
 import { test, expect } from './hulp.js';
 
 const BRIEF = 'brief 2026-11-14-homepage-mobiel-stock';
+// Aangepast door brief 2026-11-15-homepage-mobiel-tweetraps (A): tekst bovenin, kolom in de paletkleur, zin 18 px staand.
 // staand: 360 × 740, 390 × 844, 430 × 932 (390 × 664 = het project iphone); liggend: 844 × 390 (touch, hoogte ≤ 500 px)
 const SCHERMEN = [[360, 740], [390, 844], [430, 932], [844, 390]];
 const INKT = 'rgb(32, 32, 32)', WIT = 'rgb(255, 255, 255)';
@@ -23,12 +24,14 @@ async function nieuweTelefoon(browser, info, b, h, extra = {}) {
 const naarSectie = (page, sel) => page.evaluate(s => { const e = document.querySelector(s); window.scrollTo(0, e.getBoundingClientRect().top + scrollY - 84); }, sel);
 
 test.describe('telefoon', () => {
+  // Deze toetsen draaien met minder beweging: dan staat elk drieluikblok direct in stap 2 (brief 2026-11-15-homepage-mobiel-tweetraps,
+  // criterium 7). De twee stappen zelf toetst tests/e2e/homepage-mobiel-tweetraps.spec.js.
   test.beforeEach(({}, info) => { test.skip(info.project.name !== 'mobiel', 'eigen schermmaten in Chromium (WebKit: zie de iPhone-toets hieronder)'); });
 
   // Criteria 1–5 en ontwerpcriteria 1, 4 en 5
   for (const [b, h] of SCHERMEN) {
     const liggend = b > 760;
-    test(`001 Producten ${b} × ${h}: foto als stilstaande achtergrond, witte tekst onderaan, balk perzik (${BRIEF}, A)`, async ({ browser }, info) => {
+    test(`001 Producten ${b} × ${h}: foto als stilstaande achtergrond, witte tekst (staand bovenin), balk perzik (${BRIEF}, A)`, async ({ browser }, info) => {
       const ctx = await nieuweTelefoon(browser, info, b, h);
       const page = await ctx.newPage();
       await page.goto('/');
@@ -37,7 +40,8 @@ test.describe('telefoon', () => {
       const m = await page.evaluate(() => [...document.querySelectorAll('#producten .kern-kolom')].map(k => {
         const r = k.getBoundingClientRect(), beeld = k.querySelector('.kern-beeld'), f = beeld.getBoundingClientRect(), img = beeld.querySelector('img');
         const delen = [k.querySelector('.nr'), k.querySelector('h2'), k.querySelector('p.klein'), k.querySelector('a.pijl')];
-        return { id: k.id, hoogte: r.height, breedte: r.width, links: r.left, onder: r.bottom, kleur: getComputedStyle(k).backgroundColor,
+        return { id: k.id, hoogte: r.height, breedte: r.width, links: r.left, onder: r.bottom, kleur: getComputedStyle(k).backgroundColor, masker: getComputedStyle(k.querySelector('.kern-masker')).backgroundColor,
+          nrBoven: delen[0].getBoundingClientRect().top - r.top,
           beeld: [f.left - r.left, f.top - r.top, r.right - f.right, r.bottom - f.bottom, f.width], cover: getComputedStyle(img).objectFit,
           transform: [getComputedStyle(beeld).transform, getComputedStyle(k.querySelector('.kern-masker')).transform, getComputedStyle(img).transform],
           opacity: getComputedStyle(img).opacity, loading: img.getAttribute('loading'),
@@ -47,12 +51,15 @@ test.describe('telefoon', () => {
       }));
       expect(m.map(k => k.id)).toEqual(['kraamcadeauboxen', 'prematuurkleding', 'babynest']);
       for (const k of m) {
-        expect(k.kleur, `${k.id}: ondergrond #2A1C14`).toBe('rgb(42, 28, 20)');
+        // brief 2026-11-15-homepage-mobiel-tweetraps: staand heeft de kolom de paletkleur van stap 1 en dekt de foto (ondergrond #2A1C14) het blok in stap 2
+        expect(k.masker, `${k.id}: ondergrond van de foto #2A1C14`).toBe('rgb(42, 28, 20)');
+        if (liggend) expect(k.kleur, `${k.id}: liggend tekst op #2A1C14`).toBe('rgb(42, 28, 20)');
         expect(k.breedte, `${k.id}: blok over de volle breedte`).toBeGreaterThanOrEqual(b - 1);
         if (!liggend) {
           expect(k.hoogte, `${k.id}: blok ≤ schermhoogte − 56`).toBeLessThanOrEqual(h - 56 + 0.5);
           expect(k.beeld.slice(0, 4).every(x => Math.abs(x) <= 1), `${k.id}: de foto vult het hele blok (${k.beeld})`).toBe(true);
-          expect(k.tekstOnder, `${k.id}: tekst onderaan (48 px)`).toBeLessThanOrEqual(49);
+          // brief 2026-11-15-homepage-mobiel-tweetraps (ontwerpcriterium 4): de tekst staat bovenin, nr 72 px onder de bovenrand (was onderaan, 48 px)
+          expect(Math.abs(k.nrBoven - 72), `${k.id}: tekst bovenin (nr ${k.nrBoven} px)`).toBeLessThanOrEqual(2);
         } else {
           expect(Math.abs(k.hoogte - h), `${k.id}: liggend één scherm hoog`).toBeLessThanOrEqual(1);
           expect(Math.abs(k.beeld[2]) <= 1 && Math.abs(k.beeld[4] - b * 0.55) <= 1, `${k.id}: liggend de foto rechts op 55 % (${k.beeld})`).toBe(true);
@@ -63,7 +70,8 @@ test.describe('telefoon', () => {
         expect(k.loading, `${k.id}: foto blijft lazy`).toBe('lazy');
         expect([...k.volgorde].sort((x, y) => x - y), `${k.id}: volgorde nr, kop, zin, pijl-link`).toEqual(k.volgorde);
         expect(k.kleuren.every(c => c === WIT), `${k.id}: alle tekst wit (${k.kleuren})`).toBe(true);
-        expect(k.maten, `${k.id}: kop ≥ 34 px, zin en pijl-link 16 px`).toEqual([expect.any(Number), 16, 16]);
+        // zin staand 18 px / 1,6 (brief 2026-11-15-homepage-mobiel-tweetraps, ontwerpcriterium 4), liggend 16 px zoals na #88
+        expect(k.maten, `${k.id}: kop ≥ 34 px, zin ${liggend ? 16 : 18} px en pijl-link 16 px`).toEqual([expect.any(Number), liggend ? 16 : 18, 16]);
         expect(k.maten[0]).toBeGreaterThanOrEqual(34);
         expect(k.pijl, `${k.id}: pijl-link minstens 44 px`).toBeGreaterThanOrEqual(43.5);
       }

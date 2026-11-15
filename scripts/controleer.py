@@ -376,14 +376,51 @@ LEES_DRIELUIK = r"""() => { const s = document.querySelector('#producten'); if (
       const woorden = (() => { const rg = document.createRange(); rg.selectNodeContents(h); return [...rg.getClientRects()].some(x => x.width && (x.right > r.right + 1 || x.left < r.left - 1)); })();
       return { id: k.id, kop: schoon(h.textContent), tekst: [...k.querySelectorAll('p.klein')].map(p => schoon(p.textContent)),
         pijlen: [...k.querySelectorAll('a')].map(a => [a.getAttribute('href'), a.getBoundingClientRect().height, getComputedStyle(a).visibility, parseFloat(getComputedStyle(a).opacity)]),
-        breedte: r.width, kleur: getComputedStyle(k).backgroundColor, buiten: woorden,
+        breedte: r.width, kleur: getComputedStyle(k).backgroundColor, masker: k.querySelector('.kern-masker') ? getComputedStyle(k.querySelector('.kern-masker')).backgroundColor : '', buiten: woorden,
         img: img ? [img.getAttribute('src'), img.getAttribute('loading'), ir.width, ir.height, ir.bottom <= hr.top + 1, img.naturalWidth || 0, getComputedStyle(img.closest('.kern-beeld')).display] : null,
         vult: img ? (() => { const f = img.closest('.kern-beeld').getBoundingClientRect(); return Math.abs(f.left - r.left) + Math.abs(f.top - r.top) + Math.abs(f.right - r.right) + Math.abs(f.bottom - r.bottom) <= 2 && hr.top >= f.top && hr.bottom <= f.bottom; })() : false,
         tekstkleur: [...k.querySelectorAll('.kern-tekst .nr, .kern-tekst h2, .kern-tekst p, .kern-tekst a')].map(e => getComputedStyle(e).color),
         tabstops: [...k.querySelectorAll('a, button, [tabindex]')].filter(e => e.tabIndex >= 0).length + (k.tabIndex >= 0 ? 1 : 0) }; }) }; }"""
 
+# Brief 2026-11-15-homepage-mobiel-tweetraps (A): op mobiel staand twee stappen. Stap 1: paletkleur, nr en kop in inkt, zin en
+# pijl-link met opacity 0 (wel in de DOM en focusbaar), foto buiten de kolom. Stap 2 (eenmalig): foto met sluier en witte tekst.
+LEES_STAP1 = r"""() => [...document.querySelectorAll('#producten .kern-kolom')].map(k => { const r = k.getBoundingClientRect(), b = k.querySelector('.kern-beeld').getBoundingClientRect();
+  const s = e => getComputedStyle(k.querySelector(e));
+  return [k.id, k.classList.contains('aangekomen'), s('h2').color, s('.nr').color, s('p.klein').opacity, s('a.pijl').opacity, s('a.pijl').visibility, s('a.pijl').display,
+    k.querySelector('a.pijl').tabIndex, getComputedStyle(k).backgroundColor, b.bottom <= r.top + 0.5, r.top >= innerHeight * 0.5]; })"""
+
+def drieluik_stappen(page, tag):
+    """Mobiel met beweging: in rust stap 1; na het scrollen naar elk blok (bovenrand boven 50 %) stap 2, ook na terug omhoog."""
+    # opnieuw openen bovenaan: eerdere controles (horizontaal scrollen halverwege) hebben de blokken al eenmalig in stap 2 gezet
+    # instant: html heeft scroll-behavior: smooth; een zachte scroll die nog loopt wordt bij herladen halverwege hersteld (CI-run
+    # 43733337103: blok 1 stond daardoor al boven de 50 %-lijn en terecht direct in stap 2)
+    page.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })")
+    page.wait_for_function("() => scrollY === 0")
+    page.goto(page.url.split("#")[0], wait_until="load"); page.wait_for_timeout(400)  # nieuwe navigatie: geen herstelde scrollpositie
+    if not page.evaluate("() => document.querySelector('#producten').classList.contains('stappen')"):
+        fouten.append(f"{tag}: het drieluik staat op mobiel niet in twee stappen (#producten mist .stappen, brief 2026-11-15)"); return
+    kleuren = dict((d[0], norm_kleur(page, d[4])) for d in DRIELUIK)
+    for rust in page.evaluate(LEES_STAP1):
+        id_ = rust[0]
+        if not rust[11]:
+            # begint het blok al boven de 50 %-lijn, dan hoort het direct in stap 2 te staan (ontwerprichting punt 2)
+            if not rust[1]:
+                fouten.append(f"{tag} [drieluik {id_}]: het blok begint boven de 50 %-lijn maar staat niet direct in stap 2: {rust}")
+            continue
+        if rust[1] or rust[2:6] != ["rgb(32, 32, 32)", "rgb(32, 32, 32)", "0", "0"] or rust[6] != "visible" or rust[7] == "none" or rust[8] < 0 or rust[9] != kleuren[id_] or not rust[10]:
+            fouten.append(f"{tag} [drieluik {id_}]: stap 1 klopt niet (bovenaan nog stap 1, inkt op {kleuren[id_]}, zin en pijl-link opacity 0 maar in de DOM en focusbaar, foto buiten de kolom): {rust}")
+    for id_, *_r in DRIELUIK:
+        page.evaluate("""id => { const k = document.getElementById(id); window.scrollTo({ top: k.getBoundingClientRect().top + scrollY - innerHeight * 0.3, behavior: 'instant' }); }""", id_)
+        page.wait_for_timeout(1600)  # foto 1 s, zin en pijl-link 1 s na 0,4 s
+    page.evaluate("window.scrollTo(0, 0)"); page.wait_for_timeout(200)
+    niet = [x[0] for x in page.evaluate(LEES_STAP1) if not x[1]]
+    if niet:
+        fouten.append(f"{tag}: na het scrollen (en terug omhoog) staan deze blokken niet in stap 2: {niet}")
+
 def controleer_home(page, tag, naam):
     """Brief 2026-11-06, criteria 2, 3 en 9 en ontwerpcriteria 1, 6, 8, 12 en 13."""
+    if naam == "mobiel":
+        drieluik_stappen(page, tag)  # daarna staat elk blok in stap 2 (eenmalig), zoals de toetsen hieronder verwachten
     d = page.evaluate(LEES_DRIELUIK)
     if not d:
         fouten.append(f"{tag}: sectie #producten (001 — Producten) ontbreekt"); return
@@ -411,8 +448,9 @@ def controleer_home(page, tag, naam):
             if naam == "mobiel":
                 # Mobiel-regel 10 (besluit Carst 14 nov., brief 2026-11-14-homepage-mobiel-stock): op mobiel staat de tekst op de foto
                 # (stilstaande achtergrond over het hele blok, ondergrond #2A1C14, sluier) en is alle tekst wit; touch-tablets houden foto boven tekst
-                if disp == "none" or not k["vult"] or k["kleur"] != "rgb(42, 28, 20)" or any(c != "rgb(255, 255, 255)" for c in k["tekstkleur"]):
-                    fouten.append(f"{ktag}: op mobiel vult de foto het blok niet als achtergrond met witte tekst erop ({k['img']}, vult {k['vult']}, {k['kleur']}, {k['tekstkleur']})")
+                # brief 2026-11-15-homepage-mobiel-tweetraps: de ondergrond #2A1C14 zit in het masker van de foto; de kolom zelf heeft de paletkleur van stap 1
+                if disp == "none" or not k["vult"] or k["masker"] != "rgb(42, 28, 20)" or any(c != "rgb(255, 255, 255)" for c in k["tekstkleur"]):
+                    fouten.append(f"{ktag}: op mobiel vult de foto het blok niet als achtergrond met witte tekst erop ({k['img']}, vult {k['vult']}, {k['masker']}, {k['tekstkleur']})")
             elif disp == "none" or not boven:
                 fouten.append(f"{ktag}: op touch staat de foto niet boven de tekst ({k['img']})")
             if nat and b > nat + 0.5:
@@ -1057,7 +1095,7 @@ def pijl_meer(page, tag):
     for sectie, tekst, doel in HOME_PIJLEN:
         zoek = f"() => [...document.querySelectorAll('{sectie} a.pijl')].find(a => {'true' if tekst is None else repr(tekst) + ' === a.textContent.trim()'})"
         page.evaluate(f"() => {{ const a = ({zoek})(); if (a) a.scrollIntoView({{ block: 'center', behavior: 'instant' }}); }}")
-        page.wait_for_timeout(1300)  # opkomen bij scrollen duurt 0,9 s
+        page.wait_for_timeout(1600)  # opkomen bij scrollen duurt 0,9 s; op mobiel stap 2 van het drieluik 1,4 s (brief 2026-11-15-homepage-mobiel-tweetraps)
         st = page.evaluate(f"""() => {{ const a = ({zoek})();
           if (!a) return null; const c = getComputedStyle(a), r = a.getBoundingClientRect();
           let o = 1; for (let e = a; e; e = e.parentElement) o *= parseFloat(getComputedStyle(e).opacity);
