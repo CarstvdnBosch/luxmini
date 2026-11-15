@@ -1907,3 +1907,24 @@ html:not(.js) img[data-src] { display: none; }
   .js #technieken.handwerk-kleur, .lookbook-tabs [role="tab"] > span:first-child::after { transition: none; }
 }
 
+/* ---------- Homepage 004 Instagram op mobiel: een eigen post van het atelier (brief 2026-11-14-homepage-mobiel-stock, C) ----------
+   Witte kaart op grijsblauw (rechte hoeken, zonder rand of schaduw): profielregel met het LUX-logo als avatar (geen link), foto 4:5,
+   drie eigen lijniconen (decoratief, geen knoppen, geen tellers), de bestaande kop als bijschrift (28 px), zin en pijl-link.
+   Geen Instagram-logo, kleurverloop of nagemaakte interface. Desktop en tablet blijven zoals ze zijn. */
+.insta-profiel, .insta-iconen { display: none; }
+@media (max-width: 760px), (hover: none) and (pointer: coarse) and (max-height: 500px) {
+  .insta-blok { display: flex; flex-direction: column; align-items: stretch; gap: 0; width: 100%; max-width: 400px; margin: 0 auto; background: var(--wit); }
+  .insta-profiel { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .insta-avatar { display: flex; align-items: center; justify-content: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--terracotta); box-shadow: 0 0 0 2px var(--wit), 0 0 0 3px var(--terracotta); }
+  .insta-avatar img { width: 26px; height: auto; }
+  .insta-naam { font-family: var(--sans); font-size: 16px; font-weight: 600; line-height: 1.3; color: var(--inkt); }
+  .insta-foto { width: 100%; max-width: none; }
+  .insta-foto img { aspect-ratio: 4 / 5; object-position: 50% 40%; }
+  .insta-iconen { display: flex; gap: 18px; padding: 14px 14px 0; color: var(--inkt); pointer-events: none; }
+  .insta-iconen svg { width: 24px; height: 24px; flex: none; }
+  .insta-tekst { gap: 12px; padding: 10px 14px 16px; }
+  .insta-tekst .kop-l { font-size: 28px; line-height: 1.12; }
+  .insta-tekst .kop-l br { display: none; }
+  .insta-tekst .klein { font-size: 16px; line-height: 1.6; }
+  .insta-tekst .pijl { min-height: 44px; font-size: 16px; }
+}

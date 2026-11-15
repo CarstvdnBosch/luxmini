@@ -257,19 +257,72 @@ test.describe('telefoon', () => {
     expect(m.sectie).toBe(HANDWERK[3][3]);
     await ctx.close();
   });
+
+  // Criterium 11–13 en ontwerpcriterium 10
+  for (const [b, h] of SCHERMEN) {
+    test(`004 Instagram ${b} × ${h}: een eigen post op een witte kaart, zonder tellers of Instagram-logo (${BRIEF}, C)`, async ({ browser }, info) => {
+      const ctx = await nieuweTelefoon(browser, info, b, h);
+      const page = await ctx.newPage();
+      await page.goto('/');
+      await naarSectie(page, 'section[data-label*="Instagram"]');
+      await page.evaluate(() => { const i = document.querySelector('.insta-foto img'); i.loading = 'eager'; return i.decode().catch(() => {}); });
+      const m = await page.evaluate(() => {
+        const kaart = document.querySelector('.insta-blok'), r = kaart.getBoundingClientRect();
+        const delen = ['.insta-profiel', '.insta-foto img', '.insta-iconen', '.insta-tekst h2', '.insta-tekst p.klein', '.insta-tekst a.pijl'].map(s => kaart.querySelector(s));
+        const av = kaart.querySelector('.insta-avatar'), avr = av.getBoundingClientRect(), foto = delen[1].getBoundingClientRect();
+        const iconen = delen[2];
+        return { kleur: getComputedStyle(kaart).backgroundColor, breed: r.width, links: r.left, rechts: innerWidth - r.right, schaduw: getComputedStyle(kaart).boxShadow, rand: getComputedStyle(kaart).borderTopWidth,
+          volgorde: delen.map(d => d.getBoundingClientRect().top),
+          avatar: [avr.width, avr.height, getComputedStyle(av).borderRadius, getComputedStyle(av).backgroundColor, av.querySelector('img').getAttribute('alt')],
+          naam: [kaart.querySelector('.insta-naam').textContent.trim(), parseFloat(getComputedStyle(kaart.querySelector('.insta-naam')).fontSize), getComputedStyle(kaart.querySelector('.insta-naam')).color],
+          profielLink: !!kaart.querySelector('.insta-profiel a'),
+          foto: [foto.width / foto.height, delen[1].getAttribute('alt'), foto.left - r.left, r.right - foto.right],
+          iconen: [iconen.getAttribute('aria-hidden'), iconen.querySelectorAll('svg').length, [...iconen.querySelectorAll('svg')].every(s => s.getAttribute('focusable') === 'false'),
+            [...iconen.querySelectorAll('a, button, [tabindex]')].length, getComputedStyle(iconen).pointerEvents],
+          kop: [delen[3].textContent.replace(/\s+/g, ' ').trim(), parseFloat(getComputedStyle(delen[3]).fontSize)],
+          zin: delen[4].textContent.trim(), links2: [...kaart.querySelectorAll('a')].map(a => [a.getAttribute('href'), a.getBoundingClientRect().height]),
+          cijfers: kaart.innerText.replace(/luxmini2020/gi, '').match(/\d/g),
+          merk: [...kaart.querySelectorAll('img')].map(i => i.getAttribute('src')).filter(s => /insta|ig-logo|instagram/i.test(s) && !/ig-outfit/.test(s)) };
+      });
+      expect(m.kleur, 'witte kaart').toBe(WIT);
+      expect(m.schaduw + ' ' + m.rand, 'zonder schaduw en rand').toBe('none 0px');
+      expect(m.breed, 'kaart ≤ 400 px').toBeLessThanOrEqual(400.5);
+      if (b <= 760) expect(Math.abs(m.links - Math.min(32, b * 0.082)), `kaart 100 % binnen de rand (links ${m.links})`).toBeLessThanOrEqual(1);
+      expect(Math.abs(m.links - m.rechts), 'kaart gecentreerd').toBeLessThanOrEqual(1);
+      expect([...m.volgorde].sort((x, y) => x - y), 'profiel, foto, iconen, kop, zin, pijl-link').toEqual(m.volgorde);
+      expect(m.avatar, 'rond avatar van 40 px op terracotta met het LUX-logo').toEqual([40, 40, '50%', 'rgb(188, 133, 101)', '']);
+      expect(m.naam).toEqual(['luxmini2020', 16, INKT]);
+      expect(m.profielLink, 'de profielregel is geen link').toBe(false);
+      expect(Math.abs(m.foto[0] - 0.8), `foto 4:5 (${m.foto[0]})`).toBeLessThanOrEqual(0.01);
+      expect(m.foto[1]).toBe('Mauve overslagshirtje met ruches en een flared broekje aan een houten ladder, op Instagram');
+      expect(Math.abs(m.foto[2]) + Math.abs(m.foto[3]), 'foto van rand tot rand').toBeLessThanOrEqual(1);
+      expect(m.iconen, 'drie decoratieve iconen, niet focusbaar, geen knoppen').toEqual(['true', 3, true, 0, 'none']);
+      expect(m.kop[0]).toBe('Volg het atelier op Instagram');
+      expect(m.kop[1]).toBeGreaterThanOrEqual(24);
+      expect(m.zin).toBe('Nieuwe stukjes uit het atelier, zo van de naaimachine.');
+      expect(m.links2.map(l => l[0]), 'precies twee links, allebei naar het profiel').toEqual(['https://www.instagram.com/Luxmini2020/', 'https://www.instagram.com/Luxmini2020/']);
+      expect(m.links2.every(l => l[1] >= 43.5), 'tikdoelen ≥ 44 px').toBe(true);
+      expect(m.cijfers, 'geen aantallen of andere cijfers in de kaart').toBeNull();
+      expect(m.merk, 'geen Instagram-logo').toEqual([]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), 'geen horizontaal scrollen').toBe(b);
+      await ctx.close();
+    });
+  }
 });
 
 // WebKit/iPhone (390 × 664): de belangrijkste maten ook in Safari
-test(`iPhone: drieluikblok past onder de balk, één lookbook in beeld (${BRIEF})`, async ({ page }, info) => {
+test(`iPhone: drieluikblok past onder de balk, één lookbook in beeld, post 4:5 (${BRIEF})`, async ({ page }, info) => {
   test.skip(info.project.name !== 'iphone', 'alleen Safari op de iPhone');
   await page.goto('/');
   const h = page.viewportSize().height;
   const m = await page.evaluate(() => ({
     blokken: [...document.querySelectorAll('#producten .kern-kolom')].map(k => k.getBoundingClientRect().height),
     paneel: (() => { const rij = document.querySelector('.lookbook-rij').getBoundingClientRect(); return [...document.querySelectorAll('.lookbook-paneel')].filter(p => { const r = p.getBoundingClientRect(); return r.left >= rij.left - 1 && r.right <= rij.right + 1; }).length; })(),
+    foto: (() => { const r = document.querySelector('.insta-foto img').getBoundingClientRect(); return r.width / r.height; })(),
     breed: document.documentElement.scrollWidth }));
   for (const b of m.blokken) expect(b).toBeLessThanOrEqual(h - 56 + 0.5);
   expect(m.paneel).toBe(1);
+  expect(Math.abs(m.foto - 0.8)).toBeLessThanOrEqual(0.01);
   expect(m.breed).toBe(390);
 });
 
@@ -297,11 +350,12 @@ test.describe('zonder JavaScript', () => {
 });
 
 // Criterium 15 en ontwerpcriterium 11: desktop en touch-tablets houden het oude gedrag
-test(`desktop en tablet: geen lookbook; drieluik, Handwerk en Instagram zoals ze waren (${BRIEF}, criterium 15)`, async ({ page }, info) => {
+test(`desktop en tablet: geen lookbook en geen post; drieluik, Handwerk en Instagram zoals ze waren (${BRIEF}, criterium 15)`, async ({ page }, info) => {
   test.skip(!['desktop', 'tablet'].includes(info.project.name), 'alleen vanaf 761 px');
   await page.goto('/');
   const m = await page.evaluate(() => ({
     lookbook: getComputedStyle(document.querySelector('.lookbook')).display,
+    post: ['.insta-profiel', '.insta-iconen'].map(s => getComputedStyle(document.querySelector(s)).display),
     kaarten: getComputedStyle(document.querySelector('.sfeer-kaarten')).display,
     lijst: getComputedStyle(document.querySelector('.hoverlijst.sferen')).display,
     kolommen: getComputedStyle(document.querySelector('.kern-kolommen')).gridTemplateColumns.split(' ').length,
@@ -310,6 +364,7 @@ test(`desktop en tablet: geen lookbook; drieluik, Handwerk en Instagram zoals ze
     insta: getComputedStyle(document.querySelector('.insta-blok')).display,
     sectie: [document.querySelector('#technieken').classList.contains('met-laag'), document.querySelector('#technieken').style.backgroundColor] }));
   expect(m.lookbook).toBe('none');
+  expect(m.post).toEqual(['none', 'none']);
   expect(m.kolommen, 'drieluik in drie kolommen').toBe(3);
   expect(m.kleur, 'Prematuurkleding op oker').toBe('rgb(200, 159, 103)');
   expect(m.insta, 'Instagram: foto met tekst ernaast').toBe('grid');
