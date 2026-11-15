@@ -87,3 +87,26 @@ Vragen aan website-ontwerper:
 - Bestandsgrootte: per bestand niet groter dan het origineel, samen hooguit 1,5 × het origineel.
 - We gaan verder met de webversie van 480 × 640 (het grotere bestand is nog open).
 - Snijrand van de mouwen: eerst beoordeelt website-ontwerper of het pakje onzichtbaar kan schommelen; zo niet, dan legt de hoofdsessie de alternatieven aan Carst voor.
+
+## Besluit Carst (15 nov., na proefvideo's A, B en C)
+**Optie B: alleen het broekje.** Het hele pakje kan niet onzichtbaar schommelen (beide mouwen lopen tot de fotorand; elke draaiing schuift een rechte snijrand naar binnen). Acceptatiecriterium 4 wordt daarom: *alleen het broekje beweegt met `skewX`, de bovenrand vast op de onderkant van de zoom van het shirt; shirt, hangertje, kaartje, ladder en muur staan stil.* Criterium 5 ("het pakje") geldt voor het broekje.
+
+## Ontwerprichting (website-ontwerper, 15 nov.; optie B)
+1. **Wat beweegt.** Alleen het broekje, scheef getrokken (`transform: skewX()`), `transform-origin` precies op de onderkant van de zoom van het shirt (ca. y 429 in het bestand). Shirt, hangertje "62", kaartje, ladder en muur staan stil. Het schaduwrandje van de broekzoompjes op de onderste sport (4–6 px, zachte rand) zit in de bewegende laag.
+2. **Lagen en verloop.** Twee nieuwe bestanden, beide uitsneden van het origineel: (a) een stuk achtergrond rond het broekje met het broekje weggehaald en opgevuld; (b) het broekje met alfa. Ze liggen met percentages precies over de originele `<img>`. Het origineel blijft de foto in rust; de lagen verschijnen pas als ze geladen zijn, liggen in rust pixelgelijk en worden na het schommelen weer verborgen. Web Animations API, skewX-keyframes: 0 % 0° · 18 % +2,5° · 38 % −1,6° · 58 % +0,9° · 78 % −0,4° · 100 % 0°; totaal 2,8 s; per stuk `cubic-bezier(.45,0,.55,1)`; eerste uitslag naar rechts. Gevoel: een zuchtje wind.
+3. **Trigger.** Lagen laden pas als de post binnen 400 px van het scherm komt. Schommelen één keer per paginabezoek, zodra ≥ 60 % van de foto in beeld is en op zijn vroegst 700 ms na `in-beeld` (opkomen is dan klaar). Niet gedecodeerd 2 s na dat moment → schommelen vervalt, origineel blijft. `scale(1.04)` bij aanwijzen gaat naar een gemeenschappelijke binnenlaag om origineel en lagen; `.opkomen` blijft op `a.insta-foto` (nooit twee transforms op één element). Aanwijzen tijdens schommelen mag, zonder sprong.
+4. **Schermen.** Zelfde hoek en duur op desktop, tablet en mobiel (uitslag op 390 px vanzelf ca. 6 px). Niets bij tikken. Mobiele Instagram-kaart ongewijzigd.
+5. **Opvulling.** Achter het broekje alleen opgevulde muur en sport; een wazige strook op de muur ≤ 3 px (bestandspixels); geen veeg of vlek op het hout; geen extra schaduw. Masker: vaste, met de hand getekende polygoon in het script.
+6. **Minder beweging en zonder JS.** Alleen de huidige foto, stil, met de huidige alt-tekst; nieuwe bestanden niet geladen. Geen pauzeknop nodig (2,8 s < 5 s, WCAG 2.2.2).
+
+### Ontwerpcriteria
+1. In rust (vóór, direct na, en bij minder beweging) pixelgelijk aan `ig-outfit-ladder.jpg` op 1440, 768 en 390 px; bestaande visuele basis blijft groen.
+2. Grootste uitslag: zoom van het broekje verschuift onderaan 8 ± 1 px in het bestand; bovenrand 0 px; op 2× geen naad of spleet tussen shirt en broekje.
+3. Bij +2,5° en −2,5° raakt het broekje de fotorand niet; geen transparante pixels, gaten of herhaalde stukken. Bouwer levert beide standen als stilstaand beeld op ware grootte en 2×, desktop en 390 px.
+4. Op die beelden: wazige strook ≤ 3 px, geen vlek op de onderste sport, schaduwrandje loopt mee.
+5. Duur 2,8 s (± 0,1), vijf afnemende uitslagen, eindigt exact op 0°; daarna geen rAF of observer meer actief.
+6. Eén keer: wegscrollen en terugkomen start niet opnieuw; start pas bij ≥ 60 % in beeld en ≥ 700 ms na `in-beeld`.
+7. Aanwijzen vóór, tijdens of na: geen sprong of flits; achtergrond en broekje schalen samen.
+8. 390 px: geen horizontaal scrollen, geen layout shift, kaart ongewijzigd, pagina scrolt door.
+9. Minder beweging en zonder JS: precies één `<img>` met de huidige alt-tekst, geen netwerkverzoeken naar de nieuwe bestanden.
+10. Twee uitsneden, elk kleiner dan het origineel in px en bytes, samen ≤ 1,5 × het origineel.
