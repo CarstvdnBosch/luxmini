@@ -19,7 +19,7 @@ function telVerzoeken(page) {
 // Meet in de pagina: moment van in-beeld, start van de animatie (met het zichtbare deel), aantal starts, layout shifts.
 async function meetInit(page) {
   await page.addInitScript(() => {
-    const m = window.__schommel = { inBeeld: 0, starts: [], shift: 0 };
+    const m = window.__schommel = { inBeeld: 0, klaar: 0, starts: [], shift: 0 };
     const orig = Element.prototype.animate;
     Element.prototype.animate = function (kf, opt) {
       if (this.classList && this.classList.contains('insta-broekje')) {
@@ -34,6 +34,9 @@ async function meetInit(page) {
       if (!post) return;
       new MutationObserver(() => { if (!m.inBeeld && post.classList.contains('in-beeld')) m.inBeeld = performance.now(); })
         .observe(post, { attributes: true, attributeFilter: ['class'] });
+      // einde in de pagina zelf meten (moment waarop main.js "klaar" zet), los van het pollen van Playwright
+      new MutationObserver(() => { if (!m.klaar && post.dataset.schommel === 'klaar') m.klaar = performance.now(); })
+        .observe(post, { attributes: true, attributeFilter: ['data-schommel'] });
     });
     try {
       new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput && m.starts.length) m.shift += e.value; })
@@ -111,9 +114,12 @@ test.describe('met beweging', () => {
     expect(m.starts[0].zicht).toBeGreaterThanOrEqual(0.6);
     expect(m.inBeeld).toBeGreaterThan(0);
     expect(m.starts[0].t - m.inBeeld).toBeGreaterThanOrEqual(695);
-    const t0 = Date.now();
     await expect(page.locator('.insta-foto')).toHaveAttribute('data-schommel', 'klaar', { timeout: 5000 });
-    expect(Date.now() - t0).toBeLessThan(3100);
+    // duur in de pagina: van de start van de animatie (animate()) tot "klaar" (finish); niet de wandklok van de test,
+    // want toHaveAttribute pollt met 100/250/500/1000 ms en kan een einde net na een poll ~0,5 s later zien (CI mobiel 15 nov.)
+    const duur = await page.evaluate(() => window.__schommel.klaar - window.__schommel.starts[0].t);
+    expect(duur).toBeGreaterThanOrEqual(2700);
+    expect(duur).toBeLessThan(3100);
   });
 
   test('in rust en bij de grootste uitslag: lagen precies op de foto, bovenrand vast, zoom 8 ± 1 px, geen horizontaal scrollen, geen layout shift', async ({ page }) => {
