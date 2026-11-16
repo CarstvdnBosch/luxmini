@@ -17,6 +17,7 @@
 <link rel="icon" href="assets/img/logo-luxmini.png">
 <link rel="preload" href="assets/fonts/libre-caslon-display-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" as="image" href="assets/img/babynest-boven.jpg" fetchpriority="high">
 <script>(function(d){var h=d.documentElement;h.classList.add('js');try{var s=sessionStorage;var o=s.getItem('lux-overgang'),r=matchMedia('(prefers-reduced-motion: reduce)').matches;if(/^#[0-9a-f]{6}$/i.test(o||'')&&!r){h.classList.add('overgang-binnen');h.style.setProperty('--overgang-kleur',o)}else if(s.getItem('lux-intro-gezien')!=='1'&&!r){h.classList.add('intro-aan');s.setItem('lux-intro-gezien','1');var l=d.createElement('link');l.rel='preload';l.as='image';l.href='assets/img/p-knuffel-naam.jpg';d.head.appendChild(l)}}catch(e){}setTimeout(function(){if(!window.luxKlaar)h.classList.remove('js','intro-aan','overgang-binnen')},Math.max(0,3000-(window.performance&&performance.now?performance.now():0)))})(document)</script>
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -85,7 +86,7 @@
 
 <header class="site-header op-kleur">
   <div class="wrap">
-    <a class="logo" href="index.html" aria-label="LUX mini, naar de homepage"><span class="logo-klein"><img class="logo-wit" src="assets/img/logo-luxmini-wit.png" alt="LUX mini" width="248" height="94"><img class="logo-donker" src="assets/img/logo-luxmini-donker.png" alt="" width="248" height="93"></span><span class="logo-groot"><img class="logo-wit" src="assets/img/logo-lux-groot-wit.png" alt="" width="880" height="334"><img class="logo-donker" src="assets/img/logo-lux-groot-donker.png" alt="" width="880" height="334" fetchpriority="low"></span></a>
+    <a class="logo" href="index.html" aria-label="LUX mini, naar de homepage"><span class="logo-klein"><img class="logo-wit" src="assets/img/logo-luxmini-wit.png" alt="LUX mini" width="248" height="94"><img class="logo-donker" src="assets/img/logo-luxmini-donker.png" alt="" width="248" height="93"></span><span class="logo-groot"><img class="logo-wit" src="assets/img/logo-lux-groot-wit.png" alt="" width="880" height="334" fetchpriority="low"><img class="logo-donker" src="assets/img/logo-lux-groot-donker.png" alt="" width="880" height="334" fetchpriority="low"></span></a>
     <nav class="menu" aria-label="Hoofdmenu">
       <a href="werkwijze.html">Werkwijze</a>
       <a href="kraamcadeauboxen.html">Kraamcadeauboxen</a>
@@ -127,12 +128,12 @@
       <div class="media-object">
         <div class="boek papier obj">
           <figure class="blad blad-rechts">
-            <img src="assets/img/babynest-boven.jpg" alt="Babynest van groene wafelstof met een binnenkant met cactussen, van bovenaf" width="768" height="960" loading="lazy" decoding="async">
+            <img src="assets/img/babynest-boven.jpg" alt="Babynest van groene wafelstof met een binnenkant met cactussen, van bovenaf" width="768" height="960" loading="lazy" decoding="sync">
             <figcaption>Het nest</figcaption>
           </figure>
           <div class="kaft">
             <div class="kaft-voor boek-kaft">
-              <img src="assets/img/babynest-voorkant.jpg" alt="Kaft van het boek: babynest van groene wafelstof met een lapje met het LUX-label aan de voorkant" width="768" height="960" loading="lazy" decoding="async">
+              <img src="assets/img/babynest-voorkant.jpg" srcset="assets/img/babynest-voorkant-560.jpg 560w, assets/img/babynest-voorkant.jpg 768w" sizes="(min-width: 1025px) 248px, (min-width: 761px) 462px, (min-width: 649px) 480px, 74vw" alt="Kaft van het boek: babynest van groene wafelstof met een lapje met het LUX-label aan de voorkant" width="768" height="960" loading="lazy" decoding="async">
               <p class="kaft-strook">LUX mini — Babynest</p>
             </div>
             <figure class="blad kaft-achter">
