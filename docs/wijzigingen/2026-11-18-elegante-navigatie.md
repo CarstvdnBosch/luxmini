@@ -114,6 +114,46 @@ Vragen aan website-ontwerper:
 6. **Testwijzigingen:** de aanpassingen in B3 volgen uit de structuur en zijn geen versoepeling. Carst ziet ze in de diff en in het validatierapport. Als een meting een ander ankerpunt krijgt (criterium 10), staat dat met reden in de pull request.
 7. **Story 5:** klopt het dat deze brief Story 5 (kader om de pijl-link) helemaal afdekt, ook buiten de homepage? Dan kan die story na de merge dicht.
 
+### Antwoord website-ontwerper (rol 1, 18 nov.; gemeten op eigen poort, Chromium touch 360/390 px)
+Proefbeeld: `/tmp/claude-0/-home-claude/d4af4dd4-d393-563f-96ff-bcef27cbdbce/scratchpad/proef/proef-pijl-en-lookbook.png`.
+Aanvulling inventaris B2: `.hoe-nr` ("01"–"03" in de koppen van Hoe ik werk, `werkwijze.html` r. 166/171/176) gaat ook weg. B4: de CLAUDE.md-regel "labels in Libre Caslon Text" wordt `.caps` in Source Sans 3.
+
+1. **Sectielabels: alleen het woord.** Elk `.label` en `data-label` toont alleen de naam, zonder nummer en zonder streepje ("— LUX mini" → "LUX mini"). Opmaak `.caps`: Source Sans 3, 600, hoofdletters; in de pagina 14 px / 0,64em, ≤ 760 px 13 px / 0,4em. Balk: 14 px / 0,2em vanaf 761 px, 13 px / 0,1em ≤ 760 px; `.balk .links` gat op mobiel 16 → 12 px. Labels inkt (op terracotta 5,2:1).
+2. **Pijl-link (`.pijl`): pijl steekt door een dun kader** (opbouw Stock). HTML gelijk; kader is een pseudo-element.
+   - Maten: link ≥ 48 px hoog; pijl 28 × 10 px vanaf de linkerrand van de inhoud; kader begint 14 px verder (midden van de pijl); 12 px tussen pijl en tekst; binnen het kader links 26 px, rechts 24 px (breedte = tekst + 64 px).
+   - Lijn 1 px boven, rechts en onder; links alleen twee stompjes van 10 px (boven en onder), opening van 28 px in het midden waar de pijl doorloopt.
+   - Kleur `currentColor`, dekking 0,72 bij inkt, 1 bij witte tekst (alleen op donkere foto). Nooit gevuld, geen schaduw, geen ronde hoeken.
+   - Tekst Libre Caslon Text 400, overal 16 px (varianten 15/17 px vervallen). Geen nieuw lettertypebestand.
+   - Overal hetzelfde (prijskaarten, contactlijst, footer). Onder elkaar (`.pijl-rij` mobiel, `.contact-lijst`, `.gegevens`) 12 px tussen de kaders.
+   - Op touch staat het kader er ook, zonder animatie.
+3. **Aanwijzen en focus (alleen `(hover: hover) and (pointer: fine)`, bij hover en `:focus-visible`):** 0,6 s in en uit, `cubic-bezier(.45,0,.55,1)`: pijl `translateX(6px)`; stompjes 10 → 17 px (kader sluit rond de pijl, 2 px lucht); lijn naar dekking 1. De tekst staat stil. Focus: idem plus lijn 2 px naar binnen; algemene `outline` vervalt op `.pijl` (volle `currentColor` ≥ 3:1). Minder beweging: pijl schuift niet, lijn/stompjes direct. Vervagende pijl-links (drieluik stap 1, `lijst-actief`): kader vervaagt mee als kind van de link. Bij `#technieken` vult het diepe vlak precies het kader (vanaf 14 px). Techniek: `@property --stomp` (`<length>`) of twee lijnstukjes met `scaleY`.
+4. **Lookbook (Handwerk, mobiel): pijlknoppen met streepjes.** Tablist wordt een `.carrousel`: rij `role="region"`, `aria-label="Handwerk"`, `tabindex="0"`, Home/End; niet-actieve panelen inert.
+   - Rij onder het lookbook, gecentreerd op de plek van de tabjes: Vorige · 20 px · streepjes · 20 px · Volgende; 232 × 44 px (pijl-link eronder verschuift niet).
+   - Knoppen `.carrousel-knop`: rond 44 × 44, rand 1 px inkt, pijl 20 × 10; ook op touch (uitzondering op "alleen muis", ze vervangen de tabjes). `aria-label` "Vorig handwerk"/"Volgend handwerk", `aria-controls="lookbook-rij"`.
+   - Begin/eind: `aria-disabled="true"` en dekking 0,3; niet rondlopen.
+   - Positie: vier streepjes 1 px dik, 16 px breed, 8 px tussenruimte, inkt 0,4; actief 32 px op dekking 1; overgang 0,5 s `cubic-bezier(.45,0,.55,1)`, minder beweging direct; `aria-hidden`, niet tikbaar.
+   - Voorleesbaar: `.sr-only` met `aria-live="polite"`, bijv. "Siliconen items, 2 van 4" (cijfers alleen voorgelezen).
+   - Vegen blijft; sectie en balk volgen de kleur van het actieve item; zonder JS alleen de veegrij.
+   - P2: met een muis schuift de pijl in elke `.carrousel-knop` 4 px in zijn richting (0,5 s); niet bij `aria-disabled` of minder beweging.
+5. **Overige cijfers weg:** "Hoe ik werk" blijft tabbladen met alleen het woord (actief lijntje 24 px blijft); `.hoe-nr` weg. Drieluik `.nr` weg; op mobiel begint de kop in stap 1 op 72 px. "Zo werkt het" `.stap-nr`: rondje blijft (tekent zich in), cijfer wordt een punt van 5 px in `currentColor` (`aria-hidden`); `<ol>` blijft; lijnen en pijlpunten blijven.
+6. **Volgorde:** label (woord) → kop en zin → pijl-link met kader als herkenbaar actiepunt, geen opvallende knop. Mobiel één kolom binnen 32 px marge.
+
+**Ontwerpcriteria**
+- **O1** 360 en 390 px: elk balklabel op één regel, ≥ 12 px tot het tikvlak van de burger (getoetst met "Wat er in de box kan", "Stuur een bericht", "Kraamcadeauboxen", "Prematuurkleding", "Contactgegevens"; gemeten 13 / 38 px).
+- **O2** Sectielabels en balk: Source Sans 3, 600, hoofdletters, ≥ 13 px, spatiëring ≥ 0,1em.
+- **O3** Elke zichtbare `.pijl` ≥ 48 px hoog; pijl op de linkerrand van de inhoud, kader 14 px verder (± 1); linkerkant open over ≥ 24 px rond het midden.
+- **O4** Langste pijl-link ("Bekijk de kraamcadeauboxen", met kader 288 px) op 360 en 390 px op één regel, rechterkant niet voorbij de zijmarge (gemeten 318 / grens 330 op 360); geen horizontaal scrollen.
+- **O5** Kadercontrast in rust ≥ 3:1 (inkt 0,72: wit 6,2, grijsblauw 5,5, perzik 4,5, oker 3,8, salie 4,8, mauve 3,6, olijf 4,1, terracotta 3,34, diepe tinten ≥ 3,4); wit op 1,0 op donkere foto zoals de witte tekst daar. Bouwer meet op foto's met pixels uit de schermafdruk.
+- **O6** Muis: 0,7 s na hover/focus pijl `translateX(6px)`, stompjes 17 px, lijn dekking 1; focus lijn 2 px; tekstpositie 0 px verschoven. Touch en minder beweging: geen overgang.
+- **O7** 390 × 844: onder het lookbook Vorige en Volgende 44 × 44 (`.carrousel-knop`, `aria-controls="lookbook-rij"`), vier streepjes (`aria-hidden`), nergens een cijfer; knoprij binnen 32 px onder het actieve paneel.
+- **O8** Paneel 1: Vorige `aria-disabled="true"` en dekking 0,3; paneel 4: Volgende; tik op gedempte knop doet niets; precies één streepje 32 px op dekking 1.
+- **O9** Na tik op Volgende kondigt de live-regel de nieuwe naam aan; sectie en balk binnen 1 s de `data-kleur` van dat paneel.
+- **O10** `werkwijze.html` "Hoe ik werk": geen cijfer (tabs en koppen). "Zo werkt het" (Kraamcadeauboxen, Prematuurkleding, Babynest): rondje 48/44/40 px met punt van 5 px. Drieluik: geen `.nr`.
+- **O11** Pijl-links onder elkaar ≥ 12 px tussen de kaders op 390 en 768 px.
+- **O12** axe groen; focus zichtbaar (≥ 2 px, ≥ 3:1) op `.pijl`, lookbookknoppen en tabs van Hoe ik werk, ook op terracotta en foto.
+
+Opmerking ontwerper: Stocks kaderlijn haalt ~1,7:1; met inkt 0,72 wordt ons kader iets donkerder dan bij Stock om 3:1 te halen (criterium 13). Wil Carst het lichtere kader (~0,4), dan moet criterium 13 versoepeld worden; advies: 0,72 houden.
+
 ## Antwoorden hoofdsessie (18 nov., niet-blokkerende vragen; in lijn met Carsts "cijfers overal niet netjes")
 - Vraag 2: één brief, één pull request (A, B en C samen).
 - Vraag 3: ja, de zichtbare stapnummers in "Zo werkt het" gaan weg; de genummerde lijst (`<ol>`) blijft voor schermlezers.
