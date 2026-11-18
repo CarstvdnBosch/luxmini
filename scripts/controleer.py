@@ -12,7 +12,7 @@ Wat het doet:
     #contact-link en na End op Contact staan (ontwerpcriterium 12)
   - controleert de prijskaarten van de kraamcadeaubox (prijzen, producten,
     vinkjes en aantallen)
-  - controleert "003 — Zo werkt het" op de kraamcadeaubox: één <ol> met drie
+  - controleert "Zo werkt het" op de kraamcadeaubox: één <ol> met drie
     stappen, de juiste koppen en geen horizontaal scrollen (1440/768/390)
   - controleert de tabbladen in Personaliseren (klik wisselt foto en kop
     binnen 1,5 s, aanwijzen niet)
@@ -170,7 +170,7 @@ def controleer_contact(browser):
                     # brief 2026-11-06: geen contactblok meer; #contact is een anker in 003 Inspiratie (bij "Stuur Carien een bericht"),
                     # End toont het laatste blok (004 Instagram)
                     label = page.evaluate("() => (document.querySelector('.balk .sectie-label') || {}).textContent || ''")
-                    verwacht_label = "003 — Inspiratie" if manier == "link" else "004 — Instagram"
+                    verwacht_label = "Inspiratie" if manier == "link" else "Instagram"
                     if verwacht_label not in " ".join(label.split()):
                         fouten.append(f"{tag}: balk toont '{label.strip()}' in plaats van {verwacht_label}")
                     if manier == "link":
@@ -379,14 +379,16 @@ LEES_DRIELUIK = r"""() => { const s = document.querySelector('#producten'); if (
         breedte: r.width, kleur: getComputedStyle(k).backgroundColor, masker: k.querySelector('.kern-masker') ? getComputedStyle(k.querySelector('.kern-masker')).backgroundColor : '', buiten: woorden,
         img: img ? [img.getAttribute('src'), img.getAttribute('loading'), ir.width, ir.height, ir.bottom <= hr.top + 1, img.naturalWidth || 0, getComputedStyle(img.closest('.kern-beeld')).display] : null,
         vult: img ? (() => { const f = img.closest('.kern-beeld').getBoundingClientRect(); return Math.abs(f.left - r.left) + Math.abs(f.top - r.top) + Math.abs(f.right - r.right) + Math.abs(f.bottom - r.bottom) <= 2 && hr.top >= f.top && hr.bottom <= f.bottom; })() : false,
-        tekstkleur: [...k.querySelectorAll('.kern-tekst .nr, .kern-tekst h2, .kern-tekst p, .kern-tekst a')].map(e => getComputedStyle(e).color),
+        tekstkleur: [...k.querySelectorAll('.kern-tekst h2, .kern-tekst p, .kern-tekst a')].map(e => getComputedStyle(e).color),
+        nummers: k.querySelectorAll('.nr').length, // brief 2026-11-18-elegante-navigatie: geen volgnummer meer
         tabstops: [...k.querySelectorAll('a, button, [tabindex]')].filter(e => e.tabIndex >= 0).length + (k.tabIndex >= 0 ? 1 : 0) }; }) }; }"""
 
-# Brief 2026-11-15-homepage-mobiel-tweetraps (A): op mobiel staand twee stappen. Stap 1: paletkleur, nr en kop in inkt, zin en
+# Brief 2026-11-15-homepage-mobiel-tweetraps (A): op mobiel staand twee stappen. Stap 1: paletkleur, kop in inkt (sinds brief
+# 2026-11-18-elegante-navigatie zonder nummer: op de plek van nr staat de kleur van de kop nogmaals), zin en
 # pijl-link met opacity 0 (wel in de DOM en focusbaar), foto buiten de kolom. Stap 2 (eenmalig): foto met sluier en witte tekst.
 LEES_STAP1 = r"""() => [...document.querySelectorAll('#producten .kern-kolom')].map(k => { const r = k.getBoundingClientRect(), b = k.querySelector('.kern-beeld').getBoundingClientRect();
   const s = e => getComputedStyle(k.querySelector(e));
-  return [k.id, k.classList.contains('aangekomen'), s('h2').color, s('.nr').color, s('p.klein').opacity, s('a.pijl').opacity, s('a.pijl').visibility, s('a.pijl').display,
+  return [k.id, k.classList.contains('aangekomen'), s('h2').color, k.querySelector('.nr') ? 'nummer zichtbaar' : s('h2').color, s('p.klein').opacity, s('a.pijl').opacity, s('a.pijl').visibility, s('a.pijl').display,
     k.querySelector('a.pijl').tabIndex, getComputedStyle(k).backgroundColor, b.bottom <= r.top + 0.5, r.top >= innerHeight * 0.5]; })"""
 
 def drieluik_stappen(page, tag):
@@ -423,9 +425,9 @@ def controleer_home(page, tag, naam):
         drieluik_stappen(page, tag)  # daarna staat elk blok in stap 2 (eenmalig), zoals de toetsen hieronder verwachten
     d = page.evaluate(LEES_DRIELUIK)
     if not d:
-        fouten.append(f"{tag}: sectie #producten (001 — Producten) ontbreekt"); return
-    if d["label"] != "001 — Producten" or (d["kleur"] or "").upper() != "#DEB799":
-        fouten.append(f"{tag}: drieluik heeft label {d['label']!r} of kleur {d['kleur']} (verwacht 001 — Producten op perzik)")
+        fouten.append(f"{tag}: sectie #producten (Producten) ontbreekt"); return
+    if d["label"] != "Producten" or (d["kleur"] or "").upper() != "#DEB799":
+        fouten.append(f"{tag}: drieluik heeft label {d['label']!r} of kleur {d['kleur']} (verwacht Producten op perzik)")
     bron = wat_ik_maak()
     if [k["id"] for k in d["kolommen"]] != [x[0] for x in DRIELUIK]:
         fouten.append(f"{tag}: kolommen van het drieluik kloppen niet ({[k['id'] for k in d['kolommen']]})"); return
@@ -440,6 +442,8 @@ def controleer_home(page, tag, naam):
             fouten.append(f"{ktag}: {k['tabstops']} tabstops in de kolom, verwacht 1")
         if k["buiten"]:
             fouten.append(f"{ktag}: een woord van de kop steekt buiten de kolom")
+        if k["nummers"]:
+            fouten.append(f"{ktag}: er staat nog een volgnummer (.nr) in de kolom (brief 2026-11-18-elegante-navigatie: alleen het woord)")
         # loading=lazy staat in de HTML (controleer_bestanden); met een muis zet main.js de foto's bij het naderen op eager
         if not k["img"]:
             fouten.append(f"{ktag}: foto ontbreekt")
@@ -483,19 +487,21 @@ def controleer_home(page, tag, naam):
         [...s.querySelectorAll('.sfeer .productregel')].map(p => p.textContent.trim()), !!s.querySelector('#babykleding'), !!s.querySelector('#siliconen'),
         [...s.querySelectorAll(':scope > .wrap > a.pijl')].map(a => a.getAttribute('href')),
         [...s.querySelectorAll('.lookbook-paneel')].map(p => [p.querySelector('h3').textContent.trim(), p.querySelector('.lookbook-regel').textContent.trim(), p.querySelector('a').getAttribute('href'), p.offsetHeight > 0]),
-        [...s.querySelectorAll('.lookbook [role="tab"]')].filter(t => t.offsetHeight > 0).length]; }""")
+        [...s.querySelectorAll('.lookbook .lookbook-knoppen .carrousel-knop')].filter(t => t.offsetHeight > 0).length,
+        [...s.querySelectorAll('.lookbook [role="tab"], .lookbook [role="tablist"]')].length]; }""")
     if not t:
         fouten.append(f"{tag}: sectie #technieken ontbreekt")
     else:
-        if t[0] != "002 — Handwerk" or [x[:2] for x in t[1]] != [[n, h] for n, _, h, _ in TECHNIEKEN] or [x[2] for x in t[1]] != [k for *_, k in TECHNIEKEN]:
+        if t[0] != "Handwerk" or [x[:2] for x in t[1]] != [[n, h] for n, _, h, _ in TECHNIEKEN] or [x[2] for x in t[1]] != [k for *_, k in TECHNIEKEN]:
             fouten.append(f"{tag}: Technieken klopt niet ({t[:2]})")
         if [x[:3] for x in t[2]] != [[n, r, h] for n, r, h, _ in TECHNIEKEN] or t[3] != [r for _, r, _, _ in TECHNIEKEN]:
             fouten.append(f"{tag}: kaarten of productregels van Technieken kloppen niet ({t[2]}, {t[3]})")
         if naam == "mobiel":
-            # brief 2026-11-14-homepage-mobiel-stock (B, besluit Carst 14 nov.): op mobiel één LUX mini-lookbook per keer met tabjes 01–04
-            # (vervangt de kaarten met witte naam 24 px en productregel 19 px op mobiel); touch-tablets houden de kaarten
-            if [x[:3] for x in t[7]] != [[n, r, h] for n, r, h, _ in TECHNIEKEN] or not all(x[3] for x in t[7]) or t[8] != 4 or any(x[3] for x in t[2]):
-                fouten.append(f"{tag}: op mobiel hoort Handwerk vier lookbook-panelen met tabjes te tonen in plaats van de kaarten ({t[7]}, tabjes {t[8]})")
+            # brief 2026-11-14-homepage-mobiel-stock (B, besluit Carst 14 nov.): op mobiel één LUX mini-lookbook per keer
+            # (vervangt de kaarten met witte naam 24 px en productregel 19 px op mobiel); touch-tablets houden de kaarten.
+            # Brief 2026-11-18-elegante-navigatie: de tabjes 01–04 zijn twee pijlknoppen (vorige/volgende); geen tablist meer
+            if [x[:3] for x in t[7]] != [[n, r, h] for n, r, h, _ in TECHNIEKEN] or not all(x[3] for x in t[7]) or t[8] != 2 or t[9] != 0 or any(x[3] for x in t[2]):
+                fouten.append(f"{tag}: op mobiel hoort Handwerk vier lookbook-panelen met twee pijlknoppen (geen tabjes) te tonen in plaats van de kaarten ({t[7]}, knoppen {t[8]}, tabjes {t[9]})")
         elif naam != "desktop" and not all(x[3] for x in t[2]):
             fouten.append(f"{tag}: op touch staan de kaarten van Technieken niet in beeld")
         if not (t[4] and t[5]):
@@ -527,7 +533,7 @@ def controleer_home(page, tag, naam):
         fouten.append(f"{tag}: {n} links naar contact.html#formulier in main, verwacht precies 1")
 
 def controleer_witte_lijn(browser):
-    """F2 (feedback Carst 6 nov. 14:28 en 7 nov. 16:47): geen enkele dunne witte lijn in of langs 001 — Producten, ook niet
+    """F2 (feedback Carst 6 nov. 14:28 en 7 nov. 16:47): geen enkele dunne witte lijn in of langs Producten, ook niet
     tussen de kolommen; langs de randen van #producten geen witte rij of kolom."""
     from PIL import Image
     import io
@@ -561,7 +567,7 @@ def controleer_witte_lijn(browser):
         bedoeld = []
         los = [x for x in lijnen if not any(abs(x - k) <= 1 for k in bedoeld)]
         if los or hor:
-            fouten.append(f"index.html [{b} x {h}, 001 — Producten]: losse witte lijn(en): verticaal {los or lijnen}, horizontaal {hor[:6]} (bedoeld: {bedoeld})")
+            fouten.append(f"index.html [{b} x {h}, Producten]: losse witte lijn(en): verticaal {los or lijnen}, horizontaal {hor[:6]} (bedoeld: {bedoeld})")
         ctx.close()
 
 def controleer_home_interactie(browser):
@@ -934,7 +940,7 @@ def controleer_bestanden():
     elif not vakken[0] and not re.search(r"<!--TURNSTILE-NOSCRIPT\s*<noscript><p class=\"noscript-melding\">.*?</noscript>\s*TURNSTILE-NOSCRIPT-->", contact, re.S):
         fouten.append("contact.html: de <noscript>-regel voor Turnstile staat er niet (in commentaar met de markeringen TURNSTILE-NOSCRIPT)")
     if "noscript-melding" in contact:
-        kop = contact.find('<p class="label"><span>002 —</span> Stuur een bericht</p>')
+        kop = contact.find('<p class="label">Stuur een bericht</p>')
         if not (0 <= kop < contact.find("noscript-melding") < contact.find("<form")):
             fouten.append("contact.html: de <noscript>-regel staat niet direct onder de kop van 002, vóór het formulier")
 
@@ -1106,7 +1112,7 @@ def pijl_meer(page, tag):
         if href != doel or hoogte < 43.5 or zicht != "visible" or float(dekking) < 1 or breedte == 0 or not inbeeld:
             fouten.append(f"{tag}: pijl-link in {sectie} niet goed zichtbaar, te laag of verkeerd doel ({st})")
 
-HOME_LABELS = ["001 — Producten", "002 — Handwerk", "003 — Inspiratie", "004 — Instagram"]
+HOME_LABELS = ["Producten", "Handwerk", "Inspiratie", "Instagram"]
 
 def controleer_algemeen(page, tag, pagina, naam):
     """Per pagina en scherm: data-labels, pijl-links 44 px, lopende tekst 16 px, homepage-opbouw."""
@@ -1126,7 +1132,7 @@ def controleer_algemeen(page, tag, pagina, naam):
         # brief 2026-11-06: hero, 001 Producten, 002 Technieken, 003 Inspiratie, 004 Instagram
         labels = page.evaluate("() => [...document.querySelectorAll('main [data-label]')].map(e => e.getAttribute('data-label').replace(/<[^>]+>/g, '').trim())")
         zicht = page.evaluate("() => [...document.querySelectorAll('main .label')].map(e => e.textContent.replace(/\\s+/g, ' ').trim())")
-        if labels != ["— LUX mini"] + HOME_LABELS or not page.query_selector("main > section:first-child .hero[data-wissel]"):
+        if labels != ["LUX mini"] + HOME_LABELS or not page.query_selector("main > section:first-child .hero[data-wissel]"):
             fouten.append(f"{tag}: volgorde van de secties is {labels}, verwacht de hero en dan {HOME_LABELS}")
         if zicht != HOME_LABELS:
             fouten.append(f"{tag}: zichtbare labels zijn {zicht}")
@@ -1222,7 +1228,7 @@ def controleer_werkwijze(browser):
     if boek["fotorij"] or re.search(r"\.fotorij|\.atelier-vak", (ROOT / "assets" / "css" / "style.css").read_text(encoding="utf-8")):
         fouten.append("werkwijze.html: de oude fotorij (#fotorij, .fotorij, .atelier-vak of knoppen) staat er nog")
     secties = page.evaluate("() => [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()])")
-    if secties != [["", "— Werkwijze"], ["atelier", "001 — Het atelier"], ["hoe-ik-werk", "002 — Hoe ik werk"], ["personaliseren", "003 — Personaliseren"], ["contact", "004 — Contact"]]:
+    if secties != [["", "Werkwijze"], ["atelier", "Het atelier"], ["hoe-ik-werk", "Hoe ik werk"], ["personaliseren", "Personaliseren"], ["contact", "Contact"]]:
         fouten.append(f"{tag}: volgorde of labels van de secties kloppen niet ({secties})")
     # criterium 7: geen dubbele onderdelen (wat van de homepage verhuisde staat er alleen als het er nog niet stond) en geen lege secties
     dubbel = page.evaluate("""() => { const tel = s => document.querySelectorAll('main ' + s).length;
@@ -1294,8 +1300,8 @@ THEMA_KLEUREN_VERBODEN = {"rgb(188, 133, 101)"}  # terracotta
 THEMAS = ["Giraf", "Vos", "Tulp", "Wilde blaadjes", "Framboos", "Regenboog", "Wilgentakjes", "Blaadjes en bloemen"]
 # volgorde van de pagina (feedback Carst 6 nov. 14:28, F4): kop, statementfoto, 001 formaten (salie), 002 wat er in de box kan
 # (producten en stoffen), 003 thema's (twee kolommen breed: desktop sets van vier, tablet sets van twee; brief 2026-11-14), 004 zo werkt het, 005 contact
-BOX_SECTIES = [["", "— Kraamcadeauboxen"], ["", "— Met naam"], ["formaten", "001 — Kies je formaat"], ["in-de-box", "002 — Wat er in de box kan"],
-               ["themas", "003 — Thema's"], ["werkwijze", "004 — Zo werkt het"], ["contact", "005 — Contact"]]
+BOX_SECTIES = [["", "Kraamcadeauboxen"], ["", "Met naam"], ["formaten", "Kies je formaat"], ["in-de-box", "Wat er in de box kan"],
+               ["themas", "Thema's"], ["werkwijze", "Zo werkt het"], ["contact", "Contact"]]
 LEES_THEMAS = """() => { const s = document.querySelector('#themas'); const kaarten = [...s.querySelectorAll('.themacarrousel li')];
   return { kaarten: kaarten.map(k => { const i = k.querySelector('img'), r = i.getBoundingClientRect();
       return [(k.querySelector('figcaption') || {}).textContent, i.getAttribute('src') || i.getAttribute('data-src'), i.getAttribute('srcset') || i.getAttribute('data-srcset') || '', i.getAttribute('width'), r.width, r.height, Math.round(r.left), i.getAttribute('alt') || '']; }),
@@ -1421,15 +1427,15 @@ LEEG_SCHERM = """() => { const els = [...document.querySelectorAll('main h1, mai
 PRODUCTPAGINAS = {
     "prematuurkleding.html": {"formulier": "contact.html?onderwerp=prematuurkleding#formulier", "h1": "Prematuurkleding", "foto_id": "maatwerk", "kleur": "#C3CFBC", "foto": "prematuur-regenboog-setje.jpg", "max_b": 480, "alt_prematuur": True,
                               # brief 2026-11-14-prematuur-fotos: 003 Voorbeelden erbij, Zo werkt het en Contact schuiven door
-                              "secties": [["", "— Prematuurkleding"], ["maatwerk", "001 — Maatwerk"], ["prijs", "002 — Prijs"], ["voorbeelden", "003 — Voorbeelden"], ["zo-werkt-het", "004 — Zo werkt het"], ["contact", "005 — Contact"]]},
+                              "secties": [["", "Prematuurkleding"], ["maatwerk", "Maatwerk"], ["prijs", "Prijs"], ["voorbeelden", "Voorbeelden"], ["zo-werkt-het", "Zo werkt het"], ["contact", "Contact"]]},
     # brief 2026-11-14-babynest-media-en-logo (A): drie blokken zoals het Media-overzicht van Stock; eigen controle hieronder
     "babynest.html": {"formulier": "contact.html?onderwerp=babynest#formulier", "h1": "Babynest", "foto_id": "babynest", "kleur": "#B5969E", "max_b": 384,
                       "fotos": ["babynest-boven.jpg", "babynest-dekentje.jpg", "babynest-stof-rits.jpg", "babynest-voorkant.jpg"], "media": True,
-                      "blokken": [["babynest", "001 — Het nest", "#B5969E", "Het nest", "Bespreek je idee", "contact.html?onderwerp=babynest#formulier"],
-                                  ["stof", "002 — De stof", "#C3CFBC", "De stof", "Bekijk de stoffen", "kraamcadeauboxen.html#stoffen"],
-                                  ["dekentje", "003 — Het dekentje", "#DEB799", "Het dekentje", "Vraag ernaar", "contact.html?onderwerp=babynest#formulier"]],
-                      "secties": [["", "— Babynest"], ["babynest", "001 — Het nest"], ["stof", "002 — De stof"], ["dekentje", "003 — Het dekentje"],
-                                  ["prijs", "004 — Prijs"], ["zo-werkt-het", "005 — Zo werkt het"], ["contact", "006 — Contact"]]},
+                      "blokken": [["babynest", "Het nest", "#B5969E", "Het nest", "Bespreek je idee", "contact.html?onderwerp=babynest#formulier"],
+                                  ["stof", "De stof", "#C3CFBC", "De stof", "Bekijk de stoffen", "kraamcadeauboxen.html#stoffen"],
+                                  ["dekentje", "Het dekentje", "#DEB799", "Het dekentje", "Vraag ernaar", "contact.html?onderwerp=babynest#formulier"]],
+                      "secties": [["", "Babynest"], ["babynest", "Het nest"], ["stof", "De stof"], ["dekentje", "Het dekentje"],
+                                  ["prijs", "Prijs"], ["zo-werkt-het", "Zo werkt het"], ["contact", "Contact"]]},
 }
 
 def controleer_productpagina(browser, pagina):
@@ -1484,8 +1490,8 @@ def controleer_productpagina(browser, pagina):
         p = st[9]
         if not p or p[1] != INKT or p[2] < 16 or p[3] != "Source Sans 3" or "[" in p[0] or re.search(r"€|\d", p[0]) or p[8]:
             fouten.append(f"{tag}: #prijs heeft geen zin in inkt (Source Sans 3, min. 16 px) zonder plaatshouder of bedrag ({p})")
-        elif p[4] != ["Vraag naar de prijs", v["formulier"]] or p[5] != "002 — Prijs":
-            fouten.append(f"{tag}: #prijs heeft niet de pijl-link 'Vraag naar de prijs' naar {v['formulier']} of het label '002 — Prijs' ({p[4]}, {p[5]!r})")
+        elif p[4] != ["Vraag naar de prijs", v["formulier"]] or p[5] != "Prijs":
+            fouten.append(f"{tag}: #prijs heeft niet de pijl-link 'Vraag naar de prijs' naar {v['formulier']} of het label 'Prijs' ({p[4]}, {p[5]!r})")
         elif naam == "mobiel" and p[6] > 0.5 * p[7]:
             fouten.append(f"{tag}: #prijs is {p[6]:.0f} px hoog, meer dan een halve schermhoogte ({0.5 * p[7]:.0f} px)")
         leeg = page.evaluate(LEEG_SCHERM)
@@ -1566,7 +1572,7 @@ def controleer_babynest(browser):
             z ? parseFloat(getComputedStyle(z).fontSize) : 0, a ? [a.textContent.trim(), a.getAttribute('href')] : null, s.querySelector('.label').textContent.trim(),
             s.getBoundingClientRect().height, innerHeight]; }""")
         if p[0] != "Richtprijs € 95" or not 30 <= p[1] <= 34 or p[2] != "De prijs kan iets wijzigen, afhankelijk van de stof en extra wensen." or p[3] != INKT or p[4] < 16 \
-                or p[5] != ["Vraag naar de prijs", v["formulier"]] or p[6] != "004 — Prijs":
+                or p[5] != ["Vraag naar de prijs", v["formulier"]] or p[6] != "Prijs":
             fouten.append(f"{tag}: #prijs heeft niet de richtprijs (ca. 32 px), de zin in inkt en 'Vraag naar de prijs' ({p})")
         elif naam == "mobiel" and p[7] > 0.5 * p[8]:
             fouten.append(f"{tag}: #prijs is {p[7]:.0f} px hoog, meer dan een halve schermhoogte ({0.5 * p[8]:.0f} px)")
@@ -1628,7 +1634,7 @@ def controleer_portfoliopagina(browser):
         ctx, page = nieuwe_pagina(browser, "inspiratie.html", b, h, touch, reduced_motion="reduce")
         tag = f"inspiratie.html [{naam}]"
         kop = page.evaluate("() => [document.querySelector('h1').textContent.trim(), document.title, [...document.querySelectorAll('main > section')].map(s => [s.id, s.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()]), document.querySelectorAll('.pagina-kop a, .werken, .werk, .portfolio-groep').length]")
-        verwacht = [["", "— Inspiratie"]] + [[p["id"], f"00{i + 1} — {p['kort']}"] for i, p in enumerate(PROJECTEN)] + [["", "— Het atelier"], ["contact", "005 — Contact"]]
+        verwacht = [["", "Inspiratie"]] + [[p["id"], p['kort']] for i, p in enumerate(PROJECTEN)] + [["", "Het atelier"], ["contact", "Contact"]]
         if kop[0] != "Inspiratie" or not kop[1].startswith("Inspiratie") or kop[2] != verwacht or kop[3]:
             fouten.append(f"{tag}: h1, titel, secties of kop zonder links/metselwerk kloppen niet ({kop})")
         tegels = page.evaluate(LEES_TEGELS)
@@ -1705,7 +1711,7 @@ def controleer_projectpaginas(browser):
             st = page.evaluate(LEES_PROJECT)
             for f, l in zip(st["fotos"], lazy):
                 f["lazy"] = l
-            if [s[:2] for s in st["secties"]] != [["", "— Inspiratie"], ["fotos", "001 — Foto's"], ["volgend", "002 — Meer zien"], ["contact", "003 — Contact"]] or any(s[1] != s[2] for s in st["secties"][1:]):
+            if [s[:2] for s in st["secties"]] != [["", "Inspiratie"], ["fotos", "Foto's"], ["volgend", "Meer zien"], ["contact", "Contact"]] or any(s[1] != s[2] for s in st["secties"][1:]):
                 fouten.append(f"{tag}: secties, labels of zichtbare labels kloppen niet ({st['secties']})")
             if st["h1"] != p["naam"] or st["caps"] != "Inspiratie" or st["uitleg"] != p["uitleg"] or st["laag"] != p["licht"]:
                 fouten.append(f"{tag}: kop (label, h1, uitleg) of de tint van 001 klopt niet ({st['h1']}, {st['caps']}, {st['laag']})")
@@ -1802,7 +1808,7 @@ def controleer_contactpagina(browser):
         tekst = page.inner_text(".gegevens")
         for stuk in ["Sperwerstraat 10", "6035 GH Ospel", "WhatsApp Carien", "06 – 43 79 16 18", "info.LUXmini@gmail.com", "binnen 7 werkdagen verzonden"]:
             if stuk not in tekst:
-                fouten.append(f"{tag}: '{stuk}' ontbreekt in 001 — Contactgegevens")
+                fouten.append(f"{tag}: '{stuk}' ontbreekt in Contactgegevens")
         ctx.close()
         # mislukte verzending: melding staat zonder scrollen in beeld
         ctx = browser.new_context(viewport={"width": b, "height": h}, has_touch=touch, is_mobile=touch)

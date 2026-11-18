@@ -1,5 +1,5 @@
 // Homepage op mobiel zoals Stock (brief 2026-11-14-homepage-mobiel-stock): 001 Producten met de foto als stilstaande achtergrond,
-// 002 Handwerk als veegbaar LUX mini-lookbook met tabjes 01–04, 004 Instagram als eigen post. Alleen ≤ 760 px en telefoons liggend;
+// 002 Handwerk als veegbaar LUX mini-lookbook met pijlknoppen (brief 2026-11-18-elegante-navigatie; was tabjes 01–04), 004 Instagram als eigen post. Alleen ≤ 760 px en telefoons liggend;
 // desktop en touch-tablets blijven gelijk (criterium 15).
 import { test, expect } from './hulp.js';
 
@@ -39,15 +39,16 @@ test.describe('telefoon', () => {
       await page.locator('#kraamcadeauboxen').hover().catch(() => {}); // ook na aanwijzen staat alles stil
       const m = await page.evaluate(() => [...document.querySelectorAll('#producten .kern-kolom')].map(k => {
         const r = k.getBoundingClientRect(), beeld = k.querySelector('.kern-beeld'), f = beeld.getBoundingClientRect(), img = beeld.querySelector('img');
-        const delen = [k.querySelector('.nr'), k.querySelector('h2'), k.querySelector('p.klein'), k.querySelector('a.pijl')];
+        // brief 2026-11-18-elegante-navigatie: geen volgnummer meer; de kop is het eerste deel
+        const delen = [k.querySelector('h2'), k.querySelector('p.klein'), k.querySelector('a.pijl')];
         return { id: k.id, hoogte: r.height, breedte: r.width, links: r.left, onder: r.bottom, kleur: getComputedStyle(k).backgroundColor, masker: getComputedStyle(k.querySelector('.kern-masker')).backgroundColor,
-          nrBoven: delen[0].getBoundingClientRect().top - r.top,
+          kopBoven: delen[0].getBoundingClientRect().top - r.top, nrAantal: k.querySelectorAll('.nr').length,
           beeld: [f.left - r.left, f.top - r.top, r.right - f.right, r.bottom - f.bottom, f.width], cover: getComputedStyle(img).objectFit,
           transform: [getComputedStyle(beeld).transform, getComputedStyle(k.querySelector('.kern-masker')).transform, getComputedStyle(img).transform],
           opacity: getComputedStyle(img).opacity, loading: img.getAttribute('loading'),
           volgorde: delen.map(d => d.getBoundingClientRect().top), kleuren: delen.map(d => getComputedStyle(d).color),
-          maten: [parseFloat(getComputedStyle(delen[1]).fontSize), parseFloat(getComputedStyle(delen[2]).fontSize), parseFloat(getComputedStyle(delen[3]).fontSize)],
-          pijl: delen[3].getBoundingClientRect().height, tekstOnder: r.bottom - delen[3].getBoundingClientRect().bottom };
+          maten: [parseFloat(getComputedStyle(delen[0]).fontSize), parseFloat(getComputedStyle(delen[1]).fontSize), parseFloat(getComputedStyle(delen[2]).fontSize)],
+          pijl: delen[2].getBoundingClientRect().height, tekstOnder: r.bottom - delen[2].getBoundingClientRect().bottom };
       }));
       expect(m.map(k => k.id)).toEqual(['kraamcadeauboxen', 'prematuurkleding', 'babynest']);
       for (const k of m) {
@@ -58,8 +59,9 @@ test.describe('telefoon', () => {
         if (!liggend) {
           expect(k.hoogte, `${k.id}: blok ≤ schermhoogte − 56`).toBeLessThanOrEqual(h - 56 + 0.5);
           expect(k.beeld.slice(0, 4).every(x => Math.abs(x) <= 1), `${k.id}: de foto vult het hele blok (${k.beeld})`).toBe(true);
-          // brief 2026-11-15-homepage-mobiel-tweetraps (ontwerpcriterium 4): de tekst staat bovenin, nr 72 px onder de bovenrand (was onderaan, 48 px)
-          expect(Math.abs(k.nrBoven - 72), `${k.id}: tekst bovenin (nr ${k.nrBoven} px)`).toBeLessThanOrEqual(2);
+          // brief 2026-11-15-homepage-mobiel-tweetraps (ontwerpcriterium 4): de tekst staat bovenin, 72 px onder de bovenrand (was onderaan, 48 px);
+          // sinds brief 2026-11-18-elegante-navigatie zonder nummer: de kop begint op 72 px
+          expect(Math.abs(k.kopBoven - 72), `${k.id}: tekst bovenin (kop ${k.kopBoven} px)`).toBeLessThanOrEqual(2);
         } else {
           expect(Math.abs(k.hoogte - h), `${k.id}: liggend één scherm hoog`).toBeLessThanOrEqual(1);
           expect(Math.abs(k.beeld[2]) <= 1 && Math.abs(k.beeld[4] - b * 0.55) <= 1, `${k.id}: liggend de foto rechts op 55 % (${k.beeld})`).toBe(true);
@@ -68,7 +70,8 @@ test.describe('telefoon', () => {
         expect(k.transform, `${k.id}: foto staat stil (geen transform)`).toEqual(['none', 'none', 'none']);
         expect(k.opacity, `${k.id}: foto niet gedimd`).toBe('1');
         expect(k.loading, `${k.id}: foto blijft lazy`).toBe('lazy');
-        expect([...k.volgorde].sort((x, y) => x - y), `${k.id}: volgorde nr, kop, zin, pijl-link`).toEqual(k.volgorde);
+        expect(k.nrAantal, `${k.id}: geen volgnummer`).toBe(0);
+        expect([...k.volgorde].sort((x, y) => x - y), `${k.id}: volgorde kop, zin, pijl-link`).toEqual(k.volgorde);
         expect(k.kleuren.every(c => c === WIT), `${k.id}: alle tekst wit (${k.kleuren})`).toBe(true);
         // zin staand 18 px / 1,6 (brief 2026-11-15-homepage-mobiel-tweetraps, ontwerpcriterium 4), liggend 16 px zoals na #88
         expect(k.maten, `${k.id}: kop ≥ 34 px, zin ${liggend ? 16 : 18} px en pijl-link 16 px`).toEqual([expect.any(Number), liggend ? 16 : 18, 16]);
@@ -82,7 +85,7 @@ test.describe('telefoon', () => {
       const balk = await page.evaluate(() => { const b = document.querySelector('.balk');
         return [b.classList.contains('zichtbaar'), getComputedStyle(b).backgroundColor, getComputedStyle(b.querySelector('.logo-donker')).display, getComputedStyle(b.querySelector('.logo-wit')).display,
           getComputedStyle(b.querySelector('.sectie-label')).color, b.querySelector('.sectie-label').textContent.replace(/\s+/g, ' ').trim()]; });
-      expect(balk, 'balk perzik met donker logo en label in inkt boven het drieluik').toEqual([true, 'rgb(222, 183, 153)', 'block', 'none', INKT, '001 — Producten']);
+      expect(balk, 'balk perzik met donker logo en label in inkt boven het drieluik').toEqual([true, 'rgb(222, 183, 153)', 'block', 'none', INKT, 'Producten']);
       await ctx.close();
     });
   }
@@ -109,7 +112,7 @@ test.describe('telefoon', () => {
 
   // Criterium 2 en ontwerpcriterium 2: contrast van de witte tekst op de foto met sluier (tekst verborgen, 99,5e percentiel)
   for (const [b, h] of [[390, 844], [360, 740], [844, 390]]) {
-    test(`001 Producten ${b} × ${h}: wit haalt op elke foto 4,5:1 (nr, zin, pijl-link) en 3:1 (kop) (${BRIEF}, criterium 2)`, async ({ browser }, info) => {
+    test(`001 Producten ${b} × ${h}: wit haalt op elke foto 4,5:1 (zin, pijl-link) en 3:1 (kop) (${BRIEF}, criterium 2)`, async ({ browser }, info) => {
       const ctx = await nieuweTelefoon(browser, info, b, h);
       const page = await ctx.newPage();
       await page.goto('/');
@@ -117,7 +120,7 @@ test.describe('telefoon', () => {
         await page.evaluate(i => { const k = document.getElementById(i); window.scrollTo(0, k.getBoundingClientRect().top + scrollY - 60); }, id);
         await page.evaluate(i => { const img = document.querySelector(`#${i} .kern-beeld img`); img.loading = 'eager'; return img.decode().catch(() => {}); }, id);
         await page.waitForTimeout(300);
-        for (const [sel, min] of [['.nr', 4.5], ['h2', 3], ['p.klein', 4.5], ['a.pijl', 4.5]]) {
+        for (const [sel, min] of [['h2', 3], ['p.klein', 4.5], ['a.pijl', 4.5]]) {
           const vak = await page.evaluate(([i, s]) => { const e = document.querySelector(`#${i} .kern-tekst ${s}`); e.style.color = 'transparent';
             e.querySelectorAll('*').forEach(x => { x.style.color = 'transparent'; x.style.stroke = 'transparent'; });
             const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, width: r.width, height: r.height }; }, [id, sel]);
@@ -160,7 +163,8 @@ test.describe('telefoon', () => {
 
   // Criteria 6–8 en ontwerpcriteria 6 en 7
   for (const [b, h] of SCHERMEN) {
-    test(`002 Handwerk ${b} × ${h}: één lookbook per keer, tabjes op één regel, links gelijk (${BRIEF}, B)`, async ({ browser }, info) => {
+    // brief 2026-11-18-elegante-navigatie (A, O7, O8): de tabjes 01–04 zijn vervangen door pijlknoppen met vier streepjes
+    test(`002 Handwerk ${b} × ${h}: één lookbook per keer, pijlknoppen en streepjes op één regel, links gelijk (${BRIEF}, B)`, async ({ browser }, info) => {
       const ctx = await nieuweTelefoon(browser, info, b, h);
       const page = await ctx.newPage();
       await page.goto('/');
@@ -169,7 +173,8 @@ test.describe('telefoon', () => {
       const m = await page.evaluate(() => {
         const s = document.querySelector('#technieken'), rij = s.querySelector('.lookbook-rij'), rr = rij.getBoundingClientRect();
         const panelen = [...s.querySelectorAll('.lookbook-paneel')];
-        const tabs = [...s.querySelectorAll('[role="tab"]')];
+        const houder = s.querySelector('.lookbook-knoppen'), knoppen = [...houder.querySelectorAll('.carrousel-knop')], strepen = [...houder.querySelectorAll('.lookbook-streepjes > span')];
+        const actief = panelen.find(p => !p.hasAttribute('inert')).getBoundingClientRect();
         const label = s.querySelector('.label').getBoundingClientRect(), pijl = s.querySelector(':scope > .wrap > a.pijl').getBoundingClientRect();
         return {
           oud: [getComputedStyle(s.querySelector('.sfeer-kaarten')).display, getComputedStyle(s.querySelector('.hoverlijst')).display],
@@ -179,30 +184,39 @@ test.describe('telefoon', () => {
           naam: parseFloat(getComputedStyle(panelen[0].querySelector('h3')).fontSize),
           object: panelen[0].querySelector('.papier.spread').getBoundingClientRect().width, decor: panelen[0].querySelector('.papier.spread').getAttribute('aria-hidden'),
           alts: [...s.querySelectorAll('.lookbook img')].map(i => i.getAttribute('alt')),
-          tabs: tabs.map(t => { const r = t.getBoundingClientRect(); return [t.textContent.replace(/\s+/g, ' ').trim(), Math.round(r.top), r.width, r.height, t.getAttribute('aria-selected'), t.getAttribute('aria-controls'), getComputedStyle(t).color]; }),
-          lijst: [s.querySelector('[role="tablist"]').hidden, s.querySelector('[role="tablist"]').getAttribute('aria-label')],
-          streep: tabs.map(t => getComputedStyle(t.firstElementChild, '::after').transform !== 'none' && getComputedStyle(t.firstElementChild, '::after').transform !== 'matrix(1, 0, 0, 1, 0, 0)' ? 'uit' : getComputedStyle(t.firstElementChild, '::after').height),
+          rij: [rij.getAttribute('role'), rij.getAttribute('aria-label'), rij.getAttribute('tabindex'), rij.classList.contains('carrousel')],
+          tablijst: s.querySelectorAll('[role="tablist"], [role="tab"]').length,
+          houder: [houder.hidden, Math.round(houder.getBoundingClientRect().width), Math.round(houder.getBoundingClientRect().height), houder.getBoundingClientRect().top - actief.bottom],
+          knoppen: knoppen.map(k => { const r = k.getBoundingClientRect(); return [k.getAttribute('aria-label'), Math.round(r.top + r.height / 2), r.width, r.height, k.getAttribute('aria-controls'), k.getAttribute('aria-disabled'), getComputedStyle(k).opacity, k.textContent.trim()]; }),
+          strepen: [houder.querySelector('.lookbook-streepjes').getAttribute('aria-hidden'), strepen.map(x => [x.getBoundingClientRect().width, x.getBoundingClientRect().height, getComputedStyle(x).opacity])],
+          stand: s.querySelector('.lookbook-stand') && [s.querySelector('.lookbook-stand').getAttribute('aria-live'), s.querySelector('.lookbook-stand').classList.contains('sr-only')],
+          cijfers: houder.innerText.match(/\d/g),
           hoogte: pijl.bottom - label.top, pijlTekst: s.querySelector(':scope > .wrap > a.pijl').textContent.trim(),
           breed: document.documentElement.scrollWidth };
       });
       expect(m.oud, 'oude kaartenrij en hover-lijst zijn weg op mobiel').toEqual(['none', 'none']);
       expect(m.inBeeld, 'precies één paneel volledig in beeld').toBe(1);
       expect(m.panelen.map(p => p.slice(0, 5))).toEqual(HANDWERK.map(([n, r, href, kleur]) => [n, r, href, kleur, INKT]));
-      expect(m.panelen.map(p => p[5]), 'elk paneel is een tabpanel').toEqual(['tabpanel', 'tabpanel', 'tabpanel', 'tabpanel']);
+      expect(m.panelen.map(p => p[5]), 'panelen zijn geen tabpanel meer (de rij is een .carrousel-region)').toEqual([null, null, null, null]);
       expect(m.panelen.map(p => p[6]), 'alleen het actieve paneel is niet inert').toEqual([false, true, true, true]);
       expect(m.naam, 'naam 40 px').toBe(40);
       expect(m.decor, 'het lookbook is decoratief').toBe('true');
       expect(m.alts.every(a => a === ''), 'foto’s in het lookbook zonder alt').toBe(true);
       expect(m.object, 'lookbook ≤ 400 px breed').toBeLessThanOrEqual(400.5);
       if (b <= 760) expect(m.object, 'lookbook ≥ 290 px breed').toBeGreaterThanOrEqual(290);
-      expect(m.lijst).toEqual([false, 'Handwerk']);
-      expect(m.tabs.map(t => t[0])).toEqual(['01 Belettering', '02 Siliconen items', '03 Prematuurkleding', '04 Borduren']);
-      expect(new Set(m.tabs.map(t => t[1])).size, 'tabjes op één regel').toBe(1);
-      for (const t of m.tabs) { expect(t[2], `${t[0]}: breed genoeg`).toBeGreaterThanOrEqual(44); expect(t[3], `${t[0]}: hoog genoeg`).toBeGreaterThanOrEqual(43.5); expect(t[6], 'tabjes in volle inkt').toBe(INKT); }
-      expect(m.tabs.map(t => t[4])).toEqual(['true', 'false', 'false', 'false']);
-      expect(m.tabs.map(t => t[5])).toEqual(['lookbook-1', 'lookbook-2', 'lookbook-3', 'lookbook-4']);
-      expect(m.streep[0], 'actieve tab onderstreept (1 px)').toBe('1px');
-      expect(m.streep.slice(1), 'andere tabjes niet onderstreept').toEqual(['uit', 'uit', 'uit']);
+      expect(m.rij, 'de veegrij is een .carrousel-region met naam en tabstop').toEqual(['region', 'Handwerk', '0', true]);
+      expect(m.tablijst, 'geen tablist of tabjes meer').toBe(0);
+      expect(m.houder.slice(0, 3), 'knoprij zichtbaar, 232 × 44 px').toEqual([false, 232, 44]);
+      expect(m.houder[3], 'knoprij binnen 32 px onder het actieve paneel').toBeLessThanOrEqual(32.5);
+      expect(m.houder[3]).toBeGreaterThanOrEqual(0);
+      expect(m.knoppen.map(k => k[0])).toEqual(['Vorig handwerk', 'Volgend handwerk']);
+      expect(new Set(m.knoppen.map(k => k[1])).size, 'knoppen op één regel').toBe(1);
+      for (const k of m.knoppen) { expect([k[2], k[3]], `${k[0]}: 44 × 44`).toEqual([44, 44]); expect(k[4]).toBe('lookbook-rij'); expect(k[7], `${k[0]}: geen tekst of cijfer`).toBe(''); }
+      expect(m.knoppen.map(k => [k[5], k[6]]), 'paneel 1: Vorige uit (0,3), Volgende aan').toEqual([['true', '0.3'], ['false', '1']]);
+      expect(m.strepen[0], 'streepjes decoratief').toBe('true');
+      expect(m.strepen[1], 'vier streepjes: het eerste 32 px op 1, de rest 16 px op 0,4').toEqual([[32, 1, '1'], [16, 1, '0.4'], [16, 1, '0.4'], [16, 1, '0.4']]);
+      expect(m.stand, 'voorleesbare positie (sr-only, aria-live polite)').toEqual(['polite', true]);
+      expect(m.cijfers, 'geen zichtbaar cijfer in de bediening').toBeNull();
       expect(m.pijlTekst).toBe('Zo personaliseert Carien');
       if (b === 390 && h === 844) expect(m.hoogte, 'van het label tot onder "Zo personaliseert Carien" ≤ 788 px').toBeLessThanOrEqual(788);
       expect(m.breed, 'geen horizontaal scrollen').toBe(b);
@@ -210,60 +224,86 @@ test.describe('telefoon', () => {
     });
   }
 
-  // Criterium 7 en ontwerpcriterium 8: tabjes en vegen werken samen; kleur van sectie en balk volgt; minder beweging direct
-  test(`002 Handwerk: tab 03, vegen, pijl rechts, Home en End wisselen het paneel; sectie en balk volgen de kleur (${BRIEF}, criterium 7)`, async ({ page }) => {
+  // Criterium 7 en ontwerpcriterium 8; brief 2026-11-18-elegante-navigatie (criteria 2–4, O8, O9): pijlknoppen en vegen werken samen;
+  // kleur van sectie en balk volgt; aan begin en eind is de knop uit (niet rondlopen); minder beweging direct
+  test(`002 Handwerk: Volgende, Vorige, vegen, Home en End wisselen het paneel; sectie en balk volgen de kleur (${BRIEF}, criterium 7)`, async ({ page }) => {
     await page.goto('/');
     await naarSectie(page, '#technieken');
     await page.waitForTimeout(300);
     const stand = () => page.evaluate(() => {
       const s = document.querySelector('#technieken'), balk = document.querySelector('.balk');
-      return { gekozen: [...s.querySelectorAll('[role="tab"]')].map(t => t.getAttribute('aria-selected') === 'true').indexOf(true),
+      const strepen = [...s.querySelectorAll('.lookbook-streepjes > span')];
+      return { gekozen: [...s.querySelectorAll('.lookbook-paneel')].map(p => p.hasAttribute('inert')).indexOf(false),
         inert: [...s.querySelectorAll('.lookbook-paneel')].map(p => p.hasAttribute('inert')), sectie: getComputedStyle(s).backgroundColor,
-        balk: getComputedStyle(balk).backgroundColor, overgang: getComputedStyle(s).transitionDuration, focus: document.activeElement.id,
-        logo: getComputedStyle(balk.querySelector('.logo-donker')).display }; });
-    const verwacht = async (n, focus) => {
+        balk: getComputedStyle(balk).backgroundColor, overgang: getComputedStyle(s).transitionDuration,
+        logo: getComputedStyle(balk.querySelector('.logo-donker')).display,
+        uit: [...s.querySelectorAll('.lookbook-knoppen .carrousel-knop')].map(k => k.getAttribute('aria-disabled')),
+        lang: strepen.filter(x => x.getBoundingClientRect().width === 32 && getComputedStyle(x).opacity === '1').length,
+        streep: strepen.findIndex(x => x.getBoundingClientRect().width === 32),
+        live: s.querySelector('.lookbook-stand').textContent.trim() }; });
+    const verwacht = async (n, live) => {
       await expect.poll(async () => (await stand()).gekozen, { timeout: 1000 }).toBe(n);
+      // O9: sectie en balk binnen 1 s in de kleur van het item
+      await expect.poll(async () => { const x = await stand(); return [x.sectie, x.balk]; }, { timeout: 1000, message: `paneel ${n + 1}: sectie en balk in de kleur van het item` }).toEqual([HANDWERK[n][3], HANDWERK[n][3]]);
       const st = await stand();
       expect(st.inert, `paneel ${n + 1}: andere panelen inert`).toEqual([0, 1, 2, 3].map(i => i !== n));
-      expect(st.sectie, `paneel ${n + 1}: sectie in de kleur van het item`).toBe(HANDWERK[n][3]);
-      expect(st.balk, `paneel ${n + 1}: balk in de kleur van het item`).toBe(HANDWERK[n][3]);
       expect(st.logo, 'donker logo op de lichte kleur').toBe('block');
       expect(st.overgang.split(',').every(d => parseFloat(d) === 0), 'minder beweging: geen overgang').toBe(true);
-      if (focus) expect(st.focus).toBe(`lookbook-tab-${n + 1}`);
+      expect(st.uit, `paneel ${n + 1}: Vorige uit op 1, Volgende uit op 4`).toEqual([n === 0 ? 'true' : 'false', n === 3 ? 'true' : 'false']);
+      expect([st.lang, st.streep], `paneel ${n + 1}: precies één lang streepje op de goede plek`).toEqual([1, n]);
+      if (live) expect(st.live, `paneel ${n + 1}: de live-regel noemt naam en positie`).toBe(`${HANDWERK[n][1]}, ${n + 1} van 4`);
     };
-    await page.locator('#lookbook-tab-3').click();
-    await verwacht(2);
-    // vegen: de rij één paneel terug schuiven (zoals een veeg naar rechts)
-    await page.evaluate(() => { const rij = document.querySelector('.lookbook-rij'); rij.scrollTo({ left: document.getElementById('lookbook-2').offsetLeft, behavior: 'auto' }); });
-    await verwacht(1);
-    await page.locator('#lookbook-tab-2').focus();
-    await page.keyboard.press('ArrowRight');
+    const vorige = page.locator('.lookbook-knoppen .carrousel-knop[data-richting="-1"]');
+    const volgende = page.locator('.lookbook-knoppen .carrousel-knop[data-richting="1"]');
+    await verwacht(0);
+    // een tik op de gedempte knop doet niets (niet rondlopen); force: Playwright wacht anders op een knop zonder aria-disabled
+    await expect(vorige).toHaveAttribute('aria-disabled', 'true');
+    await vorige.click({ force: true });
+    await page.waitForTimeout(300);
+    await verwacht(0);
+    await volgende.click();
+    await verwacht(1, true);
+    await volgende.click();
     await verwacht(2, true);
-    await page.keyboard.press('End');
+    await vorige.click();
+    await verwacht(1, true);
+    // vegen: de rij één paneel verder schuiven (zoals een veeg naar links)
+    await page.evaluate(() => { const rij = document.querySelector('.lookbook-rij'); rij.scrollTo({ left: document.getElementById('lookbook-3').offsetLeft, behavior: 'auto' }); });
+    await verwacht(2, true);
+    await volgende.click();
     await verwacht(3, true);
+    await expect(volgende).toHaveAttribute('aria-disabled', 'true');
+    await volgende.click({ force: true });
+    await page.waitForTimeout(300);
+    await verwacht(3);
+    // Home en End in de rij
+    await page.locator('#lookbook-rij').focus();
     await page.keyboard.press('Home');
     await verwacht(0, true);
-    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press('End');
     await verwacht(3, true);
     // er wisselt niets vanzelf
     await page.waitForTimeout(2500);
     expect((await stand()).gekozen).toBe(3);
   });
 
-  test(`002 Handwerk met beweging: tab 04 schuift zacht naar het vierde paneel en blijft daar (${BRIEF}, criterium 7)`, async ({ browser }, info) => {
+  test(`002 Handwerk met beweging: Volgende schuift zacht één paneel verder en blijft daar (${BRIEF}, criterium 7)`, async ({ browser }, info) => {
     const ctx = await nieuweTelefoon(browser, info, 390, 844, { reducedMotion: 'no-preference' });
     const page = await ctx.newPage();
     await page.goto('/');
     await naarSectie(page, '#technieken');
     await page.waitForTimeout(400);
-    await page.locator('#lookbook-tab-4').click();
-    await page.waitForTimeout(1600);
-    const m = await page.evaluate(() => ({ gekozen: [...document.querySelectorAll('#technieken [role="tab"]')].map(t => t.getAttribute('aria-selected')),
+    const volgende = page.locator('.lookbook-knoppen .carrousel-knop[data-richting="1"]');
+    for (let i = 0; i < 3; i++) { await volgende.click(); await page.waitForTimeout(900); }
+    await page.waitForTimeout(800);
+    const m = await page.evaluate(() => ({ inert: [...document.querySelectorAll('#technieken .lookbook-paneel')].map(p => p.hasAttribute('inert')),
       plek: Math.abs(document.querySelector('.lookbook-rij').scrollLeft - document.getElementById('lookbook-4').offsetLeft),
-      sectie: document.querySelector('#technieken').style.backgroundColor }));
-    expect(m.gekozen).toEqual(['false', 'false', 'false', 'true']);
+      sectie: document.querySelector('#technieken').style.backgroundColor,
+      uit: [...document.querySelectorAll('.lookbook-knoppen .carrousel-knop')].map(k => k.getAttribute('aria-disabled')) }));
+    expect(m.inert).toEqual([true, true, true, false]);
     expect(m.plek, 'de rij staat op het vierde paneel').toBeLessThanOrEqual(1);
     expect(m.sectie).toBe(HANDWERK[3][3]);
+    expect(m.uit, 'op het laatste paneel is Volgende uit').toEqual(['false', 'true']);
     await ctx.close();
   });
 
@@ -335,13 +375,13 @@ test(`iPhone: drieluikblok past onder de balk, één lookbook in beeld, post 4:5
   expect(m.breed).toBe(390);
 });
 
-// Criterium 10 en ontwerpcriterium 9: zonder JavaScript zijn alle items bereikbaar, zonder tablist en zonder inert
+// Criterium 10 en ontwerpcriterium 9: zonder JavaScript zijn alle items bereikbaar, zonder knoppen en zonder inert
 test.describe('zonder JavaScript', () => {
   test.use({ javaScriptEnabled: false });
-  test(`002 Handwerk: veegrij met vier namen en links, geen tablist in beeld (${BRIEF}, criterium 10)`, async ({ page }, info) => {
+  test(`002 Handwerk: veegrij met vier namen en links, geen knoppen in beeld (${BRIEF}, criterium 10)`, async ({ page }, info) => {
     test.skip(info.project.name !== 'mobiel', 'gemeten op 390 × 844');
     await page.goto('/');
-    await expect(page.locator('#technieken [role="tablist"]')).toBeHidden();
+    await expect(page.locator('#technieken .lookbook-knoppen')).toBeHidden();
     const m = await page.evaluate(() => ({
       panelen: [...document.querySelectorAll('.lookbook-paneel')].map(p => [p.querySelector('h3').textContent.trim(), p.querySelector('a').getAttribute('href'), p.hasAttribute('inert'), p.getBoundingClientRect().height > 0]),
       rij: [getComputedStyle(document.querySelector('.lookbook-rij')).overflowX, getComputedStyle(document.querySelector('.lookbook-rij')).scrollSnapType],

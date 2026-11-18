@@ -48,7 +48,7 @@ test('inhoud: alleen het bestaande verhaal en de quote, één keer, zonder persa
   await expect(s.locator('.quote')).toHaveCount(1);
   expect(norm(await s.locator('.quote').textContent())).toBe(QUOTE);
   // alle tekst in 001: label, kafttitel, quote en verhaal, en verder niets
-  expect(norm(await s.textContent())).toBe(norm(`001 — Het atelier LUX mini · Atelier ${QUOTE} ${VERHAAL}`));
+  expect(norm(await s.textContent())).toBe(norm(`Het atelier LUX mini · Atelier ${QUOTE} ${VERHAAL}`));
   await expect(s.locator('.kaft-strook')).toHaveText('LUX mini · Atelier');
   await expect(s.locator('figcaption, .masthead')).toHaveCount(0);
   const alles = (await s.textContent()) + ' ' + (await s.evaluate(e => [...e.querySelectorAll('img')].map(i => i.alt).join(' ')));
@@ -58,14 +58,14 @@ test('inhoud: alleen het bestaande verhaal en de quote, één keer, zonder persa
 test('opbouw: #atelier, data-label, salie, inkt en het donkere balklogo (criterium 7, ontwerp 1)', async ({ page }) => {
   await page.goto('/werkwijze');
   const s = page.locator('#atelier');
-  await expect(s).toHaveAttribute('data-label', '<span>001 —</span> Het atelier');
+  await expect(s).toHaveAttribute('data-label', 'Het atelier');
   await expect(s).toHaveAttribute('data-achtergrond', '#C3CFBC');
-  await expect(s.locator('.media-rij > .label')).toHaveText('001 — Het atelier');
+  await expect(s.locator('.media-rij > .label')).toHaveText('Het atelier');
   const secties = await page.$$eval('main > section', x => x.map(e => e.id));
   expect(secties).toEqual(['', 'atelier', 'hoe-ik-werk', 'personaliseren', 'contact']);
   await s.evaluate(e => window.scrollTo(0, e.getBoundingClientRect().top + scrollY + 40));
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('.achtergrond')).backgroundColor)).toBe('rgb(195, 207, 188)');
-  await expect(page.locator('.balk .sectie-label')).toHaveText('001 — Het atelier');
+  await expect(page.locator('.balk .sectie-label')).toHaveText('Het atelier');
   await expect(page.locator('.balk .logo-donker')).toBeVisible();
   await expect(page.locator('.balk .logo-wit')).toBeHidden();
   const kleuren = await s.evaluate(e => [...e.querySelectorAll('.media-rij > .label, .quote, .verhaal, .kaft-strook')].map(x => getComputedStyle(x).color));

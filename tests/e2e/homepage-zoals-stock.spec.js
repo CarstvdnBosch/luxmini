@@ -101,7 +101,7 @@ test('formulier: kraamcadeaubox met maat 50 geeft "Kledingmaat: maat 50" in de m
   await expect(page).toHaveURL(/\/bedankt$/);
 });
 
-test('formulier: op 390 x 844 staat "002 — Stuur een bericht" onder de balk', async ({ page }, info) => {
+test('formulier: op 390 x 844 staat "Stuur een bericht" onder de balk', async ({ page }, info) => {
   test.skip(info.project.name !== 'mobiel', 'gemeten op 390 x 844');
   await page.goto('/contact?onderwerp=kraamcadeaubox&formaat=50#formulier');
   await page.waitForTimeout(600);
@@ -379,16 +379,16 @@ test('F1 hero: meebewegen zoals Stock (absolute muispositie /20 /15 /10, kanteli
   await ctx.close();
 });
 
-test('F2: geen witte scheidingslijn in 001 — Producten (ook niet tussen de kolommen, feedback Carst 7 nov.)', async ({ page }) => {
+test('F2: geen witte scheidingslijn in Producten (ook niet tussen de kolommen, feedback Carst 7 nov.)', async ({ page }) => {
   await page.goto('/');
   const lijnen = await page.evaluate(() => { const k = document.querySelector('#producten .kern-kolom:nth-child(2)');
     return ['::before', '::after'].map(p => getComputedStyle(k, p).display); });
   expect(lijnen, 'geen witte lijnen tussen de kolommen').toEqual(['none', 'none']);
 });
 
-test('F3: label 002 — Handwerk en vier namen waarin elk woord één keer voorkomt', async ({ page }) => {
+test('F3: label Handwerk en vier namen waarin elk woord één keer voorkomt', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('#technieken .label')).toHaveText(/002\s—\sHandwerk/);
+  await expect(page.locator('#technieken .label')).toHaveText(/^\s*Handwerk\s*$/);
   const namen = await page.locator('#technieken .hoverlijst ul a').evaluateAll(as => as.map(a => a.childNodes[0].textContent.trim()));
   expect(namen).toEqual(['Warm en eigen', 'Rustig en praktisch', 'Klein en precies', 'Speels en levendig']);
   const woorden = namen.join(' ').split(' ').filter(w => w !== 'en');

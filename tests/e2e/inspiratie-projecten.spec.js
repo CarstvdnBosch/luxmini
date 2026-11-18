@@ -42,7 +42,7 @@ test('overzicht: vier projecttegels in volgorde, kleur, één link en één tabs
   await page.goto('/inspiratie');
   await wachtOpRust(page);
   const s = await page.evaluate(() => [...document.querySelectorAll('main > section')].map(x => [x.id, x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()]));
-  expect(s).toEqual([['', '— Inspiratie'], ...PROJECTEN.map((p, i) => [p.id, `00${i + 1} — ${p.kort}`]), ['', '— Het atelier'], ['contact', '005 — Contact']]);
+  expect(s).toEqual([['', 'Inspiratie'], ...PROJECTEN.map((p, i) => [p.id, p.kort]), ['', 'Het atelier'], ['contact', 'Contact']]);
   await expect(page.locator('h1')).toHaveText('Inspiratie');
   await expect(page.locator('.pagina-kop .kop-xl')).toHaveText('Gemaakt in het atelier in Ospel');
   await expect(page.locator('.pagina-kop a'), 'geen pijl-links meer in de kop').toHaveCount(0);
@@ -180,7 +180,7 @@ for (const [i, p] of PROJECTEN.entries()) {
     expect(antwoord.status()).toBe(200);
     const s = await page.evaluate(() => [...document.querySelectorAll('main > section')].map(x => { const l = x.querySelector(':scope .label');
       return [x.id, x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim(), l ? l.textContent.replace(/\s+/g, ' ').trim() : null]; }));
-    expect(s.map(x => x.slice(0, 2))).toEqual([['', '— Inspiratie'], ['fotos', "001 — Foto's"], ['volgend', '002 — Meer zien'], ['contact', '003 — Contact']]);
+    expect(s.map(x => x.slice(0, 2))).toEqual([['', 'Inspiratie'], ['fotos', "Foto's"], ['volgend', 'Meer zien'], ['contact', 'Contact']]);
     for (const x of s.slice(1)) expect(x[2], `${x[0]}: zichtbaar label gelijk aan data-label`).toBe(x[1]);
     await expect(page.locator('h1')).toHaveText(p.naam);
     await expect(page.locator('main > section.pagina-kop')).toHaveCount(1);
