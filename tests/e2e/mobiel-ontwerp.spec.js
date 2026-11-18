@@ -110,7 +110,7 @@ test('vaste balk bedekt geen kop na een ankerlink', async ({ page }) => {
 });
 
 // Leesbare letters op mobiel (brief 2026-11-07, criteria 15–17; principes.md, Mobiel regel 2): alles wat je aantikt of moet lezen
-// om iets te bedienen is minimaal 16 px, in main, in het geopende menu en in de footer. Alleen decoratieve labels ("001 —", .caps)
+// om iets te bedienen is minimaal 16 px, in main, in het geopende menu en in de footer. Alleen decoratieve labels (.label, .caps)
 // mogen kleiner, maar niet onder 13 px. Uitzondering met naam: de inline maillink in de lopende tekst van de privacyverklaring
 // (zelfde grootte als die tekst).
 for (const { pad, naam } of [...PAGINAS, { pad: '/bestaat-niet-meer', naam: '404' }]) {
@@ -457,7 +457,7 @@ test(`003 Inspiratie op 390 × 844: geen witte streep tussen de balk en de foto 
     const m = await page.evaluate(() => { const b = document.querySelector('.balk'), f = document.querySelector('#inspiratie > img').getBoundingClientRect();
       return { onder: b.getBoundingClientRect().bottom, label: b.querySelector('.sectie-label').textContent.replace(/\s+/g, ' ').trim(), foto: f.top, achtergrond: getComputedStyle(b).backgroundColor }; });
     // neemt de balk de kleur van Inspiratie, dan raakt de foto de balk (geen strook van de laag ertussen)
-    if (m.label === '003 — Inspiratie') expect(m.foto, `${afstand} px: foto begint onder de balk met een streep (balk ${m.onder}, foto ${m.foto})`).toBeLessThanOrEqual(m.onder + 0.5);
+    if (m.label === 'Inspiratie') expect(m.foto, `${afstand} px: foto begint onder de balk met een streep (balk ${m.onder}, foto ${m.foto})`).toBeLessThanOrEqual(m.onder + 0.5);
     else expect(m.achtergrond, `${afstand} px: de balk heeft de kleur van de sectie erboven`).not.toBe('rgb(188, 133, 101)');
   }
 });

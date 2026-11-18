@@ -35,7 +35,7 @@ const LEES = id => {
     hoogte: r.height, top: r.top, bg: stijl(k).backgroundColor, masker: stijl(q('.kern-masker')).backgroundColor,
     beeld: [beeld.top - r.top, beeld.bottom - r.top, beeld.left - r.left, r.right - beeld.right, r.bottom - beeld.bottom],
     imgTransform: stijl(img).transform, objectFit: stijl(img).objectFit,
-    nr: [q('.nr').getBoundingClientRect().top - r.top, stijl(q('.nr')).color],
+    nrAantal: k.querySelectorAll('.nr').length, // brief 2026-11-18-elegante-navigatie: geen volgnummer meer in de blokken
     kop: [q('h2').getBoundingClientRect().top - r.top, q('h2').getBoundingClientRect().bottom - r.top, stijl(q('h2')).color, parseFloat(stijl(q('h2')).fontSize)],
     zin: [stijl(q('p.klein')).opacity, stijl(q('p.klein')).display, stijl(q('p.klein')).visibility, stijl(q('p.klein')).pointerEvents, stijl(q('p.klein')).color, parseFloat(stijl(q('p.klein')).fontSize), parseFloat(stijl(q('p.klein')).lineHeight), q('p.klein').getBoundingClientRect().width],
     pijl: [stijl(q('a.pijl')).opacity, stijl(q('a.pijl')).display, stijl(q('a.pijl')).visibility, stijl(q('a.pijl')).pointerEvents, stijl(q('a.pijl')).color, parseFloat(stijl(q('a.pijl')).fontSize),
@@ -53,7 +53,7 @@ test.describe('telefoon staand, met beweging', () => {
   test.beforeEach(({}, info) => alleenTelefoon(info));
 
   // Criteria 1, 3, 4 (stap 1), 5, 13; ontwerpcriteria 1 en 4
-  test(`stap 1: paletkleur met nr en kop in inkt, foto buiten de kolom, zin en pijl-link onzichtbaar maar in de DOM (${BRIEF}, criterium 1)`, async ({ browser }, info) => {
+  test(`stap 1: paletkleur met de kop in inkt (zonder nummer), foto buiten de kolom, zin en pijl-link onzichtbaar maar in de DOM (${BRIEF}, criterium 1)`, async ({ browser }, info) => {
     for (const [b, h] of schermen(info)) {
       const ctx = await telefoon(browser, info, b, h);
       const page = await ctx.newPage();
@@ -69,7 +69,8 @@ test.describe('telefoon staand, met beweging', () => {
         expect(m.stap2, `${t}: nog in stap 1 met de bovenrand op 62 %`).toBe(false);
         expect(m.bg, `${t}: effen paletkleur`).toBe(kleur);
         expect(m.beeld[1], `${t}: foto helemaal buiten de kolom (${m.beeld})`).toBeLessThanOrEqual(0.5);
-        expect([m.nr[1], m.kop[2]], `${t}: nr en kop in inkt`).toEqual([INKT, INKT]);
+        expect(m.nrAantal, `${t}: geen volgnummer (brief 2026-11-18-elegante-navigatie)`).toBe(0);
+        expect(m.kop[2], `${t}: kop in inkt`).toBe(INKT);
         expect(contrast(INKT, kleur), `${t}: inkt op de paletkleur ≥ 6:1`).toBeGreaterThanOrEqual(6);
         for (const [naam, d] of [['zin', m.zin], ['pijl-link', m.pijl]]) {
           expect(d[0], `${t}: ${naam} opacity 0`).toBe('0');
@@ -79,7 +80,7 @@ test.describe('telefoon staand, met beweging', () => {
         }
         expect(m.pijl[7], `${t}: pijl-link focusbaar`).toBe(0);
         expect(m.verborgen, `${t}: geen aria-hidden op de tekst`).toBe(false);
-        expect(Math.abs(m.nr[0] - 72), `${t}: nr 72 px onder de bovenrand (${m.nr[0]})`).toBeLessThanOrEqual(2);
+        expect(Math.abs(m.kop[0] - 72), `${t}: kop 72 px onder de bovenrand (${m.kop[0]}; was het nummer, brief 2026-11-18-elegante-navigatie)`).toBeLessThanOrEqual(2);
         expect(m.kop[3], `${t}: kop 40 px`).toBe(40);
         expect(m.breed, `${t}: geen horizontaal scrollen`).toBe(m.vw);
       }
@@ -110,12 +111,12 @@ test.describe('telefoon staand, met beweging', () => {
           window.scrollTo({ top: r0.top + scrollY - innerHeight * 0.48, behavior: 'instant' });
           const uit = [], start = performance.now();
           await new Promise(klaar => { const stap = () => { const r = k.getBoundingClientRect(), b = k.querySelector('.kern-beeld').getBoundingClientRect(), h2 = k.querySelector('h2');
-            uit.push({ t: performance.now() - start, kleur: getComputedStyle(h2).color, nrKleur: getComputedStyle(k.querySelector('.nr')).color,
+            uit.push({ t: performance.now() - start, kleur: getComputedStyle(h2).color,
               onthuld: b.bottom - r.top, kopOnder: h2.getBoundingClientRect().bottom - r.top, pijlOp: parseFloat(getComputedStyle(k.querySelector('a.pijl')).opacity) });
             if (performance.now() - start < 1700) requestAnimationFrame(stap); else klaar(); }; requestAnimationFrame(stap); });
           return { uit, inkt }; }, [id, INKT]);
         for (const f of film.uit) {
-          if (f.kleur !== INKT || f.nrKleur !== INKT) expect(f.onthuld, `${t}: op ${f.t.toFixed(0)} ms is de kop niet meer inkt (${f.kleur}) terwijl de foto pas tot ${f.onthuld.toFixed(0)} px is onthuld`).toBeGreaterThanOrEqual(f.kopOnder);
+          if (f.kleur !== INKT) expect(f.onthuld, `${t}: op ${f.t.toFixed(0)} ms is de kop niet meer inkt (${f.kleur}) terwijl de foto pas tot ${f.onthuld.toFixed(0)} px is onthuld`).toBeGreaterThanOrEqual(f.kopOnder);
         }
         const vroeg = film.uit.filter(f => f.t < 150);
         expect(vroeg.every(f => f.kleur === INKT), `${t}: de kop verkleurt niet vóór 0,2 s`).toBe(true);
@@ -125,11 +126,11 @@ test.describe('telefoon staand, met beweging', () => {
         expect(na.masker, `${t}: ondergrond van de foto #2A1C14`).toBe('rgb(42, 28, 20)');
         expect(na.imgTransform, `${t}: foto niet geschaald`).toBe('none');
         expect(na.objectFit).toBe('cover');
-        expect([na.nr[1], na.kop[2], na.zin[4], na.pijl[4]], `${t}: alle tekst wit`).toEqual([WIT, WIT, WIT, WIT]);
+        expect([na.kop[2], na.zin[4], na.pijl[4]], `${t}: alle tekst wit`).toEqual([WIT, WIT, WIT]);
         expect([na.zin[0], na.pijl[0]], `${t}: zin en pijl-link zichtbaar`).toEqual(['1', '1']);
         expect([na.zin[3], na.pijl[3]], `${t}: zin en pijl-link bruikbaar`).toEqual(['auto', 'auto']);
         expect(na.hoogte, `${t}: blokhoogte gelijk in stap 1 en 2`).toBe(voor.hoogte);
-        expect([na.nr[0], na.kop[0]], `${t}: nr en kop op dezelfde plek (Δy = 0)`).toEqual([voor.nr[0], voor.kop[0]]);
+        expect(na.kop[0], `${t}: kop op dezelfde plek (Δy = 0)`).toBe(voor.kop[0]);
         // regelafstand 18 × 1,6 = 28,8 px; WebKit geeft 28.800001 (afronding van de meting, geen versoepeling)
         expect(na.zin[5], `${t}: zin 18 px`).toBe(18);
         expect(na.zin[6], `${t}: regelafstand 1,6 (28,8 px)`).toBeCloseTo(28.8, 1);
@@ -191,9 +192,11 @@ test.describe('telefoon staand, met beweging', () => {
       return [a.getAttribute('href'), !!k && k.classList.contains('aangekomen'), getComputedStyle(a).pointerEvents]; });
     expect(direct, 'focus op de pijl-link en meteen stap 2').toEqual(['kraamcadeauboxen.html', true, 'auto']);
     await page.waitForTimeout(1600);
-    const focus = await page.evaluate(() => { const a = document.activeElement, s = getComputedStyle(a); return [s.opacity, s.outlineStyle, s.outlineWidth, a.matches(':focus-visible')]; });
+    // brief 2026-11-18-elegante-navigatie (O6, O12): de focusrand van een pijl-link is zijn kader, 2 px en dekkend (in plaats van de outline)
+    const focus = await page.evaluate(() => { const a = document.activeElement, s = getComputedStyle(a), k = getComputedStyle(a, '::before');
+      return [s.opacity, k.borderTopStyle, k.borderTopWidth, k.opacity, a.matches(':focus-visible')]; });
     if (safari) expect(focus[0], 'na de overgang: opacity 1').toBe('1');
-    else expect(focus, 'na de overgang: opacity 1 en een zichtbare focusrand').toEqual(['1', 'solid', '2px', true]);
+    else expect(focus, 'na de overgang: opacity 1 en een zichtbare focusrand (kader 2 px, dekkend)').toEqual(['1', 'solid', '2px', '1', true]);
     // tik op het blok in stap 1: stap 2, adres blijft gelijk
     await blokOp(page, 'prematuurkleding', 0.62);
     await page.waitForTimeout(250);
@@ -281,7 +284,7 @@ test.describe('direct stap 2', () => {
       // staand vult de foto het blok; liggend de rechterhelft (55 %)
       expect([m.beeld[0], m.beeld[3], m.beeld[4]].every(x => Math.abs(x) <= 1) && m.beeld[1] > 1, `${t} ${id}: foto in beeld (${m.beeld})`).toBe(true);
       expect([m.zin[0], m.pijl[0], m.pijl[3]], `${t} ${id}: zin en pijl-link zichtbaar en bruikbaar`).toEqual(['1', '1', 'auto']);
-      expect([m.nr[1], m.kop[2], m.zin[4], m.pijl[4]], `${t} ${id}: tekst wit`).toEqual([WIT, WIT, WIT, WIT]);
+      expect([m.kop[2], m.zin[4], m.pijl[4]], `${t} ${id}: tekst wit`).toEqual([WIT, WIT, WIT]);
       expect(m.breed, `${t}: geen horizontaal scrollen`).toBe(m.vw);
     }
   };

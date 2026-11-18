@@ -2,8 +2,8 @@
 // Boek (001), magazine (002) en tablet (003) om en om, daarna 004 Prijs, 005 Zo werkt het en 006 Contact.
 import { test, expect } from './hulp.js';
 
-const SECTIES = [['', '— Babynest'], ['babynest', '001 — Het nest'], ['stof', '002 — De stof'], ['dekentje', '003 — Het dekentje'],
-  ['prijs', '004 — Prijs'], ['zo-werkt-het', '005 — Zo werkt het'], ['contact', '006 — Contact']];
+const SECTIES = [['', 'Babynest'], ['babynest', 'Het nest'], ['stof', 'De stof'], ['dekentje', 'Het dekentje'],
+  ['prijs', 'Prijs'], ['zo-werkt-het', 'Zo werkt het'], ['contact', 'Contact']];
 const FORMULIER = 'contact.html?onderwerp=babynest#formulier';
 const BLOKKEN = [
   { id: 'babynest', kleur: '#B5969E', kop: 'Het nest', pijl: 'Bespreek je idee', href: FORMULIER },

@@ -8,7 +8,7 @@ import { test, expect, wachtOpRust } from './hulp.js';
 const TERRACOTTA = 'rgb(188, 133, 101)';
 const WIT = 'rgb(255, 255, 255)';
 const LIJN = 0.76;
-// criterium 3: afstand laatste tekstregel 001 → letters "002 —" per schermbreedte (± 12 px), gemeten nadat het label van 002
+// criterium 3: afstand laatste tekstregel 001 → letters van het label van 002 per schermbreedte (± 12 px), gemeten nadat het label van 002
 // is opgekomen; de tests draaien met prefers-reduced-motion: reduce (hulp.js), dus zonder opkomen.
 const AFSTAND = { 1440: 131, 1280: 119, 1024: 102, 768: 86, 390: 70 };
 const BREEDTES = { desktop: [[1440, 900], [1280, 800], [1024, 768]] };
@@ -30,8 +30,8 @@ async function afstand(page) {
   return page.evaluate(() => {
     // onderkant van de laagste tekstregel in 001 (laatste blok van elke kolom; kolommen kunnen naast elkaar staan)
     const onder = Math.max(...[...document.querySelectorAll('.gegevens-kolom')].map(k => k.lastElementChild.getBoundingClientRect().bottom));
-    // bovenkant van de letters "002 —"
-    const r = document.createRange(); r.selectNodeContents(document.querySelector('#formulier .label span').firstChild);
+    // bovenkant van de letters van het label (sinds brief 2026-11-18-elegante-navigatie alleen het woord, zonder "002 —")
+    const r = document.createRange(); r.selectNodeContents(document.querySelector('#formulier .label').firstChild);
     const boven = Math.min(...[...r.getClientRects()].map(x => x.top));
     return Math.round(boven - onder);
   });

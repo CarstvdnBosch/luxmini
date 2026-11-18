@@ -65,8 +65,8 @@ test('pagina: volgorde, labels, ankers, perzik met inkt en contactmomenten (crit
     const l = x.querySelector('.label');
     return [x.id, x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim(), l ? l.textContent.trim() : null, x.getAttribute('data-achtergrond')];
   }));
-  expect(s.map(x => x.slice(0, 2))).toEqual([['', '— Prematuurkleding'], ['maatwerk', '001 — Maatwerk'], ['prijs', '002 — Prijs'],
-    ['voorbeelden', '003 — Voorbeelden'], ['zo-werkt-het', '004 — Zo werkt het'], ['contact', '005 — Contact']]);
+  expect(s.map(x => x.slice(0, 2))).toEqual([['', 'Prematuurkleding'], ['maatwerk', 'Maatwerk'], ['prijs', 'Prijs'],
+    ['voorbeelden', 'Voorbeelden'], ['zo-werkt-het', 'Zo werkt het'], ['contact', 'Contact']]);
   for (const x of s.slice(1)) expect(x[2], `${x[0]}: zichtbaar label gelijk aan data-label`).toBe(x[1]);
   expect(s[3][3], '003 op perzik').toBe('#DEB799');
   for (const anker of ['maatwerk', 'prijs', 'zo-werkt-het', 'contact']) {
@@ -110,7 +110,7 @@ test('raster: kolommen, verschuivingen, linkerrand en hoogte van 003 (OC2, OC4, 
       blok: Math.max(...figs.map(f => f.t + f.h)) - Math.min(...figs.map(f => f.t)), g: [g.width, g.height], maatwerk: mw.height, vh: innerHeight };
   });
   const p = info.project.name;
-  // OC5: de eerste kolom begint op de linkerrand van het label "003 —"
+  // OC5: de eerste kolom begint op de linkerrand van het label (Voorbeelden)
   expect(Math.abs(m.l - m.label)).toBeLessThanOrEqual(1);
   const grens = { desktop: 1650, tablet: 950, mobiel: 1150, iphone: 1150 }[p];
   expect(m.blok, `fotoblok ${m.blok.toFixed(0)} px`).toBeLessThanOrEqual(grens);

@@ -98,7 +98,7 @@ test('homepage: hero, 001 Producten, 002 Handwerk, 003 Inspiratie, 004 Instagram
   test.skip(info.project.name !== 'desktop', 'volgorde is per scherm gelijk');
   await page.goto('/');
   const labels = await page.locator('main > section').evaluateAll(s => s.map(x => x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()));
-  expect(labels).toEqual(['— LUX mini', '001 — Producten', '002 — Handwerk', '003 — Inspiratie', '004 — Instagram']);
+  expect(labels).toEqual(['LUX mini', 'Producten', 'Handwerk', 'Inspiratie', 'Instagram']);
   await expect(page.locator('main section.categorie')).toHaveCount(0);
   // drieluik: drie kolommen, elk één link naar de productpagina
   const kolommen = await page.locator('#producten .kern-kolom').evaluateAll(s => s.map(x => [x.id, [...x.querySelectorAll('a')].map(a => a.getAttribute('href'))]));
@@ -126,7 +126,7 @@ test('homepage: hero, 001 Producten, 002 Handwerk, 003 Inspiratie, 004 Instagram
 test('kraamcadeauboxen: volgorde en thema\'s twee kolommen breed in sets met scroll-snap', async ({ page }, info) => {
   await page.goto('/kraamcadeauboxen');
   const labels = await page.locator('main > section').evaluateAll(s => s.map(x => x.getAttribute('data-label').replace(/<[^>]+>/g, '').trim()));
-  expect(labels).toEqual(['— Kraamcadeauboxen', '— Met naam', '001 — Kies je formaat', '002 — Wat er in de box kan', '003 — Thema\'s', '004 — Zo werkt het', '005 — Contact']);
+  expect(labels).toEqual(['Kraamcadeauboxen', 'Met naam', 'Kies je formaat', 'Wat er in de box kan', 'Thema\'s', 'Zo werkt het', 'Contact']);
   const rij = page.locator('#themas .themacarrousel');
   await expect(rij.locator('li')).toHaveCount(8);
   // de foto's laden pas als de sectie in de buurt komt (ronde 8)

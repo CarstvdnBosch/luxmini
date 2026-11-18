@@ -31,7 +31,7 @@ test('raster: linkerrand op alle breedtes, rechterrand op desktop, maten en geen
   for (const w of [360, 390, 768, 1024, 1025, 1280, 1440, 1600, 1920]) {
     await naar(page, w);
     const m = await meet(page);
-    // 1: de eerste product-, stof- en themategel beginnen op de linkerkant van het label "002 —"
+    // 1: de eerste product-, stof- en themategel beginnen op de linkerkant van het label (Wat er in de box kan)
     for (const k of ['p', 's', 't']) expect(Math.abs(m[k].tegels[0].l - m.label.l), `${w}: eerste tegel (${k}) op de linkerrand`).toBeLessThanOrEqual(1);
     // 8: nooit een stoftegel breder dan 240 px of een thema breder dan 600 px
     for (const t of m.s.tegels) expect(t.b, `${w}: stoftegel max. 240 px`).toBeLessThanOrEqual(240);

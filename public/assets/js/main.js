@@ -929,25 +929,30 @@
 
   /* ---------------------------------------------------------------
      5g. Homepage 002 Handwerk op mobiel (≤ 760 px en telefoons liggend; brief 2026-11-14-homepage-mobiel-stock, B):
-         een veegrij met één lookbook per keer en de tabjes 01–04 (tablist). Het actieve paneel volgt uit een
-         IntersectionObserver (drempel 0,6; Safari kent niet overal scrollend). Een tik of pijltoets op een tab scrolt naar
-         het paneel (bij "minder beweging" direct). Niet-actieve panelen zijn inert. De sectie (en dus de balk) krijgt de
-         kleur van het actieve item en doet dan niet mee met de kleurlaag. Er wisselt niets vanzelf.
-         Zonder JavaScript blijft de tablist verborgen en is de rij gewoon veegbaar.
+         een veegrij (.carrousel, role region) met één lookbook per keer. Bediening (brief 2026-11-18-elegante-navigatie):
+         pijlknoppen vorige/volgende (.carrousel-knop, ook op touch: ze vervangen de tabjes 01–04) met vier streepjes als
+         positie (aria-hidden) en een live-regel ("Siliconen items, 2 van 4"). Aan begin en eind is de knop uit
+         (aria-disabled, niet rondlopen). Home/End in de rij. Het actieve paneel volgt uit een IntersectionObserver
+         (drempel 0,6; Safari kent niet overal scrollend). Niet-actieve panelen zijn inert. De sectie (en dus de balk)
+         krijgt de kleur van het actieve item en doet dan niet mee met de kleurlaag. Er wisselt niets vanzelf.
+         Zonder JavaScript blijven de knoppen verborgen en is de rij gewoon veegbaar.
      --------------------------------------------------------------- */
   document.querySelectorAll('.lookbook').forEach(function (lb) {
     var rij = lb.querySelector('.lookbook-rij');
-    var lijst = lb.querySelector('.lookbook-tabs');
+    var houder = lb.querySelector('.lookbook-knoppen');
     var sec = lb.closest('section');
-    if (!rij || !lijst || !sec) return;
-    var tabs = Array.prototype.slice.call(lijst.querySelectorAll('[role="tab"]'));
+    if (!rij || !houder || !sec) return;
+    var knoppen = Array.prototype.slice.call(houder.querySelectorAll('.carrousel-knop'));
+    var streepjes = Array.prototype.slice.call(houder.querySelectorAll('.lookbook-streepjes > span'));
+    var stand = lb.querySelector('.lookbook-stand');
     var panelen = Array.prototype.slice.call(rij.querySelectorAll('.lookbook-paneel'));
-    if (!tabs.length || tabs.length !== panelen.length) return;
+    if (knoppen.length !== 2 || !panelen.length) return;
+    var namen = panelen.map(function (p) { var r = p.querySelector('.lookbook-regel'); return r ? r.textContent.trim() : ''; });
     var mobiel = window.matchMedia('(max-width: 760px), (hover: none) and (pointer: coarse) and (max-height: 500px)');
     var eigenKleur = sec.getAttribute('data-achtergrond');
     var huidig = 0, doel = null, doelTimer = null;
-    lijst.hidden = false;
-    panelen.forEach(function (p, n) { p.setAttribute('role', 'tabpanel'); p.setAttribute('aria-labelledby', tabs[n].id); });
+    houder.hidden = false;
+    rij.setAttribute('tabindex', '0'); // tabstop voor Home/End (zonder JavaScript gaat Tab direct naar de vier links)
     function kleurZetten() {
       if (mobiel.matches) {
         var kleur = panelen[huidig].getAttribute('data-kleur');
@@ -964,29 +969,35 @@
       laagBijwerken(true);
       if (balkBijwerken) balkBijwerken(true);
     }
-    function kies(n) {
+    function kies(n, melden) {
+      var anders = n !== huidig;
       huidig = n;
-      tabs.forEach(function (t, i) { t.setAttribute('aria-selected', i === n ? 'true' : 'false'); t.tabIndex = i === n ? 0 : -1; });
       panelen.forEach(function (p, i) { if (i === n) p.removeAttribute('inert'); else p.setAttribute('inert', ''); });
+      streepjes.forEach(function (s, i) { s.classList.toggle('aan', i === n); });
+      knoppen[0].setAttribute('aria-disabled', n === 0 ? 'true' : 'false');
+      knoppen[1].setAttribute('aria-disabled', n === panelen.length - 1 ? 'true' : 'false');
+      // cijfers alleen voorgelezen, nooit zichtbaar
+      if (stand && melden && anders) stand.textContent = namen[n] + ', ' + (n + 1) + ' van ' + panelen.length;
       kleurZetten();
     }
-    function ga(n, focus) {
-      kies(n);
-      if (focus) tabs[n].focus();
+    function ga(n) {
+      kies(n, true);
       doel = n; clearTimeout(doelTimer);
       doelTimer = setTimeout(function () { doel = null; }, 1500); // vangnet als het scrollen wordt onderbroken
       rij.scrollTo({ left: panelen[n].offsetLeft, behavior: stil ? 'auto' : 'smooth' });
     }
-    tabs.forEach(function (t, n) { t.addEventListener('click', function () { ga(n, false); }); });
-    lijst.addEventListener('keydown', function (e) {
-      var n = tabs.indexOf(document.activeElement), naar = null;
-      if (n < 0) return;
-      if (e.key === 'ArrowRight') naar = (n + 1) % tabs.length;
-      else if (e.key === 'ArrowLeft') naar = (n - 1 + tabs.length) % tabs.length;
-      else if (e.key === 'Home') naar = 0;
-      else if (e.key === 'End') naar = tabs.length - 1;
-      if (naar === null) return;
-      e.preventDefault(); ga(naar, true);
+    knoppen.forEach(function (k) {
+      k.addEventListener('click', function () {
+        if (k.getAttribute('aria-disabled') === 'true') return;
+        var naar = huidig + Number(k.dataset.richting);
+        if (naar >= 0 && naar < panelen.length) ga(naar);
+      });
+    });
+    // Home en End in de rij: naar het eerste of het laatste lookbook (niet de hele pagina)
+    rij.addEventListener('keydown', function (e) {
+      if (e.target !== rij || (e.key !== 'Home' && e.key !== 'End')) return;
+      e.preventDefault();
+      ga(e.key === 'Home' ? 0 : panelen.length - 1);
     });
     if ('IntersectionObserver' in window) {
       var lbIo = new IntersectionObserver(function (items) {
@@ -994,14 +1005,14 @@
           if (!it.isIntersecting || it.intersectionRatio < 0.6) return;
           var n = panelen.indexOf(it.target);
           if (doel !== null) { if (n !== doel) return; doel = null; clearTimeout(doelTimer); }
-          if (n !== huidig) kies(n);
+          if (n !== huidig) kies(n, true);
         });
       }, { root: rij, threshold: 0.6 });
       panelen.forEach(function (p) { lbIo.observe(p); });
     }
-    var opnieuw = function () { kies(huidig); rij.scrollLeft = panelen[huidig].offsetLeft; };
+    var opnieuw = function () { kies(huidig, false); rij.scrollLeft = panelen[huidig].offsetLeft; };
     if (mobiel.addEventListener) mobiel.addEventListener('change', opnieuw);
-    kies(0);
+    kies(0, false);
   });
 
   /* ---------------------------------------------------------------
@@ -1329,7 +1340,7 @@
       io.observe(el);
     });
     document.querySelectorAll('main .woorden-kop').forEach(function (el) { if (!el.closest('.hero')) io.observe(el); });
-    /* 003 Zo werkt het: rondjes en lijnstukken tekenen zich één keer, 01 → 02 → 03 (CSS .stappen.teken) */
+    /* 003 Zo werkt het: rondjes en lijnstukken tekenen zich één keer, eerste → tweede → derde (CSS .stappen.teken) */
     document.querySelectorAll('main .stappen').forEach(function (el) { el.classList.add('teken'); io.observe(el); });
     document.querySelectorAll('main .paar > img, main .duo .beelden img, main .uitgelicht-beeld img, main .contact-foto').forEach(function (img) { img.classList.add('zoom'); io.observe(img); });
     /* Prematuurkleding 003 Voorbeelden: het kader schuift één keer in (CSS .inschuif, brief 2026-11-14-prematuur-fotos) */
@@ -1845,6 +1856,7 @@
   // aan het begin of eind is de knop uit. Vegen op touch en de pijltoetsen in de rij werken vanzelf.
   // Scrolt een rij niet (bijv. de producten vanaf 1025 px), dan geen knoppen en geen tabstop (brief 2026-11-12, Story 1).
   document.querySelectorAll('.carrousel').forEach(function (rij) {
+    if (rij.classList.contains('lookbook-rij')) return; // het lookbook (5g) heeft eigen knoppen: één lookbook per tik
     var knoppen = Array.prototype.slice.call(document.querySelectorAll('.carrousel-knop[aria-controls="' + rij.id + '"]'));
     var houders = knoppen.map(function (k) { return k.closest('.carrousel-knoppen'); }).filter(function (h, i, a) { return h && a.indexOf(h) === i; });
     var stand = function () {
