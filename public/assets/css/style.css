@@ -646,14 +646,12 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .kern-label { position: absolute; left: var(--rand); top: var(--ritme); z-index: 3; }
 .kern-kolommen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .kern-kolom { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: calc(var(--ritme) + 48px) 24px calc(var(--ritme) / 2) clamp(24px, calc(var(--u) * 8.333), 120px); }
-/* met een muis (1025–ca. 1250 px): de linkerrand wijkt zo ver als nodig, zodat de tekstkolom van 288 px (en dus de langste
-   pijl-link met kader) in de kolom past en de drie kaders op één regel even hoog zijn (ontwerpgate ronde 3) */
-/* past de langste link ook zo niet (binnenbreedte van de kolom < 288 px), dan breken de links af; alle drie even hoog (twee regels, 72 px) */
+/* de linkerrand blijft op de lijn van label en logo (ontwerpgate ronde 4). Past de tekstkolom van 288 px (en dus de langste
+   pijl-link met kader) niet binnen die lijn (binnenbreedte < 288 px, met een muis tot ca. 1260 px), dan krijgen alle drie de
+   kaders twee regels hoogte (72 px), zodat ze in de rij even hoog zijn */
 .kern-kolom { container-type: inline-size; }
 @container (max-width: 287.98px) { .kern-tekst .pijl { min-height: 72px; } }
-@media (hover: hover) and (pointer: fine) and (min-width: 761px) {
-  .kern-kolom { padding-left: max(24px, min(clamp(24px, calc(var(--u) * 8.333), 120px), calc(100% - 288px - 24px))); }
-}
+@container (max-width: 189.98px) { .kern-tekst .pijl { min-height: 96px; } } /* nog smaller (muis op 761–ca. 900 px): drie regels voor alle drie */
 .kolom-prem { background: var(--oker); }
 .kolom-nest { background: var(--mauve); }
 /* geen witte scheidingslijnen tussen de kolommen (feedback Carst 7 nov. 16:47) */

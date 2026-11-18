@@ -172,15 +172,19 @@ test(`prijskaarten 1280 en 1366 px: "Stel deze box samen" op één regel (48 px)
   }
 });
 
-test(`drieluik met een muis op 1024 en 1100 px: de drie kaders even hoog (${BRIEF}, ontwerpgate ronde 3)`, async ({ page }, info) => {
+// ronde 4: de linkerrand blijft op de lijn van het label; binnen die lijn passen de links pas vanaf ca. 1260 px op één regel
+test(`drieluik met een muis: drie kaders even hoog en tekst op de lijn van het label "Producten" (${BRIEF}, ontwerpgate ronde 3 en 4)`, async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'met een muis, breedtes worden hier zelf gezet');
-  for (const b of [1024, 1100, 1200]) {
+  for (const [b, hoogte] of [[800, 96], [1024, 72], [1100, 72], [1200, 72], [1280, 48], [1440, 48]]) {
     await page.setViewportSize({ width: b, height: 900 });
     await page.goto('/');
     await page.evaluate(() => document.fonts.ready);
-    const h = await page.evaluate(() => [...document.querySelectorAll('#producten .kern-tekst .pijl')].map(a => Math.round(a.getBoundingClientRect().height)));
-    expect(h.length).toBe(3);
-    expect(new Set(h).size, `${b} px: kaders even hoog (${h})`).toBe(1);
+    const m = await page.evaluate(() => { const label = document.querySelector('#producten .kern-label').getBoundingClientRect().left, k1 = document.querySelector('#producten .kern-kolom');
+      return { label, kop: k1.querySelector('h2').getBoundingClientRect().left, pijl: k1.querySelector('.pijl').getBoundingClientRect().left,
+        h: [...document.querySelectorAll('#producten .kern-tekst .pijl')].map(a => Math.round(a.getBoundingClientRect().height)) }; });
+    expect(m.h, `${b} px: drie kaders van ${hoogte} px`).toEqual([hoogte, hoogte, hoogte]);
+    expect(Math.abs(m.kop - m.label), `${b} px: kop op de lijn van het label (${m.kop.toFixed(1)} / ${m.label.toFixed(1)})`).toBeLessThanOrEqual(2);
+    expect(Math.abs(m.pijl - m.label), `${b} px: pijl-link op de lijn van het label (${m.pijl.toFixed(1)} / ${m.label.toFixed(1)})`).toBeLessThanOrEqual(2);
   }
 });
 
