@@ -188,14 +188,15 @@ test(`drieluik met een muis: drie kaders even hoog en tekst op de lijn van het l
   }
 });
 
-test(`mobiel: 16 px tussen projecttitel en kader op Inspiratie, 16 px onder het kader in de prijskaart (${BRIEF}, ontwerpgate ronde 3)`, async ({ page }, info) => {
+test(`mobiel: 16 px tussen projecttitel en kader op Inspiratie, 12 px onder het kader in de prijskaart (${BRIEF}, ontwerpgate ronde 3 en 5)`, async ({ page }, info) => {
   test.skip(info.project.name !== 'mobiel', 'gemeten op 390 × 844');
   await page.goto('/inspiratie');
   const titel = await page.evaluate(() => [...document.querySelectorAll('.project-onder')].map(o => o.querySelector('.pijl').getBoundingClientRect().top - o.querySelector('h2').getBoundingClientRect().bottom));
   for (const a of titel) expect(Math.abs(a - 16), `titel → kader ${a.toFixed(1)} px`).toBeLessThanOrEqual(1);
   await page.goto('/kraamcadeauboxen');
   const onder = await page.evaluate(() => [...document.querySelectorAll('#formaten .formaat')].map(k => k.getBoundingClientRect().bottom - k.querySelector('.pijl').getBoundingClientRect().bottom));
-  for (const a of onder) expect(a, `kader → onderrand kaart ${a.toFixed(1)} px`).toBeGreaterThanOrEqual(15.5);
+  // ronde 5: 12 px (was 16) zodat de vier kaarten ook op 390 × 664 binnen 1,2 scherm blijven (afspraak coördinator: 10–12 px)
+  for (const a of onder) expect(a, `kader → onderrand kaart ${a.toFixed(1)} px`).toBeGreaterThanOrEqual(11.5);
 });
 
 // Criterium 14, 15 en ontwerpcriteria O6, O12: met een muis schuift bij aanwijzen en focus de pijl 6 px, groeien de stompjes

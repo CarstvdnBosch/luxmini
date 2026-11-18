@@ -423,6 +423,9 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
   .balk .links { gap: 12px; }
   .balk .sectie-label { font-size: 13px; letter-spacing: .1em; white-space: nowrap; }
 }
+/* smalle telefoons (≤ 380 px): 8 px tussen logo en label, zodat ook het langste label ("Wat er in de box kan") met wat
+   bredere letterweergave ruim vrij blijft van de burger (360 px: 17 px; brief 2026-11-18-elegante-navigatie, ronde 5) */
+@media (max-width: 380px) { .balk .links { gap: 8px; } }
 
 /* =====================================================================
    Interacties naar het voorbeeld van stockdutchdesign.com
@@ -899,6 +902,9 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .contact-tekst { grid-column: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 32px; }
 .contact-lijst { display: flex; flex-direction: column; align-items: flex-start; }
 .contact-lijst { gap: 12px; } /* pijl-links onder elkaar: 12 px tussen de kaders */
+/* Contact 001: onderaan dezelfde 12 px als p en address in de andere kolommen, zodat de afstand naar 002 niet afhangt van
+   welke kolom het langst is (in CI was de linkerkolom de langste: 117 i.p.v. 129 px op 1440) */
+.gegevens .contact-lijst { margin-bottom: 12px; }
 .contact-foto { grid-column: 4; width: 100%; height: auto; max-width: 480px; aspect-ratio: 1; object-fit: cover; } /* height: auto: een foto met width/height (Babynest) houdt de verhouding van de CSS */
 .contact-formulier { padding: 0 calc(var(--B) * .16667); display: flex; flex-direction: column; gap: 24px; }
 .contact-formulier .formulier { max-width: 960px; margin: 0; }
@@ -1768,14 +1774,14 @@ html:not(.js) img[data-src] { display: none; }
   /* 001 Kies je formaat: compacte kaarten; prijs en aantal op één regel, daaronder de producten op één regel
      ("In deze box: …" of "plus: …", zonder herhaalde vinklijst) en de pijl-link. Het takje en de korte omschrijving vallen weg. */
   .formaten { gap: 12px; }
-  .formaat { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 16px; padding: 18px 20px 16px; } /* 16 px onder het kader (ontwerpgate ronde 3) */
+  .formaat { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 16px; padding: 16px 20px 12px; } /* 12 px onder het kader: zo blijven € 35 t/m € 80 ook op 390 × 664 ruim binnen 1,2 scherm (brief 2026-11-18-elegante-navigatie, ronde 5) */
   .formaat .takje, .formaat-regel, .formaat-kop-lang, .formaat-lijst .vink { display: none; }
   .formaat-prijs { font-size: 40px; }
   .formaat-aantal { margin: 0; }
-  .formaat-inhoud { grid-column: 1 / -1; margin-top: 10px; font-size: 16px; line-height: 1.5; }
+  .formaat-inhoud { grid-column: 1 / -1; margin-top: 8px; font-size: 16px; line-height: 1.5; }
   .formaat-kop, .formaat-lijst, .formaat-lijst li { display: inline; margin: 0; padding: 0; border: 0; font-weight: 400; }
   .formaat-lijst li + li::before { content: ", "; }
-  .formaat .pijl { grid-column: 1 / -1; grid-row: 4; margin-top: 2px; justify-self: start; } /* rij 2: de iconen (brief 2026-11-14-prijskaart-iconen) */
+  .formaat .pijl { grid-column: 1 / -1; grid-row: 4; margin-top: 0; justify-self: start; } /* rij 2: de iconen (brief 2026-11-14-prijskaart-iconen) */
 }
 
 /* ---------- Hero op tablet (761–1024 px): zes foto's in de eigen indeling, de kop overlapt nooit een foto ----------
