@@ -789,7 +789,7 @@
 
   /* ---------------------------------------------------------------
      5h. Homepage 001 Producten op mobiel in twee stappen (brief 2026-11-15-homepage-mobiel-tweetraps, A; zoals Stock).
-         Alleen staand t/m 760 px, met beweging: #producten krijgt .stappen. Stap 1: paletkleur met nr en kop in inkt.
+         Alleen staand t/m 760 px, met beweging: #producten krijgt .stappen. Stap 1: paletkleur met de kop in inkt (zonder nummer).
          Stap 2 (.aangekomen), één keer: zodra de bovenrand van het blok 50 % van het scherm passeert (eigen observer,
          rootMargin -50 % onder, los van drieIo), bij focus in het blok of bij een tik op het blok. Was het blok in stap 1 nog
          niet in beeld (laden, herladen halverwege, anker, sprong), dan direct stap 2 zonder overgang (.direct).

@@ -92,7 +92,11 @@ test(`balk 360 en 390 px: elk sectielabel op één regel, min. 12 px vrij van de
 // het kader begint 14 px verder, links open (stompjes van 10 px), 1 px lijn in currentColor zonder vulling, schaduw of ronde
 // hoeken; op mobiel binnen de zijmarge en onder elkaar 12 px tussen de kaders
 for (const { pad, naam } of PAGINAS) {
-  test(`${naam}: pijl-links met dun kader, pijl ervoor, ≥ 48 px, binnen de rand (${BRIEF}, criteria 11, 12, O3, O4, O11)`, async ({ page }) => {
+  // ronde 2 (controleur): ook op 1024 px (desktop-project) en 768 px (tablet-project); een gebroken pijl-link staat met
+  // ≥ 8 px boven en onder en ≥ 24 px rechts binnen het kader (drieluik op de tablet: kolom van ca. 208 px)
+  test(`${naam}: pijl-links met dun kader, pijl ervoor, ≥ 48 px, binnen de rand (${BRIEF}, criteria 11, 12, O3, O4, O11)`, async ({ page }, info) => {
+   for (const breedte of (info.project.name === 'desktop' ? [1440, 1024] : [null])) {
+    if (breedte) await page.setViewportSize({ width: breedte, height: 900 });
     await page.goto(pad);
     await wachtOpRust(page);
     const m = await page.evaluate(() => {
@@ -100,10 +104,12 @@ for (const { pad, naam } of PAGINAS) {
       return { vw: innerWidth, rand, breed: document.documentElement.scrollWidth, pijlen: [...document.querySelectorAll('main .pijl, footer .pijl')].filter(p => p.getClientRects().length && getComputedStyle(p).display !== 'none').map(p => {
         const r = p.getBoundingClientRect(), svg = p.querySelector('svg').getBoundingClientRect(), k = getComputedStyle(p, '::before'), s = getComputedStyle(p);
         const tekst = document.createRange(); const tn = [...p.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()); if (tn) tekst.selectNodeContents(tn);
-        const tr = tn ? tekst.getBoundingClientRect() : null;
-        return { t: p.textContent.trim(), h: r.height, l: r.left, r: r.right, top: r.top, svgL: svg.left - r.left, svgB: svg.width,
+        const tr = tn ? tekst.getBoundingClientRect() : null, regelRects = tn ? [...tekst.getClientRects()].filter(x => x.width > 0) : [];
+        return { t: p.textContent.replace(/\u00ad/g, '').trim(), h: r.height, l: r.left, r: r.right, top: r.top, svgL: svg.left - r.left, svgB: svg.width,
           kader: [k.content, k.position, k.left, k.top, k.bottom, k.right, k.borderTopWidth, k.borderRightWidth, k.borderBottomWidth, k.borderLeftWidth, k.borderTopStyle, k.boxShadow, k.borderTopRightRadius, k.backgroundColor, k.backgroundSize],
-          tekstL: tr ? tr.left - svg.right : null, tekstR: tr ? r.right - tr.right : null, regels: tr ? tekst.getClientRects().length : 1,
+          tekstL: tr ? tr.left - svg.right : null, tekstR: tr ? r.right - tr.right : null, regels: tn ? new Set(regelRects.map(x => Math.round(x.top))).size : 1,
+          tekstBoven: regelRects.length ? Math.min(...regelRects.map(x => x.top)) - r.top : null, tekstOnder: regelRects.length ? r.bottom - Math.max(...regelRects.map(x => x.bottom)) : null,
+          tekstRechts: regelRects.length ? r.right - Math.max(...regelRects.map(x => x.right)) : null,
           maat: parseFloat(s.fontSize), letter: s.fontFamily, gewicht: s.fontWeight, achter: s.backgroundColor };
       }) };
     });
@@ -119,6 +125,11 @@ for (const { pad, naam } of PAGINAS) {
       expect(p.h - 20, `${t}: opening links ≥ 24 px`).toBeGreaterThanOrEqual(24);
       if (!p.t.startsWith('Zo personaliseert')) expect(p.kader[13], `${t}: kader niet gevuld`).toBe('rgba(0, 0, 0, 0)');
       expect(p.achter, `${t}: geen achtergrondvlak`).toBe('rgba(0, 0, 0, 0)');
+      if (p.tekstBoven !== null) {
+        expect(p.tekstBoven, `${t} (${m.vw} px, ${p.regels} regel(s)): ≥ 8 px tussen tekst en bovenlijn (${p.tekstBoven.toFixed(1)})`).toBeGreaterThanOrEqual(8);
+        expect(p.tekstOnder, `${t} (${m.vw} px, ${p.regels} regel(s)): ≥ 8 px tussen tekst en onderlijn (${p.tekstOnder.toFixed(1)})`).toBeGreaterThanOrEqual(8);
+        expect(p.tekstRechts, `${t} (${m.vw} px): ≥ 24 px rechts binnen het kader (${p.tekstRechts.toFixed(1)})`).toBeGreaterThanOrEqual(23.5);
+      }
       if (p.tekstL !== null && p.regels === 1) {
         expect(Math.abs(p.tekstL - 12), `${t}: 12 px tussen pijl en tekst (${p.tekstL})`).toBeLessThanOrEqual(1);
         expect(Math.abs(p.tekstR - 24), `${t}: 24 px tussen tekst en kader (${p.tekstR})`).toBeLessThanOrEqual(1);
@@ -139,6 +150,7 @@ for (const { pad, naam } of PAGINAS) {
         expect(b.top - (a.top + a.h), `"${a.t}" → "${b.t}": min. 12 px tussen de kaders`).toBeGreaterThanOrEqual(11.5);
       }
     }
+   }
   });
 }
 
@@ -192,6 +204,13 @@ test(`pijl-link op touch en bij minder beweging: geen overgang, de pijl schuift 
     await ctx.close();
     return;
   }
+  // minder beweging (hulp.js) met een muis: ook een projecttegel van Inspiratie (de tegel is de link) verschuift de pijl niet
+  await page.goto('/inspiratie');
+  const tegel = page.locator('.project-link').first();
+  await tegel.scrollIntoViewIfNeeded();
+  await tegel.hover();
+  expect(await tegel.locator('.pijl svg').evaluate(s => getComputedStyle(s).transform), 'Inspiratie-tegel: de pijl schuift niet bij minder beweging').toBe('none');
+  await page.goto('/kraamcadeauboxen');
   // minder beweging (hulp.js) met een muis: direct, pijl blijft staan, lijn wel dekkend
   await pijl.hover();
   const m = await pijl.evaluate(p => [new DOMMatrix(getComputedStyle(p.querySelector('svg')).transform).m41, getComputedStyle(p, '::before').opacity, getComputedStyle(p, '::before').transitionDuration]);

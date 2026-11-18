@@ -71,10 +71,10 @@ html.kop-donker .site-header { color: var(--wit); }
 .caps { font-size: 14px; font-weight: 600; letter-spacing: .64em; text-transform: uppercase; }
 /* Pijl-link (brief 2026-11-18-elegante-navigatie, deel C; opbouw Stock): de pijl steekt door een dun kader om de tekst.
    Pijl 28 x 10 op de linkerrand; het kader (::before) begint 14 px verder (midden van de pijl), 12 px tussen pijl en tekst,
-   rechts 24 px binnen het kader. Lijn 1 px boven, rechts en onder; links alleen twee stompjes van 10 px, met een opening van 28 px
+   rechts 24 px binnen het kader, 12 px boven en onder (een gebroken pijl-link staat netjes in het kader, de pijl in het midden). Lijn 1 px boven, rechts en onder; links alleen twee stompjes van 10 px, met een opening van 28 px
    waar de pijl doorloopt. Kleur currentColor op 0,72 (≥ 3:1 op wit, grijsblauw, de lichte paletkleuren, terracotta en de diepe
    tinten); bij witte tekst op een donkere foto 1. Nooit gevuld, geen schaduw, geen ronde hoeken. Altijd minimaal 48 px hoog. */
-.pijl { position: relative; font-family: var(--serif); font-size: 16px; font-weight: 400; text-decoration: none; display: inline-flex; align-items: center; gap: 12px; padding: 0 24px 0 0; min-height: 48px; width: fit-content; max-width: 100%; } /* fit-content: het kader loopt alleen om de tekst, ook als flex- of grid-item */
+.pijl { position: relative; font-family: var(--serif); font-size: 16px; font-weight: 400; text-decoration: none; display: inline-flex; align-items: center; gap: 12px; padding: 12px 24px 12px 0; min-height: 48px; line-height: 1.5; width: fit-content; max-width: 100%; } /* fit-content: het kader loopt alleen om de tekst, ook als flex- of grid-item */
 .pijl svg { width: 28px; height: 10px; flex: none; }
 .pijl::before { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 14px; border: 1px solid currentColor; border-left: 0; opacity: .72; pointer-events: none;
   background: linear-gradient(currentColor, currentColor) left top / 1px 10px no-repeat, linear-gradient(currentColor, currentColor) left bottom / 1px 10px no-repeat; }
@@ -98,7 +98,8 @@ html.kop-donker .site-header { color: var(--wit); }
 }
 @media (prefers-reduced-motion: reduce) {
   .pijl svg, .pijl::before { transition: none !important; }
-  .pijl:hover svg, .pijl:focus-visible svg { transform: none; }
+  /* de pijl schuift nooit, ook niet via een ouder (projecttegels van Inspiratie: .project-link:hover .pijl svg) */
+  .pijl svg, .pijl:hover svg, .pijl:focus-visible svg { transform: none !important; }
 }
 .quote { margin: 0; font-family: var(--display); font-size: clamp(26px, 2.8vw, 40px); line-height: 1.25; letter-spacing: .02em; }
 
