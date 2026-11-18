@@ -185,10 +185,7 @@ test('toetsenbord: Tab naar de formaatkeuze en pijl naar € 65 toont de iconen 
 
 test('Kraamcadeauboxen met een muis (1440 en 1280): in rust het takje, bij aanwijzen het raster op die plek; de kaart groeit niet', async ({ page }, info) => {
   test.skip(!muis(info), 'alleen met een muis');
-  // 1280: 534 (was 506). Brief 2026-11-18-elegante-navigatie, ronde 2: de pijl-link "Stel deze box samen" past met kader niet
-  // op één regel in de kaart van 197 px binnenbreedte en staat nu op twee regels met 12 px boven en onder in het kader
-  // (eerder raakte de tekst de lijnen). Alleen het ijkpunt verschuift; de grens (± 8 px, niet groeien bij aanwijzen) blijft.
-  for (const [breedte, nu] of [[1440, 512], [1280, 534]]) {
+  for (const [breedte, nu] of [[1440, 512], [1280, 506]]) {
     await page.setViewportSize({ width: breedte, height: 900 });
     await naarBoxen(page);
     await page.mouse.move(2, 2);

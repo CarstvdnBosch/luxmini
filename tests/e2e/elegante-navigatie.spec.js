@@ -154,6 +154,46 @@ for (const { pad, naam } of PAGINAS) {
   });
 }
 
+// Ontwerpgate ronde 3: afwerking van de kaders op een paar krappe plekken
+test(`prijskaarten 1280 en 1366 px: "Stel deze box samen" op één regel (48 px) (${BRIEF}, ontwerpgate ronde 3)`, async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'breedtes worden hier zelf gezet');
+  for (const b of [1280, 1366]) {
+    await page.setViewportSize({ width: b, height: 900 });
+    await page.goto('/kraamcadeauboxen');
+    await page.evaluate(() => document.fonts.ready);
+    const m = await page.evaluate(() => [...document.querySelectorAll('#formaten .formaat')].map(k => { const p = k.querySelector('.pijl'), r = p.getBoundingClientRect(), kr = k.getBoundingClientRect();
+      return [p.textContent.trim(), Math.round(r.height), r.left - kr.left, kr.right - r.right]; }));
+    expect(m.length).toBe(4);
+    for (const [t, h, l, rechts] of m) {
+      expect([t, h], `${b} px: één regel, 48 px`).toEqual(['Stel deze box samen', 48]);
+      expect(l, `${b} px: de pijl blijft binnen de kaart`).toBeGreaterThanOrEqual(4);
+      expect(rechts, `${b} px: het kader blijft binnen de kaart`).toBeGreaterThanOrEqual(0);
+    }
+  }
+});
+
+test(`drieluik met een muis op 1024 en 1100 px: de drie kaders even hoog (${BRIEF}, ontwerpgate ronde 3)`, async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'met een muis, breedtes worden hier zelf gezet');
+  for (const b of [1024, 1100, 1200]) {
+    await page.setViewportSize({ width: b, height: 900 });
+    await page.goto('/');
+    await page.evaluate(() => document.fonts.ready);
+    const h = await page.evaluate(() => [...document.querySelectorAll('#producten .kern-tekst .pijl')].map(a => Math.round(a.getBoundingClientRect().height)));
+    expect(h.length).toBe(3);
+    expect(new Set(h).size, `${b} px: kaders even hoog (${h})`).toBe(1);
+  }
+});
+
+test(`mobiel: 16 px tussen projecttitel en kader op Inspiratie, 16 px onder het kader in de prijskaart (${BRIEF}, ontwerpgate ronde 3)`, async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobiel', 'gemeten op 390 × 844');
+  await page.goto('/inspiratie');
+  const titel = await page.evaluate(() => [...document.querySelectorAll('.project-onder')].map(o => o.querySelector('.pijl').getBoundingClientRect().top - o.querySelector('h2').getBoundingClientRect().bottom));
+  for (const a of titel) expect(Math.abs(a - 16), `titel → kader ${a.toFixed(1)} px`).toBeLessThanOrEqual(1);
+  await page.goto('/kraamcadeauboxen');
+  const onder = await page.evaluate(() => [...document.querySelectorAll('#formaten .formaat')].map(k => k.getBoundingClientRect().bottom - k.querySelector('.pijl').getBoundingClientRect().bottom));
+  for (const a of onder) expect(a, `kader → onderrand kaart ${a.toFixed(1)} px`).toBeGreaterThanOrEqual(15.5);
+});
+
 // Criterium 14, 15 en ontwerpcriteria O6, O12: met een muis schuift bij aanwijzen en focus de pijl 6 px, groeien de stompjes
 // tot 17 px en wordt de lijn dekkend (0,6 s, rustig in-uit); de tekst staat stil; focus maakt de lijn 2 px; geen outline nodig
 test(`pijl-link met een muis: rustige animatie bij aanwijzen en focus, tekst staat stil (${BRIEF}, criteria 14, 15, O6, O12)`, async ({ browser }, info) => {

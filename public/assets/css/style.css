@@ -213,6 +213,14 @@ html.hero-licht .site-header .logo-donker { opacity: 1; }
 .formaat-aantal { margin: 12px 0 0; font-family: var(--serif); font-size: 16px; }
 .formaat-regel { margin: 4px 0 0; font-size: 16px; line-height: 1.4; color: #4a4a4a; min-height: 2.8em; }
 .formaat .pijl { margin-top: 20px; }
+/* 1025–1399 px: zijpadding 22 px en de pijl hangt 14 px in de binnenrand van de kaart, zoals Stock de pijl buiten de tekstkolom
+   zet; zo staat "Stel deze box samen" met kader (219 px) vanaf 1280 px op één regel en daaronder op hooguit twee
+   (ontwerpgate ronde 3, brief 2026-11-18-elegante-navigatie) */
+@media (min-width: 1025px) and (max-width: 1399px) {
+  .formaat { padding-left: 22px; padding-right: 22px; }
+  .formaat .pijl { margin-left: -14px; max-width: calc(100% + 14px); }
+  .formaat .formaat-iconen { left: 22px; } /* het iconenraster blijft op de plek van het takje */
+}
 .formaat-kop { margin: 20px 0 0; padding-top: 24px; border-top: 1px solid rgba(32,32,32,.15); font-size: 16px; font-weight: 600; }
 .formaat-lijst { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.35; }
 .formaat-lijst li { display: flex; gap: 10px; align-items: flex-start; }
@@ -638,6 +646,14 @@ html.zacht-scrollen { scroll-behavior: auto; }
 .kern-label { position: absolute; left: var(--rand); top: var(--ritme); z-index: 3; }
 .kern-kolommen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .kern-kolom { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: calc(var(--ritme) + 48px) 24px calc(var(--ritme) / 2) clamp(24px, calc(var(--u) * 8.333), 120px); }
+/* met een muis (1025–ca. 1250 px): de linkerrand wijkt zo ver als nodig, zodat de tekstkolom van 288 px (en dus de langste
+   pijl-link met kader) in de kolom past en de drie kaders op één regel even hoog zijn (ontwerpgate ronde 3) */
+/* past de langste link ook zo niet (binnenbreedte van de kolom < 288 px), dan breken de links af; alle drie even hoog (twee regels, 72 px) */
+.kern-kolom { container-type: inline-size; }
+@container (max-width: 287.98px) { .kern-tekst .pijl { min-height: 72px; } }
+@media (hover: hover) and (pointer: fine) and (min-width: 761px) {
+  .kern-kolom { padding-left: max(24px, min(clamp(24px, calc(var(--u) * 8.333), 120px), calc(100% - 288px - 24px))); }
+}
 .kolom-prem { background: var(--oker); }
 .kolom-nest { background: var(--mauve); }
 /* geen witte scheidingslijnen tussen de kolommen (feedback Carst 7 nov. 16:47) */
@@ -1085,6 +1101,7 @@ html.zacht-scrollen { scroll-behavior: auto; }
   .project .lopend-spoor { font-size: 56px; }
   .project-onder { margin-top: 24px; flex-direction: column; align-items: flex-start; gap: 4px; }
   .project-onder .kop-m { font-size: 34px; }
+  .project-onder .pijl { margin-top: 12px; } /* met de rij-afstand van 4 px: 16 px tussen titel en kader (ontwerpgate ronde 3) */
   .project-slot { margin-top: 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1753,7 +1770,7 @@ html:not(.js) img[data-src] { display: none; }
   /* 001 Kies je formaat: compacte kaarten; prijs en aantal op één regel, daaronder de producten op één regel
      ("In deze box: …" of "plus: …", zonder herhaalde vinklijst) en de pijl-link. Het takje en de korte omschrijving vallen weg. */
   .formaten { gap: 12px; }
-  .formaat { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 16px; padding: 18px 20px 8px; }
+  .formaat { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 16px; padding: 18px 20px 16px; } /* 16 px onder het kader (ontwerpgate ronde 3) */
   .formaat .takje, .formaat-regel, .formaat-kop-lang, .formaat-lijst .vink { display: none; }
   .formaat-prijs { font-size: 40px; }
   .formaat-aantal { margin: 0; }
